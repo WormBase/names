@@ -38,8 +38,7 @@
 (defn init
   "Entry-point for ring server initialization."
   []
-  (mount/start-with
-   #{owndb/conn (owndb/connect)}))
+  (mount/start))
 
 (def app
   (api
