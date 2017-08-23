@@ -17,13 +17,6 @@ WormBase identifiers for `Gene`, `Feature` and `Variation` entities.
 
 `lein ring server-headless`
 
-### Packaging and running as standalone jar
-
-```bash
-lein do clean, ring uberjar
-java -jar target/server.jar
-```
-
 ### Testing
 Use built-in testing utilities as provided by leiningen.
 Please run before committing/submitting new pull requests.
