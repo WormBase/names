@@ -15,10 +15,6 @@
     validator-url
     "//online.swagger.io/validator"))
 
-(def ^:private formats
-  "The formats API endpoints used to consume/produce data."
-  ["application/json"])
-
 (defn- wrap-not-found
   "Fallback 404 handler."
   [handler]
