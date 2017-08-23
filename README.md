@@ -14,8 +14,15 @@ MySQL database. It exists to facilitate pan-institution sharing of
 WormBase identifiers for `Gene`, `Feature` and `Variation` entities.
 
 ### Run the application locally
+For now, using a local dev or memory datomic db for testing.
+Run with:
 
-`lein ring server-headless`
+```bash
+export WB_DB_URI="datomic:mem://names-test"
+```
+
+Run with `lein ring server` or `lein ring server-headless`.
+
 
 ### Testing
 Use built-in testing utilities as provided by leiningen.
