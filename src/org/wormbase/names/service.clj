@@ -55,7 +55,7 @@
        {:name "feature" :description "Feature name ops"}
        {:name "variation" :description "Variation name ops"}]}}}
    (context "" []
-     :middleware [;;ring-gzip/wrap-gzip
+     :middleware [ring-gzip/wrap-gzip
                   wrap-datomic
                   wrap-not-found]
      gene/routes)))
