@@ -8,10 +8,31 @@ This library will provide:
    The final implementation may not necessarily reside in/be this
    library (or the clojure namespace defined herein.
 
+
+# Datomic schema design/approach
+The current implementation uses schema defined in Clojure (using
+[datomic.schema][1]) which makes it transparent the set of attributes
+available from attributes of type `:db.type/ref`.
+
+Provence about changes to entities (who, when, where and why) are
+modelled as attributes on the "transaction entity".
+
+We may experiment with modelling some of attributes in the same way as
+the automatically converted ACeDB database; such that we can compare
+and contrast the benefits and drawbacks of using each.
+
+[Conformity][2] is used to idemoptently transaction the database schema at runtime.
+
+The latest alpha version of [clojure][3] is used to facilitate the use
+of [clojure.spec][4] to provide validation and test-data-generation for
+testing.
+
 ## The existing WormBase "name server" - background
 The current wormbase name service is a web application backed by a
 MySQL database. It exists to facilitate pan-institution sharing of
-WormBase identifiers for `Gene`, `Feature` and `Variation` entities.
+WormBase identifiers and names for `Gene`, `Feature` and `Variation`
+entities (ACeDB does not support concurrent write-access).
+
 
 ### Run the application locally
 For now, using a local dev or memory datomic db for testing.
@@ -39,3 +60,8 @@ lein do clean, test-refresh
 ## License
 EPL (Eclipse Public License)
 Copyright ©  WormBase 2017
+
+[1]: https://github.com/gfZeng/datomic.schema
+[2]: https://github.com/rkneufeld/conformity
+[3]: https://clojure.org/community/downloads
+[4]: https://clojure.org/about/spec
