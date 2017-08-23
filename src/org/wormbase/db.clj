@@ -39,7 +39,9 @@
 
 (mount/defstate conn
   :start (binding [*wb-db-uri* (environ/env :wb-db-uri)]
-           (connect *wb-db-uri*))
+           (if (str/starts-with? *wb-db-uri* "datomic:mem")
+             (scratch-connect *wb-db-uri*)
+             (connect *wb-db-uri*)))
   :stop (d/release conn))
 
 (defn connected? []
