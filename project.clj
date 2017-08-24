@@ -36,7 +36,8 @@
                    [javax.servlet/javax.servlet-api "4.0.0"]
                    [org.clojure/tools.trace "0.7.9"]
                    [ring/ring-devel "1.6.2"]
-                   [peridot "0.4.4"]]
+                   [peridot "0.4.4"]
+                   [specviz "0.2.3"]]
     :plugins [[com.jakemccrary/lein-test-refresh "0.20.0"]
               [jonase/eastwood "0.2.4"
                :exclusions [org.clojure/clojure]]
