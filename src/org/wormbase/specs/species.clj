@@ -12,7 +12,7 @@
 (s/def ::short-name
   (s/with-gen
     (s/and st/string?
-           #(re-matches id-regexp %))
+           #(re-matches id-regexp (or % "")))
     #(sg/string-generator id-regexp)))
 
 (s/def ::id 
