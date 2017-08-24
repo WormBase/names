@@ -6,11 +6,12 @@
    [clojure.spec.test.alpha :as stest]
    [clojure.string :as str]
    [clojure.test :as t]
-   [clojure.walk :as walk]   
+   [clojure.walk :as walk]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :refer [post* json-string]]
-   [spec-tools.spec :as st]))
+   [org.wormbase.test-utils :refer [post* json-string
+                                    status-is?
+                                    body-contains?]]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -30,7 +31,13 @@
                  (-> body :problems first keys set))))))
   (t/testing "Species should always be required when creating gene names"
     (let [[status body] (new-gene-names [{:gene/cgc-name "abc-1"}])]
-      (t/is (= status 400)))))
+      (status-is? status 400 body))))
+
+(t/deftest test-new-genes-wrong-data-shape  
+  (t/testing "Non-conformant data should result in HTTP Bad Request 400"
+    (let [name-records []
+          [status body] (new-gene-names name-records)]
+      (status-is? status 400 body))))
 
 (t/deftest test-naming-single-uncloned-gene
   (t/testing "Naming one un-cloned gene succesfully returns ids"
@@ -38,22 +45,19 @@
                              [{:gene/cgc-name "abc-1"
                                :gene/species "c-elegans"}])
           expected-id "WBGene00000001"]
-      (t/is (= status 201)
-            (str (:problems body)))
+      (status-is? status 201 body)
       (let [created (:created body)]
         (t/is (= (count created) 1))
         (t/is (= (-> created first :gene/id) expected-id))))))
 
 (t/deftest test-naming-many-uncloned-genes-same-species
-    (t/testing "Naming many un-cloned genes succesfully returns ids."
-      (let [name-records [{:gene/cgc-name "abc-1"
-                           :gene/species "c-elegans"}
-                          {:gene/cgc-name "abc-2"
-                           :gene/species "c-elegans"}]
-            [status body] (new-gene-names name-records)]
-      (t/is (= status 201)
-            (str (:problems body)))
+  (t/testing "Naming many un-cloned genes succesfully returns ids."
+    (let [name-records [{:gene/cgc-name "abc-1"
+                         :gene/species "c-elegans"}
+                        {:gene/cgc-name "abc-2"
+                         :gene/species "c-elegans"}]
+          [status body] (new-gene-names name-records)]
+      (status-is? status 201 body)
       (t/is (= (count (:created body)) (count name-records))
             (pr-str body)))))
-
 
