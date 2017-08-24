@@ -33,7 +33,7 @@
     (let [[status body] (new-gene-names [{:gene/cgc-name "abc-1"}])]
       (status-is? status 400 body))))
 
-(t/deftest test-new-genes-wrong-data-shape  
+(t/deftest test-new-genes-wrong-data-shape
   (t/testing "Non-conformant data should result in HTTP Bad Request 400"
     (let [name-records []
           [status body] (new-gene-names name-records)]
@@ -60,4 +60,3 @@
       (status-is? status 201 body)
       (t/is (= (count (:created body)) (count name-records))
             (pr-str body)))))
-
