@@ -1,13 +1,15 @@
 (ns org.wormbase.test-utils
-  (:require [clojure.string :as str]
-            [peridot.core :as p]
+  (:require [compojure.api.routes :as routes]
+            [compojure.api.middleware :as mw]
             [clojure.java.io :as io]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.test :as t]
+            [datomic.api :as d]
             [muuntaja.core :as m]
-            [compojure.api.routes :as routes]
-            [compojure.api.middleware :as mw])
+            [peridot.core :as p]
+            [spec-tools.core :as stc])
   (:import (java.io InputStream)))
-
-;; file copied verbatim from compojure.api.test
 
 (def muuntaja (m/create))
 
@@ -142,3 +144,30 @@
                                      [(if (= k (keyword "/"))
                                         "/" (str "/" (name k))) v]))))
       spec)))
+
+(defn status-is? [status expected-status body]
+  (t/is (= status expected-status)
+        (format "Response body did not contain expected data:\n%s"
+                (if-let [suspec (:spec body)]
+                  (pr-str (stc/deserialize suspec))
+                  (pr-str body)))))
+
+(defn- map->set [m]
+  (assert (map? m))
+  (some->> (apply vector m)
+           (flatten)
+           (partition 2)
+           (set)))
+
+(defn body-contains? [body expected-data spec]
+  (assert (map? expected-data) "expected-data must be a map")
+  (let [exp-data (map->set expected-data)
+        act-data (map->set body)]
+    (t/is (set/subset? exp-data act-data)
+          (str/join "\n" ["Expected data:"
+                          (pr-str exp-data)
+                          "not found in response body:"
+                          (pr-str body)]))
+    (when-let [rspec (:spec body)]
+      (clojure.pprint/pprint (stc/deserialize rspec)))))
+
