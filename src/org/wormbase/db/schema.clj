@@ -29,8 +29,10 @@
   (schema/partition :db.part/gene.biotype)
   (schema/enums
    :biotype
+   {:db/ident :gene.biotype/cds}
+   {:db/ident :gene.biotype/pseudogene}
    {:db/ident :gene.biotype/transcript}
-   {:db/ident :gene.biotype/cds}))
+   {:db/ident :gene.biotype/transposon}))
 
 (defschema Gene
   (schema/partition :db.part/gene)
