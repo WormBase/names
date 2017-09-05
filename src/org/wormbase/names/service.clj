@@ -28,6 +28,8 @@
   "Annotates request with datomic connection and current db."
   [handler]
   (fn [request]
+    (when-not (owndb/connected?)
+      (mount/start))
     (let [conn owndb/conn]
       (handler (assoc request :conn conn :db (d/db conn))))))
 
