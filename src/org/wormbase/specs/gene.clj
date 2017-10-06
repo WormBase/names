@@ -1,9 +1,11 @@
 (ns org.wormbase.specs.gene
   (:require [clojure.spec.alpha :as s]
             [spec-tools.spec :as st]
+            [spec-tools.core :as stc]
             [clojure.string :as str]
             [miner.strgen :as sg]
             [clojure.test :as t]
+            [org.wormbase.specs.biotype :as owsb]
             [org.wormbase.specs.species :as owss]
             [org.wormbase.species :as ows]))
 
@@ -38,6 +40,8 @@
    {:gene/cgc-name #"^[a-z]{3,4}-[1-9]{1}\d*"
     :gene/sequence-name #"^SRAE_[\dXM]\d+$"}})
 
+(def gene-id-regexp #"WBGene\d{8}")
+
 (defn valid-name?
   "Validates `name-kw` according to correspoinding species in `data`."
   [data name-kw]
@@ -48,15 +52,17 @@
             value (or (name-kw data) "")]
         (re-matches name-pattern value)))))
 
-(def gene-id-regexp #"WBGene\d{8}")
+(defn names-valid?
+  [data]
+  (when-let [name-kwds (filter (partial contains? data)
+                               [:gene/cgc-name
+                                :gene/sequence-name])]
+    (some (partial valid-name? data) name-kwds)))
 
 (defn- gen-from-rand-name-pattern
   "Generate names for `kw` a matching random pattern."
   [kw]
-  (let [species-kw (->> (keys name-patterns)
-                        (random-sample 0.5)
-                        (take 1)
-                        (first))
+  (let [species-kw (rand-nth (keys name-patterns))
         pattern (-> name-patterns species-kw kw)]
     (sg/string-generator pattern)))
 
@@ -82,45 +88,52 @@
 (s/def :gene/sequence-name (name-spec-with-gen :gene/sequence-name))
 
 ;; TODO add proper spec
-(s/def :gene/biotype st/keyword?)
+(s/def :gene/biotype (s/or :as-keyword ::owsb/id
+                           :as-string ::owsb/short-name))
 
 (s/def :gene/species (s/with-gen
-                       (s/or
-                        :as-keyword ::owss/id
-                        :as-string ::owss/short-name)
+                       (s/or :as-keyword ::owss/id
+                             :as-string ::owss/short-name)
                        #(s/gen (-> name-patterns keys set))))
-
-(s/def ::new-un-cloned (s/keys :req [:gene/cgc-name
-                                     :gene/species]))
-(s/def ::new-cloned (s/keys
-                     :req [:gene/sequence-name
-                           :gene/biotype
-                           :gene/species]
-                     :opt [:gene/cgc-name]))
 
 (s/def ::new-id (s/keys :req [:gene/id]))
 
-(s/def ::new-ids (s/+ ::new-id))
+;; Allow both cloned and un-cloned naming
+;; species is *always* required
+;;  * cloned genes don't neccesarily have a CGC name)
+;;  * request for naming cloned gene must supply a "biotype" (class)
+(s/def ::name-new (s/and (s/keys :opt [:gene/cgc-name]
+                                 :req [:gene/species
+                                       (or :gene/cgc-name
+                                           (and :gene/sequence-name
+                                                :gene/biotype))])
+                         ;;names-valid?
+                         ))
 
-(s/def ::created (s/every-kv st/keyword?
-                             ::new-ids
-                             :kind st/map?
-                             :min-count 1
-                             :max-count 1000))
-(s/def ::new-name
-  (s/and (s/or
-          :new-un-cloned ::new-un-cloned
-          :new-cloned ::new-cloned)
-         ;; first argument is the spec variant:
-         ;;    cloned or un-cloned
-         (fn [[_ data]]
-           (when-let [name-kwds (filter (partial contains? data)
-                                        [:gene/cgc-name
-                                         :gene/sequence-name])]
-             (some (partial valid-name? data) name-kwds)))))
+(s/def ::names-new (s/coll-of ::name-new :kind st/vector? :min-count 1))
 
-(s/def ::new-names (s/+ ::new-name))
+(s/def ::names-created (s/coll-of ::new-id :kind st/vector? :min-count 1))
 
-(s/def ::new-names-request (s/every-kv st/keyword?
-                                       ::new-names
-                                       :kind st/map?))
+(s/def ::names-new-request (s/map-of st/keyword? ::names-new
+                                     :min-count 1
+                                     :max-count 1))
+
+
+(s/def ::name-update (s/and (s/keys :opt [:gene/biotype]
+                                    :req [:gene/id
+                                          :gene/species
+                                          (or (or :gene/cgc-name
+                                                  :gene/sequence-name)
+                                              (and :gene/cgc-name
+                                                   :gene/sequence-name))])
+                            names-valid?
+                            ))
+
+(s/def ::names-updated (s/map-of
+                        st/keyword?
+                        (s/coll-of ::name-update :kind st/vector?)))
+
+(s/def ::names-update-request (s/map-of
+                               st/keyword?
+                               (s/coll-of ::name-update :kind st/map?)))
+

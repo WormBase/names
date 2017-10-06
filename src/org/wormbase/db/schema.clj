@@ -165,6 +165,23 @@
            new-names)
          (throw (ex-info "Not valid according to spec."
                          {:problems [s/explain-data spec name-records]
+                          :records name-records})))})}
+
+   {:db/ident :wb.dbfns/update-names
+    :db/doc "Update or add to names for given entity"
+    :db/fn
+    (datomic.api/function
+     {:lang "clojure"
+      :requires '[[clojure.walk :as w]
+                  [clojure.spec.alpha :as s]]
+      :params '[db entity name-records spec]
+      :code
+      '(if (s/valid? spec name-records)
+         (let [eid (:db/id entity)
+               new-names [:db.fn/cas eid {}]]
+           new-names)
+         (throw (ex-info "Not valid according to spec."
+                         {:problems [s/explain-data spec name-records]
                           :records name-records})))})}))
 
 (def worms

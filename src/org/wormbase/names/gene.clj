@@ -5,13 +5,13 @@
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.walk :as walk]
-   [compojure.api.sweet :refer [context resource]]
+   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
-   [org.wormbase.specs.gene :as gene-specs]
-   [ring.util.http-response :refer [bad-request created
-                                    ok internal-server-error]]
+   [ring.util.http-response :as resp]
    [spec-tools.spec :as st]
-   [clojure.spec.test.alpha :as stest]))
+   [spec-tools.core :as stc]
+   [org.wormbase.specs.gene :as gene-specs]
+   [org.wormbase.specs.common :as common]))
 
 (defn- extract-ids [tx-result]
   (->> (map :e (:tx-data tx-result))
@@ -22,7 +22,8 @@
        (vec)))
 
 (defn- result-seq [new-ids]
-  (->> (interleave (repeat (count new-ids) :gene/id) new-ids)
+  (->> new-ids
+       (interleave (repeat (count new-ids) :gene/id))
        (partition 2)
        (map (partial apply hash-map))
        (vec)))
@@ -30,16 +31,18 @@
 (defn resolve-ref
   "Resolve a ref to its keyword name/ident."
   [env kw v]
-  (when-let [db (:db env)]
-    (let [domain (name kw)
-          entity-ident (keyword domain "id")
-          lookup-ref [entity-ident]]
-      (some->> (str/split v #"/")
-               (last)
-               (keyword (name kw))
-               (conj lookup-ref)
-               (d/entity db)
-               (entity-ident)))))
+  (if (keyword? v)
+    (keyword (name kw) (name v))
+    (when-let [db (:db env)]
+      (let [domain (name kw)
+            entity-ident (keyword domain "id")
+            lookup-ref [entity-ident]]
+        (some->> (str/split v #"/")
+                 (last)
+                 (keyword (name kw))
+                 (conj lookup-ref)
+                 (d/entity db)
+                 (entity-ident))))))
 
 (def ^{:doc (str "A dispatch map of keys in name records "
                  "to how their value should be inferred by "
@@ -59,7 +62,7 @@
                         %)
             name-records)))
 
-(defn handler [request]
+(defn create-new-names [request]
   ;; TODO: "who" needs to come from auth
   ;;      problably should ditch WBPerson ids in favour of emails
   ;;      -in sanger-nameserver data, "log_who" is always a staff
@@ -69,7 +72,7 @@
                        "matthew.russell@wormbase.org"])
         xform (partial pre-process request)
         name-records (some-> request :body-params :new xform)
-        spec ::gene-specs/new-names
+        spec ::gene-specs/names-new
         txes [[:wb.dbfns/new-names "gene" name-records spec]
               {:db/id (d/tempid :db.part/tx)
                :provenance/who (:db/id who)
@@ -78,7 +81,7 @@
                ;;       e.g: User-Agent
                :provenance/how :user.agent/script
                
-               ;; TODO: "when" protentially should come from the data,
+               ;; TODO: "when" potentially should come from the data,
                ;;       eps. when importing (might need to abstract)
                ;;       ct/now is not right: might aswell use
                ;;       :db/txInstant
@@ -88,30 +91,67 @@
     (try
       (let [tx-result @(d/transact (:conn request) txes)
             new-ids (extract-ids tx-result)
-            result {:created (result-seq new-ids)}]
-        (created "/gene/" result))
-      (catch Exception exc
+            result {:names-created (result-seq new-ids)}]
+        (resp/created "/gene/" result))
+      (catch Throwable exc
         (let [info (ex-data exc)]
+          (clojure.pprint/pprint exc)
           (if info
-            (bad-request {:problems "Request was invalid"})
-            (internal-server-error {:problems
-                                    (pr-str exc)})))))))
+            (resp/bad-request {:problems "Request was invalid"})
+            (resp/internal-server-error {:problems
+                                         (pr-str exc)})))))))
 
-(defn handle-update [request]
-  ;; TODO:
-  nil)
+(defn update-names [request gene-id]
+  (let [conn (:conn request)
+        db (:db request)
+        entity (d/entity db [:gene/id gene-id])]
+    (if entity
+      (let [eid (:db/id entity)
+            xform (partial pre-process request)
+            name-records (some-> request :body-params :add xform)
+            who (d/entity db
+                          [:user/email "matthew.russell@wormbase.org"])]
+        (try
+          (d/transact conn [[:wb.dbfns/update-names eid name-records]])))
+      (resp/not-found (format "Gene '%s' does not exist" gene-id)))))
 
-(def gene-names
-  (resource
-   {:coercion :spec
-    :post
-    {:summary "Create new names for a gene (cloned or un-cloned)"
-     :parameters {:body-params ::gene-specs/new-names-request}
-     :responses {201 {:schema ::gene-specs/created}}
-     :handler handler}}))
+(defn responses-map
+  [success-code success-spec]
+  (let [err-codes (range 400 501)
+        default (->> {:schema ::common/error-response}
+                     (repeat (count err-codes))
+                     (interleave err-codes)
+                     (apply sorted-map))
+        response-map (assoc default
+                            success-code
+                            {:schema success-spec})]
+    response-map))
 
 (def routes
-  (context "/gene" []
-    :tags ["gene"]
-    :coercion :spec
-    gene-names))
+  (sweet/routes
+   (sweet/context "/gene" []
+     :tags ["gene"]
+     (sweet/resource
+      {:coercion :spec
+       :post
+       {:summary "Create new names for a gene (cloned or un-cloned)"
+        :parameters {:body ::gene-specs/names-new-request}
+        :responses {201 {:schema (s/keys :req-un [::gene-specs/names-created])}
+                    400 {:schema  ::common/error-response}
+                    }
+        :handler create-new-names}}))
+   ;; (sweet/context "/gene/:id" []
+   ;;   :tags ["gene"]
+   ;;   :path-params [id :- :gene/id]
+   ;;   (sweet/resource
+   ;;    {:coercion :spec
+   ;;     :post
+   ;;     {:summary "Add new names to an existing gene"
+   ;;      :parameters {:body-params ::gene-specs/names-update-request}
+   ;;      :responses {200 {:schema ::gene-specs/names-updated}
+   ;;                  400 {:schema ::common/error-response}}
+   ;;      :handler (fn [request]
+   ;;                 (update-names request id))}}))
+   ))
+
+

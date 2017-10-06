@@ -1,5 +1,6 @@
 (ns org.wormbase.names.service
   (:require
+   [compojure.api.coercion.schema :as cs]
    [compojure.api.sweet :refer [api context resource]]
    [datomic.api :as d]
    [environ.core :as environ]
@@ -38,9 +39,14 @@
   []
   (mount/start))
 
+(def json-coerce-all-responses
+  (cs/create-coercion
+   (assoc-in cs/default-options [:response :default] cs/json-coercion-matcher)))
+
 (def app
   (api
-   {:swagger
+   {:coercion :spec
+    :swagger
     {:ui "/"
      :spec "/swagger.json"
      :data
