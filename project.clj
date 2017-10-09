@@ -15,7 +15,11 @@
                  ;; the use of s/map-of s/coll-of for specs with
                  ;; compojure-api
                  ;; [metosin/spec-tools "0.4.0-20170918.103911-2"]
-                 [metosin/spec-tools "0.4.0-SNAPSHOT"]
+                 ;; [metosin/spec-tools "0.4.0-SNAPSHOT"]
+
+                 ;; https://github.com/metosin/spec-tools/issues/79
+                 [metosin/spec-tools "0.4.0-20171007.191128-3"]
+
                  [mount "0.1.11"]
                  [ring/ring-core "1.6.2"]
                  [ring/ring-jetty-adapter "1.6.2"]]
