@@ -140,18 +140,18 @@
                     400 {:schema  ::common/error-response}
                     }
         :handler create-new-names}}))
-   ;; (sweet/context "/gene/:id" []
-   ;;   :tags ["gene"]
-   ;;   :path-params [id :- :gene/id]
-   ;;   (sweet/resource
-   ;;    {:coercion :spec
-   ;;     :post
-   ;;     {:summary "Add new names to an existing gene"
-   ;;      :parameters {:body-params ::gene-specs/names-update-request}
-   ;;      :responses {200 {:schema ::gene-specs/names-updated}
-   ;;                  400 {:schema ::common/error-response}}
-   ;;      :handler (fn [request]
-   ;;                 (update-names request id))}}))
-   ))
+   (sweet/context "/gene/:id" []
+     :tags ["gene"]
+     :path-params [id :- :gene/id]
+     (sweet/resource
+      {:coercion :spec
+       :put
+       {:summary "Add new names to an existing gene"
+        :parameters {:body-params ::gene-specs/names-update-request}
+        :responses {200 {:schema (s/keys :req-un [::gene-specs/names-updated])}
+                    400 {:schema ::common/error-response}}
+        :handler (fn [request]
+                   (update-names request id))}}))))
+
 
 
