@@ -57,5 +57,3 @@
    :test
    {:env
     {:wb-db-uri "datomic:mem://test-db"}}})
-
-
