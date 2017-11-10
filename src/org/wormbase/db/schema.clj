@@ -73,6 +73,7 @@
   (schema/partition :db.part/provenance)
   (schema/attrs
    [:who #'User]
+   [:what :string {:doc "Reference the entity that has been affected."}]
    [:when :instant {:doc "The time of the action."}]
    [:why :string {:doc "The operation (e.g splitFrom)"}]
    [:how #'UserAgent]))
@@ -163,9 +164,11 @@
                               (map-indexed identify-rec)
                               (vec))]
            new-names)
-         (throw (ex-info "Not valid according to spec."
-                         {:problems [s/explain-data spec name-records]
-                          :records name-records})))})}
+         (let [problems (s/explain-data spec name-records)]
+           (throw (ex-info "Not valid according to spec."
+                           {:problems (s/explain-data spec name-records)
+                            :type ::validation-error
+                            :records name-records}))))})}
 
    {:db/ident :wb.dbfns/update-names
     :db/doc "Update or add to names for given entity"
@@ -181,7 +184,8 @@
                new-names [:db.fn/cas eid {}]]
            new-names)
          (throw (ex-info "Not valid according to spec."
-                         {:problems [s/explain-data spec name-records]
+                         {:problems (s/explain-data spec name-records)
+                          :type ::validation-error
                           :records name-records})))})}))
 
 (def worms
