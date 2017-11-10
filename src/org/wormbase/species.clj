@@ -41,7 +41,8 @@
       (keyword "species" (name kw))
 
       :default
-      (throw (ex-info "Invalid species" {:val kw}))))
+      (throw (ex-info "Invalid species" {:val kw
+                                         :type :invalid-species}))))
   
   clojure.lang.MapEntry
   (-to-ident [me]
