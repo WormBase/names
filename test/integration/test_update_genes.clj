@@ -17,31 +17,31 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn add-gene-name [gene-id name-records]
-  (post* service/app
-         (str "/gene/" gene-id)
-         (->> name-records
-              (assoc {} :add)
-              (json-string))))
+;; (defn add-gene-name [gene-id name-records]
+;;   (post* service/app
+;;          (str "/gene/" gene-id)
+;;          (->> name-records
+;;               (assoc {} :add)
+;;               (json-string))))
 
-(defn update-gene-name [gene-id name-records]
-  (put* service/app
-         (str "/gene/" gene-id)
-         (->> name-records
-              (assoc {} :update)
-              (json-string))))
+;; (defn update-gene-name [gene-id name-records]
+;;   (put* service/app
+;;          (str "/gene/" gene-id)
+;;          (->> name-records
+;;               (assoc {} :update)
+;;               (json-string))))
 
-(t/deftest add-must-meet-spec
-  (t/testing (str "Adding names to genes requires "
-                  "correct data structure.")
-    (let [name-records [{}]
-          [status body] (add-gene-name "WBGene00000001" name-records)]
-      (status-is? status 400 body))))
+;; (t/deftest add-must-meet-spec
+;;   (t/testing (str "Adding names to genes requires "
+;;                   "correct data structure.")
+;;     (let [name-records [{}]
+;;           [status body] (add-gene-name "WBGene00000001" name-records)]
+;;       (status-is? status 400 body))))
 
-(t/deftest update-gene-name-must-meet-spec
-  (t/testing (str "Updating genes require "
-                  "correct data structure.")
-    (let [name-records [{}]
-          [status body] (update-gene-name "WBGene00000001" name-records)]
-      (status-is? status 400 body))))
+;; (t/deftest update-gene-name-must-meet-spec
+;;   (t/testing (str "Updating genes require "
+;;                   "correct data structure.")
+;;     (let [name-records [{}]
+;;           [status body] (update-gene-name "WBGene00000001" name-records)]
+;;       (status-is? status 400 body))))
 
