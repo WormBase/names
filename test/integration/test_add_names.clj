@@ -1,4 +1,4 @@
-(ns integration.test-update-genes
+(ns integration.test-add-names
   (:require
    [cheshire.core :as json]
    [clojure.spec.alpha :as s]
@@ -17,18 +17,16 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-;; (defn update-gene-name [gene-id name-records]
-;;   (put* service/app
-;;          (str "/gene/" gene-id)
-;;          (->> name-records
-;;               (assoc {} :update)
-;;               (json-string))))
+(defn add-gene-name [gene-id name-records]
+  (post* service/app
+         (str "/gene/" gene-id)
+         (->> name-records
+              (assoc {} :add)
+              (json-string))))
 
-
-;; (t/deftest update-gene-name-must-meet-spec
-;;   (t/testing (str "Updating genes require "
-;;                   "correct data structure.")
-;;     (let [name-records [{}]
-;;           [status body] (update-gene-name "WBGene00000001" name-records)]
-;;       (status-is? status 400 body))))
-
+(t/deftest must-meet-spec
+  (t/testing (str "Adding names to existing genes requires "
+                  "correct data structure.")
+    (let [name-records [{}]
+          [status body] (add-gene-name "WBGene00000001" name-records)]
+      (status-is? status 400 body))))
