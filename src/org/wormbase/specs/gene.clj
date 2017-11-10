@@ -45,19 +45,20 @@
 (defn valid-name?
   "Validates `name-kw` according to correspoinding species in `data`."
   [data name-kw]
-  (let [[_ species] (:gene/species data)
-        species-kw (ows/convert-to-ident species)]
+  (let [sd (:gene/species data)
+        [_ species] (if (coll? sd) sd [nil sd])
+        species-kw (ows/convert-to-ident species)
+        name-kw* (if (namespace name-kw)
+                   name-kw
+                   (keyword "gene" (name name-kw)))]
     (when-let [patterns (species-kw name-patterns)]
-      (let [name-pattern (name-kw patterns)
-            value (or (name-kw data) "")]
-        (re-matches name-pattern value)))))
+      (if-let [name-pattern (name-kw* patterns)]
+        (let [value (or (name-kw data) "")]
+          (re-matches name-pattern value))))))
 
 (defn names-valid?
   [data]
-  (when-let [name-kwds (filter (partial contains? data)
-                               [:gene/cgc-name
-                                :gene/sequence-name])]
-    (some (partial valid-name? data) name-kwds)))
+  (some (partial valid-name? data) [:gene/cgc-name :gene/sequence-name]))
 
 (defn- gen-from-rand-name-pattern
   "Generate names for `kw` a matching random pattern."
@@ -107,27 +108,33 @@
                                        (or :gene/cgc-name
                                            (and :gene/sequence-name
                                                 :gene/biotype))])
-                         ;;names-valid?
-                         ))
+                         names-valid?))
 
-(s/def ::names-new (s/coll-of ::name-new :kind st/vector? :min-count 1))
+(s/def ::names-new (s/coll-of ::name-new
+                              :kind st/vector?
+                              :min-count 1
+                              :conform-keys true))
 
-(s/def ::names-created (s/coll-of ::new-id :kind st/vector? :min-count 1))
+(s/def ::names-created (s/coll-of ::new-id
+                                  :kind st/vector?
+                                  :min-count 1
+                                  :conform-keys true))
 
-(s/def ::names-new-request (s/map-of st/keyword? ::names-new
+(s/def ::names-new-request (s/map-of st/keyword?
+                                     ::names-new
                                      :min-count 1
-                                     :max-count 1))
+                                     :max-count 1
+                                     :conform-keys true))
 
-
-(s/def ::name-update (s/and (s/keys :opt [:gene/biotype]
-                                    :req [:gene/id
-                                          :gene/species
-                                          (or (or :gene/cgc-name
-                                                  :gene/sequence-name)
-                                              (and :gene/cgc-name
-                                                   :gene/sequence-name))])
-                            names-valid?
-                            ))
+(s/def ::name-update
+  (s/and (s/keys :opt [:gene/biotype]
+                 :req [:gene/id
+                       :gene/species
+                       (or (or :gene/cgc-name
+                               :gene/sequence-name)
+                           (and :gene/cgc-name
+                                :gene/sequence-name))])
+         names-valid?))
 
 (s/def ::names-updated (s/map-of
                         st/keyword?

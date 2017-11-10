@@ -9,7 +9,7 @@
    [clojure.walk :as walk]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :refer [post* json-string
+   [org.wormbase.test-utils :refer [post* json-string parse-body
                                     status-is?
                                     body-contains?]]))
 
@@ -20,42 +20,40 @@
                                    (assoc {} :new)
                                    (json-string))))
 
-(t/deftest test-new-gene-names-must-meet-spec
-  (t/testing "Naming genes requires user to supply names"
+(t/deftest must-meet-spec
+  (t/testing "Naming genes requires user to supply names (spec problems are reported)"
     (let [name-records [{}]
-          [status body] (new-gene-names name-records)]
+          response (new-gene-names name-records)
+          [status body] response]
       (status-is? status 400 body)
-      (t/is (contains? body :problems))
-      (t/testing "spec problens are reported"
-        (t/is (= #{:path :pred :val :via :in}
-                 (-> body :problems first keys set))))))
+      (t/is (contains? (parse-body body) :problems) (pr-str body))))
   (t/testing "Species should always be required when creating gene names"
-    (let [[status body] (new-gene-names [{"gene/cgc-name" "abc-1"}])]
-      (status-is? status 400 body))))
+    (let [[status body] (new-gene-names [{"cgc-name" "abc-1"}])]
+      (status-is? status 400 (format "Body: " body)))))
 
-(t/deftest test-new-genes-wrong-data-shape
+(t/deftest wrong-data-shape
   (t/testing "Non-conformant data should result in HTTP Bad Request 400"
     (let [name-records []
           [status body] (new-gene-names name-records)]
-      (status-is? status 400 body))))
+      (status-is? status 400 (format "Body: " body)))))
 
-(t/deftest test-naming-single-uncloned-gene
+(t/deftest naming-single-uncloned-gene
   (t/testing "Naming one un-cloned gene succesfully returns ids"
     (let [[status body] (new-gene-names
-                             [{"gene/cgc-name" "abc-1"
-                               "gene/species" "c-elegans"}])
+                             [{"cgc-name" "abc-1"
+                               "species" "c-elegans"}])
           expected-id "WBGene00000001"]
       (status-is? status 201 body)
       (let [created (:names-created body)]
         (t/is (= (count created) 1))
         (t/is (= (-> created first :gene/id) expected-id))))))
 
-(t/deftest test-naming-many-uncloned-genes-same-species
+(t/deftest naming-many-uncloned-with-same-species
   (t/testing "Naming many un-cloned genes succesfully returns ids."
-    (let [name-records [{"gene/cgc-name" "abc-1"
-                         "gene/species" "c-elegans"}
-                        {"gene/cgc-name" "abc-2"
-                         "gene/species" "c-elegans"}]
+    (let [name-records [{"cgc-name" "abc-1"
+                         "species" "c-elegans"}
+                        {"cgc-name" "abc-2"
+                         "species" "c-elegans"}]
           [status body] (new-gene-names name-records)]
       (status-is? status 201 body)
       (t/is (= (count (:names-created body)) (count name-records))
