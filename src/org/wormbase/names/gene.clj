@@ -10,6 +10,7 @@
    [ring.util.http-response :as resp]
    [spec-tools.spec :as st]
    [spec-tools.core :as stc]
+   [org.wormbase.names.util :refer [namespace-keywords]]
    [org.wormbase.specs.gene :as gene-specs]
    [org.wormbase.specs.common :as common]))
 
@@ -53,14 +54,14 @@
 
 ;; (s/fdef pre-process
 ;;         :args )
-(defn pre-process [request name-records]
+(defn pre-process [request domain name-records]
   (vec (map #(reduce-kv (fn [rec kw v]
                           (if-let [v-fn (kw ingress-processors)]
                             (assoc rec kw (v-fn request kw v))
                             rec))
                         %
                         %)
-            name-records)))
+            (namespace-keywords domain name-records))))
 
 (defn create-new-names [request]
   ;; TODO: "who" needs to come from auth
@@ -70,7 +71,7 @@
   (let [who (d/entity (:db request)
                       [:user/email
                        "matthew.russell@wormbase.org"])
-        xform (partial pre-process request)
+        xform (partial pre-process request "gene")
         name-records (some-> request :body-params :new xform)
         spec ::gene-specs/names-new
         txes [[:wb.dbfns/new-names "gene" name-records spec]
@@ -80,26 +81,16 @@
                ;; TODO: application/how should come from a http header?
                ;;       e.g: User-Agent
                :provenance/how :user.agent/script
-               
+
                ;; TODO: "when" potentially should come from the data,
                ;;       eps. when importing (might need to abstract)
                ;;       ct/now is not right: might aswell use
                ;;       :db/txInstant
                :provenance/when (to-date (ct/now))}]]
-    ;; (println "TXES:")
-    ;; (clojure.pprint/pprint txes)
-    (try
-      (let [tx-result @(d/transact (:conn request) txes)
-            new-ids (extract-ids tx-result)
-            result {:names-created (result-seq new-ids)}]
-        (resp/created "/gene/" result))
-      (catch Throwable exc
-        (let [info (ex-data exc)]
-          (clojure.pprint/pprint exc)
-          (if info
-            (resp/bad-request {:problems "Request was invalid"})
-            (resp/internal-server-error {:problems
-                                         (pr-str exc)})))))))
+    (let [tx-result @(d/transact (:conn request) txes)
+          new-ids (extract-ids tx-result)
+          result {:names-created (result-seq new-ids)}]
+      (resp/created "/gene/" result))))
 
 (defn update-names [request gene-id]
   (let [conn (:conn request)
@@ -111,8 +102,7 @@
             name-records (some-> request :body-params :add xform)
             who (d/entity db
                           [:user/email "matthew.russell@wormbase.org"])]
-        (try
-          (d/transact conn [[:wb.dbfns/update-names eid name-records]])))
+        @(d/transact conn [[:wb.dbfns/update-names eid name-records]]))
       (resp/not-found (format "Gene '%s' does not exist" gene-id)))))
 
 (defn responses-map
@@ -152,6 +142,3 @@
                     400 {:schema ::common/error-response}}
         :handler (fn [request]
                    (update-names request id))}}))))
-
-
-
