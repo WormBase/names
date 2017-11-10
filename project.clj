@@ -2,10 +2,11 @@
   :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  ;; [org.clojure/tools.logging "0.4.0"]
+                 [org.clojure/core.cache "0.6.5"]
                  [bk/ring-gzip "0.2.1"]
                  [clj-time "0.14.0"]
                  [com.velisco/strgen "0.1.4"]
-                 [datomic.schema "0.1.11"]
+                 [datomic.schema "0.1.12"]
                  [environ "1.1.0"]
                  [io.rkn/conformity "0.5.1"]
                  [metosin/compojure-api "2.0.0-alpha7"]
@@ -18,11 +19,11 @@
                  ;; [metosin/spec-tools "0.4.0-SNAPSHOT"]
 
                  ;; https://github.com/metosin/spec-tools/issues/79
-                 [metosin/spec-tools "0.4.0-20171007.191128-3"]
+                 [metosin/spec-tools "0.5.1"]
 
                  [mount "0.1.11"]
-                 [ring/ring-core "1.6.2"]
-                 [ring/ring-jetty-adapter "1.6.2"]]
+                 [ring/ring-core "1.6.3"]
+                 [ring/ring-jetty-adapter "1.6.3"]]
   :plugins [[lein-environ "1.1.0"]
             [lein-pprint "1.1.2"]
             [lein-ring "0.12.0"]]
@@ -43,13 +44,14 @@
    :dev
    {:aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}
-    :dependencies [[expound "0.3.0"]
+    :dependencies [[expound "0.3.3"]
                    [org.clojure/test.check "0.9.0"]
                    [com.gfredericks/test.chuck "0.2.8"]
                    [javax.servlet/javax.servlet-api "4.0.0"]
                    [org.clojure/tools.trace "0.7.9"]
-                   [ring/ring-devel "1.6.2"]
-                   [peridot "0.4.4"]
+                   [ring/ring-devel "1.6.3"]
+                   [peridot "0.5.0"]
+                   [vvvvalvalval/datomock "0.2.0"]
                    [ring/ring-mock "0.3.1"]
                    [specviz "0.2.4"]]
     :plugins [[com.jakemccrary/lein-test-refresh "0.20.0"]
