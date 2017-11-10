@@ -25,7 +25,8 @@
             (str "Refusing to connect - "
                  "URI did not match any permitted prefix.")
             {:uri uri
-             :allowed-uri-prefixes allowed-uri-prefixes}))))
+             :allowed-uri-prefixes allowed-uri-prefixes
+             :type :connection-error}))))
 
 (defn checked-delete
   [uri]
