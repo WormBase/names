@@ -10,16 +10,12 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
    [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :refer [post* json-string
+   [org.wormbase.test-utils :refer [post* put* json-string
                                     status-is?
                                     body-contains?]]
    [datomic.api :as d]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
-
-;; (defn- create-name-recs [how-many]
-;;   (let [name-records ])
-;;   (d/transact owdb/conn []))
 
 (defn add-gene-name [gene-id name-records]
   (post* service/app
@@ -28,10 +24,24 @@
               (assoc {} :add)
               (json-string))))
 
-(t/deftest test-add-gene-name-must-meet-spec
+(defn update-gene-name [gene-id name-records]
+  (put* service/app
+         (str "/gene/" gene-id)
+         (->> name-records
+              (assoc {} :update)
+              (json-string))))
+
+(t/deftest add-must-meet-spec
   (t/testing (str "Adding names to genes requires "
                   "correct data structure.")
     (let [name-records [{}]
           [status body] (add-gene-name "WBGene00000001" name-records)]
+      (status-is? status 400 body))))
+
+(t/deftest update-gene-name-must-meet-spec
+  (t/testing (str "Updating genes require "
+                  "correct data structure.")
+    (let [name-records [{}]
+          [status body] (update-gene-name "WBGene00000001" name-records)]
       (status-is? status 400 body))))
 
