@@ -83,8 +83,10 @@
      (ex-data exc))))
 
 (defn handle-unexpected-error [^Exception exc data request]
-  ;; TDB: logging
-  (http-response/internal-server-error data))
+  ;; TDB: logging - ensure exceptions appear in the log/stdout.
+  (if (environ/env :wb-ns-dev)
+    (throw exc)
+    (http-response/internal-server-error data)))
 
 (defn handle-txfn-error [^Exception exc data request]
   (let [txfn-err? (instance? ExecutionException exc)
