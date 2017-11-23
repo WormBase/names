@@ -19,8 +19,7 @@
   []
   (let [conn (dm/mock-conn)]
     (schema/install conn 1)
-;;    @(d/transact conn ()mysc/tx-schema)
-;;    @(d/transact conn (fix/tx-fixtures))
+    @(d/transact conn [{:user/email "tester@wormbase.org"}])
     conn))
 
 (defonce conn-cache
