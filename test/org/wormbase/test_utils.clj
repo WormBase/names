@@ -170,4 +170,3 @@
                           (pr-str body)]))
     (when-let [rspec (:spec body)]
       (clojure.pprint/pprint (stc/deserialize rspec)))))
-
