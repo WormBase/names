@@ -124,7 +124,7 @@
 
 (def routes
   (sweet/routes
-   (sweet/context "/gene" []
+   (sweet/context "/gene/" []
      :tags ["gene"]
      (sweet/resource
       {:coercion :spec
