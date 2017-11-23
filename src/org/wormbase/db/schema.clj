@@ -219,7 +219,9 @@
     {:template/format "WBVar%08d"
      :template/describes :variation/id}]
    :users
-   [{:user/email "matthew.russell@wormbase.org"}]})
+   [{:user/roles #{:user.role/admin}
+     :user/email "matthew.russell@wormbase.org"}]})
+
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
 ;;       schema transactions.
