@@ -9,7 +9,7 @@
    [org.wormbase.species :as wb-species]))
 
 (defschema Species
-  (schema/partition :db.part/species)
+  (schema/partition :db.part/wb.species)
   (schema/attrs
    ^{:added "1.0"}
    [:id :keyword {:unique :value
@@ -48,13 +48,17 @@
                        :doc "CGC name of Gene."}]))
 
 (defschema UserRole
-  (schema/partition :db.part/user.role)
+  (schema/partition :db.part/wb.user)
   (schema/enums
    :role
-   {:db/ident :user.role/admin}))
+   {:db/ident :user.role/admin}
+   {:db/ident :user.role/viewer}
+   {:db/ident :user.role/adder}
+   {:db/ident :user.role/killer}
+   {:db/ident :user.role/modifier}))
 
 (defschema UserAgent
-  (schema/partition :db.part/user.agent)
+  (schema/partition :db.part/wb.user)
   (schema/enums
    :agent
    {:db/ident :user.agent/script}
@@ -63,14 +67,15 @@
    {:db/ident :user.agent/web-app}))
 
 (defschema User
-  (schema/partition :db.part/wormbase-users)
+  (schema/partition :db.part/wb.user)
   (schema/attrs
    [:email :string {:unique :value
                     :doc "Primary identifier for a staff member."}]
-   [:role #'UserRole]))
+   [:roles #'UserRole {:cardinality :many
+                       :doc "Roles a user may have."}]))
 
 (defschema Provenance
-  (schema/partition :db.part/provenance)
+  (schema/partition :db.part/wb.provenance)
   (schema/attrs
    [:who #'User]
    [:what :string {:doc "Reference the entity that has been affected."}]
@@ -79,7 +84,7 @@
    [:how #'UserAgent]))
 
 (defschema Template
-  (schema/partition :db.part/wormbase-name-templates)
+  (schema/partition :db.part/wb.name-templates)
   (schema/attrs
    [:describes
     :keyword
