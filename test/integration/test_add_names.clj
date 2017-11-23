@@ -1,6 +1,7 @@
 (ns integration.test-add-names
   (:require
    [cheshire.core :as json]
+   [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as s]
    [clojure.spec.alpha :as s]
    [clojure.spec.test.alpha :as stest]
@@ -30,10 +31,15 @@
 
 (defn resolve-ref [tx-fixture]
   (let [species (:gene/species tx-fixture)
-        biotype (name (:gene/biotype tx-fixture))
+        biotype (if (contains? tx-fixture :gene/biotype)
+                  (name (:gene/biotype tx-fixture)))
+        dissoc-if (fn [m k]
+                    (if (contains? m k)
+                      (dissoc m k)
+                      m))
         tx-fixture* (-> tx-fixture
                         (dissoc :gene/species)
-                        (dissoc :gene/biotype)
+                        (dissoc-if :gene/biotype)
                         (assoc :gene/species [:species/id species]))]
     (if-let [bt (:gene/biotype tx-fixture)]
       (assoc tx-fixture* :gene/biotype (keyword "gene.biotype" biotype))
@@ -44,8 +50,9 @@
 (t/deftest must-meet-spec
   (let [conn (db-testing/fixture-conn)
         tx-tmp-id (d/tempid :db.part/tx)
+        sample (gen/sample (s/gen ::owsg/name-update) 1)
         tx-fixtures (concat
-                     (resolve-refs (gen/sample (s/gen ::owsg/name-update) 1))
+                     (resolve-refs sample)
                      [[:db/add tx-tmp-id
                        :provenance/who [:user/email "tester@wormbase.org"]]
                       [:db/add tx-tmp-id :provenance/why "testing"]
@@ -53,11 +60,10 @@
     (t/testing (str "Adding names to existing genes requires "
                     "correct data structure.")
       (let [db (db-testing/speculate tx-fixtures)
+            xxx (if (nil? db)
+                  (println "DB was nil"))
             name-records [{}]
             gene-id (-> tx-fixtures first :gene/id)
             gene (d/entity db [:gene/id gene-id])
             [status body] (add-gene-name gene-id name-records)]
     (status-is? status 400 body)))))
-
-
-
