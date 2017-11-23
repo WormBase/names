@@ -18,10 +18,10 @@
       (t/is (= "application/json; charset=utf-8"
                (get-in response [:headers "Content-Type"])))
       (t/is (contains? response :body))
-      (t/is (not= nil (-> response
-                       :body
-                       slurp
-                       json/parse-string
-                       walk/keywordize-keys
-                       :reason
-                       not-empty))))))
+      (t/is (not= nil (some-> response
+                              :body
+                              slurp
+                              json/parse-string
+                              walk/keywordize-keys
+                              :reason
+                              not-empty))))))

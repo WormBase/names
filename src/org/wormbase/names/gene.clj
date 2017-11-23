@@ -70,8 +70,7 @@
   ;;      -in sanger-nameserver data, "log_who" is always a staff
   ;;       member. So instead of :person/id it should be :staff/id
   (let [who (d/entity (:db request)
-                      [:user/email
-                       "matthew.russell@wormbase.org"])
+                      [:user/email "matthew.russell@wormbase.org"])
         xform (partial pre-process request "gene")
         name-records (some-> request :body-params :new xform)
         spec ::gene-specs/names-new
@@ -133,8 +132,7 @@
        {:summary "Create new names for a gene (cloned or un-cloned)"
         :parameters {:body ::gene-specs/names-new-request}
         :responses {201 {:schema (s/keys :req-un [::gene-specs/names-created])}
-                    400 {:schema  ::common/error-response}
-                    }
+                    400 {:schema  ::common/error-response}}
         :handler create-new-names}}))
    (sweet/context "/gene/:id" []
      :tags ["gene"]
