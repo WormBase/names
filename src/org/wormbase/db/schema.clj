@@ -177,11 +177,11 @@
      {:lang "clojure"
       :requires '[[clojure.walk :as w]
                   [clojure.spec.alpha :as s]]
-      :params '[db entity name-records spec]
+      :params '[db lur name-records spec]
       :code
       '(if (s/valid? spec name-records)
-         (let [eid (:db/id entity)
-               new-names [:db.fn/cas eid {}]]
+         (let [entity (d/entity db lur)
+               new-names [:db.fn/cas (:db/id entity) name-records]]
            new-names)
          (throw (ex-info "Not valid according to spec."
                          {:problems (s/explain-data spec name-records)

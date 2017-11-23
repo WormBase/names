@@ -93,17 +93,22 @@
       (resp/created "/gene/" result))))
 
 (defn update-names [request gene-id]
-  (let [conn (:conn request)
-        db (:db request)
-        entity (d/entity db [:gene/id gene-id])]
-    (if entity
-      (let [eid (:db/id entity)
-            xform (partial pre-process request)
-            name-records (some-> request :body-params :add xform)
-            who (d/entity db
-                          [:user/email "matthew.russell@wormbase.org"])]
-        @(d/transact conn [[:wb.dbfns/update-names eid name-records]]))
-      (resp/not-found (format "Gene '%s' does not exist" gene-id)))))
+  (if-let [conn (:conn request)]
+    (let [db (:db request)
+          entity (d/entity db [:gene/id gene-id])]
+      (if entity
+        (let [lur [:gene/id gene-id]
+              xform (partial pre-process request)
+              name-records (some-> request :body-params :add xform)
+              who (d/entity db
+                            ;;; TODO: extract from header
+                            [:user/email "matthew.russell@wormbase.org"])
+              tx-result @(d/transact
+                          conn
+                          [[:wb.dbfns/update-names lur name-records]])]
+          (resp/ok {:tx-result (pr-str tx-result)}))
+        (resp/not-found (format "Gene '%s' does not exist" gene-id)))
+    (resp/gateway-timeout "Connection to database not possible"))))
 
 (defn responses-map
   [success-code success-spec]
