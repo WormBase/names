@@ -38,11 +38,17 @@
   
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-" (ctc/to-long (ct/now)))]
-    (binding [owdb/*wb-db-uri* uri]
-      (mount/start-with
-       {#'owdb/conn
-        (fixture-conn)})
+    (let [conn (fixture-conn)]
+      (mount/start-with {#'owdb/conn conn})
       (f)
       (owdb/checked-delete uri)
       (mount/stop))))
+
+(defn empty-db []
+  (let [conn (fixture-conn)]
+    (schema/install conn 1)
+    (d/db conn)))
+
+(defn speculate [tx]
+  (:db-after (d/with (empty-db) tx)))
 
