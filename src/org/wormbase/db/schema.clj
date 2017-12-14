@@ -104,94 +104,90 @@
 
    {:db/ident :wb.dbfns/latest-id
     :db/doc "Get the latest identifier for a given ident."
-    :db/fn
-    (datomic.api/function
-     {:params '[db ident]
-      :lang "clojure"
-      :code
-      '(some->> (d/datoms db :avet ident)
-                (sort-by (comp d/tx->t :tx))
-                (last)
-                (:v))})}
+    :db/fn (d/function
+            {:params '[db ident]
+             :lang "clojure"
+             :code
+             '(some->> (d/datoms db :avet ident)
+                       (sort-by (comp d/tx->t :tx))
+                       (last)
+                       (:v))})}
 
    {:db/ident :wb.dbfns/latest-id-number
     :db/doc
     "Get the numeric suffix of the latest identifier for a given ident."
-    :db/fn
-    (datomic.api/function
-     {:params '[db ident]
-      :lang "clojure"
-      :code
-      '(let [latest-identifier (d/invoke db :wb.dbfns/latest-id db ident)
-             latest-n (if latest-identifier
-                        (->> (re-seq #"[0]+(\d+)" latest-identifier)
-                             flatten
-                             last
-                             read-string)
-                        -1)]
-         (if latest-identifier
-           latest-n
-           0))})}
+    :db/fn (d/function
+            {:params '[db ident]
+             :lang "clojure"
+             :code
+             '(let [latest-identifier (d/invoke db :wb.dbfns/latest-id db ident)
+                    latest-n (if latest-identifier
+                               (->> (re-seq #"[0]+(\d+)" latest-identifier)
+                                    flatten
+                                    last
+                                    read-string)
+                               -1)]
+                (if latest-identifier
+                  latest-n
+                  0))})}
    
    {:db/ident :wb.dbfns/new-names
     :db/doc "Allocate a new name for entity"
-    :db/fn
-    (datomic.api/function
-     {:lang "clojure"
-      :requires '[[clojure.walk :as w]
-                  [clojure.spec.alpha :as s]]
-      :params '[db entity-type name-records spec]
-      :code
-      '(if (s/valid? spec name-records)
-         (let [ident (keyword entity-type "id")
-               template (-> (d/entity db [:template/describes ident])
-                            :template/format)
-               status-ident (keyword entity-type "status")
-               live-ident (keyword (str entity-type ".status") "live")
-               start-n (d/invoke db :wb.dbfns/latest-id-number db ident)
-               stop-n (some-> name-records count inc)
-               identify-rec (fn [idx rec]
-                              (let [next-n (+ 1 idx start-n)
-                                    next-id (format template next-n)
-                                    temp-part (keyword "db.part"
-                                                       entity-type)
-                                    temp-id (d/tempid temp-part)
-                                    species-id (:gene/species rec)
-                                    species-lur [:species/id species-id]]
-                                (merge
-                                 (-> (assoc rec ident next-id)
-                                     (dissoc :gene/species)
-                                     (assoc :gene/species species-lur))
-                                 {:db/id temp-id}
-                                 {status-ident live-ident})))
-               new-names (->> name-records
-                              (map w/keywordize-keys)
-                              (map-indexed identify-rec)
-                              (vec))]
-           new-names)
-         (let [problems (s/explain-data spec name-records)]
-           (throw (ex-info "Not valid according to spec."
-                           {:problems (s/explain-data spec name-records)
-                            :type ::validation-error
-                            :records name-records}))))})}
+    :db/fn (d/function
+            {:lang "clojure"
+             :requires '[[clojure.walk :as w]
+                         [clojure.spec.alpha :as s]]
+             :params '[db entity-type name-records spec]
+             :code
+             '(if (s/valid? spec name-records)
+                (let [ident (keyword entity-type "id")
+                      template (-> (d/entity db [:template/describes ident])
+                                   :template/format)
+                      status-ident (keyword entity-type "status")
+                      live-ident (keyword (str entity-type ".status") "live")
+                      start-n (d/invoke db :wb.dbfns/latest-id-number db ident)
+                      stop-n (some-> name-records count inc)
+                      identify-rec (fn [idx rec]
+                                     (let [next-n (+ 1 idx start-n)
+                                           next-id (format template next-n)
+                                           temp-part (keyword "db.part"
+                                                              entity-type)
+                                           temp-id (d/tempid temp-part)
+                                           species-id (:gene/species rec)
+                                           species-lur [:species/id species-id]]
+                                       (merge
+                                        (-> (assoc rec ident next-id)
+                                            (dissoc :gene/species)
+                                            (assoc :gene/species species-lur))
+                                        {:db/id temp-id}
+                                        {status-ident live-ident})))
+                      new-names (->> name-records
+                                     (map w/keywordize-keys)
+                                     (map-indexed identify-rec)
+                                     (vec))]
+                  new-names)
+                (let [problems (s/explain-data spec name-records)]
+                  (throw (ex-info "Not valid according to spec."
+                                  {:problems (s/explain-data spec name-records)
+                                   :type ::validation-error
+                                   :records name-records}))))})}
 
    {:db/ident :wb.dbfns/update-names
     :db/doc "Update or add to names for given entity"
-    :db/fn
-    (datomic.api/function
-     {:lang "clojure"
-      :requires '[[clojure.walk :as w]
-                  [clojure.spec.alpha :as s]]
-      :params '[db lur name-records spec]
-      :code
-      '(if (s/valid? spec name-records)
-         (let [entity (d/entity db lur)
-               new-names [:db.fn/cas (:db/id entity) name-records]]
-           new-names)
-         (throw (ex-info "Not valid according to spec."
-                         {:problems (s/explain-data spec name-records)
-                          :type ::validation-error
-                          :records name-records})))})}))
+    :db/fn (d/function
+            {:lang "clojure"
+             :requires '[[clojure.walk :as w]
+                         [clojure.spec.alpha :as s]]
+             :params '[db lur name-records spec]
+             :code
+             '(if (s/valid? spec name-records)
+                (let [entity (d/entity db lur)
+                      new-names [:db.fn/cas (:db/id entity) name-records]]
+                  new-names)
+                (throw (ex-info "Not valid according to spec."
+                                {:problems (s/explain-data spec name-records)
+                                 :type ::validation-error
+                                 :records name-records})))})}))
 
 (def worms
   ["Caenorhabditis elegans"
