@@ -1,69 +1,87 @@
 (ns integration.test-add-names
   (:require
-   [cheshire.core :as json]
-   [clojure.pprint :refer [pprint]]
+   [clojure.edn :as edn]
+   [clojure.spec.gen.alpha :as gen]
    [clojure.spec.alpha :as s]
    [clojure.spec.alpha :as s]
    [clojure.spec.test.alpha :as stest]
    [clojure.string :as str]
    [clojure.test :as t]
    [clojure.walk :as walk]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.db :as owdb]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :refer [post* put* json-string
-                                    status-is?
-                                    body-contains?]]
    [datomic.api :as d]
-   [org.wormbase.specs.gene :as owsg]
-   [clojure.spec.gen.alpha :as gen]
+   [java-time :as jt]
+   [ring.mock.request :as mock]
+   [org.wormbase.db :as own-db]
+   [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.fake-auth] ;; for side effect
    [org.wormbase.names.gene :as gene]
-   [ring.mock.request :as mock]))
+   [org.wormbase.names.service :as service]
+   [org.wormbase.specs.gene :as owsg]
+   [org.wormbase.test-utils :as tu])
+  (:import (java.util Date))) ;; TODO: java.time
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn add-gene-name [gene-id name-records]
-  (put* service/app
-        (str "/gene/" gene-id)
-        (->> name-records
-             (assoc {} :add)
-             (json-string))))
+(def edn-write pr-str)
 
-(defn resolve-ref [tx-fixture]
-  (let [species (:gene/species tx-fixture)
-        biotype (if (contains? tx-fixture :gene/biotype)
-                  (name (:gene/biotype tx-fixture)))
-        dissoc-if (fn [m k]
-                    (if (contains? m k)
-                      (dissoc m k)
-                      m))
-        tx-fixture* (-> tx-fixture
-                        (dissoc :gene/species)
-                        (dissoc-if :gene/biotype)
-                        (assoc :gene/species [:species/id species]))]
-    (if-let [bt (:gene/biotype tx-fixture)]
-      (assoc tx-fixture* :gene/biotype (keyword "gene.biotype" biotype))
-      tx-fixture*)))
+(defn add-gene-name [gene-id name-record]
+  (let [uri (str "/gene/" gene-id)
+        put (partial tu/raw-put-or-post* service/app uri :put)
+        headers {"auth-user" "tester@wormbase.org"
+                 "authorization" "Bearer TOKEN_HERE"
+                 "user-agent" "wb-ns-script"}
+        data (edn-write {:add name-record})
+        [status body] (put data nil headers)]
+    [status (tu/parse-body body)]))
 
-(def resolve-refs (partial map resolve-ref))
+(defn sample-to-txes
+  "Convert a sample generated from a spec into a transactable form."  
+  [sample]
+  (let [biotype (-> sample :gene/biotype :biotype/id)
+        species (-> sample :gene/species vec first)
+        assoc-if (fn [m k v]
+                   (if v
+                     (assoc m k v)
+                     m))]
+    (-> sample
+        (dissoc :provenance/who)
+        (dissoc :provenance/why)
+        (dissoc :provenance/when)
+        (dissoc :provenance/how)
+        (dissoc :gene/species)
+        (dissoc :gene/biotype)
+        (assoc :gene/species species)
+        (assoc-if :gene/biotype biotype))))
 
 (t/deftest must-meet-spec
   (let [conn (db-testing/fixture-conn)
-        tx-tmp-id (d/tempid :db.part/tx)
-        sample (gen/sample (s/gen ::owsg/name-update) 1)
-        tx-fixtures (concat
-                     (resolve-refs sample)
-                     [[:db/add tx-tmp-id
-                       :provenance/who [:user/email "tester@wormbase.org"]]
-                      [:db/add tx-tmp-id :provenance/why "testing"]
-                      [:db/add tx-tmp-id :provenance/when (java.util.Date.)]])]
+        test-user-dbid (:db/id
+                        (d/entity (d/db conn)
+                                  [:user/email "tester@wormbase.org"]))
+        gene-id (first (gen/sample (s/gen :gene/id) 1))
+        sample (first (gen/sample (s/gen ::owsg/add-name) 1))
+        add-name-data (merge sample {:gene/id gene-id})
+        xxx (println "GENE TX-FIXTURE TO TEST AGAINST:" add-name-data)
+        yyy (println)
+        tx-tmp-id "datomic.tx"
+        fixture-data (sample-to-txes add-name-data)
+        tx-fixtures [fixture-data
+                     {:db/id "datomic.tx"
+                      :provenance/who test-user-dbid
+                      :provenance/why "Adding new name"
+                      :provenance/when (jt/to-java-date (jt/instant))}]
+        zzz (println "TRANSACTING GENE TX-FIXfTURE:" tx-fixtures)
+        tx-res @(d/transact own-db/conn tx-fixtures)]
+    (alter-var-root
+     (var own-db/db)
+     (fn fixtured-db [real-fn]
+       (fn [conn]
+         (db-testing/speculate tx-fixtures))))
     (t/testing (str "Adding names to existing genes requires "
                     "correct data structure.")
-      (let [db (db-testing/speculate tx-fixtures)
-            xxx (if (nil? db)
-                  (println "DB was nil"))
-            name-records [{}]
-            gene-id (-> tx-fixtures first :gene/id)
-            gene (d/entity db [:gene/id gene-id])
-            [status body] (add-gene-name gene-id name-records)]
-    (status-is? status 400 body)))))
+      (let [name-record {}]
+        (let [response (add-gene-name gene-id name-record)
+              [status body] response]
+          (tu/status-is? status
+                         400
+                         (pr-str response)))))))

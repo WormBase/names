@@ -1,31 +1,24 @@
 (ns org.wormbase.specs.provenance
-  (:require [clojure.spec.alpha :as s]
-            [clojure.string :as str]))
+  (:require
+   [clojure.spec.alpha :as s]
+   [clojure.string :as str]
+   [java-time :as jt]
+   [org.wormbase.specs.user :as ows-user]
+   [miner.strgen :as sg]))
 
-(def operations #{"addName"
-                  "changeName"
-                  "created"
-                  "delName"
-                  "import"
-                  "killed"
-                  "mergedFrom"
-                  "mergedTo"
-                  "resurrected"
-                  "splitFrom"
-                  "splitTo"})
+;; clients should provide zoned-date-time
+;; db wants instant.
+(s/def :provenance/when inst?)
 
-(def clients #{"import-script"
-               "reconcilation-script"
-               "rest-api"
-               "web-form"})
+(s/def :data-source-method/script keyword?)
 
-(def instant? (partial instance? java.util.Date))
+(s/def :provenance/who ::ows-user/user)
 
-(def user? (partial re-matches #"[\w\-\.]+@wormbase.org"))
+(s/def :provenance/how #{:script :web-form :import})
 
-(s/def ::how (s/and string? clients))
-(s/def ::when instant?)
-(s/def ::why (s/and string? operations))
-(s/def ::who (s/and string?))
-(s/def ::audit (s/keys :req [::how ::when ::why ::who]))
+(s/def :provenance/why (s/and string? (comp not str/blank?)))
 
+(def db-spces [:provenance/how
+               :provenance/when
+               :provenance/who
+               :provenance/why])

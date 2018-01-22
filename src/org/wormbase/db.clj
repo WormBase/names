@@ -50,3 +50,18 @@
         state-key (pr-str #'conn)]
     (states state-key)))
 
+;; factored out so can be mocked in tests.
+(defn db
+  [conn]
+  (d/db conn))
+
+(defn wrap-datomic
+  "Annotates request with datomic connection and current db."
+  [request-handler]
+  (fn [request]
+    (when-not (connected?)
+      (mount/start))
+    (-> request
+        (assoc :conn conn
+               :db (db conn))
+        (request-handler))))

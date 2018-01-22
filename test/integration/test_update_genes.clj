@@ -10,7 +10,8 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
    [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :refer [post* put* json-string
+   [org.wormbase.test-utils :refer [post*
+                                    put*
                                     status-is?
                                     body-contains?]]
    [datomic.api :as d]))

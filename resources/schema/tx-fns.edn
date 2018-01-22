@@ -1,0 +1,126 @@
+[{:db/ident :wormbase.tx-fns/new-user
+    :db/doc "Create a new user."
+    :db/fn #db/fn
+    {:lang "clojure"
+     :requires [[clojure.spec.alpha :as s]]
+     :params [db record spec]
+     :code
+     "(if (s/valid? spec record)
+        [record]
+        (throw (ex-info
+                \"Invalid user record\"
+                {:problems (s/explain-data spec user-records)})))"}}
+
+ {:db/ident :wormbase.tx-fns/latest-id
+  :db/doc "Get the latest identifier for a given `ident`."
+  :db/fn #db/fn
+  {:params [db ident]
+   :lang "clojure"
+   :code
+   "(some->> (d/datoms db :avet ident)
+             (sort-by (comp d/tx->t :tx))
+             (last)
+             (:v))"}}
+
+ {:db/ident :wormbase.tx-fns/latest-id-number
+  :db/doc
+  "Get the numeric suffix of the latest identifier for a given `ident`."
+  :db/fn #db/fn
+  {:params [db ident]
+   :lang "clojure"
+   :code
+   "(if-let [latest-identifier (d/invoke db
+                                         :wormbase.tx-fns/latest-id
+                                         db
+                                         ident)]
+        (->> (re-seq #\"[0]+(\\d+)\" latest-identifier)
+             (flatten)
+             (last)
+             (read-string))
+        0)"}}
+
+ {:db/ident :wormbase.tx-fns/new-name
+  :db/doc "Allocate a new name for entity"
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.walk :as w]
+              [clojure.spec.alpha :as s]]
+   :params [db entity-type name-record spec]
+   :code
+   "(if (s/valid? spec name-record)
+     (let [ident (keyword entity-type \"id\")
+           template (-> (d/entity db [:template/describes ident])
+                        :template/format)
+           last-id (d/invoke db
+                             :wormbase.tx-fns/latest-id-number
+                             db
+                             ident)
+           identify-rec (fn [rec]
+                          (let [next-identifier (format template (+ last-id 1))
+                               ;; temp-part (keyword \"db.part\" entity-type)
+                               ;; temp-id (d/tempid temp-part)
+                               species-lur (-> rec :gene/species vec first)
+                               species-dbid (->> species-lur
+                                                 (d/entity db)
+                                                 :db/id)]
+                            (-> (assoc rec ident next-identifier)
+                                (assoc :gene/species species-dbid))))
+                            ;; (merge (-> (assoc rec ident next-identifier)
+                            ;;            (assoc :gene/species species-lur))
+                            ;;        {:db/id temp-id})))
+           new-name (identify-rec name-record)
+           ;; xxx (println \"Returning from txor fn:\" (pr-str new-name))
+           ]
+       [new-name])
+     (let [problems (s/explain-data spec name-record)]
+       (prn spec)
+       (prn name-record)
+       ;; (expound.alpha/expound spec name-record)
+       (throw (ex-info \"Not valid according to spec.\"
+                       {:problems (s/explain-data spec name-record)
+                        :type ::validation-error
+                        ;; :spec (pr-str spec)
+                        :valid? (s/valid? spec name-record)
+                        :records name-record}))))"}}
+
+ {:db/ident :wormbase.tx-fns/collate-cas-batch
+  :db/doc "Collate a collection of Compare-and-swap operations."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db entity name-record]
+   :code
+   "(let [eid (:db/id entity)
+            e-keys (keys name-record)
+            existing (->> e-keys
+                          (mapv (partial get entity))
+                          (zipmap e-keys))]
+        (->> (mapv (fn [[old-k old-v] [new-k new-v]]
+                     (assert (= old-k new-k)
+                             \"Should never happen!\")
+                     (when (not= old-v new-v)
+                       [:db.fn/cas eid new-k old-v new-v]))
+                   existing name-record)))"}}
+
+ {:db/ident :wormbase.tx-fns/update-name
+  :db/doc "Update/add a name for given entity."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.walk :as w]
+              [clojure.spec.alpha :as s]]
+   :params [db lur name-records spec]
+   :code
+   "(if (s/valid? spec name-records)
+      (let [entity (d/entity db lur)
+            eid (:db/id entity)
+            collate-cas-batch (partial
+                               d/invoke
+                               db
+                               :wormbase.tx-fns/collate-cas-batch
+                               db
+                               entity)
+            new-names (flatten (map collate-cas-batch name-records))]
+        new-names)
+      (throw (ex-info \"Not valid according to spec.\"
+                      {:problems (s/explain-data spec name-records)
+                       :type ::validation-error
+                       :records name-records})))"}}]

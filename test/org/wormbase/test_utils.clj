@@ -1,17 +1,20 @@
 (ns org.wormbase.test-utils
-  (:require [compojure.api.routes :as routes]
-            [compojure.api.middleware :as mw]
-            [clojure.java.io :as io]
-            [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test :as t]
-            [datomic.api :as d]
-            [muuntaja.core :as m]
-            [peridot.core :as p]
-            [spec-tools.core :as stc])
+  (:require
+   [clojure.java.io :as io]
+   [clojure.pprint :refer [pprint]]
+   [clojure.set :as set]
+   [clojure.spec.alpha :as s]
+   [clojure.string :as str]
+   [clojure.test :as t]   
+   [compojure.api.routes :as routes]
+   [compojure.api.middleware :as mw]
+   [datomic.api :as d]
+   [muuntaja.core :as m]
+   [peridot.core :as p]
+   [spec-tools.core :as stc])
   (:import (java.io InputStream)))
 
-(def muuntaja (m/create))
+(def muuntaja (assoc (m/create) :default-format "application/edn"))
 
 (defn read-body [body]
   (if (instance? InputStream body)
@@ -21,7 +24,21 @@
 (defn parse-body [body]
   (let [body (read-body body)
         body (if (instance? String body)
-               (m/decode muuntaja "application/json" body)
+               (try
+                 (m/decode muuntaja "application/edn" body)
+                 (catch clojure.lang.ExceptionInfo jpe
+                   (let [divider #(str "-----------------: % :-----------------")]
+                     (println (divider "DEBUGING"))
+                     (println "Error type:" (type jpe))
+                     (println "Cause:" (.getCause jpe))
+                     (println "Invalid response data format? body was returned as:"
+                              (type body))
+                     (println (if (or (nil? body) (str/blank? body))
+                                (println "BODY WAS NIL or empty string!")
+                                body))
+                     (println (divider "END DEBUGGING"))
+                     (println))
+                   (throw jpe)))
                body)]
     body))
 
@@ -32,13 +49,12 @@
   (let [schema-name (keyword (extract-schema-name ref))]
     (get-in spec [:definitions schema-name])))
 
-(defn json-stream [x]
-  (m/encode muuntaja "application/json" x))
-
-(def json-string (comp slurp json-stream))
-
-(defn parse [x]
-  (m/decode muuntaja "application/json" x))
+(defn edn-stream [x]
+  (try
+    (m/encode muuntaja "application/edn" x)
+    (catch Exception e
+      (println "********** COULD NOT ENCODE " x "as EDN")
+      (throw e))))
 
 (defn follow-redirect [state]
   (if (some-> state :response :headers (get "Location"))
@@ -84,21 +100,23 @@
 
 (defn form-post* [app uri params]
   (let [{{:keys [status body]} :response}
-        (-> (p/session app)
+        (-> app
+            (p/session)
             (p/request uri
                        :request-method :post
                        :params params))]
     [status (parse-body body)]))
 
 (defn raw-put-or-post* [app uri method data content-type headers]
-  (let [{{:keys [status body]} :response}
-        (-> (p/session app)
-            (p/request uri
-                       :request-method method
-                       :headers (or headers {})
-                       :content-type (or content-type "application/json")
-                       :body (.getBytes data)))]
-    [status (read-body body)]))
+  (let [request (-> (p/session app)
+                    (p/request uri
+                               :request-method method
+                               :headers (or headers {})
+                               :content-type (or content-type
+                                                 "application/edn")
+                               :body (.getBytes data)))
+        {{:keys [status body response-headers]} :response} request]
+    [status (read-body body) response-headers]))
 
 (defn raw-post* [app uri & [data content-type headers]]
   (raw-put-or-post* app uri :post data content-type headers))
@@ -148,9 +166,9 @@
 (defn status-is? [status expected-status body]
   (t/is (= status expected-status)
         (format "Response body did not contain expected data:\n%s"
-                (if-let [suspec (:spec body)]
-                  (pr-str (stc/deserialize suspec))
-                  (pr-str body)))))
+                (pr-str (if-let [suspec (:spec body)]
+                          (stc/deserialize suspec)
+                          body)))))
 
 (defn- map->set [m]
   (assert (map? m))
@@ -169,4 +187,5 @@
                           "not found in response body:"
                           (pr-str body)]))
     (when-let [rspec (:spec body)]
-      (clojure.pprint/pprint (stc/deserialize rspec)))))
+      (pprint (stc/deserialize rspec)))))
+

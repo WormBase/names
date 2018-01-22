@@ -1,0 +1,25 @@
+{:secrets #include #join [#env HOME "/.wb-ns-google-secrets-web.edn"]
+ :cookie-name "WBNS-COOKIE"
+ :cookie-secret "166085a0c66ab900e41cb323275993d0"
+ :oauth2
+ {:google
+  {:launch-uri "/oauth2/google"
+   :authorize-uri "https://accounts.google.com/o/oauth2/auth"
+   :authorization-uri "https://accounts.google.com/o/oauth2/auth"
+   :access-token-uri "https://www.googleapis.com/oauth2/v4/token"
+   :redirect-uri "http://lvh.me:3000"
+   :scopes [:profile :email :openid]
+   :grant-type "offline"
+   :client-id ^:ref [:secrets :client-id]
+   :client-secret ^:ref [:secrets :client-secret]
+   :landing-uri "/gene/"
+   :basic-auth? true}}
+ :test
+ {:authorize-uri    "https://example.com/oauth2/authorize"
+  :access-token-uri "https://example.com/oauth2/access-token"
+  :redirect-uri     "/oauth2/test/callback"
+  :launch-uri       "/oauth2/test"
+  :landing-uri      "/"
+  :scopes           [:user :project]
+  :client-id        "abcdef"
+  :client-secret    "01234567890abcdef"}}

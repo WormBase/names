@@ -19,7 +19,11 @@
   []
   (let [conn (dm/mock-conn)]
     (schema/install conn 1)
-    @(d/transact conn [{:user/email "tester@wormbase.org"}])
+    ;; A set of fake users with different roles to test against.
+    @(d/transact conn [{:user/email "tester@wormbase.org"
+                        :user/roles #{:user.role/admin}}
+                       {:user/email "tester2@wormbase.org"}
+                       {:user/email "tester3@wormbase.org"}])
     conn))
 
 (defonce conn-cache
@@ -47,6 +51,12 @@
 (defn empty-db []
   (let [conn (fixture-conn)]
     (schema/install conn 1)
+    ;; (let [test-user-email "tester@wormbase.org"]
+    ;;   (when-not (d/q '[:find ?e
+    ;;                    :in $ ?email
+    ;;                    :where [?e :user/email ?email]]
+    ;;                  (d/db conn) test-user-email)
+    ;;     @(d/transact conn [{:user/email test-user-email}])))
     (d/db conn)))
 
 (defn speculate [tx]

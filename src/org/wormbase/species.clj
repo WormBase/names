@@ -5,8 +5,8 @@
             [org.wormbase.specs.species :as owss]))
 
 (s/fdef latin-name->ident
-        :args (s/cat :species ::owss/latin-name)
-        :ret ::owss/id)
+        :args (s/cat :species :species/latin-name)
+        :ret :species/id)
 (defn latin-name->ident [latin-name]
   (let [[genus species] (str/split latin-name #"\s")]
     (->> [(first genus) species]
@@ -22,7 +22,7 @@
   String
   (-to-ident [s]
     (cond
-      (s/valid? ::owss/latin-name s)
+      (s/valid? :species/latin-name s)
       (latin-name->ident s)
 
       (s/valid? ::owss/short-name s)
@@ -58,8 +58,8 @@
         :args (s/cat :s-or-kw
                      (s/or
                       :short-name ::owss/short-name
-                      :id ::owss/id))
-        :ret (s/nilable ::owss/id))
+                      :id :species/id))
+        :ret (s/nilable :species/id))
 (defn convert-to-ident
   "Convert a string or keyword to a keyword representing a datomic ident.
 
