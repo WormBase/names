@@ -7,14 +7,19 @@
    [clojure.string :as str]
    [clojure.test :as t]   
    [compojure.api.routes :as routes]
-   [compojure.api.middleware :as mw]
-   [datomic.api :as d]
-   [muuntaja.core :as m]
+   [java-time :as jt]
+   [muuntaja.core :as muuntaja]
+   [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.db :as owdb]
    [peridot.core :as p]
    [spec-tools.core :as stc])
   (:import (java.io InputStream)))
 
-(def muuntaja (assoc (m/create) :default-format "application/edn"))
+;; TODO: Unify way of creating muuntaja formats "instance"?
+;;       (Duplication as per o.w.n/service.clj - which does it correctly!)
+;;       - usage here is ok, is just for testing.
+
+(def mformats (muuntaja/create))
 
 (defn read-body [body]
   (if (instance? InputStream body)
@@ -25,9 +30,9 @@
   (let [body (read-body body)
         body (if (instance? String body)
                (try
-                 (m/decode muuntaja "application/edn" body)
+                 (muuntaja/decode mformats "application/edn" body)
                  (catch clojure.lang.ExceptionInfo jpe
-                   (let [divider #(str "-----------------: % :-----------------")]
+                   (let [divider #(format "-----------------: % :-----------------" %)]
                      (println (divider "DEBUGING"))
                      (println "Error type:" (type jpe))
                      (println "Cause:" (.getCause jpe))
@@ -51,7 +56,7 @@
 
 (defn edn-stream [x]
   (try
-    (m/encode muuntaja "application/edn" x)
+    (muuntaja/encode mformats "application/edn" x)
     (catch Exception e
       (println "********** COULD NOT ENCODE " x "as EDN")
       (throw e))))
@@ -140,7 +145,7 @@
 (defn ring-request [m format data]
   {:uri "/echo"
    :request-method :post
-   :body (m/encode m format data)
+   :body (muuntaja/encode mformats format data)
    :headers {"content-type" format
              "accept" format}})
 
@@ -189,3 +194,39 @@
     (when-let [rspec (:spec body)]
       (pprint (stc/deserialize rspec)))))
 
+(defn sample-to-txes
+  "Convert a sample generated from a spec into a transactable form."  
+  [sample]
+  (let [biotype (-> sample :gene/biotype :biotype/id)
+        species (-> sample :gene/species vec first)
+        assoc-if (fn [m k v]
+                   (if v
+                     (assoc m k v)
+                     m))]
+    (-> sample
+        (dissoc :provenance/who)
+        (dissoc :provenance/why)
+        (dissoc :provenance/when)
+        (dissoc :provenance/how)
+        (dissoc :gene/species)
+        (dissoc :gene/biotype)
+        (assoc :gene/species species)
+        (assoc-if :gene/biotype biotype))))
+
+(defn with-fixtures [data-samples test-fn
+                     & {:keys [user why when]
+                        :or {user [:user/email "tester@wormbase.org"]
+                             when (jt/to-java-date (jt/instant))}}]
+  (let [conn (db-testing/fixture-conn)
+        data (sample-to-txes data-samples)
+        prov (merge {:db/id "datomic.tx"
+                     :provenance/when when
+                     :provenance/who user}
+                    (if why
+                      {:provenance/why why}))
+        tx-fixtures [data prov]]
+    (with-redefs [owdb/db (fn speculative-db [_]
+                            (db-testing/speculate tx-fixtures))]
+      ;; (prn "FIXTURES:")
+      ;; (prn tx-fixtures)
+      (test-fn data prov))))
