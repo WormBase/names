@@ -5,7 +5,7 @@
    [compojure.api.sweet :as sweet]
    [environ.core :as environ]
    [mount.core :as mount]
-   [muuntaja.core :as m]
+   [muuntaja.core :as muuntaja]
    [org.wormbase.db :as own-db]
    [org.wormbase.db.schema :as own-db-schema]
    [org.wormbase.names.auth :as own-auth]
@@ -13,22 +13,27 @@
    [org.wormbase.names.gene :as own-gene]
    [org.wormbase.names.user :as own-user]
    [org.wormbase.specs.auth :as auth-spec]
-   [org.wormbase.names.auth.restructure] ;; Included for side effects   
+   [org.wormbase.names.auth.restructure] ;; Included for side effects
    [ring.middleware.gzip :as ring-gzip]
    [ring.util.http-response :as http-response]
    [spec-tools.core :as stc]
    [clojure.spec.alpha :as s]
-   [compojure.api.middleware :as mw])
+   [compojure.api.middleware :as mw]
+   [muuntaja.core :as m])
   (:import
    (java.util.concurrent ExecutionException)))
 
 
 (def default-format "application/edn")
 
-(def ^{:doc "Request/response format configuration."} muuntaja
-  (-> m/default-options
-      (assoc :default-format "application/edn")
-      (m/create)))
+(def ^{:private true
+       :doc "Request/Response format configuration"} mformats
+  (muuntaja/create
+    (muuntaja/select-formats
+      muuntaja/default-options
+      ["application/edn"
+       "application/transit+json"
+       "application/json"])))
 
 (defn- wrap-not-found
   "Fallback 404 handler."
@@ -40,6 +45,9 @@
               (http-response/not-found)
               (http-response/content-type default-format))))))
 
+(defn decode-content [mime-type content]
+  (muuntaja/decode mformats mime-type content))
+
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
   (if-let [validator-url (environ/env :swagger-validator-url)]
@@ -50,7 +58,7 @@
   {:ui "/"
    :spec "/swagger.json"
    :ignore-missing-mappings? false
-   :data   
+   :data
    {:info
     {:title "Wormbase name service"
      :description "Provides naming operations for WormBase entities."}
@@ -72,10 +80,8 @@
 
 (def ^{:doc "The main application."} app
   (sweet/api
-   {:coercion nil
-    :formats muuntaja
-    ;; :formats {"application/edn" {:decoder [formats/make-edn-decoder]
-    ;;                              :encoder [formats/make-edn-encoder]}}
+   {:coercion :spec
+    :formats mformats
     :middleware [ring-gzip/wrap-gzip
                  own-auth/wrap-app-session
                  own-db/wrap-datomic
@@ -83,13 +89,15 @@
     :exceptions
     {:handlers
      {ExecutionException own-eh/handle-txfn-error
+
+      ;; TODO: this shouldn't really be here...spec not tight enough?
       datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error
+
       ::own-db-schema/validation-error own-eh/handle-validation-error
       ::ex/request-validation own-eh/handle-request-validation
       ::ex/default own-eh/handle-unexpected-error}}
     :swagger swagger-ui}
    (sweet/context "" []
-
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?

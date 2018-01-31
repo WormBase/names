@@ -29,7 +29,7 @@
              "application/edn")
             (str "Wrong content-type?:" (pr-str (:headers response))))
       (t/is (contains? response :body))
-      (let [decode #(m/decode service/muuntaja "application/edn" %)
+      (let [decode #(service/decode-content "application/edn" %)
             response-text (some-> response :body slurp)]
         (t/is (not= nil (:reason (decode response-text)))
               (str response-text))))))
