@@ -18,7 +18,6 @@
 
 (s/def :biotype/id ::biotypes)
 
-
 (def db-specs (-> all-biotypes
                   (zipmap (repeat {:db/unique :db.unique/value}))
                   vec))

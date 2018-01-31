@@ -85,10 +85,6 @@
 
 (s/def :gene/sequence-name (name-spec-with-gen :gene/sequence-name))
 
-(s/def :gene/other-names (s/coll-of (or :gene/cgc-name
-                                        :gene/sequence-name)
-                                    :kind set?))
-
 (s/def :gene/biotype (s/keys :req [:biotype/id]))
 
 (s/def :gene/species
@@ -109,7 +105,6 @@
 
 ;; HOW is determined by user-agent, so not an input a client should provide.
 (s/def ::new (s/and (s/keys :opt [:gene/cgc-name
-                                  :gene/other-names
                                   :provenance/who
                                   :provenance/when
                                   :provenance/why]
@@ -119,20 +114,9 @@
                                            :gene/biotype))])
                     names-valid?))
 
-(s/def ::name-update
-  (s/and (s/keys :opt [:gene/biotype
-                       :gene/other-names
-                       :provenance/who
-                       :provenance/when
-                       :provenance/why]
-                 :req [:gene/species
-                       (or (or :gene/cgc-name
-                               :gene/sequence-name)
-                           (and :gene/cgc-name
-                                :gene/sequence-name))])
-         names-valid?))
+(s/def ::created (s/keys :req [:gene/id]))
 
-(s/def ::add-name
+(s/def ::update
   (s/and (s/keys :opt [:gene/biotype
                        :provenance/who
                        :provenance/when

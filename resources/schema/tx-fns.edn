@@ -57,25 +57,12 @@
                              ident)
            identify-rec (fn [rec]
                           (let [next-identifier (format template (+ last-id 1))
-                               ;; temp-part (keyword \"db.part\" entity-type)
-                               ;; temp-id (d/tempid temp-part)
-                               species-lur (-> rec :gene/species vec first)
-                               species-dbid (->> species-lur
-                                                 (d/entity db)
-                                                 :db/id)]
+                               species-lur (-> rec :gene/species vec first)]
                             (-> (assoc rec ident next-identifier)
-                                (assoc :gene/species species-dbid))))
-                            ;; (merge (-> (assoc rec ident next-identifier)
-                            ;;            (assoc :gene/species species-lur))
-                            ;;        {:db/id temp-id})))
-           new-name (identify-rec name-record)
-           ;; xxx (println \"Returning from txor fn:\" (pr-str new-name))
-           ]
+                                (assoc :gene/species species-lur))))
+           new-name (identify-rec name-record)]
        [new-name])
      (let [problems (s/explain-data spec name-record)]
-       (prn spec)
-       (prn name-record)
-       ;; (expound.alpha/expound spec name-record)
        (throw (ex-info \"Not valid according to spec.\"
                        {:problems (s/explain-data spec name-record)
                         :type ::validation-error
@@ -90,10 +77,10 @@
    :params [db entity name-record]
    :code
    "(let [eid (:db/id entity)
-            e-keys (keys name-record)
-            existing (->> e-keys
-                          (mapv (partial get entity))
-                          (zipmap e-keys))]
+          e-keys (keys name-record)
+          existing (->> e-keys
+                        (mapv (partial get entity))
+                        (zipmap e-keys))]
         (->> (mapv (fn [[old-k old-v] [new-k new-v]]
                      (assert (= old-k new-k)
                              \"Should never happen!\")
@@ -123,4 +110,21 @@
       (throw (ex-info \"Not valid according to spec.\"
                       {:problems (s/explain-data spec name-records)
                        :type ::validation-error
-                       :records name-records})))"}}]
+                       :records name-records})))"}}
+
+ {:db/ident :wormbase.tx-fns/merge-genes
+  :db/doc "Merge gene `src` into gene `target`."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.spec.alpha :as s]]
+   :params [db src-id target-id spec]
+   :code
+   "(if (every (partial s/valid? spec) [src-id target-id])
+      (let [src (d/entity db [:gene/id src-id))
+            target (d/entity db [:gene/id target-id])]
+        [src target))
+      (throw (ex-info \"Not valid according to spec.\"
+                      {:problems (s/explain-data spec name-records)
+                       :type ::validation-error
+                       :records name-records})))"}
+  }]

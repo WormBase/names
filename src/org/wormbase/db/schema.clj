@@ -311,7 +311,7 @@
     (let [db-fns (-> (io/resource "schema/tx-fns.edn") slurp read-string)
           db-schemas [owsb/db-specs
                       owst/db-specs
-                      owsp/db-spces
+                      owsp/db-specs
                       owsu/db-specs
                       owss/db-specs
                       owsg/db-specs]

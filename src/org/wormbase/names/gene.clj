@@ -137,7 +137,7 @@
                           [[:wormbase.tx-fns/update-name
                             lur
                             name-record
-                            ::owsg/add-name]
+                            ::owsg/update]
                            prov])
               yyy (print "after transact")]
           (resp/ok {:updated (pr-str tx-result)}))
@@ -153,10 +153,64 @@
   ;; 
   nil)
 
+(defn idents-by-ns [db ns-name]
+  (sort (d/q '[:find [?ident ...]
+               :in $ ?ns-name
+               :where
+               [?e :db/ident ?ident]
+               [_ :db.install/attribute ?e]
+               [(namespace ?ident) ?ns]
+               [(= ?ns ?ns-name)]]
+             db ns-name)))
+
+(defn merge-genes
+  [db user id-spec src-id target-id new-biotype]
+  (if (every? (map (partial s/valid? id-spec) [src-id target-id]))
+    (let [invoke (partial d/invoke db)]
+      (when (= src-id target-id)
+        (throw (ex-info "Cannot merge gene into itself!"
+                        {:src-id src-id
+                         :target-id target-id})))
+      (when-not (s/valid? :gene/biotype new-biotype)
+        (throw (ex-info "Invalid target biotype specified."
+                        {:invalid-target-biotype new-biotype})))
+      (let [[src tgt] (map #(d/entity db [:gene/id %]) [src-id target-id])
+            [src-cgc-name tgt-cgc-name] (map :gene/cgc-name [src tgt])]
+        (when (every? :gene/cgc-name [src-cgc-name tgt-cgc-name])
+          (throw (ex-info
+                  (format (str "Both genes have a GCG name,"
+                               "correct course of action to be "
+                               "determined by the GCG admin"))
+                  {:src-cgc-name src-cgc-name
+                   :target-cgc-name tgt-cgc-name})))
+
+        (when (and src-cgc-name (not tgt-cgc-name))
+          ;; TODO: use logging instead of println
+          (println (format (str "Gene to be merged has a CGC name " 
+                                "and should probably be reatined. ")
+                           {:src-cgc ("gene/cgc-name" src)})))
+
+        ;; generate cas entries for all attributes being eaten
+        ;; TODO: can provenance be supplied outside this context or is too complex?
+        ;;       pattern used so far is for provenance to be passed in outside of a
+        ;;       the context of a tx-fn. (i.e from the ring handler)
+        (let [target-eid [:gene/id target-id]
+              src-seq-name (:gene/sequence-name src)
+              existing-bt [:biotype/id (:gene/biotype tgt)]
+              txes [[:db.fn/cas target-eid :gene/sequence-name nil src-seq-name] 
+                    [:db/retract target-eid :gene/biotype existing-bt new-biotype]
+                    ;; TBD : new-biotype -> lookup-ref
+                    [:ad/add [:gene/id target-id new-biotype]
+                     [:db.fn/retractEntity [:gene/id src-id]]]]]
+              (if tgt-cgc-name
+                txes
+                (cons [:db.fn/cas target-eid :gene/cgc-name nil src-cgc-name]
+                      txes)))))))
+
 (defn responses-map
   [success-code success-spec]
   (let [err-codes (range 400 501)
-        default (->> {:schema ::owsc/error-response}
+        default (->> {:schema "owsc/error-response"}
                      (repeat (count err-codes))
                      (interleave err-codes)
                      (apply sorted-map))
@@ -168,7 +222,7 @@
 (def routes
   (sweet/routes
    (sweet/context "/gene/" []
-     :tags ["gene"]     
+    :tags ["gene"]
      (sweet/resource
       {:get
        {:summary "Testing auth session."
@@ -197,8 +251,8 @@
        :put
        {:summary "Add new names to an existing gene"
         :x-name ::update
-        :parameters {:body {:add ::owsg/add-name}}
-        :responses {200 {:schema {:updated ::owsg/name-update}}
+        :parameters {:body {:add ::owsg/update}}
+        :responses {200 {:schema {:updated ::owsg/updated}}
                     400 {:schema {:errors ::owsc/error-response}}}
         :handler (fn [request]
                    (update-names request id))}}))))
