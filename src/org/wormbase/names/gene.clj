@@ -13,6 +13,7 @@
    [org.wormbase.names.util :refer [namespace-keywords]]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
+   [org.wormbase.specs.provenance :as owsp]
    [org.wormbase.specs.auth :as oswa]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
@@ -35,89 +36,67 @@
            (map (partial apply hash-map))
            (vec)))
 
-(defn resolve-ref
-  "Resolve a ref to its keyword name/ident."
-  [env kw v]
-  (if (keyword? v)
-    (keyword (name kw) (name v))
-    (when-let [db (:db env)]
-      (let [domain (name kw)
-            entity-ident (keyword domain "id")
-            lookup-ref [entity-ident]]
-        (some->> (str/split v #"/")
-                 (last)
-                 (keyword (name kw))
-                 (conj lookup-ref)
-                 (d/entity db)
-                 (entity-ident))))))
+(defmulti resolve-ref
+  (fn [kw db data]
+    (kw data)))
 
-;; (def ^{:doc (str "A dispatch map of keys in name records "
-;;                  "to how their value should be inferred by "
-;;                  "the request handler.")}
-;;   ingress-processors
-;;   {:gene/species resolve-ref
-;;    :gene/biotype resolve-ref})
+(defmethod resolve-ref :gene/species [_ db data]
+  (let [species-ident (-> data :gene/species vec)
+        species-entid (d/entid db species-ident)]
+    (println)
+    (println "!!!!! >> entid for" species-ident "was" species-entid)
+    (println)
+    species-entid))
 
-;; ;;; TODO: spec this function?
-;; ;; (s/fdef pre-process
-;; ;;         :args )
-;; (defn pre-process [request domain name-records]
-;;   (vec (map #(reduce-kv (fn [rec kw v]
-;;                           (if-let [v-fn (kw ingress-processors)]
-;;                             (assoc rec kw (v-fn request kw v))
-;;                             rec))
-;;                         %
-;;                         %)
-;;             (namespace-keywords domain name-records))))
+(defmethod resolve-ref :gene/biotype [_ db data]
+  (when (contains? :gene/biotype data)
+    (d/entid db (-> data :gene/biotype :biotype/id))))
 
-;; (defn resolve-refs [name-record]
-;;   (reduce-kv #(update %1 %2 (get ingress-processors %2))
-;;              (empty name-record)
-;;              name-record))
-
-(defn having-key-ns [data key-ns]
+(defn select-keys-with-ns [data key-ns]
   (into {} (filter #(= (namespace (key %)) key-ns)) data))
 
-(defn ap [request payload]
-  (let [prov (having-key-ns payload "provenance")
-        who (:provenance/who prov)]
+(defn assoc-provenence [request payload]
+  (let [prov (select-keys-with-ns payload "provenance")
+        who (:provenance/who prov)
+
+        ;; TODO (!important): determine :provenance/how via credentials
+        ;; used, not user-agent string.
+        user-agent (get-in request [:headers "user-agent"])
+        is-client-script? (and user-agent
+                               (str/includes? user-agent "script"))]
     (if-not (:db request)
       (throw (ex-info "DB was nil!" {})))
-    (cond-> {}
-      ;; (nil? (:provenance/who prov))
-      ;; (assoc :provenance/who "whof")
-
+    (cond-> prov
       (:user/email who)
       (assoc :provenance/who (:db/id
                               (d/entity (:db request)
                                         [:user/email (:user/email who)])))
 
-      ;; (nil? (:provenance/why prov))
-      ;; (assoc :provenance/why "whyf")
+      (not (:provenance/why prov))
+      (assoc :provenance/why "No reason given")
 
-      (nil? (:provenance/when prov))
+      (not (:provenance/when prov))
       (assoc :provenance/when (jt/to-java-date (jt/instant)))
 
-      ;; (nil? (:provenance/how prov))
-      ;;(assoc :provenance/how "TBD")
-      )))
+      
+      is-client-script?
+      (assoc :provenance/how [:agent/id :agent/script])
+
+      (not is-client-script?)
+      (assoc :provenance/how [:agent/id :agent/web-form]))))
 
 (defn new-names [request]
-  ;; TODO: "who" needs to come from auth
-  ;;      problably should ditch WBPerson ids in favour of emails
-  ;;      -in sanger-nameserver data, "log_who" is always a staff
-  ;;       member. So instead of :person/id it should be :staff/id
+  ;; TODO: "who" needs to come from auth problably should ditch
+  ;;      WBPerson ids in favour of emails -in sanger-nameserver data,
+  ;;      "log_who" is always a staff member. So instead of :person/id
+  ;;      it should be :staff/id or :wbperson/id etc.
   (let [data (some-> request :body-params :new)
-        name-record (having-key-ns data "gene")
-        prov (assoc (ap request data)
-                    :db/id "datomic.tx")
-        nnn (println "NAME-REC:" name-record)
-        ppp (println "PROV:" prov)
+        db (:db request)
+        name-record (select-keys-with-ns data "gene")
+        prov (assoc (assoc-provenence request data) :db/id "datomic.tx")
         spec ::owsg/new
         txes [[:wormbase.tx-fns/new-name "gene" name-record spec]
-              prov]
-        ;; yyy (println "Submitting txes:" (pr-str txes))
-        ]
+              prov]]
     (let [tx-result @(d/transact (:conn request) txes)
           new-id (extract-id tx-result)
           result {:created {:gene/id new-id}}]
@@ -129,21 +108,18 @@
         lur [:gene/id gene-id]
         entity (d/entity db lur)]
       (if entity
-        (let [data (some-> request :body-param :add)
-              name-record (having-key-ns data "gene")
-              prov (ap request data)
-              tx-result @(d/transact
-                          conn
-                          [[:wormbase.tx-fns/update-name
-                            lur
-                            name-record
-                            ::owsg/update]
-                           prov])
-              yyy (print "after transact")]
-          (resp/ok {:updated (pr-str tx-result)}))
-        (do
-          (println "***************** NO GENE FOUND ***********************")
-          (resp/not-found (format "Gene '%s' does not exist" gene-id))))))
+        (let [data (some-> request :body-params)
+              name-record (select-keys-with-ns data "gene")
+              prov (assoc-provenence request data)
+              txes [[:wormbase.tx-fns/update-name
+                     lur
+                     name-record
+                     ::owsg/update]
+                    prov]
+              tx-result @(d/transact conn txes)]
+          (if (:db-after tx-result)
+            (resp/ok {:updated {:gene/id gene-id}})
+            (resp/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
 (defn merge-into [request]
   ;; If both the source and targets of the merge have CGC names
@@ -158,7 +134,7 @@
                :in $ ?ns-name
                :where
                [?e :db/ident ?ident]
-               [_ :db.install/attribute ?e]
+               [_ :db/valueType ?e]
                [(namespace ?ident) ?ns]
                [(= ?ns ?ns-name)]]
              db ns-name)))
@@ -190,14 +166,10 @@
                                 "and should probably be reatined. ")
                            {:src-cgc ("gene/cgc-name" src)})))
 
-        ;; generate cas entries for all attributes being eaten
-        ;; TODO: can provenance be supplied outside this context or is too complex?
-        ;;       pattern used so far is for provenance to be passed in outside of a
-        ;;       the context of a tx-fn. (i.e from the ring handler)
         (let [target-eid [:gene/id target-id]
               src-seq-name (:gene/sequence-name src)
               existing-bt [:biotype/id (:gene/biotype tgt)]
-              txes [[:db.fn/cas target-eid :gene/sequence-name nil src-seq-name] 
+              txes [[:db.fn/cas target-eid :gene/sequence-name nil src-seq-name]
                     [:db/retract target-eid :gene/biotype existing-bt new-biotype]
                     ;; TBD : new-biotype -> lookup-ref
                     [:ad/add [:gene/id target-id new-biotype]
@@ -251,7 +223,7 @@
        :put
        {:summary "Add new names to an existing gene"
         :x-name ::update
-        :parameters {:body {:add ::owsg/update}}
+        :parameters {:body ::owsg/update}
         :responses {200 {:schema {:updated ::owsg/updated}}
                     400 {:schema {:errors ::owsc/error-response}}}
         :handler (fn [request]

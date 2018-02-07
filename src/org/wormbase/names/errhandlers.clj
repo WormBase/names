@@ -30,7 +30,6 @@
                 cause
                 exc)
           info {:message (.getMessage err) :type type}]
-      ;; "Poor mans' debugging": (println err)
       (f (if (= type :validation-error)
            (let [info* (ex-data err)
                  problems (if info*
@@ -45,7 +44,6 @@
   (let [problems (get-in data [:data :problems])
         info (if problems
                (assoc data :problems problems)
-               ;; (expound/expound (:spec data) problems))
                data)]
     (respond-bad-request request info)))
 
@@ -53,11 +51,10 @@
   ([^Exception exc data request]
   ;; TODO: logging - ensure exceptions appear in the log/stdout.
   ;; TODO: remove constant comparison thing below (or true x)
-  (if (or true (environ/env :wb-ns-dev))
-    (throw exc)
+  (if (environ/env :wb-ns-dev)
+    (handle-unexpected-error exc)
     (http-response/internal-server-error data)))
   ([exc]
-   (println "Thing passed to error handler was:" exc)
    (throw exc)))
 
 (defn handle-txfn-error [^Exception exc data request]
@@ -73,9 +70,7 @@
             (s/explain-data (:spec data) (:problems data)))
    (respond-bad-request request {:reason (:problems data)}))
   ([err]
-   (println "ERKERKERKERKERKERERK: What's this then?" err)
    err))
-  ;; (http-response/bad-request {:problems (expound/expound-str data)}))
 
 (defn handle-unauthenticated [^Exception exc data request]
   (if-not (authenticated? request)

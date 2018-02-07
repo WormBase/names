@@ -31,8 +31,8 @@
 
 (defn starting-point-conn []
   (:conn (swap! conn-cache #(if (cache/has? % :conn)
-                             (cache/hit % :conn)
-                             (cache/miss % :conn (make-fixture-conn))))))
+                              (cache/hit % :conn)
+                              (cache/miss % :conn (make-fixture-conn))))))
 
 (defn fixture-conn
   "Creates a Datomic connection with the schema and fixture data
@@ -48,17 +48,16 @@
       (owdb/checked-delete uri)
       (mount/stop))))
 
-(defn empty-db []
-  (let [conn (fixture-conn)]
-    (schema/install conn 1)
-    ;; (let [test-user-email "tester@wormbase.org"]
-    ;;   (when-not (d/q '[:find ?e
-    ;;                    :in $ ?email
-    ;;                    :where [?e :user/email ?email]]
-    ;;                  (d/db conn) test-user-email)
-    ;;     @(d/transact conn [{:user/email test-user-email}])))
-    (d/db conn)))
+(defn empty-db [conn]
+  (schema/install conn 1)
+  ;; (let [test-user-email "tester@wormbase.org"]
+  ;;   (when-not (d/q '[:find ?e
+  ;;                    :in $ ?email
+  ;;                    :where [?e :user/email ?email]]
+  ;;                  (d/db conn) test-user-email)
+  ;;     @(d/transact conn [{:user/email test-user-email}])))
+  (d/db conn))
 
-(defn speculate [tx]
-  (:db-after (d/with (empty-db) tx)))
+(defn speculate [conn tx]
+  (:db-after (d/with (d/db conn) tx)))
 

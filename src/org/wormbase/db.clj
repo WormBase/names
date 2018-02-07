@@ -55,13 +55,16 @@
   [conn]
   (d/db conn))
 
+(defn connection []
+  conn)
+
 (defn wrap-datomic
   "Annotates request with datomic connection and current db."
   [request-handler]
   (fn [request]
     (when-not (connected?)
       (mount/start))
-    (-> request
-        (assoc :conn conn
-               :db (db conn))
-        (request-handler))))
+    (let [cx (connection)]
+      (-> request
+          (assoc :conn cx :db (db cx))
+          (request-handler)))))

@@ -81,6 +81,8 @@
     (s/and string? (partial re-matches gene-id-regexp))
     #(sg/string-generator gene-id-regexp)))
 
+(s/def :gene/status (s/keys :req-un [:gene.status/id]))
+
 (s/def :gene/cgc-name (name-spec-with-gen :gene/cgc-name))
 
 (s/def :gene/sequence-name (name-spec-with-gen :gene/sequence-name))
@@ -134,4 +136,5 @@
                [:gene/cgc-name {:db/unique :db.unique/value}]
                [:gene/sequence-name {:db/unique :db.unique/value}]
                :gene/biotype
+               :gene/status
                :gene/species])

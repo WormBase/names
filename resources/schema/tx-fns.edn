@@ -70,33 +70,57 @@
                         :valid? (s/valid? spec name-record)
                         :records name-record}))))"}}
 
+ {:db/ident :wormbase.tx-fns/resolve-gene-refs
+  :db/doc "Resolve references in a gene entity suitable for CAS."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db data]
+   :code
+   "(let [species-lur (-> data :gene/species vec first)
+          species-entid (d/entid db species-lur)
+          biotype-ident* (get data :gene/biotype)
+          biotype-ident (get biotype-ident* :biotype/id biotype-ident*)
+          biotype-entid (when biotype-ident (d/entid db biotype-ident))]
+      (let [bt-added (assoc data :gene/biotype biotype-entid)
+            res (-> (merge data bt-added)
+                    (assoc :gene/species species-entid)
+                    (vec)
+                    (sort))]
+        res))"}}
+
  {:db/ident :wormbase.tx-fns/collate-cas-batch
   :db/doc "Collate a collection of Compare-and-swap operations."
   :db/fn #db/fn
   {:lang "clojure"
+   :requires [[clojure.walk :as walk]]
    :params [db entity name-record]
    :code
-   "(let [eid (:db/id entity)
+   "(let [resolve-refs (partial d/invoke db :wormbase.tx-fns/resolve-gene-refs db)
+          eid (:db/id entity)
           e-keys (keys name-record)
-          existing (->> e-keys
-                        (mapv (partial get entity))
-                        (zipmap e-keys))]
-        (->> (mapv (fn [[old-k old-v] [new-k new-v]]
-                     (assert (= old-k new-k)
-                             \"Should never happen!\")
-                     (when (not= old-v new-v)
-                       [:db.fn/cas eid new-k old-v new-v]))
-                   existing name-record)))"}}
+          entity->map (fn datomic-entity-to-array-map [ent]
+                        (walk/prewalk #(if (instance? datomic.query.EntityMap %)
+                                         (into {} %)
+                                         %)
+                                      ent))
+          existing (resolve-refs (entity->map entity))
+          new (resolve-refs name-record)
+          res (some->> (mapv (fn [[old-k old-v] [new-k new-v]]
+                               (when-not (nil? new-v)
+                                 [:db.fn/cas eid new-k old-v new-v]))
+                             existing
+                             new)
+                       (filter identity))]
+      res)"}}
 
  {:db/ident :wormbase.tx-fns/update-name
   :db/doc "Update/add a name for given entity."
   :db/fn #db/fn
   {:lang "clojure"
-   :requires [[clojure.walk :as w]
-              [clojure.spec.alpha :as s]]
-   :params [db lur name-records spec]
+   :requires [[clojure.spec.alpha :as s]]
+   :params [db lur name-record spec]
    :code
-   "(if (s/valid? spec name-records)
+   "(if (s/valid? spec name-record)
       (let [entity (d/entity db lur)
             eid (:db/id entity)
             collate-cas-batch (partial
@@ -105,12 +129,12 @@
                                :wormbase.tx-fns/collate-cas-batch
                                db
                                entity)
-            new-names (flatten (map collate-cas-batch name-records))]
-        new-names)
+            batched (collate-cas-batch name-record)]
+        batched)
       (throw (ex-info \"Not valid according to spec.\"
-                      {:problems (s/explain-data spec name-records)
+                      {:problems (s/explain-data spec name-record)
                        :type ::validation-error
-                       :records name-records})))"}}
+                       :record name-record})))"}}
 
  {:db/ident :wormbase.tx-fns/merge-genes
   :db/doc "Merge gene `src` into gene `target`."
@@ -126,5 +150,4 @@
       (throw (ex-info \"Not valid according to spec.\"
                       {:problems (s/explain-data spec name-records)
                        :type ::validation-error
-                       :records name-records})))"}
-  }]
+                       :records name-records})))"}}]

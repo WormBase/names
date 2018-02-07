@@ -12,7 +12,8 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
    [peridot.core :as p]
-   [spec-tools.core :as stc])
+   [spec-tools.core :as stc]
+   [datomic.api :as d])
   (:import (java.io InputStream)))
 
 ;; TODO: Unify way of creating muuntaja formats "instance"?
@@ -214,19 +215,21 @@
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures [data-samples test-fn
-                     & {:keys [user why when]
-                        :or {user [:user/email "tester@wormbase.org"]
-                             when (jt/to-java-date (jt/instant))}}]
+                     & {:keys [how when why user]
+                        :or {how [:agent/id :agent/script]
+                             when (jt/to-java-date (jt/instant))
+                             user [:user/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
         data (sample-to-txes data-samples)
         prov (merge {:db/id "datomic.tx"
+                     :provenance/how how
                      :provenance/when when
                      :provenance/who user}
                     (if why
                       {:provenance/why why}))
         tx-fixtures [data prov]]
-    (with-redefs [owdb/db (fn speculative-db [_]
-                            (db-testing/speculate tx-fixtures))]
-      ;; (prn "FIXTURES:")
-      ;; (prn tx-fixtures)
-      (test-fn data prov))))
+    @(d/transact conn tx-fixtures)
+    (with-redefs [owdb/connection (fn [] conn)
+                  owdb/db (fn speculative-db [_]
+                            (d/db conn))]
+      (test-fn conn data prov))))

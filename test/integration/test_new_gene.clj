@@ -13,7 +13,8 @@
    [org.wormbase.test-utils :refer [raw-put-or-post*
                                     parse-body
                                     status-is?
-                                    body-contains?]]))
+                                    body-contains?]]
+   [datomic.api :as d]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -32,6 +33,13 @@
            "application/edn"
            {"authorization" (str "Bearer " current-user-token)})]
       [status (parse-body body)])))
+
+(defn check-db [gene-id]
+  (d/q '[:find ?status
+         :where
+         [?e :gene/id gene-id]
+         [?e :gene/status ?status]
+         ]))
 
 (t/deftest must-meet-spec
   (t/testing "Incorrectly naming gene reports problems."

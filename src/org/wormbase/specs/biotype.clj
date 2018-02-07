@@ -18,7 +18,8 @@
 
 (s/def :biotype/id ::biotypes)
 
-(def db-specs (-> all-biotypes
-                  (zipmap (repeat {:db/unique :db.unique/value}))
-                  vec))
+(def db-specs (concat [[:biotype/id {:db/unique :db.unique/value}]]
+                      (-> all-biotypes
+                          (zipmap (repeat {:db/unique :db.unique/value}))
+                          vec)))
   
