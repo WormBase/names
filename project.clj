@@ -4,7 +4,7 @@
   [[org.clojure/clojure "1.9.0"]
    ;; TODO: figure out how to enable console logging
    ;;       when this package is added.
-   ;; [org.clojure/tools.logging "0.4.0"]
+   [org.clojure/tools.logging "0.4.0"]
    [org.clojure/core.cache "0.6.5"]
    [aero "1.1.2"]
    [bk/ring-gzip "0.2.1"]
@@ -17,6 +17,10 @@
    [environ "1.1.0"]
    [expound "0.5.0"]
    [io.rkn/conformity "0.5.1"]
+   [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
+                                      javax.jms/jms
+                                      com.sun.jdmk/jmxtools
+                                      com.sun.jmx/jmxri]]
    [me.raynes/fs "1.4.6"]
    [metosin/compojure-api "2.0.0-alpha16" :exclusions [potemkin
                                                        instaparse]]
