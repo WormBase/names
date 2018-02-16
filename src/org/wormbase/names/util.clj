@@ -2,8 +2,7 @@
   (:require
    [aero.core :as aero]
    [clojure.java.io :as io]
-   [clojure.walk :as walk]
-   [datomic.api :as d]))
+   [clojure.walk :as walk]))
 
 (defn read-app-config
   ([]
@@ -33,3 +32,8 @@
                    %)
        data))
 
+(defn entity->map [ent]
+  (walk/prewalk #(if (instance? datomic.query.EntityMap %)
+                   (into {} %)
+                   %)
+                ent))
