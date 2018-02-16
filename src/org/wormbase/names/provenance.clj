@@ -1,7 +1,4 @@
-(ns org.wormbase.names.provenance
-  (:require
-   [datomic.api :as d]
-   [org.wormbase.names.auth :as ow-auth]))
+(ns org.wormbase.names.provenance)
 
 
   ;; For each key in the provenance schema:

@@ -1,11 +1,9 @@
 (ns org.wormbase.names.errhandlers
   (:require
+   [clojure.spec.alpha :as s]
    [buddy.auth :refer [authenticated?]]
-   [compojure.api.exception :as ex]
    [environ.core :as environ]
-   [expound.alpha :as expound]
-   [ring.util.http-response :as http-response]
-   [clojure.spec.alpha :as s])
+   [ring.util.http-response :as http-response])
   (:import
    (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))

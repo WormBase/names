@@ -1,7 +1,6 @@
 (ns org.wormbase.names.oauth2
   (:require
    [clojure.string :as str]
-   [clj-http.client :as http]
    [org.wormbase.names.util :as util]
    [ring.util.codec :as codec]
    [ring.util.request :as req]))

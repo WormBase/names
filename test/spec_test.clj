@@ -1,8 +1,7 @@
 (ns spec-test
-  (:require [clojure.pprint :as pprint]
-            [clojure.spec.test.alpha :as stest]
-            [clojure.tools.namespace.repl :refer [refresh]]
-            [clojure.spec.alpha :as s]))
+  (:require
+   [clojure.spec.test.alpha :as stest]
+   [clojure.tools.namespace.repl :refer [refresh]]))
 
 (defn run-analysis
   []

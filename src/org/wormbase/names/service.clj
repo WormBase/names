@@ -1,7 +1,6 @@
 (ns org.wormbase.names.service
   (:require
    [compojure.api.exception :as ex]
-   [compojure.api.middleware :as mw]
    [compojure.api.sweet :as sweet]
    [environ.core :as environ]
    [mount.core :as mount]
@@ -16,8 +15,6 @@
    [org.wormbase.names.auth.restructure] ;; Included for side effects
    [ring.middleware.gzip :as ring-gzip]
    [ring.util.http-response :as http-response]
-   [spec-tools.core :as stc]
-   [clojure.spec.alpha :as s]
    [compojure.api.middleware :as mw]
    [muuntaja.core :as m])
   (:import

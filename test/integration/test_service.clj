@@ -1,16 +1,11 @@
 (ns integration.test-service
   (:require
-   [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.test :as t]
-   [clojure.walk :as walk]
    [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.auth :as own-auth]
    [org.wormbase.names.service :as service]
    [org.wormbase.fake-auth]
-   [org.wormbase.test-utils :refer [ring-request]]
-   [ring.util.http-response :as http-response]
-   [muuntaja.core :as m]))
+   [ring.util.http-response :as http-response]))
 
 (t/use-fixtures :once db-testing/db-lifecycle)
 

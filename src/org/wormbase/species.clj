@@ -1,6 +1,5 @@
 (ns org.wormbase.species
   (:require [clojure.spec.alpha :as s]
-            [spec-tools.spec :as st]
             [clojure.string :as str]
             [org.wormbase.specs.species :as owss]))
 
@@ -13,7 +12,6 @@
          (map str/lower-case)
          (str/join "-")
          (keyword "species"))))
-
 
 (defprotocol SpeciesIdent
   (-to-ident [this]))
@@ -42,7 +40,7 @@
 
       :default
       (throw (ex-info "Invalid species" {:val kw
-                                         :type :invalid-species}))))
+                                         :type ::invalid}))))
   
   clojure.lang.MapEntry
   (-to-ident [me]

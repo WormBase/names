@@ -1,13 +1,7 @@
 (ns org.wormbase.specs.gene
   (:require [clojure.spec.alpha :as s]
-            [spec-tools.spec :as st]
-            [spec-tools.core :as stc]
-            [clojure.string :as str]
             [miner.strgen :as sg]
-            [clojure.test :as t]
-            [org.wormbase.specs.biotype :as owsb]
-            [org.wormbase.species :as ows]
-            [org.wormbase.specs.species :as owss]))
+            [org.wormbase.specs.biotype :as owsb]))
 
 (def ^{:doc
        "Mapping of species name to name-typed valid identifier pattern."}

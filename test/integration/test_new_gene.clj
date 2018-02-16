@@ -1,18 +1,11 @@
 (ns integration.test-new-gene
   (:require
-   [cheshire.core :as json]
-   [clojure.spec.alpha :as s]
-   [clojure.spec.alpha :as s]
-   [clojure.spec.test.alpha :as stest]
-   [clojure.string :as str]
    [clojure.test :as t]
-   [clojure.walk :as walk]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.service :as service]
    [org.wormbase.test-utils :as tu]
-   [datomic.api :as d]
-   [org.wormbase.db :as owdb]))
+   [datomic.api :as d]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

@@ -4,9 +4,7 @@
    [datomic.api :as d]
    [org.wormbase.names.auth.restructure] ;; TBD: side effects?   
    [org.wormbase.specs.user :as ows-user]
-   [spec-tools.spec :as st]
-   [ring.util.http-response :as http-response]
-   [clj-http.client :as http]))
+   [ring.util.http-response :as http-response]))
 
 (defn create [request]
   (let [conn (:conn request)

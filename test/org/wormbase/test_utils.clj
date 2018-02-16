@@ -1,9 +1,7 @@
 (ns org.wormbase.test-utils
   (:require
-   [clojure.java.io :as io]
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
-   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.test :as t]
    [clojure.tools.logging :as log]

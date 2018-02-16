@@ -1,7 +1,5 @@
 (ns org.wormbase.db-testing
   (:require
-   [clojure.string :as str]
-   [clojure.test :as t]
    [clojure.core.cache :as cache]
    [clj-time.coerce :as ctc]
    [clj-time.core :as ct]

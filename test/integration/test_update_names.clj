@@ -2,22 +2,16 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
-   [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [java-time :as jt]
-   [ring.mock.request :as mock]
    [org.wormbase.db :as owdb]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.fake-auth] ;; for side effect
-   [org.wormbase.names.gene :as gene]
    [org.wormbase.names.service :as service]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
-
-(def edn-write pr-str)
 
 (defn update-gene-name [gene-id name-record]
   (let [uri (str "/gene/" gene-id)
@@ -25,7 +19,7 @@
         headers {"auth-user" "tester@wormbase.org"
                  "authorization" "Bearer TOKEN_HERE"
                  "user-agent" "wb-ns-script"}
-        data (edn-write name-record)
+        data (pr-str name-record)
         [status body] (put data nil headers)]
     [status (tu/parse-body body)]))
 

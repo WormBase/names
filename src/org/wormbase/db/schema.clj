@@ -2,18 +2,9 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [clojure.string :as str]
-   [clojure.spec.alpha :as s]
    [datomic.api :as d]
    [io.rkn.conformity :as c]
-   [org.wormbase.species :as ows]
-   [org.wormbase.specs.agent :as owsa]
-   [org.wormbase.specs.biotype :as owsb]
-   [org.wormbase.specs.gene :as owsg]
-   [org.wormbase.specs.species :as owss]
-   [org.wormbase.specs.provenance :as owsp]
-   [org.wormbase.specs.template :as owst]
-   [org.wormbase.specs.user :as owsu])
+   [org.wormbase.species :as ows])
   (:import (java.io PushbackReader)))
 
 ;; TODO: not sure the canonical species listing should "live" here...
