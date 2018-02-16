@@ -31,12 +31,13 @@
 
 (t/deftest must-meet-spec
   (let [identifier (first (gen/sample (s/gen :gene/id) 1))
-        sample (-> (first (gen/sample (s/gen ::owsg/update) 1))
+        sample (-> (gen/sample (s/gen ::owsg/update) 1)
+                   (first)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
     (tu/with-fixtures
       sample-data
-      (fn [conn data prov]
+      (fn [conn]
         (t/testing (str "Updating name for existing gene requires "
                         "correct data structure.")
           (let [data {}]
@@ -45,24 +46,8 @@
               (tu/status-is? status 400 (pr-str response))))))
       :why "Updating name")))
 
-
-(defn query-provenence [db gene-id]
-  (->> (d/q '[:find [?who ?when ?why ?how]
-              :in $ ?gene-id
-              :where
-              [?e :gene/id ?gene-id ?tx]
-              [?tx :provenance/who ?u-id]
-              [(get-else $ ?u-id :user/email "nobody") ?who]
-              [(get-else $ ?tx :provenance/when :unset) ?when]
-              [(get-else $ ?tx :provenance/why "Dunno") ?why]
-              [(get-else $ ?tx :provenance/how :who-knows?) ?how-id]
-              [?how-id :agent/id ?how]]
-            (d/history db)
-            gene-id)
-       (zipmap [:provenance/who :provenance/when :provenance/why :provenance/how])))
-
 (t/deftest provenance
-  (t/testing "Testing provenance is recorded when succesfully updating a name."
+  (t/testing (str "Provenance is recorded for successful transactions")
     (let [identifier (first (gen/sample (s/gen :gene/id) 1))
           sample (first (gen/sample (s/gen ::owsg/update) 1))
           sample-data (merge sample {:gene/id identifier})
@@ -70,21 +55,25 @@
           reason "Updating a cgc-name records provenance"]
       (tu/with-fixtures
         sample-data
-        (fn [conn tx-data prov]
+        (fn [conn]
           (let [payload (-> sample-data
                             (assoc :gene/cgc-name "cgc-1")
                             (assoc :provenance/who
                                    [:user/email "tester@wormbase.org"]))
                 db (owdb/db conn)]
             (let [response (update-gene-name identifier payload)
-                  [status body] response]
+                  [status body] response
+                  ent (d/entity (d/db conn) [:gene/id identifier])]
               (tu/status-is? status 200 (pr-str response))
-              (let [act-prov (query-provenence db identifier)]
+              (let [act-prov (tu/query-provenence db identifier)]
                 (t/is (= (:provenance/how act-prov) :agent/script)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
-                (t/is (= (:provenance/who act-prov) "tester@wormbase.org"))
-                (t/is (not= nil (:provenance/when act-prov)))))
-            (t/is (= "cgc-1"
-                     (:gene/cgc-name (d/entity (owdb/db conn) [:gene/id identifier]))))))
+                (t/is (= (:provenance/who act-prov)
+                         "tester@wormbase.org"))
+                (t/is (not= nil (:provenance/when act-prov))))
+              (let [gs (:gene/status ent)]
+                (t/is (= :gene.status/live gs)
+                      (pr-str (:gene/status ent))))
+              (t/is (= "cgc-1" (:gene/cgc-name ent))))))
         :why reason))))

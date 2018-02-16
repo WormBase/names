@@ -9,6 +9,7 @@
    [spec-tools.spec :as st]
    [spec-tools.core :as stc]
    [org.wormbase.names.auth :as own-auth]
+   [org.wormbase.names.util :as ownu]
    [org.wormbase.names.provenance :as provenance]
    [org.wormbase.names.util :refer [namespace-keywords]]
    [org.wormbase.specs.common :as owsc]
@@ -43,14 +44,11 @@
 (defmethod resolve-ref :gene/species [_ db data]
   (let [species-ident (-> data :gene/species vec)
         species-entid (d/entid db species-ident)]
-    (println)
-    (println "!!!!! >> entid for" species-ident "was" species-entid)
-    (println)
     species-entid))
 
 (defmethod resolve-ref :gene/biotype [_ db data]
   (when (contains? :gene/biotype data)
-    (d/entid db (-> data :gene/biotype :biotype/id))))
+    (d/entid db (:gene/biotype data))))
 
 (defn select-keys-with-ns [data key-ns]
   (into {} (filter #(= (namespace (key %)) key-ns)) data))
@@ -91,15 +89,17 @@
   ;;      "log_who" is always a staff member. So instead of :person/id
   ;;      it should be :staff/id or :wbperson/id etc.
   (let [data (some-> request :body-params :new)
-        db (:db request)
         name-record (select-keys-with-ns data "gene")
         prov (assoc (assoc-provenence request data) :db/id "datomic.tx")
         spec ::owsg/new
         txes [[:wormbase.tx-fns/new-name "gene" name-record spec]
               prov]]
     (let [tx-result @(d/transact (:conn request) txes)
+          db (:db-after tx-result)
           new-id (extract-id tx-result)
-          result {:created {:gene/id new-id}}]
+          ent (d/entity db [:gene/id new-id])
+          emap (ownu/entity->map ent)
+          result {:created emap}]
       (resp/created "/gene/" result))))
 
 (defn update-names [request gene-id]
@@ -107,7 +107,7 @@
         db (:db request)
         lur [:gene/id gene-id]
         entity (d/entity db lur)]
-      (if entity
+      (when entity
         (let [data (some-> request :body-params)
               name-record (select-keys-with-ns data "gene")
               prov (assoc-provenence request data)
@@ -116,18 +116,21 @@
                      name-record
                      ::owsg/update]
                     prov]
-              tx-result @(d/transact conn txes)]
+              tx-result @(d/transact conn txes)
+              ent (d/entity db lur)]
           (if (:db-after tx-result)
-            (resp/ok {:updated {:gene/id gene-id}})
+            (resp/ok {:updated (ownu/entity->map ent)})
             (resp/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
-(defn merge-into [request]
-  ;; If both the source and targets of the merge have CGC names
-  ;; abort with a HTTP conflict
-  ;; See: /wormbase-pipeline/scripts/NAMEDB/lib/NameDB_handler.pm
-  ;;      for reference (!)
-  ;; 
-  nil)
+(defn merge-from [request source-id target-id]
+  (let [conn (:conn request)
+        target-biotype (some-> request :body-params :gene/biotype)
+        tx-result @(d/transact conn [[:wormbase.tx-fns/merge-genes
+                                      source-id target-id :gene/id target-biotype]])]
+    (if-let [db (:db-after tx-result)]
+      (let [ent (d/entity (:db-after tx-result) [:gene/id target-id])]
+        (resp/ok {:updated (ownu/entity->map ent)}))
+      (resp/bad-request {:reason tx-result}))))
 
 (defn idents-by-ns [db ns-name]
   (sort (d/q '[:find [?ident ...]
@@ -138,46 +141,6 @@
                [(namespace ?ident) ?ns]
                [(= ?ns ?ns-name)]]
              db ns-name)))
-
-(defn merge-genes
-  [db user id-spec src-id target-id new-biotype]
-  (if (every? (map (partial s/valid? id-spec) [src-id target-id]))
-    (let [invoke (partial d/invoke db)]
-      (when (= src-id target-id)
-        (throw (ex-info "Cannot merge gene into itself!"
-                        {:src-id src-id
-                         :target-id target-id})))
-      (when-not (s/valid? :gene/biotype new-biotype)
-        (throw (ex-info "Invalid target biotype specified."
-                        {:invalid-target-biotype new-biotype})))
-      (let [[src tgt] (map #(d/entity db [:gene/id %]) [src-id target-id])
-            [src-cgc-name tgt-cgc-name] (map :gene/cgc-name [src tgt])]
-        (when (every? :gene/cgc-name [src-cgc-name tgt-cgc-name])
-          (throw (ex-info
-                  (format (str "Both genes have a GCG name,"
-                               "correct course of action to be "
-                               "determined by the GCG admin"))
-                  {:src-cgc-name src-cgc-name
-                   :target-cgc-name tgt-cgc-name})))
-
-        (when (and src-cgc-name (not tgt-cgc-name))
-          ;; TODO: use logging instead of println
-          (println (format (str "Gene to be merged has a CGC name " 
-                                "and should probably be reatined. ")
-                           {:src-cgc ("gene/cgc-name" src)})))
-
-        (let [target-eid [:gene/id target-id]
-              src-seq-name (:gene/sequence-name src)
-              existing-bt [:biotype/id (:gene/biotype tgt)]
-              txes [[:db.fn/cas target-eid :gene/sequence-name nil src-seq-name]
-                    [:db/retract target-eid :gene/biotype existing-bt new-biotype]
-                    ;; TBD : new-biotype -> lookup-ref
-                    [:ad/add [:gene/id target-id new-biotype]
-                     [:db.fn/retractEntity [:gene/id src-id]]]]]
-              (if tgt-cgc-name
-                txes
-                (cons [:db.fn/cas target-eid :gene/cgc-name nil src-cgc-name]
-                      txes)))))))
 
 (defn responses-map
   [success-code success-spec]
@@ -227,4 +190,20 @@
         :responses {200 {:schema {:updated ::owsg/updated}}
                     400 {:schema {:errors ::owsc/error-response}}}
         :handler (fn [request]
-                   (update-names request id))}}))))
+                   (update-names request id))}})
+     (sweet/context "/merge/:from-id" [another-id]
+       (sweet/resource
+        {:post
+         {:summary "Merge one gene with another."
+          :x-name ::merge
+          :path-params [id :gene/id
+                        another-id :gene/id]
+          :parameters {:body {:gene/biotype :gene/biotype}}
+          :responses {200 {:schema {:updated ::owsg/updated}}
+                      400 {:schema {:errors ::owsc/error-response}}
+                      409 {:schema {:conflict ::owsc/conflict-response}}}
+          :handler
+          (fn [request]
+            (merge-from request another-id id))}})))))
+  
+  

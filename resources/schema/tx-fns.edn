@@ -55,12 +55,13 @@
                              :wormbase.tx-fns/latest-id-number
                              db
                              ident)
-           identify-rec (fn [rec]
-                          (let [next-identifier (format template (+ last-id 1))
-                               species-lur (-> rec :gene/species vec first)]
-                            (-> (assoc rec ident next-identifier)
-                                (assoc :gene/species species-lur))))
-           new-name (identify-rec name-record)]
+           identify (fn [rec]
+                      (let [next-identifier (format template (+ last-id 1))
+                            species-lur (-> rec :gene/species vec first)]
+                        (-> (assoc rec ident next-identifier)
+                            (assoc :gene/species species-lur)
+                            (assoc :gene/status :gene.status/live))))
+           new-name (identify name-record)]
        [new-name])
      (let [problems (s/explain-data spec name-record)]
        (throw (ex-info \"Not valid according to spec.\"
@@ -71,15 +72,14 @@
                         :records name-record}))))"}}
 
  {:db/ident :wormbase.tx-fns/resolve-gene-refs
-  :db/doc "Resolve references in a gene entity suitable for CAS."
+  :db/doc "Resolve ref  erences in a gene entity suitable for CAS."
   :db/fn #db/fn
   {:lang "clojure"
    :params [db data]
    :code
    "(let [species-lur (-> data :gene/species vec first)
           species-entid (d/entid db species-lur)
-          biotype-ident* (get data :gene/biotype)
-          biotype-ident (get biotype-ident* :biotype/id biotype-ident*)
+          biotype-ident (get data :gene/biotype)
           biotype-entid (when biotype-ident (d/entid db biotype-ident))]
       (let [bt-added (assoc data :gene/biotype biotype-entid)
             res (-> (merge data bt-added)
@@ -141,13 +141,62 @@
   :db/fn #db/fn
   {:lang "clojure"
    :requires [[clojure.spec.alpha :as s]]
-   :params [db src-id target-id spec]
+   :params [db src-id target-id id-spec target-biotype]
    :code
-   "(if (every (partial s/valid? spec) [src-id target-id])
-      (let [src (d/entity db [:gene/id src-id))
-            target (d/entity db [:gene/id target-id])]
-        [src target))
-      (throw (ex-info \"Not valid according to spec.\"
-                      {:problems (s/explain-data spec name-records)
-                       :type ::validation-error
-                       :records name-records})))"}}]
+   "(let [participants [[id-spec src-id] [id-spec target-id]]
+          valids (zipmap participants
+                         (map (partial s/valid? id-spec) participants))]
+      (when (= src-id target-id)
+        (throw (ex-info \"Source and target ids cannot be the same!\"
+                        {:src-id src-id :target-id target-id})))
+      (when-not (s/valid? :gene/biotype target-biotype)
+         (throw (ex-info \"Invalid biotype\"
+                          {:problems (s/explain-data :gene/biotype
+                                                     target-biotype)})))
+      (when (some nil? (vals valids))
+        (let [invalids (some->> valids
+                                (mapv (fn [[k v]]
+                                        (if-not v k)))
+                                (remove nil?))]
+          (throw (ex-info \"Found one or more invalid identifiers.\"
+                           {:problems (map #(s/explain-data id-spec %)
+                                           invalids)
+                            :type ::validation-error
+                            :invalid-entities invalids}))))
+       (let [[src target] (map #(d/entity db %) participants)]
+         (when (some nil? [src target])
+           (throw (ex-info \"Merge participant does not exist!\"
+                            {:missing (remove (comp not nil?)
+                                              (map :gene/id [src target]))
+                             :type ::validation-error
+                             :participants participants})))
+         (when (reduce not= (map (comp :species/id :gene/species) [src target]))
+           (throw (ex-info \"Refusing to merge: genes have differing species\"
+                           {:src {id-spec src-id
+                                  :species/id (:gene/species src)}
+                            :target {id-spec target-id
+                                     :species/id (:gene/species target)}
+                            :type :gene.merge/conflct})))
+         (when (:gene/cgc-name src)
+           (throw (ex-info (str \"Gene to be killed has a CGC name, \"
+                                \"refusing to merge\")
+                            {:src-id src-id
+                             :src-cgc-name (:gene/cgc-name src)
+                             :type :gene.merge/conflict})))
+          (let [entid (partial d/entid db)
+                src-seq-name (:gene/sequence-name src)
+                none? #(every? nil? %)
+                uncloned-target? (none? ((juxt :gene/biotype :gene/sequence-name)
+                                         target))
+                [sid tid] (map :db/id [src target])
+                txes [[:db.fn/cas sid :gene/status
+                                      (entid (:gene/status src))
+                                      (entid :gene.status/dead)]
+                      [:db.fn/cas tid :gene/biotype
+                                      (entid (:gene/biotype target))
+                                      (entid target-biotype)]]]
+             (if uncloned-target?
+               (-> txes
+                   (conj [:db/retract sid :gene/sequence-name src-seq-name])
+                   (conj [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
+               txes))))"}}]

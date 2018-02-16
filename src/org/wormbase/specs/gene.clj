@@ -5,7 +5,9 @@
             [clojure.string :as str]
             [miner.strgen :as sg]
             [clojure.test :as t]
-            [org.wormbase.species :as ows]))
+            [org.wormbase.specs.biotype :as owsb]
+            [org.wormbase.species :as ows]
+            [org.wormbase.specs.species :as owss]))
 
 (def ^{:doc
        "Mapping of species name to name-typed valid identifier pattern."}
@@ -81,13 +83,11 @@
     (s/and string? (partial re-matches gene-id-regexp))
     #(sg/string-generator gene-id-regexp)))
 
-(s/def :gene/status (s/keys :req-un [:gene.status/id]))
-
 (s/def :gene/cgc-name (name-spec-with-gen :gene/cgc-name))
 
 (s/def :gene/sequence-name (name-spec-with-gen :gene/sequence-name))
 
-(s/def :gene/biotype (s/keys :req [:biotype/id]))
+(s/def :gene/biotype owsb/all-biotypes)
 
 (s/def :gene/species
   (s/with-gen
@@ -100,23 +100,58 @@
                    (map (partial apply array-map))
                    (set))))))
 
+(s/def :gene.status/dead boolean?)
+
+(s/def :gene.status/live boolean?)
+
+(s/def :gene.status/suppressed boolean?)
+
+(def all-statuses #{:gene.status/dead
+                    :gene.status/live
+                    :gene.status/suppressed})
+
+(s/def :gene/status all-statuses)
+
+(s/def ::status (s/or :db :gene/status
+                      :short (set (map (comp keyword name) all-statuses))
+                      :qualified all-statuses))
+
+(s/def ::cloned (s/and
+                 (s/keys :req [:gene/species :gene/biotype :gene/sequence-name]
+                         :opt [:gene/cgc-name
+                               :provenance/who
+                               :provenance/how
+                               :provenance/why])
+                         names-valid?))
+
+(s/def ::uncloned (s/and
+                   (s/keys :req [:gene/species :gene/cgc-name]
+                           :opt [:gene/cgc-name
+                                 :provenance/who
+                                 :provenance/how
+                                 :provenance/why])
+                   names-valid?))
+
+(s/def ::new (s/or :cloned ::cloned
+                   :uncloned ::uncloned))
+
 ;; Allow both cloned and un-cloned naming
 ;; species is *always* required
 ;;  * cloned genes don't neccesarily have a CGC name)
 ;;  * request for naming cloned gene must supply a "biotype" (class)
 
 ;; HOW is determined by user-agent, so not an input a client should provide.
-(s/def ::new (s/and (s/keys :opt [:gene/cgc-name
-                                  :provenance/who
-                                  :provenance/when
-                                  :provenance/why]
-                            :req [:gene/species
-                                  (or :gene/cgc-name
-                                      (and :gene/sequence-name
-                                           :gene/biotype))])
-                    names-valid?))
+;; (s/def ::new (s/and (s/keys :opt [:gene/cgc-name
+;;                                   :provenance/who
+;;                                   :provenance/when
+;;                                   :provenance/why]
+;;                             :req [:gene/species
+;;                                   (or :gene/cgc-name
+;;                                       (and :gene/sequence-name
+;;                                            :gene/biotype))])
+;;                     names-valid?))
 
-(s/def ::created (s/keys :req [:gene/id]))
+(s/def ::created (s/keys :req [:gene/id :gene/status]))
 
 (s/def ::update
   (s/and (s/keys :opt [:gene/biotype
@@ -130,11 +165,12 @@
                                 :gene/sequence-name))])
          names-valid?))
 
+
+(s/def ::species (->> name-patterns
+                      (keys)
+                      (map (comp keyword name))
+                      (set)))
+
 (s/def ::updated (s/keys :req [:gene/id]))
 
-(def db-specs [[:gene/id {:db/unique :db.unique/value}]
-               [:gene/cgc-name {:db/unique :db.unique/value}]
-               [:gene/sequence-name {:db/unique :db.unique/value}]
-               :gene/biotype
-               :gene/status
-               :gene/species])
+(s/def ::merge (s/keys :req [:gene/biotype]))

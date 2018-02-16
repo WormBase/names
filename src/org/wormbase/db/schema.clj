@@ -1,5 +1,6 @@
 (ns org.wormbase.db.schema
   (:require
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.spec.alpha :as s]
@@ -12,8 +13,8 @@
    [org.wormbase.specs.species :as owss]
    [org.wormbase.specs.provenance :as owsp]
    [org.wormbase.specs.template :as owst]
-   [org.wormbase.specs.user :as owsu]
-   [provisdom.spectomic.core :as spectomic]))
+   [org.wormbase.specs.user :as owsu])
+  (:import (java.io PushbackReader)))
 
 ;; TODO: not sure the canonical species listing should "live" here...
 (def worms ["Caenorhabditis elegans"
@@ -25,6 +26,43 @@
             "Brugia malayi"
             "Onchocerca volvulus"
             "Strongyloides ratti"])
+
+(defn definitions [db]
+  (d/q '[:find [?attr ...]
+         :in $ [?include-ns ...]
+         :where
+         [?e :db/valueType]
+         [?e :db/ident ?attr]
+         [(namespace ?attr) ?ns]
+         [(= ?ns ?include-ns)]]
+       db
+       #{"agent"
+         "biotype"
+         "gene"
+         "gene.status"
+         "provenance"
+         "species"
+         "template"
+         "user"}))
+
+(defn write-edn [conn]
+  (binding [*out* (-> "/tmp/schema.edn" io/file io/writer)]
+    (let [qr (-> conn d/db definitions)
+          se (->> qr
+                  (sort-by namespace)
+                  (map (comp d/touch
+                             #(d/entity (d/db conn) %)))
+                  (map #(into {} %))
+                  (map #(dissoc % :db/id))
+                  vec)]
+      (prn se))))
+
+(defn read-edn [readable]
+  (let [edn-read (partial edn/read {:readers *data-readers*})]
+    (-> readable
+        io/reader
+        (PushbackReader.)
+        (edn-read))))
 
 (def seed-data {:agents
                 [{:agent/id :agent/web-form}
@@ -53,23 +91,15 @@
 ;;       e.g: could be release number (WS\d+), or a timestamp-ed string
 (defn install [conn run-n]
   (let [schema-ident (keyword (str "schema-" run-n))]
-    (let [db-fns (-> (io/resource "schema/tx-fns.edn") slurp read-string)
-          db-schemas [owsa/db-specs
-                      owsb/db-specs
-                      owst/db-specs
-                      owsu/db-specs
-                      owsp/db-specs
-                      owss/db-specs
-                      owsg/db-specs]
-          all-db-specs (spectomic/datomic-schema (apply concat db-schemas))
+    (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
+          definitions (read-edn (io/resource "schema/definitions.edn"))
           seeds {::seed-data {:txes (-> seed-data vals vec)}}
-          txes (assoc-in {}
-                         [schema-ident :txes]
-                         (cons db-fns [all-db-specs]))]
+          init-schema [(concat db-fns definitions)]]
       ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
       ;;       relations without some data installed.
       ;;       i.e schema alone will not draw the arrows between refs.
       ;; (println txes)
-      (c/ensure-conforms conn txes)
+      ;; (c/ensure-conforms conn {schema-ident {:txes db-fns}})
+      (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
       (c/ensure-conforms conn seeds))))
 

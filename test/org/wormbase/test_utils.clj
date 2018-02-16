@@ -5,7 +5,8 @@
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.test :as t]   
+   [clojure.test :as t]
+   [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [java-time :as jt]
    [muuntaja.core :as muuntaja]
@@ -59,7 +60,7 @@
   (try
     (muuntaja/encode mformats "application/edn" x)
     (catch Exception e
-      (println "********** COULD NOT ENCODE " x "as EDN")
+      (log/trace "********** COULD NOT ENCODE " x "as EDN")
       (throw e))))
 
 (defn follow-redirect [state]
@@ -198,7 +199,7 @@
 (defn sample-to-txes
   "Convert a sample generated from a spec into a transactable form."  
   [sample]
-  (let [biotype (-> sample :gene/biotype :biotype/id)
+  (let [biotype (:gene/biotype sample)
         species (-> sample :gene/species vec first)
         assoc-if (fn [m k v]
                    (if v
@@ -211,6 +212,7 @@
         (dissoc :provenance/how)
         (dissoc :gene/species)
         (dissoc :gene/biotype)
+        (assoc :gene/status :gene.status/live)
         (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
@@ -220,16 +222,38 @@
                              when (jt/to-java-date (jt/instant))
                              user [:user/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
-        data (sample-to-txes data-samples)
-        prov (merge {:db/id "datomic.tx"
-                     :provenance/how how
-                     :provenance/when when
-                     :provenance/who user}
-                    (if why
-                      {:provenance/why why}))
-        tx-fixtures [data prov]]
-    @(d/transact conn tx-fixtures)
+        sample-data (if (map? data-samples)
+                      [data-samples]
+                      data-samples)]
+    (doseq [data-sample sample-data]
+      (let [data (sample-to-txes data-sample)
+            prov (merge {:db/id "datomic.tx"
+                         :provenance/how how
+                         :provenance/when when
+                         :provenance/who user}
+                        (if why
+                          {:provenance/why why}))
+            tx-fixtures [data prov]]
+        @(d/transact conn tx-fixtures)))
     (with-redefs [owdb/connection (fn [] conn)
                   owdb/db (fn speculative-db [_]
                             (d/db conn))]
-      (test-fn conn data prov))))
+      (test-fn conn))))
+
+(defn query-provenence [db gene-id]
+  (let [qr (d/q '[:find [?who ?when ?why ?how]
+                  :in $ ?gene-id
+                  :where
+                  [?e :gene/id ?gene-id ?tx]
+                  [?tx :provenance/who ?u-id]
+                  [(get-else $ ?u-id :user/email "nobody") ?who]
+                  [(get-else $ ?tx :provenance/when :unset) ?when]
+                  [(get-else $ ?tx :provenance/why "Dunno") ?why]
+                  [(get-else $ ?tx :provenance/how :who-knows?) ?how-id]
+                  [?how-id :agent/id ?how]]
+                (d/history db)
+                gene-id)]
+    (zipmap [:provenance/who
+             :provenance/when
+             :provenance/why
+             :provenance/how] qr)))
