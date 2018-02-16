@@ -36,13 +36,13 @@
          "template"
          "user"}))
 
-(defn write-edn [conn]
-  (binding [*out* (-> "/tmp/schema.edn" io/file io/writer)]
+(defn write-edn [conn & {:keys [out-path]
+                         :or {out-path "/tmp/schema.edn"}}]
+  (binding [*out* (-> out-path io/file io/writer)]
     (let [qr (-> conn d/db definitions)
           se (->> qr
                   (sort-by namespace)
-                  (map (comp d/touch
-                             #(d/entity (d/db conn) %)))
+                  (map (comp d/touch #(d/entity (d/db conn) %)))
                   (map #(into {} %))
                   (map #(dissoc % :db/id))
                   vec)]
