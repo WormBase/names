@@ -1,9 +1,10 @@
 (ns org.wormbase.specs.common
-  (:require [clojure.spec.alpha :as s]
-            [spec-tools.spec :as st]))
+  (:require [clojure.spec.alpha :as s]))
 
-(s/def ::spec-info st/map?)
+(s/def ::info map?)
 
-(s/def ::spec (s/keys :req-un [::spec-info]))
+(s/def ::spec (s/keys :req-un [::info]))
 
 (s/def ::error-response (s/keys :req-un [::spec]))
+
+(s/def ::conflict-response (s/keys :req-un [::info]))
