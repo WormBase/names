@@ -14,7 +14,7 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-;; TODO: change the generators to generated from either ::owsg/uncloned or ::owsg/cloned rather than ::owsg/update
+;; TODO: change the generators to generate from either ::owsg/uncloned or ::owsg/cloned rather than ::owsg/update
 
 (defn gene-samples [n]
   (assert (int? n))
