@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [org.wormbase.specs.agent :as ows-agent]
    [org.wormbase.specs.user :as ows-user]))
 
 ;; TODO: clients should provide zoned-date-time (times in UTC)
@@ -12,7 +13,7 @@
 
 (s/def :provenance/who ::ows-user/user)
 
-(s/def :provenance/how (s/keys :req-un [:agent/id]))
+(s/def :provenance/how (s/keys :req [:agent/id]))
 
 (s/def :provenance/why (s/and string? (complement str/blank?)))
 

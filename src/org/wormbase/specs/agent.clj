@@ -8,7 +8,7 @@
 (def all-agents #{:agent/script
                   :agent/web-form})
 
-(s/def ::agents all-agents)
+(s/def ::agent all-agents)
 
-(s/def :agent/id ::agents)
+(s/def :agent/id ::agent)
 
