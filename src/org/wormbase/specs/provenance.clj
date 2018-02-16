@@ -13,7 +13,7 @@
 
 (s/def :provenance/who ::ows-user/user)
 
-(s/def :provenance/how (s/keys :req-un [:agent/id]))
+(s/def :provenance/how (s/keys :req [:agent/id]))
 
 (s/def :provenance/why (s/and string? (complement str/blank?)))
 
