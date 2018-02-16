@@ -1,7 +1,6 @@
 (ns org.wormbase.specs.species
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [clojure.string :as str]
             [miner.strgen :as sg]))
 
 (def id-regexp #"[a-z]{1}-[a-z]+$")
@@ -31,5 +30,3 @@
            #(re-matches latin-name-regexp %))
     #(sg/string-generator latin-name-regexp)))
 
-(def db-specs [[:species/id {:db/unique :db.unique/value}]
-               [:species/latin-name {:db/unique :db.unique/value}]])

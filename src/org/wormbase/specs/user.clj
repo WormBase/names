@@ -1,23 +1,17 @@
 (ns org.wormbase.specs.user
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :as str]
-            [clj-uuid :as uuid]
-            [spec-tools.spec :as sts]
-            [miner.strgen :as sg]
-            [spec-tools.spec :as st]
-            [datomic.api :as d]
-            [clojure.test :as t])
+            [miner.strgen :as sg])
   (:import (java.util UUID)))
 
 ;; TODO: generators for these specs.
 
-(s/def ::name (s/and sts/string? not-empty))
+(s/def ::name (s/and string? not-empty))
 
 (def email-regexp #"[a-z0-9][a-z0-9.]+?@wormbase\.org")
 
 (s/def :user/email
   (s/with-gen
-    (s/and sts/string? #(re-matches email-regexp %))
+    (s/and string? #(re-matches email-regexp %))
     #(sg/string-generator email-regexp)))
 
 
@@ -28,7 +22,7 @@
                                  :override-nomenclature})
 
 (s/def ::permission (s/with-gen
-                      (s/and sts/keyword? ::available-permissions)
+                      (s/and keyword? ::available-permissions)
                       #(s/gen ::available-permissions)))
 
 (s/def ::permissions (s/coll-of ::permission :kind set? :min-count 1))
@@ -55,6 +49,3 @@
 (s/def ::created (s/keys :req [::users]))
 
 (s/def ::identified (s/keys :req [::name :user/email]))
-
-(def db-specs [[:user/email {:db/unique :db.unique/value}]
-                :user/roles])
