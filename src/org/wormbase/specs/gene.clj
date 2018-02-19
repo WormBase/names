@@ -168,3 +168,10 @@
 (s/def ::updated (s/keys :req [:gene/id]))
 
 (s/def ::merge (s/keys :req [:gene/biotype]))
+
+(s/def ::product (s/keys :req [:gene/sequence-name :gene/biotype]))
+
+(s/def ::split (s/keys :req [:gene/biotype]
+                       :req-un [::product]
+                       ;:opt [:gene/biotype]
+                       ))

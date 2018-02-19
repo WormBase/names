@@ -20,7 +20,7 @@
    "(some->> (d/datoms db :avet ident)
              (sort-by (comp d/tx->t :tx))
              (last)
-             (:v))"}}
+             (:v))"}} 
 
  {:db/ident :wormbase.tx-fns/latest-id-number
   :db/doc
@@ -29,17 +29,15 @@
   {:params [db ident]
    :lang "clojure"
    :code
-   "(if-let [latest-identifier (d/invoke db
-                                         :wormbase.tx-fns/latest-id
-                                         db
-                                         ident)]
-        (->> (re-seq #\"[0]+(\\d+)\" latest-identifier)
-             (flatten)
-             (last)
-             (read-string))
-        0)"}}
+   "(if-not (d/entid db ident)
+     (throw (ex-info \"Invalid ident\" {:ident ident}))
+     (or (some->> (d/invoke db :wormbase.tx-fns/latest-id db ident)
+                  (re-seq #\"0*(\\d+)\")
+                  (flatten)
+                  (last)
+                  (read-string)) 0))"}}
 
- {:db/ident :wormbase.tx-fns/new-name
+ {:db/ident :wormbase.tx-fns/new
   :db/doc "Allocate a new name for entity"
   :db/fn #db/fn
   {:lang "clojure"
@@ -61,8 +59,8 @@
                         (-> (assoc rec ident next-identifier)
                             (assoc :gene/species species-lur)
                             (assoc :gene/status :gene.status/live))))
-           new-name (identify name-record)]
-       [new-name])
+           new (identify name-record)]
+       [new])
      (let [problems (s/explain-data spec name-record)]
        (throw (ex-info \"Not valid according to spec.\"
                        {:problems (s/explain-data spec name-record)
@@ -199,4 +197,30 @@
                (-> txes
                    (conj [:db/retract sid :gene/sequence-name src-seq-name])
                    (conj [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
-               txes))))"}}]
+               txes))))"}}
+ {:db/ident :wormbase.tx-fns/split-gene
+  :db/doc "Split gene `src` into a new gene."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.spec.alpha :as s]]
+   :params [db gene-id data split-spec]
+   :code
+   "(if (s/valid? split-spec data)
+      (let [{biotype :gene/biotype product :product} data
+            {p-seq-name :gene/sequence-name p-bt :gene/biotype} product
+            entid (partial d/entid db)
+            bt-id (entid biotype)
+            src (d/entity db [:gene/id gene-id])
+            existing-bt-id (-> src :gene/biotype entid)
+            species (-> src :gene/species :species/id)
+            tx-data [[:db.fn/cas [:gene/id gene-id] :gene/biotype existing-bt-id bt-id]
+                    [:wormbase.tx-fns/new
+                     \"gene\"
+                     {:gene/sequence-name p-seq-name
+                      :gene/biotype p-bt
+                      :gene/species {:species/id species}}
+                      :org.wormbase.specs.gene/new]]]
+        tx-data)
+        (throw (ex-info \"Invalid split request\" 
+                        {:problems (s/explain-data split-spec data)
+                         :type ::validation-error})))"}}]
