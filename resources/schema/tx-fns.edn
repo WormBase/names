@@ -149,8 +149,8 @@
                         {:src-id src-id :target-id target-id})))
       (when-not (s/valid? :gene/biotype target-biotype)
          (throw (ex-info \"Invalid biotype\"
-                          {:problems (s/explain-data :gene/biotype
-                                                     target-biotype)})))
+                          {:problems (s/explain-data :gene/biotype target-biotype)
+                           :type ::validation-error})))
       (when (some nil? (vals valids))
         (let [invalids (some->> valids
                                 (mapv (fn [[k v]]
@@ -162,11 +162,17 @@
                             :type ::validation-error
                             :invalid-entities invalids}))))
        (let [[src target] (map #(d/entity db %) participants)]
+         (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
+                                  [src target])]
+           (when-not (empty? deads)
+             (throw (ex-info \"Both merge participants must be live\"
+                             {:type :org.wormbase.db/conflict
+                              :dead-genes (map :gene/id deads)}))))
          (when (some nil? [src target])
            (throw (ex-info \"Merge participant does not exist!\"
                             {:missing (remove (comp not nil?)
                                               (map :gene/id [src target]))
-                             :type ::validation-error
+                             :type :org.wormbase.db/missing
                              :participants participants})))
          (when (reduce not= (map (comp :species/id :gene/species) [src target]))
            (throw (ex-info \"Refusing to merge: genes have differing species\"
@@ -174,13 +180,13 @@
                                   :species/id (:gene/species src)}
                             :target {id-spec target-id
                                      :species/id (:gene/species target)}
-                            :type :gene.merge/conflct})))
+                            :type :org.wormbase.db/conflict})))
          (when (:gene/cgc-name src)
            (throw (ex-info (str \"Gene to be killed has a CGC name, \"
                                 \"refusing to merge\")
                             {:src-id src-id
                              :src-cgc-name (:gene/cgc-name src)
-                             :type :gene.merge/conflict})))
+                             :type :org.wormbase.db/conflict})))
           (let [entid (partial d/entid db)
                 src-seq-name (:gene/sequence-name src)
                 none? #(every? nil? %)
@@ -192,12 +198,15 @@
                                       (entid :gene.status/dead)]
                       [:db.fn/cas tid :gene/biotype
                                       (entid (:gene/biotype target))
-                                      (entid target-biotype)]]]
-             (if uncloned-target?
-               (-> txes
-                   (conj [:db/retract sid :gene/sequence-name src-seq-name])
-                   (conj [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
-               txes))))"}}
+                                      (entid target-biotype)]]
+                tx-data (if uncloned-target?
+                          (-> txes
+                              (conj
+                               [:db/retract sid :gene/sequence-name src-seq-name])
+                              (conj
+                               [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
+                          txes)]
+             tx-data)))"}}
  {:db/ident :wormbase.tx-fns/split-gene
   :db/doc "Split gene `src` into a new gene."
   :db/fn #db/fn
