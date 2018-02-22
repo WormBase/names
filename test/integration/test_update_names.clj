@@ -44,13 +44,15 @@
   (t/testing (str "Provenance is recorded for successful transactions")
     (let [identifier (first (gen/sample (s/gen :gene/id) 1))
           sample (first (gen/sample (s/gen ::owsg/update) 1))
-          sample-data (merge sample {:gene/id identifier})
+          sample-data (merge sample {:gene/id identifier
+                                     :gene/status :gene.status/live})
           species-id (:species/id sample)
           reason "Updating a cgc-name records provenance"]
       (tu/with-fixtures
         sample-data
         (fn [conn]
           (let [payload (-> sample-data
+                            (dissoc :gene/status)
                             (assoc :gene/cgc-name "cgc-1")
                             (assoc :provenance/who
                                    [:user/email "tester@wormbase.org"]))
@@ -59,7 +61,7 @@
                   [status body] response
                   ent (d/entity (d/db conn) [:gene/id identifier])]
               (tu/status-is? status 200 (pr-str response))
-              (let [act-prov (tu/query-provenence db identifier)]
+              (let [act-prov (tu/query-provenance conn identifier)]
                 (t/is (= (:provenance/how act-prov) :agent/script)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
