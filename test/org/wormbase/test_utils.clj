@@ -2,6 +2,8 @@
   (:require
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
+   [clojure.spec.alpha :as s]
+   [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
    [clojure.tools.logging :as log]
@@ -10,6 +12,7 @@
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
+   [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
    [spec-tools.core :as stc]
    [datomic.api :as d])
@@ -210,14 +213,13 @@
         (dissoc :provenance/how)
         (dissoc :gene/species)
         (dissoc :gene/biotype)
-        (assoc :gene/status :gene.status/live)
         (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures [data-samples test-fn
-                     & {:keys [how when why user]
+                     & {:keys [how whence why user status]
                         :or {how [:agent/id :agent/script]
-                             when (jt/to-java-date (jt/instant))
+                             whence (jt/to-java-date (jt/instant))
                              user [:user/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
         sample-data (if (map? data-samples)
@@ -227,31 +229,50 @@
       (let [data (sample-to-txes data-sample)
             prov (merge {:db/id "datomic.tx"
                          :provenance/how how
-                         :provenance/when when
+                         :provenance/when whence
                          :provenance/who user}
-                        (if why
+                        (when-not (:gene/status data)
+                          {:gene/status :gene.status/live})
+                        (when why
                           {:provenance/why why}))
             tx-fixtures [data prov]]
-        @(d/transact conn tx-fixtures)))
+        @(d/transact-async conn tx-fixtures)))
     (with-redefs [owdb/connection (fn [] conn)
                   owdb/db (fn speculative-db [_]
                             (d/db conn))]
       (test-fn conn))))
 
-(defn query-provenence [db gene-id]
-  (let [qr (d/q '[:find [?who ?when ?why ?how]
+(defn query-provenance [conn gene-id]
+  (some->> (d/q '[:find [?tx ?who ?when ?why ?how]
                   :in $ ?gene-id
                   :where
-                  [?e :gene/id ?gene-id ?tx]
+                  [?gene-id :gene/id _ ?tx]
                   [?tx :provenance/who ?u-id]
                   [(get-else $ ?u-id :user/email "nobody") ?who]
                   [(get-else $ ?tx :provenance/when :unset) ?when]
                   [(get-else $ ?tx :provenance/why "Dunno") ?why]
-                  [(get-else $ ?tx :provenance/how :who-knows?) ?how-id]
+                  [(get-else $ ?tx :provenance/how :unset) ?how-id]
                   [?how-id :agent/id ?how]]
-                (d/history db)
-                gene-id)]
-    (zipmap [:provenance/who
-             :provenance/when
-             :provenance/why
-             :provenance/how] qr)))
+                (-> conn d/db d/history)
+                [:gene/id gene-id])
+           (zipmap [:tx-id
+                    :provenance/who
+                    :provenance/when
+                    :provenance/why
+                    :provenance/how])))
+
+(defn gene-samples [n]
+  (assert (int? n))
+  (let [gene-refs (->> n
+                       (gen/sample (s/gen :gene/id))
+                       (map (partial array-map :gene/id)))
+        gene-recs (gen/sample (s/gen ::owsg/update) n)
+        data-samples (->> (interleave gene-refs gene-recs)
+                          (partition n)
+                          (map (partial apply merge)))
+        gene-ids (map :gene/id (flatten gene-refs))]
+    (if-let [dup-seq-names? (->> data-samples
+                                 (map :gene/sequence-name)
+                                 (reduce =))]
+      (recur n)
+      [gene-ids gene-recs data-samples])))
