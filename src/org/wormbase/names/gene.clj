@@ -48,10 +48,13 @@
 
 (defn assoc-provenence [request payload]
   (let [prov (select-keys-with-ns payload "provenance")
-        who (:provenance/who prov)
-
+        who (or (:provenance/who prov)
+                (d/entity (:db request)
+                          [:user/email (-> request :identity :email)]))
         ;; TODO (!important): determine :provenance/how via credentials
         ;; used, not user-agent string.
+        ;; Perhaps client shuld send header:
+        ;; "X-WormBase-GAppsID <google-apps-id>"
         user-agent (get-in request [:headers "user-agent"])
         is-client-script? (and user-agent
                                (str/includes? user-agent "script"))]
@@ -89,7 +92,7 @@
         spec ::owsg/new
         txes [[:wormbase.tx-fns/new "gene" name-record spec]
               prov]]
-    (let [tx-result @(d/transact (:conn request) txes)
+    (let [tx-result @(d/transact-async (:conn request) txes)
           db (:db-after tx-result)
           new-id (extract-id tx-result)
           ent (d/entity db [:gene/id new-id])
@@ -121,15 +124,18 @@
   (let [conn (:conn request)
         data (:body-params request)
         target-biotype (:gene/biotype data)
-        prov (-> (assoc-provenence request data)
-                 (assoc :provenance/merged-from [:gene/id source-id]))
-        tx-result @(d/transact conn
-                               [[:wormbase.tx-fns/merge-genes
-                                 source-id
-                                 target-id
-                                 :gene/id
-                                 target-biotype]
-                                prov])]
+        prov (-> request
+                 (assoc-provenence data)
+                 (assoc :provenance/merged-from [:gene/id source-id])
+                 (assoc :provenance/merged-into [:gene/id target-id]))
+        tx-result @(d/transact-async
+                    conn
+                    [[:wormbase.tx-fns/merge-genes
+                      source-id
+                      target-id
+                      :gene/id
+                      target-biotype]
+                     prov])]
     (if-let [db (:db-after tx-result)]
       (let [ent (d/entity (:db-after tx-result) [:gene/id target-id])]
         (resp/ok {:updated (ownu/entity->map ent)}))
@@ -137,17 +143,20 @@
 
 (defn split-into [request id]
   (let [conn (:conn request)
-        params (some-> request :body-params)
-        new-biotype (:gene/biotype params)
+        data (some-> request :body-params)
+        new-biotype (:gene/biotype data)
         [prod-seq-name prod-biotype] (map
-                                      #(get-in params [:product %])
+                                      #(get-in data [:product %])
                                       [:gene/sequence-name
                                        :gene/biotype])
-        tx-result @(d/transact conn [[:wormbase.tx-fns/split-gene
-                                      id
-                                      new-biotype
-                                      prod-seq-name
-                                      prod-biotype]])]
+        prov (-> request
+                 (assoc-provenence data)
+                 (assoc :provenance/split-into [:gene/id id]))
+        tx-result @(d/transact-async conn [[:wormbase.tx-fns/split-gene
+                                            id
+                                            new-biotype
+                                            prod-seq-name
+                                            prod-biotype]])]
     (let [db (:db-after tx-result)
           [ent product] (map #(d/entity db [:gene/id %]) [])]
       nil)))
@@ -224,7 +233,7 @@
                       409 {:schema {:conflict ::owsc/conflict-response}}}
           :handler
           (fn [request]
-            (merge-from request another-id id))}}))
+            (merge-from request id another-id))}}))
      (sweet/context "/split/:id" []
        (sweet/resource
         {:post
