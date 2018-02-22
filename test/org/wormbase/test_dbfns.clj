@@ -24,27 +24,11 @@
       (gen/sample 1)
       first))
 
-(defn gene-samples [n]
-  (assert (int? n))
-  (let [gene-refs (->> n
-                       (gen/sample (s/gen :gene/id))
-                       (map (partial array-map :gene/id)))
-        gene-recs (gen/sample (s/gen ::owsg/update) n)
-        data-samples (->> (interleave gene-refs gene-recs)
-                          (partition n)
-                          (map (partial apply merge)))
-        gene-ids (map :gene/id (flatten gene-refs))]
-    (if-let [dup-seq-names? (->> data-samples
-                                 (map :gene/sequence-name)
-                                 (reduce =))]
-      (recur n)
-      [gene-ids gene-recs data-samples])))
-
 (t/deftest test-merge-genes
   (let [db (d/db owdb/conn)
         merge-genes (partial d/invoke db :wormbase.tx-fns/merge-genes)]
     (t/testing "Cannot merge two genes with the same identifier."
-      (let [[[src-id _] gene-recs data-samples] (gene-samples 2)
+      (let [[[src-id _] gene-recs data-samples] (tu/gene-samples 2)
             data-sample (first data-samples)]
         (t/is (thrown-with-msg? ExceptionInfo
                                 #"cannot.*(same|identical)"
@@ -62,7 +46,7 @@
                                            :gene/id
                                            nil))))
     (t/testing "Gene to be eaten cannot have a GGC name"
-      (let [[[src-id target-id] gene-recs samples] (gene-samples 2)
+      (let [[[src-id target-id] gene-recs samples] (tu/gene-samples 2)
             [sample-1 sample-2] samples
             data-samples [sample-1
                           (assoc sample-2
@@ -80,7 +64,7 @@
                                 :gene/id
                                 :biotype/transposon)))))))
     (t/testing "Both merge participants must have the same species"
-      (let [[[src-id target-id] _ samples] (gene-samples 2)
+      (let [[[src-id target-id] _ samples] (tu/gene-samples 2)
             [sample-1 sample-2] samples
             data-samples [(-> sample-1
                               (assoc :gene/species
@@ -102,7 +86,7 @@
                                               :gene/id
                                               :biotype/transposon))))))))
     (t/testing "Both merge participants must exist in DB"
-      (let [[[src-id target-id] _ data-samples] (gene-samples 2)]
+      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)]
         (t/is
          (thrown-with-msg? ExceptionInfo
                            #"Merge participant does not exist"
@@ -112,7 +96,7 @@
                                         :gene/id
                                         :biotype/transposon)))))
     (t/testing "Both source and target of merge should be live"
-      (let [[[src-id target-id] _ data-samples] (gene-samples 2)
+      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
             [sample-1 sample-2] [(-> data-samples
                                      first
                                      (assoc :gene/status :gene.status/dead)
@@ -125,20 +109,19 @@
         (tu/with-fixtures
           samples
           (fn check-participants-both-live [conn]
-            (let [txes (merge-genes (d/db conn)
-                                    src-id
-                                    target-id
-                                    :gene/id
-                                    :biotype/transposon)
-                  tx-res (d/with (d/db conn) txes)]
-              (t/is (map? tx-res))
-              (t/is (:db-after tx-res)))))))
+            (t/is (thrown-with-msg? ExceptionInfo
+                                    #".*must be live.*"
+                                    (merge-genes (d/db conn)
+                                                 src-id
+                                                 target-id
+                                                 :gene/id
+                                                 :biotype/transposon)))))))
     (t/testing (str "When merging cloned to uncloned, "
                     "sequence name is transfered: "
                     "eaten gene's sequence name should be retracted.")
       (let [[[src-id target-id]
              gene-recs
-             [cloned uncloned]] (gene-samples 2)
+             [cloned uncloned]] (tu/gene-samples 2)
             data-samples [(dissoc cloned :gene/cgc-name)
                           (-> uncloned
                               (dissoc :gene/sequence-name)
@@ -168,7 +151,7 @@
                     "Eaten gene's sequence name is left intact.")
             (let [[[src-id target-id]
                    gene-recs
-                   [cloned-1 cloned-2]] (gene-samples 2)
+                   [cloned-1 cloned-2]] (tu/gene-samples 2)
                   tgt-seq-name (:gene/sequence-name cloned-2)
                   data-samples [(dissoc cloned-1 :gene/cgc-name)
                                 (-> cloned-2
@@ -194,7 +177,7 @@
                    (str "Target sequence name should be preserved"
                         (pr-str (d/touch tgt)))))))))
     (t/testing "Valid merge request results in correct TX form"
-      (let [[[src-id target-id] _ data-samples] (gene-samples 2)
+      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
             [sample-1 sample-2] [(-> data-samples
                                      first
                                      (dissoc :gene/cgc-name)
@@ -258,7 +241,7 @@
                           {:gene/sequence-name "ABC.1"}}
                          ::owsg/split))))
     (t/testing "a valid split operation"
-      (let [[[gene-id] _ [_ sample]] (gene-samples 1)
+      (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
             p-seq-name (-> sample
                            :gene/species
                            :species/id
@@ -299,7 +282,7 @@
         (fn no-gnmes [conn]
           (t/is (zero? (latest-id-number (d/db conn) :gene/id))))))
     (t/testing "When we have data"
-      (let [[[ids] _ samples] (gene-samples 2)]
+      (let [[[ids] _ samples] (tu/gene-samples 2)]
         (tu/with-fixtures
           samples
           (fn latest-id-with-data [conn]
