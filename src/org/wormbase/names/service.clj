@@ -6,7 +6,6 @@
    [mount.core :as mount]
    [muuntaja.core :as muuntaja]
    [org.wormbase.db :as own-db]
-   [org.wormbase.db.schema :as own-db-schema]
    [org.wormbase.names.auth :as own-auth]
    [org.wormbase.names.errhandlers :as own-eh]
    [org.wormbase.names.gene :as own-gene]
@@ -89,8 +88,8 @@
 
       ;; TODO: this shouldn't really be here...spec not tight enough?
       datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error
-
-      ::own-db-schema/validation-error own-eh/handle-validation-error
+      :user/validation-error own-eh/handle-validation-error
+      ::own-db/validation-error own-eh/handle-validation-error
       ::ex/request-validation own-eh/handle-request-validation
       ::ex/default own-eh/handle-unexpected-error}}
     :swagger swagger-ui}
