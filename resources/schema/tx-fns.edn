@@ -146,7 +146,9 @@
                          (map (partial s/valid? id-spec) participants))]
       (when (= src-id target-id)
         (throw (ex-info \"Source and target ids cannot be the same!\"
-                        {:src-id src-id :target-id target-id})))
+                        {:src-id src-id
+                         :target-id target-id
+                         :type ::validation-error})))
       (when-not (s/valid? :gene/biotype target-biotype)
          (throw (ex-info \"Invalid biotype\"
                           {:problems (s/explain-data :gene/biotype target-biotype)

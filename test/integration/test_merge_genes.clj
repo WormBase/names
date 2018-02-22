@@ -42,7 +42,7 @@
                     :provenance/who
                     :provenance/why])))
 
-(defn gene-merge
+(defn merge-genes
   [payload src-id target-id
    & {:keys [current-user]
       :or {current-user "tester@wormbase.org"}}]
@@ -61,21 +61,21 @@
 
 (t/deftest must-meet-spec
   (t/testing "Request to merge genes must meet spec."
-    (let [response (gene-merge {} "WBGene00000001" "WBGene00000002")
+    (let [response (merge-genes {} "WBGene00000001" "WBGene00000002")
           [status body] response]
       (status-is? status 400 body)
       (t/is (contains? (parse-body body) :problems) (pr-str body))))
   (t/testing "Species should always be required when creating gene name."
-    (let [[status body] (gene-merge {:gene/cgc-name "abc-1"}
-                                    "WB1"
-                                    "WB2")]
+    (let [[status body] (merge-genes {:gene/cgc-name "abc-1"}
+                                     "WB1"
+                                     "WB2")]
       (status-is? status 400 (format "Body: " body)))))
 
 (t/deftest response-codes
   (t/testing "404 for gene missing"
-    (let [[status body] (gene-merge {:gene/biotype :biotype/transposon}
-                                    "WB1"
-                                    "WB2")]
+    (let [[status body] (merge-genes {:gene/biotype :biotype/transposon}
+                                     "WB1"
+                                     "WB2")]
       (t/is (= status 404) (pr-str body))))
   (t/testing "409 for conflicting state"
     (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
@@ -89,23 +89,28 @@
                                 (assoc :gene/status :gene.status/live)
                                 (dissoc :gene/sequence-name)
                                 (dissoc :gene/biotype))]]
-        (tu/with-fixtures
-          samples
-          (fn check-conflict-when-both-not-live [conn]
-            (let [db (d/db conn)
-                  entid (partial d/entid db)
-                  entity (partial d/entity db)
-                  lur [:gene/id target-id]]
-              @(d/transact-async conn [[:db.fn/cas
-                                        lur
-                                        :gene/status
-                                        (-> lur entity :gene/status entid)
-                                        (entid :gene.status/dead)]]))
-            (let [[status body] (gene-merge {:gene/biotype :biotype/cds}
-                                            src-id
-                                            target-id)]
-              (t/is (= status 409) (pr-str body)))))))
-  (t/testing "400 for validation errors"))
+      (tu/with-fixtures
+        samples
+        (fn check-conflict-when-both-not-live [conn]
+          (let [db (d/db conn)
+                entid (partial d/entid db)
+                entity (partial d/entity db)
+                lur [:gene/id target-id]]
+            @(d/transact-async conn [[:db.fn/cas
+                                      lur
+                                      :gene/status
+                                      (-> lur entity :gene/status entid)
+                                      (entid :gene.status/dead)]]))
+          (let [[status body] (merge-genes {:gene/biotype :biotype/cds}
+                                           src-id
+                                           target-id)]
+            (t/is (= status 409) (pr-str body)))))))
+  (t/testing "400 for validation errors"
+    (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
+                                     "WBGene00000001"
+                                     "WBGene00000002")]
+      (t/is (= status 400) (pr-str body))
+      (t/is (re-seq #"Invalid.*biotype" (:message body))))))
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
@@ -122,7 +127,7 @@
                 params (-> {:gene/biotype :biotype/transposon}
                            (cons gene-ids)
                            (concat [:current-user user-email]))
-                response (apply gene-merge params)
+                response (apply merge-genes params)
                 prov (query-provenance conn
                                        (first gene-ids)
                                        (second gene-ids))
