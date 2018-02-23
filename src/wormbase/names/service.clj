@@ -51,11 +51,12 @@
     "//online.swagger.io/validator"))
 
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
-  {:ui "/api"
+  {:ui "/"
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
-   {:info
+   {:basePath "/api"
+    :info
     {:title "Wormbase name service"
      :description "Provides naming operations for WormBase entities."}
 
@@ -84,29 +85,28 @@
                  wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
-   (sweet/context "/api" []
+   (sweet/context "/" []
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?
      wn-person/routes
      wn-gene/routes)))
 
-(def ^{:doc "The main application."} app
+(defn- wrap-client-side-routes
+  "handle endpoints that need to be routed via client-side routing"
+  [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (if response
+        response
+        (http-response/resource-response "client_build/index.html")))))
 
-  (-> (sweet/routes
-       api
-      ; (route/not-found "aaa")
-       )
-      ; (http-response/found "/index.html")
+(def ^{:doc "The main application."} app
+  (-> (sweet/context "/api" [] api)
       (ring-resource/wrap-resource "client_build")
       (ring-content-type/wrap-content-type)
-      )
-
-  ;; (->
-  ;;     (ring-file/wrap-file "client/build")
-  ;;     (ring-file/wrap-file "client/build/static/media")
-  ;;  )
-  )
+      (wrap-client-side-routes)
+      ))
 
 (defn init
   "Entry-point for ring server initialization."
