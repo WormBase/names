@@ -11,7 +11,7 @@
          :host "0.0.0.0"
          :init wormbase.names.service/init}
   :source-paths ["src"]
-  :resource-paths ["resources"]
+  :resource-paths ["resources" "client/build"]
   :target-path "target/%s"
   :main ^:skip-aot wormbase.names.import-genes
   :monkeypatch-clojure-test false
