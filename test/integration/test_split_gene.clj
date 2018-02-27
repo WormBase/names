@@ -173,6 +173,7 @@
             (t/is (= (:provenance/split-from prov) gene-id))
             (t/is (= (:provenance/split-into prov) (:gene/id prod)))
             (t/is (= (:provenance/who prov) user-email))
+            (t/is (= (:gene/species src) (:gene/species prod)))
             ;; TODO: this should be dependent on the client used for
             ;;       the request.  at the momment, defaults to
             ;;       web-form.
