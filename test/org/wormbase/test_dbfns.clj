@@ -193,15 +193,21 @@
               (t/is (map? tx-res))
               (t/is (:db-after tx-res)))))))))
 
+(defn- gen-prod-seq-name [sample]
+  (let [sn (-> sample
+               :gene/species
+               :species/id
+               tu/gen-valid-seq-name-for-species)]
+    (if (= sn (:gene/sequence-name sample))
+      (recur sample)
+      sn)))
+
 (t/deftest test-split-genes
   (let [db (d/db owdb/conn)
         split-gene (partial d/invoke db :wormbase.tx-fns/split-gene)]
     (t/testing "a valid split operation"
       (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
-            p-seq-name (-> sample
-                           :gene/species
-                           :species/id
-                           tu/gen-valid-seq-name-for-species)
+            p-seq-name (gen-prod-seq-name sample)
             bt (-> :gene/biotype s/gen (gen/sample 1) first)
             data (assoc {:gene/biotype bt}
                         :product {:gene/sequence-name p-seq-name
