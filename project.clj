@@ -2,9 +2,10 @@
   :description "FIXME: write description"
   :dependencies
   [[org.clojure/clojure "1.9.0"]
-   ;; TODO: figure out how to enable console logging
-   ;;       when this package is added.
-   [org.clojure/tools.logging "0.4.0"]
+   ;; TODO: figure out how to configure logging
+   ;; When this package is added, no logging statements appear in
+   ;; console by default (compojure-api integration)
+   ;; [org.clojure/tools.logging "0.4.0"]
    [org.clojure/core.cache "0.6.5"]
    [aero "1.1.2"]
    [bk/ring-gzip "0.2.1"]
@@ -26,6 +27,7 @@
                                                        instaparse]]
    [metosin/spec-tools "0.5.1"]
    [mount "0.1.12"]
+   ;; [phrase "0.3-alpha3"] TODO: use for better API error messages.
    [ring/ring-codec "1.1.0"]
    [ring/ring-core "1.6.3"]
    [ring/ring-defaults "0.3.1"]

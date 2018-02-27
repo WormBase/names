@@ -1,24 +1,23 @@
 (ns org.wormbase.names.service
   (:require
    [compojure.api.exception :as ex]
+   [compojure.api.middleware :as mw]
    [compojure.api.sweet :as sweet]
    [environ.core :as environ]
    [mount.core :as mount]
+   [muuntaja.core :as m]
    [muuntaja.core :as muuntaja]
-   [org.wormbase.db :as own-db]
+   [org.wormbase.db :as ow-db]
    [org.wormbase.names.auth :as own-auth]
+   [org.wormbase.names.auth.restructure] ;; Included for side effects
    [org.wormbase.names.errhandlers :as own-eh]
    [org.wormbase.names.gene :as own-gene]
    [org.wormbase.names.user :as own-user]
    [org.wormbase.specs.auth :as auth-spec]
-   [org.wormbase.names.auth.restructure] ;; Included for side effects
    [ring.middleware.gzip :as ring-gzip]
-   [ring.util.http-response :as http-response]
-   [compojure.api.middleware :as mw]
-   [muuntaja.core :as m])
+   [ring.util.http-response :as http-response])
   (:import
    (java.util.concurrent ExecutionException)))
-
 
 (def default-format "application/edn")
 
@@ -80,18 +79,19 @@
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
                  own-auth/wrap-app-session
-                 own-db/wrap-datomic
+                 ow-db/wrap-datomic
                  wrap-not-found]
     :exceptions
     {:handlers
      {ExecutionException own-eh/handle-txfn-error
+      :user/validation-error own-eh/handle-validation-error
+      ::ow-db/missing own-eh/handle-missing
+      ::ow-db/validation-error own-eh/handle-validation-error
+      ::ex/request-validation own-eh/handle-request-validation
+      ::ex/default own-eh/handle-unexpected-error
 
       ;; TODO: this shouldn't really be here...spec not tight enough?
-      datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error
-      :user/validation-error own-eh/handle-validation-error
-      ::own-db/validation-error own-eh/handle-validation-error
-      ::ex/request-validation own-eh/handle-request-validation
-      ::ex/default own-eh/handle-unexpected-error}}
+      datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error}}
     :swagger swagger-ui}
    (sweet/context "" []
      ;; TODO: is it right to be

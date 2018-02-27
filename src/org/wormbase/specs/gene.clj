@@ -172,6 +172,4 @@
 (s/def ::product (s/keys :req [:gene/sequence-name :gene/biotype]))
 
 (s/def ::split (s/keys :req [:gene/biotype]
-                       :req-un [::product]
-                       ;:opt [:gene/biotype]
-                       ))
+                       :req-un [::product]))

@@ -65,10 +65,8 @@
           [status body] response]
       (status-is? status 400 body)
       (t/is (contains? (parse-body body) :problems) (pr-str body))))
-  (t/testing "Species should always be required when creating gene name."
-    (let [[status body] (merge-genes {:gene/cgc-name "abc-1"}
-                                     "WB1"
-                                     "WB2")]
+  (t/testing "Target biotype always required when merging genes."
+    (let [[status body] (merge-genes {} "WB1" "WB2")]
       (status-is? status 400 (format "Body: " body)))))
 
 (t/deftest response-codes

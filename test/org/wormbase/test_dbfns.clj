@@ -14,16 +14,6 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-;; TODO: change the generators to generated from either ::owsg/uncloned or ::owsg/cloned rather than ::owsg/update
-
-(defn- gen-valid-seq-name-for-species [species]
-  (-> species
-      owsg/name-patterns
-      :gene/sequence-name
-      sg/string-generator
-      (gen/sample 1)
-      first))
-
 (t/deftest test-merge-genes
   (let [db (d/db owdb/conn)
         merge-genes (partial d/invoke db :wormbase.tx-fns/merge-genes)]
@@ -99,23 +89,26 @@
       (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
             [sample-1 sample-2] [(-> data-samples
                                      first
-                                     (assoc :gene/status :gene.status/dead)
+                                     (assoc :gene/status
+                                            :gene.status/dead)
                                      (dissoc :gene/cgc-name))
                                  (second data-samples)]
             samples [sample-1 (-> sample-2
-                                  (assoc :gene/species (:gene/species sample-1))
+                                  (assoc :gene/species
+                                         (:gene/species sample-1))
                                   (dissoc :gene/sequence-name)
                                   (dissoc :gene/biotype))]]
         (tu/with-fixtures
           samples
           (fn check-participants-both-live [conn]
-            (t/is (thrown-with-msg? ExceptionInfo
-                                    #".*must be live.*"
-                                    (merge-genes (d/db conn)
-                                                 src-id
-                                                 target-id
-                                                 :gene/id
-                                                 :biotype/transposon)))))))
+            (t/is (thrown-with-msg?
+                   ExceptionInfo
+                   #".*must be live.*"
+                   (merge-genes (d/db conn)
+                                src-id
+                                target-id
+                                :gene/id
+                                :biotype/transposon)))))))
     (t/testing (str "When merging cloned to uncloned, "
                     "sequence name is transfered: "
                     "eaten gene's sequence name should be retracted.")
@@ -185,7 +178,9 @@
                                             :gene.status/live))
                                  (second data-samples)]
             samples [sample-1
-                     (assoc sample-2 :gene/species (:gene/species sample-1))]]
+                     (assoc sample-2
+                            :gene/species
+                            (:gene/species sample-1))]]
         (tu/with-fixtures
           samples
           (fn check-tx-forms [conn]
@@ -198,54 +193,15 @@
               (t/is (map? tx-res))
               (t/is (:db-after tx-res)))))))))
 
-
 (t/deftest test-split-genes
   (let [db (d/db owdb/conn)
         split-gene (partial d/invoke db :wormbase.tx-fns/split-gene)]
-    (t/testing "biotype of gene and new one must be supplied"
-      (t/is (thrown-with-msg?
-             ExceptionInfo
-             #"Invalid.*split.*"
-             (split-gene db
-                         "WBGene00000001"
-                         {:product
-                          {:gene/sequence-name "ABC.1"
-                           :gene/biotype "transcript"}}
-                         ::owsg/split))))
-    (t/testing "product must be specified"
-      (t/is (thrown-with-msg?
-             ExceptionInfo
-             #"Invalid.*split.*"
-             (split-gene db
-                         "WBGene00000001"
-                         {:gene/biotype :biotype/transcript}
-                         ::owsg/split))))
-    (t/testing "product sequence-name must be supplied"
-      (t/is (thrown-with-msg?
-             ExceptionInfo
-             #"Invalid.*split.*"
-             (split-gene db
-                         "WBGene00000001"
-                         {:gene/biotype :biotype/cds
-                          :product
-                          {:gene/biotype :biotype/transposon}}
-                         ::owsg/split))))
-    (t/testing "product biotype must be supplied"
-      (t/is (thrown-with-msg?
-             ExceptionInfo
-             #"Invalid.*split.*"
-             (split-gene db
-                         "WBGene00000001"
-                         {:gene/biotype :biotype/transposon
-                          :product
-                          {:gene/sequence-name "ABC.1"}}
-                         ::owsg/split))))
     (t/testing "a valid split operation"
       (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
             p-seq-name (-> sample
                            :gene/species
                            :species/id
-                           gen-valid-seq-name-for-species)
+                           tu/gen-valid-seq-name-for-species)
             bt (-> :gene/biotype s/gen (gen/sample 1) first)
             data (assoc {:gene/biotype bt}
                         :product {:gene/sequence-name p-seq-name
@@ -255,16 +211,16 @@
           data-sample
           (fn split-ok [conn]
             (let [db (d/db conn)
-                  xxx (assert db "DB was nil")
-                  txes (split-gene db gene-id data ::owsg/split)
+                  txes (split-gene db gene-id data ::owsg/new)
                   tx-result @(d/transact conn txes)
                   db (:db-after tx-result)
                   src-gene (d/entity db [:gene/id gene-id])
                   new-gene (d/entity db [:gene/sequence-name p-seq-name])]
               (t/is (= (:gene/status new-gene) :gene.status/live))
-              (t/is (= (:gene/biotype new-gene) (-> data :product :gene/biotype)))
-              (t/is (= (:gene/biotype src-gene) (:gene/biotype data-sample))))))))))
-
+              (t/is (= (:gene/biotype new-gene)
+                       (-> data :product :gene/biotype)))
+              (t/is (= (:gene/biotype src-gene)
+                       (:gene/biotype data-sample))))))))))
 
 (t/deftest test-latest-id-number
   (let [latest-id-number (fn [db ident]
@@ -275,7 +231,8 @@
     (t/testing "Getting an id number for non-existant ident"
       (t/is (thrown-with-msg? ExceptionInfo
                               #"Invalid ident"
-                              (latest-id-number (d/db owdb/conn) :galaxy/id))))
+                              (latest-id-number (d/db owdb/conn)
+                                                :galaxy/id))))
     (t/testing "Getting an id number when no other data exists"
       (tu/with-fixtures
         []
