@@ -239,7 +239,7 @@
    :code
    "(if-let [gene (d/entity db [:gene/id gene-id])]
       (if (= (:gene/status gene) :gene.status/dead)
-        (throw (ex-info \"Gene to split doesn't exist or is dead.\"
+        (throw (ex-info \"Cannot split, gene specified is dead.\"
                         {:gene-id gene-id
                          :type :org.wormbase.db/conflict}))
       (let [{biotype :gene/biotype product :product} data
