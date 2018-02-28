@@ -155,11 +155,6 @@
         (let [{biotype :gene/biotype product :product} data
               {p-seq-name :gene/sequence-name p-biotype :gene/biotype} product
               p-seq-name (get-in data [:product :gene/sequence-name])
-              ;; TODO: split needs x2 transctions
-              ;; 1 for creating the split "product"
-              ;; 1 for changing exusting biotype (if needed)
-              ;; should be done in this order, because need to
-              ;; use a reference to the new gene for :provenance/split-into
               prov-from (-> request
                             (assoc-provenence data)
                             (assoc :provenance/split-into p-seq-name)
@@ -187,6 +182,9 @@
           (http-response/ok {:something "here"}))
         (http-response/not-found {:gene/id id :message "Gene not found"}))
       (let [spec-report (s/explain-data ::owsg/split data)]
+        ;; TODO: finer grained error message here would be good.
+        ;;       e.g (phrase-first {} ::owsg/split spec-report) ->
+        ;;           "biotype missing in split product"
         (throw (ex-info "Invalid split request"
                         {:type :user/validation-error
                          :problems spec-report}))))))
