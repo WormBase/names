@@ -20,7 +20,8 @@
    [org.wormbase.specs.biotype :as owsb]))
 
 (defn- extract-id [tx-result]
-  (some->> (map :e (:tx-data tx-result))
+  (some->> (:tx-data tx-result)
+           (map :e)
            (map (partial d/entity (:db-after tx-result)))
            (map :gene/id)
            (filter identity)
@@ -84,16 +85,17 @@
       (not is-client-script?)
       (assoc :provenance/how [:agent/id :agent/web-form]))))
 
-(defn new [request]
+(defn new-record [request]
   ;; TODO: "who" needs to come from auth problably should ditch
   ;;      WBPerson ids in favour of emails -in sanger-nameserver data,
   ;;      "log_who" is always a staff member. So instead of :person/id
   ;;      it should be :staff/id or :wbperson/id etc.
   (let [data (some-> request :body-params :new)
         name-record (select-keys-with-ns data "gene")
+        tempid (-> data ((juxt :gene/sequence-name :gene/cgc-name)) first)
         prov (-> request
                  (assoc-provenence data)
-                 (assoc :db/id "datomic.tx"))
+                 (assoc :db/id tempid))
         spec ::owsg/new
         txes [[:wormbase.tx-fns/new "gene" name-record spec]
               prov]]
@@ -105,7 +107,7 @@
           result {:created emap}]
       (resp/created "/gene/" result))))
 
-(defn update-names [request gene-id]
+(defn update-record [request gene-id]
   (let [conn (:conn request)
         db (:db request)
         lur [:gene/id gene-id]
@@ -231,7 +233,7 @@
         :parameters {:body {:new ::owsg/new}}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
-        :handler new}}))
+        :handler new-record}}))
    (sweet/context "/gene/:id" [id]
      :tags ["gene"]
      (sweet/resource
@@ -247,7 +249,7 @@
         :responses {200 {:schema {:updated ::owsg/updated}}
                     400 {:schema {:errors ::owsc/error-response}}}
         :handler (fn [request]
-                   (update-names request id))}})
+                   (update-record request id))}})
      (sweet/context "/merge/:another-id" [another-id]
        (sweet/resource
         {:post
