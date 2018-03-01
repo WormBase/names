@@ -53,6 +53,15 @@
  #:db{:ident :provenance/merged-from,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
+  #:db{:ident :provenance/merged-into,
+      :valueType :db.type/ref,
+      :cardinality :db.cardinality/one}
+ #:db{:ident :provenance/split-from,
+      :valueType :db.type/ref,
+      :cardinality :db.cardinality/one}
+  #:db{:ident :provenance/split-into,
+      :valueType :db.type/ref,
+      :cardinality :db.cardinality/one}
  #:db{:ident :species/id,
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,

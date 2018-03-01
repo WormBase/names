@@ -1,11 +1,11 @@
 [{:db/ident :wormbase.tx-fns/new-user
-    :db/doc "Create a new user."
-    :db/fn #db/fn
-    {:lang "clojure"
-     :requires [[clojure.spec.alpha :as s]]
-     :params [db record spec]
-     :code
-     "(if (s/valid? spec record)
+  :db/doc "Create a new user."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.spec.alpha :as s]]
+   :params [db record spec]
+   :code
+   "(if (s/valid? spec record)
         [record]
         (throw (ex-info
                 \"Invalid user record\"
@@ -29,25 +29,34 @@
   {:params [db ident]
    :lang "clojure"
    :code
-   "(if-let [latest-identifier (d/invoke db
-                                         :wormbase.tx-fns/latest-id
-                                         db
-                                         ident)]
-        (->> (re-seq #\"[0]+(\\d+)\" latest-identifier)
-             (flatten)
-             (last)
-             (read-string))
-        0)"}}
+   "(if-not (d/entid db ident)
+     (throw (ex-info \"Invalid ident\" {:ident ident}))
+     (or (some->> (d/invoke db :wormbase.tx-fns/latest-id db ident)
+                  (re-seq #\"0*(\\d+)\")
+                  (flatten)
+                  (last)
+                  (read-string)) 0))"}}
 
- {:db/ident :wormbase.tx-fns/new-name
+ {:db/ident :wormbase.tx-fns/gene-dbid-ref
+  :db/doc "Return an identifier sutiable for inter-transaction referencing for new gene."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db record]
+   :code
+   "(let [kwds (juxt :gene/sequence-name :gene/cgc-name)]
+       (->> (kwds record)
+            (filter identity)
+            (first)))"}}
+
+ {:db/ident :wormbase.tx-fns/new
   :db/doc "Allocate a new name for entity"
   :db/fn #db/fn
   {:lang "clojure"
    :requires [[clojure.walk :as w]
               [clojure.spec.alpha :as s]]
-   :params [db entity-type name-record spec]
+   :params [db entity-type data spec]
    :code
-   "(if (s/valid? spec name-record)
+   "(if (s/valid? spec data)
      (let [ident (keyword entity-type \"id\")
            template (-> (d/entity db [:template/describes ident])
                         :template/format)
@@ -55,21 +64,27 @@
                              :wormbase.tx-fns/latest-id-number
                              db
                              ident)
+           new-gene-ref (d/invoke db
+                                  :wormbase.tx-fns/gene-dbid-ref
+                                  db
+                                  data)
            identify (fn [rec]
-                      (let [next-identifier (format template (+ last-id 1))
+                      (let [next-identifier (format template 
+                                                    (+ last-id 1))
                             species-lur (-> rec :gene/species vec first)]
                         (-> (assoc rec ident next-identifier)
                             (assoc :gene/species species-lur)
                             (assoc :gene/status :gene.status/live))))
-           new-name (identify name-record)]
-       [new-name])
-     (let [problems (s/explain-data spec name-record)]
+           new (-> data
+                   identify
+                   (assoc :db/id new-gene-ref))]
+       [new])
+     (let [problems (s/explain-data spec data)]
        (throw (ex-info \"Not valid according to spec.\"
-                       {:problems (s/explain-data spec name-record)
+                       {:problems (s/explain-data spec data)
                         :type ::validation-error
-                        ;; :spec (pr-str spec)
-                        :valid? (s/valid? spec name-record)
-                        :records name-record}))))"}}
+                        :valid? (s/valid? spec data)
+                        :records data}))))"}}
 
  {:db/ident :wormbase.tx-fns/resolve-gene-refs
   :db/doc "Resolve ref  erences in a gene entity suitable for CAS."
@@ -92,19 +107,22 @@
   :db/doc "Collate a collection of Compare-and-swap operations."
   :db/fn #db/fn
   {:lang "clojure"
-   :requires [[clojure.walk :as walk]]
-   :params [db entity name-record]
+   :requires [[clojure.walk :as w]]
+   :params [db entity data]
    :code
-   "(let [resolve-refs (partial d/invoke db :wormbase.tx-fns/resolve-gene-refs db)
+   "(let [resolve-refs (partial d/invoke
+                                db
+                                :wormbase.tx-fns/resolve-gene-refs
+                                db)
           eid (:db/id entity)
-          e-keys (keys name-record)
+          e-keys (keys data)
           entity->map (fn datomic-entity-to-array-map [ent]
-                        (walk/prewalk #(if (instance? datomic.query.EntityMap %)
-                                         (into {} %)
-                                         %)
-                                      ent))
+                        (w/prewalk #(if (instance? datomic.query.EntityMap %)
+                                      (into {} %)
+                                      %)
+                                   ent))
           existing (resolve-refs (entity->map entity))
-          new (resolve-refs name-record)
+          new (resolve-refs data)
           res (some->> (mapv (fn [[old-k old-v] [new-k new-v]]
                                (when-not (nil? new-v)
                                  [:db.fn/cas eid new-k old-v new-v]))
@@ -118,9 +136,9 @@
   :db/fn #db/fn
   {:lang "clojure"
    :requires [[clojure.spec.alpha :as s]]
-   :params [db lur name-record spec]
+   :params [db lur data spec]
    :code
-   "(if (s/valid? spec name-record)
+   "(if (s/valid? spec data)
       (let [entity (d/entity db lur)
             eid (:db/id entity)
             collate-cas-batch (partial
@@ -129,12 +147,12 @@
                                :wormbase.tx-fns/collate-cas-batch
                                db
                                entity)
-            batched (collate-cas-batch name-record)]
+            batched (collate-cas-batch data)]
         batched)
       (throw (ex-info \"Not valid according to spec.\"
-                      {:problems (s/explain-data spec name-record)
+                      {:problems (s/explain-data spec data)
                        :type ::validation-error
-                       :record name-record})))"}}
+                       :record data})))"}}
 
  {:db/ident :wormbase.tx-fns/merge-genes
   :db/doc "Merge gene `src` into gene `target`."
@@ -148,11 +166,13 @@
                          (map (partial s/valid? id-spec) participants))]
       (when (= src-id target-id)
         (throw (ex-info \"Source and target ids cannot be the same!\"
-                        {:src-id src-id :target-id target-id})))
+                        {:src-id src-id
+                         :target-id target-id
+                         :type ::validation-error})))
       (when-not (s/valid? :gene/biotype target-biotype)
          (throw (ex-info \"Invalid biotype\"
-                          {:problems (s/explain-data :gene/biotype
-                                                     target-biotype)})))
+                          {:problems (s/explain-data :gene/biotype target-biotype)
+                           :type ::validation-error})))
       (when (some nil? (vals valids))
         (let [invalids (some->> valids
                                 (mapv (fn [[k v]]
@@ -164,11 +184,17 @@
                             :type ::validation-error
                             :invalid-entities invalids}))))
        (let [[src target] (map #(d/entity db %) participants)]
+         (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
+                                  [src target])]
+           (when-not (empty? deads)
+             (throw (ex-info \"Both merge participants must be live\"
+                             {:type :org.wormbase.db/conflict
+                              :dead-genes (map :gene/id deads)}))))
          (when (some nil? [src target])
            (throw (ex-info \"Merge participant does not exist!\"
                             {:missing (remove (comp not nil?)
                                               (map :gene/id [src target]))
-                             :type ::validation-error
+                             :type :org.wormbase.db/missing
                              :participants participants})))
          (when (reduce not= (map (comp :species/id :gene/species) [src target]))
            (throw (ex-info \"Refusing to merge: genes have differing species\"
@@ -176,13 +202,13 @@
                                   :species/id (:gene/species src)}
                             :target {id-spec target-id
                                      :species/id (:gene/species target)}
-                            :type :gene.merge/conflct})))
+                            :type :org.wormbase.db/conflict})))
          (when (:gene/cgc-name src)
            (throw (ex-info (str \"Gene to be killed has a CGC name, \"
                                 \"refusing to merge\")
                             {:src-id src-id
                              :src-cgc-name (:gene/cgc-name src)
-                             :type :gene.merge/conflict})))
+                             :type :org.wormbase.db/conflict})))
           (let [entid (partial d/entid db)
                 src-seq-name (:gene/sequence-name src)
                 none? #(every? nil? %)
@@ -194,9 +220,46 @@
                                       (entid :gene.status/dead)]
                       [:db.fn/cas tid :gene/biotype
                                       (entid (:gene/biotype target))
-                                      (entid target-biotype)]]]
-             (if uncloned-target?
-               (-> txes
-                   (conj [:db/retract sid :gene/sequence-name src-seq-name])
-                   (conj [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
-               txes))))"}}]
+                                      (entid target-biotype)]]
+                tx-data (if uncloned-target?
+                          (-> txes
+                              (conj
+                               [:db/retract sid :gene/sequence-name src-seq-name])
+                              (conj
+                               [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
+                          txes)]
+             tx-data)))"}}
+ 
+ {:db/ident :wormbase.tx-fns/split-gene
+  :db/doc "Split gene `src` into a new gene."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :requires [[clojure.spec.alpha :as s]]
+   :params [db gene-id data new-gene-spec]
+   :code
+   "(if-let [gene (d/entity db [:gene/id gene-id])]
+      (if (= (:gene/status gene) :gene.status/dead)
+        (throw (ex-info \"Cannot split, gene specified is dead.\"
+                        {:gene-id gene-id
+                         :type :org.wormbase.db/conflict}))
+      (let [{biotype :gene/biotype product :product} data
+            {p-seq-name :gene/sequence-name p-bt :gene/biotype} product
+            entid (partial d/entid db)
+            bt-id (entid biotype)
+            src (d/entity db [:gene/id gene-id])
+            existing-bt-id (-> src :gene/biotype entid)
+            species (-> src :gene/species :species/id)
+            new-gene-data {:gene/species {:species/id species}
+                           :gene/biotype p-bt
+                           :gene/sequence-name p-seq-name
+                           :db/id p-seq-name}
+            tx-data [[:db.fn/cas [:gene/id gene-id] 
+                                  :gene/biotype 
+                                   existing-bt-id 
+                                   bt-id]
+                     [:wormbase.tx-fns/new \"gene\" new-gene-data new-gene-spec]]]
+         tx-data))
+     (throw (ex-info \"Gene does not exist\"
+                     {:gene-id gene-id
+                      :type :org.wormbase.db/missing})))" }}
+]

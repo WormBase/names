@@ -48,4 +48,4 @@
 
 (s/def ::created (s/keys :req [::users]))
 
-(s/def ::identified (s/keys :req [::name :user/email]))
+(s/def ::identified (s/keys :req-un [::name :user/email]))

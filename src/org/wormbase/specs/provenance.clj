@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [org.wormbase.specs.agent :as ows-agent]
+   [org.wormbase.specs.agent] ;; needed to load specs for agent
    [org.wormbase.specs.user :as ows-user]))
 
 ;; TODO: clients should provide zoned-date-time (times in UTC)

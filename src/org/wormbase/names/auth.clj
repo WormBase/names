@@ -66,7 +66,7 @@
   as used by the rest of the application."
   [data]
   (let [their-key-names ["displayName" "value"]
-        our-key-names [::user-spec/name ::user-spec/email]
+        our-key-names [:name :email]
         key-path-selector ["metadata" "primary"]
         selected (->> (vals data)
                       (apply concat)

@@ -2,14 +2,19 @@
   (:require
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
+   [clojure.spec.alpha :as s]
+   [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
-   [clojure.tools.logging :as log]
+   ;; TODO
+   ;; [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [java-time :as jt]
+   [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
+   [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
    [spec-tools.core :as stc]
    [datomic.api :as d])
@@ -26,23 +31,26 @@
     (slurp body)
     body))
 
+(defn- print-decode-err [^Exception exc body]
+  (let [divider #(format "-----------------: % :-----------------" %)]
+    (println (divider "DEBUGING"))
+    (println "Error type:" (type exc))
+    (println "Cause:" (.getCause exc))
+    (println "Invalid response data format? body was returned as:"
+             (type body))
+    (println (if (or (nil? body) (str/blank? body))
+               (println "BODY WAS NIL or empty string!")
+               body))
+    (println (divider "END DEBUGGING"))
+    (println)))
+
 (defn parse-body [body]
   (let [body (read-body body)
         body (if (instance? String body)
                (try
                  (muuntaja/decode mformats "application/edn" body)
                  (catch clojure.lang.ExceptionInfo jpe
-                   (let [divider #(format "-----------------: % :-----------------" %)]
-                     (println (divider "DEBUGING"))
-                     (println "Error type:" (type jpe))
-                     (println "Cause:" (.getCause jpe))
-                     (println "Invalid response data format? body was returned as:"
-                              (type body))
-                     (println (if (or (nil? body) (str/blank? body))
-                                (println "BODY WAS NIL or empty string!")
-                                body))
-                     (println (divider "END DEBUGGING"))
-                     (println))
+                   (print-decode-err jpe body)
                    (throw jpe)))
                body)]
     body))
@@ -58,7 +66,7 @@
   (try
     (muuntaja/encode mformats "application/edn" x)
     (catch Exception e
-      (log/trace "********** COULD NOT ENCODE " x "as EDN")
+      (println  "********** COULD NOT ENCODE " x "as EDN")
       (throw e))))
 
 (defn follow-redirect [state]
@@ -138,20 +146,12 @@
   (let [[status body] (raw-post* app uri "" nil headers)]
     [status (parse-body body)]))
 
-;;
-;; ring-request
-;;
-
 (defn ring-request [m format data]
   {:uri "/echo"
    :request-method :post
    :body (muuntaja/encode mformats format data)
    :headers {"content-type" format
              "accept" format}})
-
-;;
-;; get-spec
-;;
 
 (defn extract-paths [app]
   (-> app routes/get-routes routes/all-paths))
@@ -210,14 +210,13 @@
         (dissoc :provenance/how)
         (dissoc :gene/species)
         (dissoc :gene/biotype)
-        (assoc :gene/status :gene.status/live)
         (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures [data-samples test-fn
-                     & {:keys [how when why user]
+                     & {:keys [how whence why user status]
                         :or {how [:agent/id :agent/script]
-                             when (jt/to-java-date (jt/instant))
+                             whence (jt/to-java-date (jt/instant))
                              user [:user/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
         sample-data (if (map? data-samples)
@@ -227,31 +226,66 @@
       (let [data (sample-to-txes data-sample)
             prov (merge {:db/id "datomic.tx"
                          :provenance/how how
-                         :provenance/when when
+                         :provenance/when whence
                          :provenance/who user}
-                        (if why
+                        (when-not (:gene/status data)
+                          {:gene/status :gene.status/live})
+                        (when why
                           {:provenance/why why}))
             tx-fixtures [data prov]]
-        @(d/transact conn tx-fixtures)))
+        @(d/transact-async conn tx-fixtures)))
     (with-redefs [owdb/connection (fn [] conn)
                   owdb/db (fn speculative-db [_]
                             (d/db conn))]
       (test-fn conn))))
 
-(defn query-provenence [db gene-id]
-  (let [qr (d/q '[:find [?who ?when ?why ?how]
+(defn query-provenance [conn gene-id]
+  (some->> (d/q '[:find [?tx ?who ?when ?why ?how]
                   :in $ ?gene-id
                   :where
-                  [?e :gene/id ?gene-id ?tx]
+                  [?gene-id :gene/id _ ?tx]
                   [?tx :provenance/who ?u-id]
                   [(get-else $ ?u-id :user/email "nobody") ?who]
                   [(get-else $ ?tx :provenance/when :unset) ?when]
                   [(get-else $ ?tx :provenance/why "Dunno") ?why]
-                  [(get-else $ ?tx :provenance/how :who-knows?) ?how-id]
+                  [(get-else $ ?tx :provenance/how :unset) ?how-id]
                   [?how-id :agent/id ?how]]
-                (d/history db)
-                gene-id)]
-    (zipmap [:provenance/who
-             :provenance/when
-             :provenance/why
-             :provenance/how] qr)))
+                (-> conn d/db d/history)
+                [:gene/id gene-id])
+           (zipmap [:tx-id
+                    :provenance/who
+                    :provenance/when
+                    :provenance/why
+                    :provenance/how])))
+
+(defn gen-valid-seq-name-for-species [species]
+  (-> species
+      owsg/name-patterns
+      :gene/sequence-name
+      sg/string-generator
+      (gen/sample 1)
+      first))
+
+(defn gene-samples [n]
+  (assert (int? n))
+  (let [gene-refs (->> n
+                       (gen/sample (s/gen :gene/id))
+                       (map (partial array-map :gene/id)))
+        gene-recs (gen/sample (s/gen ::owsg/update) n)
+        data-samples
+        (->> (interleave gene-refs gene-recs)
+             (partition n)
+             (map (partial apply merge))
+             (map (fn correct-seq-name-for-species [m]
+                    (let [sn (-> m
+                                 :gene/species
+                                 :species/id
+                                 gen-valid-seq-name-for-species)]
+                      (assoc m :gene/sequence-name sn)))))
+        gene-ids (map :gene/id (flatten gene-refs))]
+    (if-let [dup-seq-names? (->> data-samples
+                                 (map :gene/sequence-name)
+                                 (reduce =))]
+      (recur n)
+      [gene-ids gene-recs data-samples])))
+

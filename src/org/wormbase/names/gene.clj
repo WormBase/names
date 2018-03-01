@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
+   [expound.core :as expound]
    [java-time :as jt]
    [ring.util.http-response :as resp]
    [org.wormbase.names.auth :as own-auth]
@@ -12,10 +13,15 @@
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.specs.provenance :as owsp]
    [org.wormbase.specs.auth :as oswa]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [org.wormbase.db :as owdb]
+   [clojure.spec.alpha :as s]
+   [clj-http.client :as http]
+   [org.wormbase.specs.biotype :as owsb]))
 
 (defn- extract-id [tx-result]
-  (some->> (map :e (:tx-data tx-result))
+  (some->> (:tx-data tx-result)
+           (map :e)
            (map (partial d/entity (:db-after tx-result)))
            (map :gene/id)
            (filter identity)
@@ -48,10 +54,13 @@
 
 (defn assoc-provenence [request payload]
   (let [prov (select-keys-with-ns payload "provenance")
-        who (:provenance/who prov)
-
+        who (or (:provenance/who prov)
+                (d/entity (:db request)
+                          [:user/email (-> request :identity :email)]))
         ;; TODO (!important): determine :provenance/how via credentials
         ;; used, not user-agent string.
+        ;; Perhaps client shuld send header:
+        ;; "X-WormBase-GAppsID <google-apps-id>"
         user-agent (get-in request [:headers "user-agent"])
         is-client-script? (and user-agent
                                (str/includes? user-agent "script"))]
@@ -76,18 +85,21 @@
       (not is-client-script?)
       (assoc :provenance/how [:agent/id :agent/web-form]))))
 
-(defn new-names [request]
+(defn new-record [request]
   ;; TODO: "who" needs to come from auth problably should ditch
   ;;      WBPerson ids in favour of emails -in sanger-nameserver data,
   ;;      "log_who" is always a staff member. So instead of :person/id
   ;;      it should be :staff/id or :wbperson/id etc.
   (let [data (some-> request :body-params :new)
         name-record (select-keys-with-ns data "gene")
-        prov (assoc (assoc-provenence request data) :db/id "datomic.tx")
+        tempid (-> data ((juxt :gene/sequence-name :gene/cgc-name)) first)
+        prov (-> request
+                 (assoc-provenence data)
+                 (assoc :db/id tempid))
         spec ::owsg/new
-        txes [[:wormbase.tx-fns/new-name "gene" name-record spec]
+        txes [[:wormbase.tx-fns/new "gene" name-record spec]
               prov]]
-    (let [tx-result @(d/transact (:conn request) txes)
+    (let [tx-result @(d/transact-async (:conn request) txes)
           db (:db-after tx-result)
           new-id (extract-id tx-result)
           ent (d/entity db [:gene/id new-id])
@@ -95,7 +107,7 @@
           result {:created emap}]
       (resp/created "/gene/" result))))
 
-(defn update-names [request gene-id]
+(defn update-record [request gene-id]
   (let [conn (:conn request)
         db (:db request)
         lur [:gene/id gene-id]
@@ -117,13 +129,67 @@
 
 (defn merge-from [request source-id target-id]
   (let [conn (:conn request)
-        target-biotype (some-> request :body-params :gene/biotype)
-        tx-result @(d/transact conn [[:wormbase.tx-fns/merge-genes
-                                      source-id target-id :gene/id target-biotype]])]
+        data (:body-params request)
+        target-biotype (:gene/biotype data)
+        prov (-> request
+                 (assoc-provenence data)
+                 (assoc :provenance/merged-from [:gene/id source-id])
+                 (assoc :provenance/merged-into [:gene/id target-id]))
+        tx-result @(d/transact-async
+                    conn
+                    [[:wormbase.tx-fns/merge-genes
+                      source-id
+                      target-id
+                      :gene/id
+                      target-biotype]
+                     prov])]
     (if-let [db (:db-after tx-result)]
       (let [ent (d/entity (:db-after tx-result) [:gene/id target-id])]
         (resp/ok {:updated (ownu/entity->map ent)}))
       (resp/bad-request {:reason tx-result}))))
+
+(defn split-into [request id]
+  (let [conn (:conn request)
+        db (d/db conn)
+        data (some-> request :body-params)]
+    (if (s/valid? ::owsg/split data)
+      (if-let [existing-gene (d/entity db [:gene/id id])]
+        (let [{biotype :gene/biotype product :product} data
+              {p-seq-name :gene/sequence-name p-biotype :gene/biotype} product
+              p-seq-name (get-in data [:product :gene/sequence-name])
+              prov-from (-> request
+                            (assoc-provenence data)
+                            (assoc :provenance/split-into p-seq-name)
+                            (assoc :provenance/split-from [:gene/id id]))
+              species (-> existing-gene :gene/species :species/id)
+              new-gene-data (-> (ownu/entity->map existing-gene)
+                                (select-keys [:gene/biotype :gene/sequence-name])
+                                (assoc :gene/species {:species/id species}))
+              tx-result @(d/transact-async
+                          conn
+                          [[:wormbase.tx-fns/split-gene id data ::owsg/new]
+                           prov-from])
+              db (:db-after tx-result)
+              new-gene-id (:gene/id (d/entity db [:gene/sequence-name p-seq-name]))
+              new-gene-qr (d/q '[:find ?e ?sf
+                                 :in $ ?sn
+                                 :where
+                                 [?e :gene/sequence-name ?sn ?tx]
+                                 [(get-else $ ?tx :provenance/split-from :nothing) ?sf]
+                                        ;[?e :gene/id ?into-gid ?tx]
+                                 ]
+                               (d/history db)
+                               p-seq-name)
+              [ent product] (map #(d/entity db [:gene/id %]) [id new-gene-id])]
+          (http-response/ok {:something "here"}))
+        (http-response/not-found {:gene/id id :message "Gene not found"}))
+      (let [spec-report (s/explain-data ::owsg/split data)]
+        ;; TODO: finer grained error message here would be good.
+        ;;       e.g (phrase-first {} ::owsg/split spec-report) ->
+        ;;           "biotype missing in split product"
+        (throw (ex-info "Invalid split request"
+                        {:type :user/validation-error
+                         :problems spec-report}))))))
 
 (defn idents-by-ns [db ns-name]
   (sort (d/q '[:find [?ident ...]
@@ -151,7 +217,7 @@
   (sweet/routes
    (sweet/context "/gene/" []
     :tags ["gene"]
-     (sweet/resource
+    (sweet/resource
       {:get
        {:summary "Testing auth session."
         :x-name ::read-all
@@ -167,7 +233,7 @@
         :parameters {:body {:new ::owsg/new}}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
-        :handler new-names}}))
+        :handler new-record}}))
    (sweet/context "/gene/:id" [id]
      :tags ["gene"]
      (sweet/resource
@@ -183,8 +249,8 @@
         :responses {200 {:schema {:updated ::owsg/updated}}
                     400 {:schema {:errors ::owsc/error-response}}}
         :handler (fn [request]
-                   (update-names request id))}})
-     (sweet/context "/merge/:from-id" [another-id]
+                   (update-record request id))}})
+     (sweet/context "/merge/:another-id" [another-id]
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
@@ -197,6 +263,18 @@
                       409 {:schema {:conflict ::owsc/conflict-response}}}
           :handler
           (fn [request]
-            (merge-from request another-id id))}})))))
-  
+            (merge-from request id another-id))}}))
+     (sweet/context "/split" []
+       (sweet/resource
+        {:post
+         {:summary "Split a gene."
+          :x-name ::split
+          :path-params [id :- :gene/id]
+          :parameters {:body ::owsg/split}
+          :responses {201 {:schema {:updated ::owsg/updated}}
+                      400 {:schema {:errors ::owsc/error-response}}
+                      409 {:schema {:conflict ::owsc/conflict-response}}}
+          :handler
+          (fn [request]
+            (split-into request id))}})))))
   
