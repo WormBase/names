@@ -228,8 +228,7 @@
                        :provenance/why
                        "a gene that has been split for testing undo"
                        :provenance/how :agent/script}]]
-          ;conn (db-testing/fixture-conn)
-          conn owdb/conn]
+          conn (db-testing/fixture-conn)]
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]
         (doseq [init-tx init-txes]
@@ -260,7 +259,6 @@
                 [from-g into-g] (map #(d/entity db [:gene/id %])
                                      [split-from split-into])]
             (t/is (= (:gene/status from-g) :gene.status/live))
-            ;; TODO: never retract :gene/id and :gene/status and enable this check
             (t/is (= (:gene/status into-g) :gene.status/dead)
                   (str "Into gene:"
                        (d/q '[:find ?e ?aname ?v ?added
