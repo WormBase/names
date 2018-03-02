@@ -38,6 +38,9 @@
  #:db{:ident :gene.status/dead}
  #:db{:ident :gene.status/suppressed}
  #:db{:ident :gene.status/live}
+ #:db{:ident :provenance/compensates
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one}
  #:db{:ident :provenance/why,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one}

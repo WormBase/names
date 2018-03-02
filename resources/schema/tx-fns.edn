@@ -17,10 +17,12 @@
   {:params [db ident]
    :lang "clojure"
    :code
-   "(some->> (d/datoms db :avet ident)
-             (sort-by (comp d/tx->t :tx))
-             (last)
-             (:v))"}}
+   "(d/q '[:find (max ?gid) .
+           :in $ ?ident
+           :where
+           [?e ?ident ?gid]]
+          (d/history db)
+          ident))"}}
 
  {:db/ident :wormbase.tx-fns/latest-id-number
   :db/doc
@@ -35,7 +37,18 @@
                   (re-seq #\"0*(\\d+)\")
                   (flatten)
                   (last)
-                  (read-string)) 0))"}}
+                  (read-string))
+          0))"}}
+
+ {:db/ident :wormbase.tx-fns/next-identifier
+  :db/doc "Get the next sequential identifier for a given ident."
+  :db/fn #db/fn
+  {:params [db ident template]
+   :lang "clojure"
+   :code
+   "(let [invoke (partial d/invoke db)
+          last-id (invoke :wormbase.tx-fns/latest-id-number db ident)]
+      (->> last-id inc (format template)))"}}
 
  {:db/ident :wormbase.tx-fns/gene-dbid-ref
   :db/doc "Return an identifier sutiable for inter-transaction referencing for new gene."
@@ -57,22 +70,20 @@
    :params [db entity-type data spec]
    :code
    "(if (s/valid? spec data)
-     (let [ident (keyword entity-type \"id\")
+     (let [invoke (partial d/invoke db)
+           ident (keyword entity-type \"id\")
            template (-> (d/entity db [:template/describes ident])
                         :template/format)
-           last-id (d/invoke db
-                             :wormbase.tx-fns/latest-id-number
-                             db
-                             ident)
-           new-gene-ref (d/invoke db
-                                  :wormbase.tx-fns/gene-dbid-ref
-                                  db
-                                  data)
+           ;; last-id (invoke :wormbase.tx-fns/latest-id-number db ident)
+           new-gene-ref (invoke :wormbase.tx-fns/gene-dbid-ref db data)
            identify (fn [rec]
-                      (let [next-identifier (format template 
-                                                    (+ last-id 1))
+                      (let [next-id (invoke
+                                     :wormbase.tx-fns/next-identifier
+                                     db
+                                     ident
+                                     template)
                             species-lur (-> rec :gene/species vec first)]
-                        (-> (assoc rec ident next-identifier)
+                        (-> (assoc rec ident next-id)
                             (assoc :gene/species species-lur)
                             (assoc :gene/status :gene.status/live))))
            new (-> data

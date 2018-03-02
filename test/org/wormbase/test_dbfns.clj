@@ -8,7 +8,8 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
    [org.wormbase.test-utils :as tu]
-   [org.wormbase.specs.gene :as owsg])
+   [org.wormbase.specs.gene :as owsg]
+   [clojure.string :as str])
   (:import
    (clojure.lang ExceptionInfo)))
 
@@ -234,29 +235,46 @@
                                      :wormbase.tx-fns/latest-id-number
                                      db
                                      ident))]
-    (t/testing "Getting an id number for non-existant ident"
-      (t/is (thrown-with-msg? ExceptionInfo
-                              #"Invalid ident"
-                              (latest-id-number (d/db owdb/conn)
-                                                :galaxy/id))))
     (t/testing "Getting an id number when no other data exists"
       (tu/with-fixtures
         []
         (fn no-gnmes [conn]
           (t/is (zero? (latest-id-number (d/db conn) :gene/id))))))
-    (t/testing "When we have data"
-      (let [[[ids] _ samples] (tu/gene-samples 2)]
+    (t/testing "Getting an id number when db populated"
+      (let [[_ _ samples] (tu/gene-samples 2)
+            data-samples (keep-indexed
+                          (fn [idx sample]
+                            (assoc sample
+                                   :gene/id
+                                   (format "WBGene%08d" (inc idx))))
+                          samples)]
         (tu/with-fixtures
-          samples
+          data-samples
           (fn latest-id-with-data [conn]
-            (let [latest-db (d/db conn)
-                  latest-id (d/invoke latest-db
-                                      :wormbase.tx-fns/latest-id
-                                      latest-db
-                                      :gene/id)
-                  lidn (d/invoke latest-db
-                                      :wormbase.tx-fns/latest-id-number
-                                      latest-db
-                                      :gene/id)]
+            (let [db (d/db conn)
+                  invoke (partial d/invoke db)
+                  latest-id (invoke :wormbase.tx-fns/latest-id
+                                    db
+                                    :gene/id)
+                  latest-ent (d/entity db [:gene/id latest-id])
+                  lidn (invoke :wormbase.tx-fns/latest-id-number
+                               db
+                               :gene/id)]
+              (t/is (str/ends-with? latest-id (str lidn)))
               (t/is (= (format "WBGene%08d" lidn)
-                       (-> samples last :gene/id))))))))))
+                       (-> data-samples last :gene/id)))
+              (t/testing "Next Id after kill should take account of dead genes"
+                @(d/transact conn [[:db.fn/cas
+                                    [:gene/id latest-id]
+                                    :gene/status
+                                    (:gene/status latest-ent)
+                                    (d/entid db :gene.status/dead)]])
+                (let [db (d/db conn)
+                      invoke (partial d/invoke db)
+                      template "WBGene%08d"
+                      next-id (invoke :wormbase.tx-fns/next-identifier
+                                      db
+                                      :gene/id
+                                      template)]
+                  (t/is (= next-id
+                           (format "WBGene%08d" (inc lidn)))))))))))))
