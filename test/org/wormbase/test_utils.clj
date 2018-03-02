@@ -258,7 +258,7 @@
                     :provenance/why
                     :provenance/how])))
 
-(defn gen-valid-seq-name-for-species [species]
+(defn gen-valid-seq-name [species]
   (-> species
       owsg/name-patterns
       :gene/sequence-name
@@ -280,7 +280,7 @@
                     (let [sn (-> m
                                  :gene/species
                                  :species/id
-                                 gen-valid-seq-name-for-species)]
+                                 gen-valid-seq-name)]
                       (assoc m :gene/sequence-name sn)))))
         gene-ids (map :gene/id (flatten gene-refs))]
     (if-let [dup-seq-names? (->> data-samples
