@@ -180,5 +180,5 @@
 
 (s/def ::dead :gene/id)
 
-(s/def ::split-undone (s/keys :req-un [::live ::dead]))
+(s/def ::undone (s/keys :req-un [::live ::dead]))
 

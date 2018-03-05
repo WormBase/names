@@ -17,7 +17,8 @@
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.specs.provenance :as owsp]
    [ring.util.http-response :as http-response]
-   [ring.util.http-response :as resp])
+   [ring.util.http-response :as resp]
+   [org.wormbase.test-utils :as tu])
   (:refer-clojure :exclude [merge]))
 
 (defn- extract-id [tx-result]
@@ -84,7 +85,10 @@
       (assoc :provenance/how [:agent/id :agent/script])
 
       (not is-client-script?)
-      (assoc :provenance/how [:agent/id :agent/web-form]))))
+      (assoc :provenance/how [:agent/id :agent/web-form])
+
+      :always
+      (assoc :db/id "datomic.tx"))))
 
 (defn new-record [request]
   ;; TODO: "who" needs to come from auth problably should ditch
@@ -128,26 +132,49 @@
             (resp/ok {:updated (ownu/entity->map ent)})
             (resp/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
-(defn merge [request source-id target-id]
+(defn merge [request into-id from-id]
   (let [conn (:conn request)
         data (:body-params request)
-        target-biotype (:gene/biotype data)
+        into-biotype (:gene/biotype data)
         prov (-> request
                  (assoc-provenence data)
-                 (assoc :provenance/merged-from [:gene/id source-id])
-                 (assoc :provenance/merged-into [:gene/id target-id]))
+                 (assoc :provenance/merged-from [:gene/id from-id])
+                 (assoc :provenance/merged-into [:gene/id into-id]))
         tx-result @(d/transact-async
                     conn
                     [[:wormbase.tx-fns/merge-genes
-                      source-id
-                      target-id
+                      from-id
+                      into-id
                       :gene/id
-                      target-biotype]
+                      into-biotype]
                      prov])]
-    (if-let [db (:db-after tx-result)]
-      (let [ent (d/entity (:db-after tx-result) [:gene/id target-id])]
-        (resp/ok {:updated (ownu/entity->map ent)}))
-      (resp/bad-request {:reason tx-result}))))
+    (if-let [db (:db-after tx-result (:tx-data tx-result))]
+      (let [[from into] (map #(d/entity db [:gene/id %])
+                             [from-id into-id])]
+        (resp/ok {:updated (ownu/entity->map into)
+                  :statuses
+                  {from-id (:gene/status from)
+                   into-id (:gene/status into)}}))
+      (resp/bad-request {:message "Invalid transaction"}))))
+
+(defn undo-merge [request from-id into-id]
+  (if-let [tx (d/q '[:find ?tx .
+                     :in $ ?from ?into
+                     :where
+                     [?from :gene/status :gene.status/dead ?tx]
+                     [?tx :provenance/merged-from ?from]
+                     [?tx :provenance/merged-into ?into]]
+                   (-> request :db d/history)
+                   [:gene/id from-id]
+                   [:gene/id into-id])]
+    (let [conn (:conn request)
+          prov {:db/id "datomic.tx"
+                :provenance/compensates tx
+                :provenance/why "Undoing merge"}
+          compensating-txes (owdb/invert-tx (d/log conn) tx prov)
+          tx-result @(d/transact-async conn compensating-txes)]
+      (http-response/ok {:live into-id :dead from-id}))
+    (http-response/not-found {:message "No transaction to undo"})))
 
 (defn split [request id]
   (let [conn (:conn request)
@@ -190,7 +217,7 @@
                         {:type :user/validation-error
                          :problems spec-report}))))))
 
-(defn invert-tx-fact-mapper [db e a v tx added?]
+(defn- invert-split-tx [db e a v tx added?]
   (cond
     (= (d/ident db a) :gene/status)
     [:db.fn/cas e a v (d/entid db :gene.status/dead)]
@@ -205,6 +232,7 @@
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
+                     [?into :gene/id]
                      [?tx :provenance/split-into ?into]
                      [?tx :provenance/split-from ?from]]
                    (-> request :db d/history)
@@ -214,7 +242,7 @@
           prov {:db/id "datomic.tx"
                 :provenance/compensates tx
                 :provenance/why "Undoing split"}
-          fact-mapper (partial invert-tx-fact-mapper (d/db conn))
+          fact-mapper (partial invert-split-tx (d/db conn))
           compensating-txes (owdb/invert-tx (d/log conn)
                                             tx
                                             prov
@@ -286,18 +314,28 @@
         :responses (dissoc default-responses 409)
         :handler (fn [request]
                    (update-record request id))}})
-     (sweet/context "/merge/:another-id" [another-id]
+     (sweet/context "/merge-from/:from-id" [from-id]
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
           :x-name ::merge
           :path-params [id :gene/id
-                        another-id :gene/id]
+                        from-id :gene/id]
           :parameters {:body {:gene/biotype :gene/biotype}}
           :responses default-responses
           :handler
           (fn [request]
-            (merge request id another-id))}}))
+            (merge request id from-id))}
+         :delete
+         {:summary "Undo a merge operation."
+          :x-name ::undo-merge
+          :path-params [id :gene/id
+                        from-id :gene/id]
+          :responses (assoc default-responses
+                            200
+                            {:schema ::owsg/undone})
+          :handler (fn [request]
+                     (undo-merge request from-id id))}}))
      (sweet/context "/split" []
        (sweet/resource
         {:post
@@ -318,9 +356,8 @@
           :x-name ::undo-split
           :path-params [id :- :gene/id
                         into-id :- :gene/id]
-
           :responses (assoc default-responses
                             200
-                            {:schema ::owsg/split-undone})
+                            {:schema ::owsg/undone})
           :handler (fn [request]
                      (undo-split request id into-id))}})))))
