@@ -86,7 +86,7 @@
         datoms)
        (throw (ex-info "No tx to invert"
                        {:tx tx
-                        :type ::conflict
+                        :type ::invert-tx-problem
                         :range (d/tx-range log t (inc t))})))))
     ([log tx provenance]
      (invert-tx log tx provenance (constantly nil))))
