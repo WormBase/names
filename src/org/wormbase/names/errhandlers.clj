@@ -68,7 +68,6 @@
 (defn handle-unexpected-error
   ([^Exception exc data request]
    ;; TODO: logging - ensure exceptions appear in the log/stdout.
-   ;; TODO: remove constant comparison thing below (or true x)
    (if-not (empty? ((juxt :test :dev) environ/env))
      (handle-unexpected-error exc)
      (http-response/internal-server-error data)))

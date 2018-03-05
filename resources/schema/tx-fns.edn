@@ -166,23 +166,23 @@
                        :record data})))"}}
 
  {:db/ident :wormbase.tx-fns/merge-genes
-  :db/doc "Merge gene `src` into gene `target`."
+  :db/doc "Merge gene `src` into gene `into`."
   :db/fn #db/fn
   {:lang "clojure"
    :requires [[clojure.spec.alpha :as s]]
-   :params [db src-id target-id id-spec target-biotype]
+   :params [db from-id into-id id-spec into-biotype]
    :code
-   "(let [participants [[id-spec src-id] [id-spec target-id]]
+   "(let [participants [[id-spec from-id] [id-spec into-id]]
           valids (zipmap participants
                          (map (partial s/valid? id-spec) participants))]
-      (when (= src-id target-id)
-        (throw (ex-info \"Source and target ids cannot be the same!\"
-                        {:src-id src-id
-                         :target-id target-id
+      (when (= from-id into-id)
+        (throw (ex-info \"Source and into ids cannot be the same!\"
+                        {:from-id from-id
+                         :into-id into-id
                          :type ::validation-error})))
-      (when-not (s/valid? :gene/biotype target-biotype)
+      (when-not (s/valid? :gene/biotype into-biotype)
          (throw (ex-info \"Invalid biotype\"
-                          {:problems (s/explain-data :gene/biotype target-biotype)
+                          {:problems (s/explain-data :gene/biotype into-biotype)
                            :type ::validation-error})))
       (when (some nil? (vals valids))
         (let [invalids (some->> valids
@@ -194,50 +194,50 @@
                                            invalids)
                             :type ::validation-error
                             :invalid-entities invalids}))))
-       (let [[src target] (map #(d/entity db %) participants)]
+       (let [[from into] (map #(d/entity db %) participants)]
          (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
-                                  [src target])]
+                                  [from into])]
            (when-not (empty? deads)
              (throw (ex-info \"Both merge participants must be live\"
                              {:type :org.wormbase.db/conflict
                               :dead-genes (map :gene/id deads)}))))
-         (when (some nil? [src target])
+         (when (some nil? [from into])
            (throw (ex-info \"Merge participant does not exist!\"
                             {:missing (remove (comp not nil?)
-                                              (map :gene/id [src target]))
+                                              (map :gene/id [from into]))
                              :type :org.wormbase.db/missing
                              :participants participants})))
-         (when (reduce not= (map (comp :species/id :gene/species) [src target]))
+         (when (reduce not= (map (comp :species/id :gene/species) [from into]))
            (throw (ex-info \"Refusing to merge: genes have differing species\"
-                           {:src {id-spec src-id
-                                  :species/id (:gene/species src)}
-                            :target {id-spec target-id
-                                     :species/id (:gene/species target)}
+                           {:from {id-spec from-id
+                                  :species/id (:gene/species from)}
+                            :into {id-spec into-id
+                                     :species/id (:gene/species into)}
                             :type :org.wormbase.db/conflict})))
-         (when (:gene/cgc-name src)
+         (when (:gene/cgc-name from)
            (throw (ex-info (str \"Gene to be killed has a CGC name, \"
                                 \"refusing to merge\")
-                            {:src-id src-id
-                             :src-cgc-name (:gene/cgc-name src)
+                            {:from-id from-id
+                             :from-cgc-name (:gene/cgc-name from)
                              :type :org.wormbase.db/conflict})))
           (let [entid (partial d/entid db)
-                src-seq-name (:gene/sequence-name src)
+                from-seq-name (:gene/sequence-name from)
                 none? #(every? nil? %)
-                uncloned-target? (none? ((juxt :gene/biotype :gene/sequence-name)
-                                         target))
-                [sid tid] (map :db/id [src target])
+                uncloned-into? (none? ((juxt :gene/biotype :gene/sequence-name)
+                                         into))
+                [sid tid] (map :db/id [from into])
                 txes [[:db.fn/cas sid :gene/status
-                                      (entid (:gene/status src))
+                                      (entid (:gene/status from))
                                       (entid :gene.status/dead)]
                       [:db.fn/cas tid :gene/biotype
-                                      (entid (:gene/biotype target))
-                                      (entid target-biotype)]]
-                tx-data (if uncloned-target?
+                                      (entid (:gene/biotype into))
+                                      (entid into-biotype)]]
+                tx-data (if uncloned-into?
                           (-> txes
                               (conj
-                               [:db/retract sid :gene/sequence-name src-seq-name])
+                               [:db/retract sid :gene/sequence-name from-seq-name])
                               (conj
-                               [:db.fn/cas tid :gene/sequence-name nil src-seq-name]))
+                               [:db.fn/cas tid :gene/sequence-name nil from-seq-name]))
                           txes)]
              tx-data)))"}}
  

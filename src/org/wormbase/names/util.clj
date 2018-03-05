@@ -1,8 +1,10 @@
 (ns org.wormbase.names.util
   (:require
-   [aero.core :as aero]
    [clojure.java.io :as io]
-   [clojure.walk :as walk]))
+   [clojure.pprint :as pp]
+   [clojure.walk :as walk]
+   [aero.core :as aero]
+   [datomic.api :as d]))
 
 (defn read-app-config
   ([]
@@ -37,3 +39,30 @@
                    (into {} %)
                    %)
                 ent))
+
+;; trunc and datom-table taken from day-of-datomic repo (congnitect).
+
+(defn trunc
+  "Return a string rep of x, shortened to n chars or less"
+  [x n]
+  (let [s (str x)]
+    (if (<= (count s) n)
+      s
+      (str (subs s 0 (- n 3)) "..."))))
+
+(defn datom-table
+  "Print a collection of datoms in an org-mode compatible table."
+  [db datoms]
+  (->> datoms
+       (map
+        (fn [{:keys [e a v tx added]}]
+          {"part" (d/part e)
+           "e" (format "0x%016x" e)
+           "a" (d/ident db a)
+           "v" (if (nat-int? v)
+                 (or (d/ident db v)
+                     (format "0x%016x" (:db/id (d/entity db v))))
+                 (trunc v 24))
+           "tx" (format "0x%x" tx)
+           "added" added}))
+       (pp/print-table ["part" "e" "a" "v" "tx" "added"])))

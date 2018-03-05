@@ -55,6 +55,7 @@
         (PushbackReader.)
         (edn-read))))
 
+;; TODO: store seed data in resources/schema as EDN.
 (def seed-data {:agents
                 [{:agent/id :agent/web-form}
                  {:agent/id :agent/script}]

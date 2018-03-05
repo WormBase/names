@@ -123,17 +123,19 @@
     [status (parse-body body)]))
 
 (defn delete [app uri content-type headers]
-  (let [request (-> (p/session app)
+  (let [request (-> app
+                    p/session
                     (p/request uri
                                :request-method :delete
                                :headers (or headers {})
                                :content-type (or content-type
                                                  "application/edn")))
         {{:keys [status body response-headers]} :response} request]
-    [status (read-body body) response-headers]))
+    [status (parse-body body) response-headers]))
 
 (defn raw-put-or-post* [app uri method data content-type headers]
-  (let [request (-> (p/session app)
+  (let [request (-> app
+                    p/session
                     (p/request uri
                                :request-method method
                                :headers (or headers {})
@@ -270,13 +272,17 @@
                     :provenance/why
                     :provenance/how])))
 
-(defn gen-valid-seq-name [species]
+(defn gen-valid-name [name-kw species]
   (-> species
       owsg/name-patterns
-      :gene/sequence-name
+      name-kw
       sg/string-generator
       (gen/sample 1)
       first))
+
+(def gen-valid-seq-name (partial gen-valid-name :gene/sequence-name))
+
+(def gen-valid-cgc-name (partial gen-valid-name :gene/cgc-name))
 
 (defn gene-samples [n]
   (assert (int? n))
