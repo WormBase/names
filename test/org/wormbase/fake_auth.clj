@@ -33,7 +33,7 @@
                        :displayName "Tester"
                        :familyName "McTester "
                        :givenName "Tester could be 1 2 or 3"
-                       :displayNameFirstLAst "McTester, Tester"}]
+                       :displayNameFirstLast "McTester, Tester"}]
               :emailAddresses
               [{:metadata {:primary true
                            :verified true
