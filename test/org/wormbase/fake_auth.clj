@@ -1,8 +1,10 @@
 (ns org.wormbase.fake-auth
-  (:require [org.wormbase.names.auth :as own-auth]
-            [cheshire.core :as json]
-            ;[clojure.tools.logging :as log]
-            ))
+  (:require
+   ;; TODO: loggigng
+   ;; [clojure.tools.logging :as log]
+   [cheshire.core :as json]
+   [environ.core :as environ]
+   [org.wormbase.names.auth :as own-auth]))
 
 (def tokens {"tester@wormbase.org" "TOKEN_HERE_tester1"
              "tester2@wormbase.org" "TOKEN_HERE_tester2"
@@ -20,6 +22,7 @@
  (var own-auth/who-am-i)
  (fn fake-google-people-me-api [real-fn]
    (fn [url]
+     ;; TODO: use logging
      (println "NOTICE: Faking requests to Google APIs")
      {:body (json/generate-string
              {:resourceName "people/123213123123"
