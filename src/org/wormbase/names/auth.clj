@@ -18,15 +18,14 @@
    [ring.util.codec :as ruc]
    [ring.util.http-response :as http-response]))
 
-;; TODO:
-;; dispatch to a different (buddy)backend credentials store
-;; depending on the request's user-agent
-;;; If requset is via a web browser,
-;;; then we want to get credentials from the OS's environ/beanstalk env vars
-;;;
-;;; If request is via a Perl/Python script,
-;;; then we want to retrieve the credentials from the configured file on disk
-;;; (or else make people set env vars every time they run their scripts?)
+;; TODO: dispatch to a different (buddy)backend credentials store
+;;       depending on the request's user-agent
+;;       If requset is via a web browser,
+;;       then we want to get credentials from the OS's environ/beanstalk env vars
+;;
+;;       If request is via a Perl/Python script,
+;;       then we want to retrieve the credentials from the configured file on disk
+;;       (or else make people set env vars every time they run their scripts?)
 
 ;;; ENSURE NOT TO LEAK INFO (e.g CLIENT_SECRET, via any logging)
 
