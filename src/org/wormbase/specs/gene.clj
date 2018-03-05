@@ -173,3 +173,12 @@
 
 (s/def ::split (s/keys :req [:gene/biotype]
                        :req-un [::product]))
+
+(s/def ::split-response (s/keys :req-un [::updated ::created]))
+
+(s/def ::live :gene/id)
+
+(s/def ::dead :gene/id)
+
+(s/def ::split-undone (s/keys :req-un [::live ::dead]))
+

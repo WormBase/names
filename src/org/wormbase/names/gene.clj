@@ -1,23 +1,24 @@
 (ns org.wormbase.names.gene
   (:require
+   [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [clj-http.client :as http]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.core :as expound]
    [java-time :as jt]
-   [ring.util.http-response :as resp]
+   [org.wormbase.db :as owdb]
    [org.wormbase.names.auth :as own-auth]
    [org.wormbase.names.util :as ownu]
    [org.wormbase.names.util :refer [namespace-keywords]]
+   [org.wormbase.specs.auth :as oswa]
+   [org.wormbase.specs.biotype :as owsb]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.specs.provenance :as owsp]
-   [org.wormbase.specs.auth :as oswa]
    [ring.util.http-response :as http-response]
-   [org.wormbase.db :as owdb]
-   [clojure.spec.alpha :as s]
-   [clj-http.client :as http]
-   [org.wormbase.specs.biotype :as owsb]))
+   [ring.util.http-response :as resp])
+  (:refer-clojure :exclude [merge]))
 
 (defn- extract-id [tx-result]
   (some->> (:tx-data tx-result)
@@ -78,7 +79,7 @@
       (not (:provenance/when prov))
       (assoc :provenance/when (jt/to-java-date (jt/instant)))
 
-      
+
       is-client-script?
       (assoc :provenance/how [:agent/id :agent/script])
 
@@ -127,7 +128,7 @@
             (resp/ok {:updated (ownu/entity->map ent)})
             (resp/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
-(defn merge-from [request source-id target-id]
+(defn merge [request source-id target-id]
   (let [conn (:conn request)
         data (:body-params request)
         target-biotype (:gene/biotype data)
@@ -148,40 +149,38 @@
         (resp/ok {:updated (ownu/entity->map ent)}))
       (resp/bad-request {:reason tx-result}))))
 
-(defn split-into [request id]
+(defn split [request id]
   (let [conn (:conn request)
         db (d/db conn)
         data (some-> request :body-params)]
     (if (s/valid? ::owsg/split data)
       (if-let [existing-gene (d/entity db [:gene/id id])]
         (let [{biotype :gene/biotype product :product} data
-              {p-seq-name :gene/sequence-name p-biotype :gene/biotype} product
+              {p-seq-name :gene/sequence-name
+               p-biotype :gene/biotype} product
               p-seq-name (get-in data [:product :gene/sequence-name])
               prov-from (-> request
                             (assoc-provenence data)
                             (assoc :provenance/split-into p-seq-name)
                             (assoc :provenance/split-from [:gene/id id]))
               species (-> existing-gene :gene/species :species/id)
-              new-gene-data (-> (ownu/entity->map existing-gene)
-                                (select-keys [:gene/biotype :gene/sequence-name])
-                                (assoc :gene/species {:species/id species}))
               tx-result @(d/transact-async
                           conn
-                          [[:wormbase.tx-fns/split-gene id data ::owsg/new]
+                          [[:wormbase.tx-fns/split-gene
+                            id
+                            data
+                            ::owsg/new]
                            prov-from])
               db (:db-after tx-result)
-              new-gene-id (:gene/id (d/entity db [:gene/sequence-name p-seq-name]))
-              new-gene-qr (d/q '[:find ?e ?sf
-                                 :in $ ?sn
-                                 :where
-                                 [?e :gene/sequence-name ?sn ?tx]
-                                 [(get-else $ ?tx :provenance/split-from :nothing) ?sf]
-                                        ;[?e :gene/id ?into-gid ?tx]
-                                 ]
-                               (d/history db)
-                               p-seq-name)
-              [ent product] (map #(d/entity db [:gene/id %]) [id new-gene-id])]
-          (http-response/ok {:something "here"}))
+              new-gene-id (-> db
+                              (d/entity [:gene/sequence-name p-seq-name])
+                              :gene/id)
+              [ent product] (map #(d/entity db [:gene/id %]) [id new-gene-id])
+              updated (-> (ownu/entity->map ent)
+                          (select-keys [:gene/biotype :gene/sequence-name])
+                          (assoc :gene/species {:species/id species}))
+              created (ownu/entity->map product)]
+          (http-response/ok {:updated updated :created created}))
         (http-response/not-found {:gene/id id :message "Gene not found"}))
       (let [spec-report (s/explain-data ::owsg/split data)]
         ;; TODO: finer grained error message here would be good.
@@ -190,6 +189,39 @@
         (throw (ex-info "Invalid split request"
                         {:type :user/validation-error
                          :problems spec-report}))))))
+
+(defn invert-tx-fact-mapper [db e a v tx added?]
+  (cond
+    (= (d/ident db a) :gene/status)
+    [:db.fn/cas e a v (d/entid db :gene.status/dead)]
+
+    (= (d/ident db a) :gene/id)
+    [:db/add e a v]
+
+    :default
+    [(if added? :db/retract :db/add) e a v]))
+
+(defn undo-split [request from-id into-id]
+  (if-let [tx (d/q '[:find ?tx .
+                     :in $ ?from ?into
+                     :where
+                     [?tx :provenance/split-into ?into]
+                     [?tx :provenance/split-from ?from]]
+                   (-> request :db d/history)
+                   [:gene/id from-id]
+                   [:gene/id into-id])]
+    (let [conn (:conn request)
+          prov {:db/id "datomic.tx"
+                :provenance/compensates tx
+                :provenance/why "Undoing split"}
+          fact-mapper (partial invert-tx-fact-mapper (d/db conn))
+          compensating-txes (owdb/invert-tx (d/log conn)
+                                            tx
+                                            prov
+                                            fact-mapper)
+          tx-result @(d/transact-async conn compensating-txes)]
+      (http-response/ok {:live from-id :dead into-id}))
+    (http-response/not-found {:message "No transaction to undo"})))
 
 (defn idents-by-ns [db ns-name]
   (sort (d/q '[:find [?ident ...]
@@ -212,6 +244,11 @@
                             success-code
                             {:schema success-spec})]
     response-map))
+
+(def default-responses
+  {200 {:schema {:updated ::owsg/updated}}
+   400 {:schema {:errors ::owsc/error-response}}
+   409 {:schema {:conflict ::owsc/conflict-response}}})
 
 (def routes
   (sweet/routes
@@ -246,8 +283,7 @@
        {:summary "Add new names to an existing gene"
         :x-name ::update
         :parameters {:body ::owsg/update}
-        :responses {200 {:schema {:updated ::owsg/updated}}
-                    400 {:schema {:errors ::owsc/error-response}}}
+        :responses (dissoc default-responses 409)
         :handler (fn [request]
                    (update-record request id))}})
      (sweet/context "/merge/:another-id" [another-id]
@@ -258,12 +294,10 @@
           :path-params [id :gene/id
                         another-id :gene/id]
           :parameters {:body {:gene/biotype :gene/biotype}}
-          :responses {200 {:schema {:updated ::owsg/updated}}
-                      400 {:schema {:errors ::owsc/error-response}}
-                      409 {:schema {:conflict ::owsc/conflict-response}}}
+          :responses default-responses
           :handler
           (fn [request]
-            (merge-from request id another-id))}}))
+            (merge request id another-id))}}))
      (sweet/context "/split" []
        (sweet/resource
         {:post
@@ -271,10 +305,22 @@
           :x-name ::split
           :path-params [id :- :gene/id]
           :parameters {:body ::owsg/split}
-          :responses {201 {:schema {:updated ::owsg/updated}}
-                      400 {:schema {:errors ::owsc/error-response}}
-                      409 {:schema {:conflict ::owsc/conflict-response}}}
+          :responses (assoc default-responses
+                            200
+                            {:schema ::owsg/split-response})
           :handler
           (fn [request]
-            (split-into request id))}})))))
-  
+            (split request id))}}))
+     (sweet/context "/split/:into-id" [into-id]
+       (sweet/resource
+        {:delete
+         {:summary "Undo a split gene operation."
+          :x-name ::undo-split
+          :path-params [id :- :gene/id
+                        into-id :- :gene/id]
+
+          :responses (assoc default-responses
+                            200
+                            {:schema ::owsg/split-undone})
+          :handler (fn [request]
+                     (undo-split request id into-id))}})))))

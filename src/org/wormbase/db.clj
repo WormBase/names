@@ -68,3 +68,25 @@
       (-> request
           (assoc :conn cx :db (db cx))
           (request-handler)))))
+
+(defn invert-tx
+  ([log tx provenance fact-mapper]
+   (let [t (d/tx->t tx)]
+     (if-let [datoms (some-> (d/tx-range log t (inc t)) first :data)]
+       (transduce
+        (comp
+         (remove (fn [[e _ _ tx _]]
+                   (= e tx)))
+         (map (fn [[e a v tx added?]]
+                (if-let [fact (fact-mapper e a v tx added?)]
+                  fact
+                  [(if added? :db/retract :db/add) e a v]))))
+        conj
+        [provenance]
+        datoms)
+       (throw (ex-info "No tx to invert"
+                       {:tx tx
+                        :type ::conflict
+                        :range (d/tx-range log t (inc t))})))))
+    ([log tx provenance]
+     (invert-tx log tx provenance (constantly nil))))

@@ -18,7 +18,9 @@
    [peridot.core :as p]
    [spec-tools.core :as stc]
    [datomic.api :as d])
-  (:import (java.io InputStream)))
+  (:import
+   (clojure.lang ExceptionInfo)
+   (java.io InputStream)))
 
 ;; TODO: Unify way of creating muuntaja formats "instance"?
 ;;       (Duplication as per o.w.n/service.clj - which does it correctly!)
@@ -49,9 +51,9 @@
         body (if (instance? String body)
                (try
                  (muuntaja/decode mformats "application/edn" body)
-                 (catch clojure.lang.ExceptionInfo jpe
-                   (print-decode-err jpe body)
-                   (throw jpe)))
+                 (catch ExceptionInfo exc
+                   (print-decode-err exc body)
+                   (throw exc)))
                body)]
     body))
 
@@ -120,6 +122,16 @@
                        :params params))]
     [status (parse-body body)]))
 
+(defn delete [app uri content-type headers]
+  (let [request (-> (p/session app)
+                    (p/request uri
+                               :request-method :delete
+                               :headers (or headers {})
+                               :content-type (or content-type
+                                                 "application/edn")))
+        {{:keys [status body response-headers]} :response} request]
+    [status (read-body body) response-headers]))
+
 (defn raw-put-or-post* [app uri method data content-type headers]
   (let [request (-> (p/session app)
                     (p/request uri
@@ -175,7 +187,7 @@
                           (stc/deserialize suspec)
                           body)))))
 
-(defn- map->set [m]
+(defn map->set [m]
   (assert (map? m))
   (some->> (apply vector m)
            (flatten)
@@ -258,7 +270,7 @@
                     :provenance/why
                     :provenance/how])))
 
-(defn gen-valid-seq-name-for-species [species]
+(defn gen-valid-seq-name [species]
   (-> species
       owsg/name-patterns
       :gene/sequence-name
@@ -280,7 +292,7 @@
                     (let [sn (-> m
                                  :gene/species
                                  :species/id
-                                 gen-valid-seq-name-for-species)]
+                                 gen-valid-seq-name)]
                       (assoc m :gene/sequence-name sn)))))
         gene-ids (map :gene/id (flatten gene-refs))]
     (if-let [dup-seq-names? (->> data-samples
