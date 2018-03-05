@@ -183,8 +183,6 @@
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]
         (let [init-tx-res @(d/transact-async conn init-txes)
-              _ (prn (ownu/datom-table (:db-after init-tx-res)
-                                       (:tx-data init-tx-res)))
               tx (d/q '[:find ?tx .
                         :in $ ?from-lur ?into-lur
                         :where
