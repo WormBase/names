@@ -1,6 +1,7 @@
 !Build/
 *.bak
 .build/
+.dir-locals.el
 .last_cover_stats
 .lein-*
 .nrepl-port
