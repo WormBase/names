@@ -6,6 +6,7 @@
    [clj-time.core :as ct]
    [datomock.core :as dm]
    [datomic.api :as d]
+   [java-time :as jt]   
    [mount.core :as mount]
    [org.wormbase.db :as owdb]
    [org.wormbase.db.schema :as schema]))
@@ -39,7 +40,8 @@
   (dm/fork-conn (starting-point-conn)))
   
 (defn db-lifecycle [f]
-  (let [uri (str "datomic:mem://" *ns* "-" (ctc/to-long (ct/now)))]
+  (let [uri (str "datomic:mem://" *ns* "-"
+                 (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)]
       (mount/start-with {#'owdb/conn conn})
       (f)
