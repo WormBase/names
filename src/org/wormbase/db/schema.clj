@@ -65,6 +65,12 @@
                      (partition 2)
                      (map (partial apply hash-map))
                      (vec))
+                ;; TODO: make biotypes data, not hard-coded
+                ;; :biotypes
+                ;; [{:db/ident :biotype/cds}
+                ;;  {:db/ident :biotype/psuedogene}
+                ;;  {:db/ident :biotype/transcript}
+                ;;  {:db/ident :biotype/transposon}]
                 :templates
                 [{:template/format "WBGene%08d"
                   :template/describes :gene/id}
