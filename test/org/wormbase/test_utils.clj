@@ -230,7 +230,7 @@
 
 (defn with-fixtures [data-samples test-fn
                      & {:keys [how whence why person status]
-                        :or {how [:agent/id ::own-agent/console]
+                        :or {how ::own-agent/console
                              whence (jt/to-java-date (jt/instant))
                              person [:person/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
@@ -264,7 +264,7 @@
                   [(get-else $ ?tx :provenance/when :unset) ?when]
                   [(get-else $ ?tx :provenance/why "Dunno") ?why]
                   [(get-else $ ?tx :provenance/how :unset) ?how-id]
-                  [?how-id :agent/id ?how]]
+                  [?how-id :db/ident ?how]]
                 (-> conn d/db d/history)
                 [:gene/id gene-id])
            (zipmap [:tx-id

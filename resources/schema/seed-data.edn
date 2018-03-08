@@ -1,0 +1,45 @@
+[;; biotypes
+ #:db{:ident :biotype/transcript}
+ #:db{:ident :biotype/transposon}
+ #:db{:ident :biotype/psuedogene}
+ #:db{:ident :biotype/cds}
+
+ ;; species
+ #:species{:latin-name "Caenorhabditis elegans"
+           :id :species/c-elegans}
+ #:species{:latin-name "Caenorhabditis briggsae"
+           :id :species/c-briggsae}
+ #:species{:latin-name "Caenorhabditis remanei"
+           :id :species/c-remanei}
+ #:species{:latin-name "Caenorhabditis brenneri"
+           :id :species/c-brenneri}
+ #:species{:latin-name "Pristionchus pacificus"
+           :id :species/p-pacificus}
+ #:species{:latin-name "Caenorhabditis japonica"
+           :id :species/c-japonica}
+ #:species{:latin-name "Brugia malayi"
+           :id :species/b-malayi}
+ #:species{:latin-name "Onchocerca volvulus"
+           :id :species/o-volvulus}
+ #:species{:latin-name "Strongyloides ratti"
+           :id :species/s-ratti}
+
+ ;; templates for identifiers
+ #:template{:format "WBGene%08d", :describes :gene/id}
+ #:template{:format "WBsf%12d", :describes :feature/id}
+ #:template{:format "WBVar%08d", :describes :variation/id}
+
+ ;; agent
+ #:db{:ident :org.wormbase.names.agent/web}
+ #:db{:ident :org.wormbase.names.agent/console}
+
+ ;; gene status
+ #:db{:ident :gene.status/dead}
+ #:db{:ident :gene.status/suppressed}
+ #:db{:ident :gene.status/live}
+ ;; person (user)
+ #:person{:roles #{:person.role/admin},
+          :google-id
+          111925262522292127085N,
+          :email
+          "matthew.russell@wormbase.org"}]
