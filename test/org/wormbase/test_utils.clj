@@ -228,8 +228,8 @@
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures [data-samples test-fn
-                     & {:keys [how whence why user status]
-                        :or {how [:agent/id :agent/script]
+                     & {:keys [how whence why person status]
+                        :or {how [:agent/id ::own-agent/console]
                              whence (jt/to-java-date (jt/instant))
                              person [:person/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
