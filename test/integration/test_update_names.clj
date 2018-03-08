@@ -55,7 +55,7 @@
                             (dissoc :gene/status)
                             (assoc :gene/cgc-name "cgc-1")
                             (assoc :provenance/who
-                                   [:user/email "tester@wormbase.org"]))
+                                   [:person/email "tester@wormbase.org"]))
                 db (owdb/db conn)]
             (let [response (update-gene-name identifier payload)
                   [status body] response

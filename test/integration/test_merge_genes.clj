@@ -143,10 +143,14 @@
                 prov (query-provenance conn from-id into-id)
                 [src tgt] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]
-            (t/is (-> prov :provenance/when inst?))
-            (t/is (= (:provenance/merged-into prov) into-id))
-            (t/is (= (:provenance/merged-from prov) from-id))
-            (t/is (= (:provenance/who prov) user-email))
+            (t/is (= status 200))
+            (t/is (some-> prov :provenance/when inst?))
+            (t/is (= (some-> prov :provenance/merged-into :gene/id)
+                     into-id))
+            (t/is (= (some-> prov :provenance/merged-from :gene/id)
+                     from-id))
+            (t/is (= (some-> prov :provenance/who :person/email)
+                     "tester@wormbase.org"))
             ;; TODO: this should be dependent on the client used for the request.
             ;;       at the momment, defaults to web-form.
             (t/is (= (:provenance/how prov) :agent/web-form))))))))

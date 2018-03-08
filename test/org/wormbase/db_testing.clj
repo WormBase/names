@@ -18,10 +18,10 @@
   (let [conn (dm/mock-conn)]
     (schema/install conn 1)
     ;; A set of fake users with different roles to test against.
-    @(d/transact conn [{:user/email "tester@wormbase.org"
-                        :user/roles #{:user.role/admin}}
-                       {:user/email "tester2@wormbase.org"}
-                       {:user/email "tester3@wormbase.org"}])
+    @(d/transact conn [{:person/email "tester@wormbase.org"
+                        :person/roles #{:person.role/admin}}
+                       {:person/email "tester2@wormbase.org"}
+                       {:person/email "tester3@wormbase.org"}])
     conn))
 
 (defonce conn-cache

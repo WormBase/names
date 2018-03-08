@@ -34,7 +34,7 @@
          "provenance"
          "species"
          "template"
-         "user"}))
+         "person"}))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]
@@ -72,9 +72,10 @@
                   :template/describes :feature/id}
                  {:template/format "WBVar%08d"
                   :template/describes :variation/id}]
-                :users
-                [{:user/roles #{:user.role/admin}
-                  :user/email "matthew.russell@wormbase.org"}]})
+                :people
+                [{:person/roles #{:person.role/admin}
+                  :person/google-id 111925262522292127085
+                  :person/email "matthew.russell@wormbase.org"}]})
 
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent

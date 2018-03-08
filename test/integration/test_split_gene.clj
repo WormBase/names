@@ -178,18 +178,22 @@
                                 :gene/sequence-name prod-seq-name}
                       :gene/biotype :biotype/cds
                       :provenance/why "testing"
-                      :provenance/who {:user/email user-email}}
-                response (split-gene data
-                                     gene-id
-                                     :current-user user-email)
+                      :provenance/who {:person/email user-email}}
+                [status body] (split-gene data
+                                          gene-id
+                                          :current-user user-email)
                 prov (query-provenance conn gene-id prod-seq-name)
                 src (d/entity (d/db conn) [:gene/id gene-id])
                 prod (d/entity (d/db conn)
                                [:gene/sequence-name prod-seq-name])]
-            (t/is (-> prov :provenance/when inst?))
-            (t/is (= (:provenance/split-from prov) gene-id))
-            (t/is (= (:provenance/split-into prov) (:gene/id prod)))
-            (t/is (= (:provenance/who prov) user-email))
+            (t/is (= status 201) (pr-str body))
+            (t/is (some-> prov :provenance/when inst?))
+            (t/is (= (some-> prov :provenance/split-from :gene/id)
+                     gene-id))
+            (t/is (= (some-> prov :provenance/split-into :gene/id)
+                     (:gene/id prod)))
+            (t/is (= (some-> prov :provenance/who :person/email)
+                     user-email))
             (t/is (= (:gene/species src) (:gene/species prod)))
             ;; TODO: this should be dependent on the client used for
             ;;       the request.  at the momment, defaults to

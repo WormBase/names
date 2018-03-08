@@ -55,19 +55,14 @@
   (into {} (filter #(= (namespace (key %)) key-ns)) data))
 
 (defn assoc-provenence [request payload]
-  (let [prov (select-keys-with-ns payload "provenance")
-        who (or (:provenance/who prov)
-                (d/entity (:db request)
-                          [:user/email (-> request :identity :email)]))
-        ;; TODO (!important): determine :provenance/how via credentials
-        ;; used, not user-agent string.
-        ;; Perhaps client shuld send header:
-        ;; "X-WormBase-GAppsID <google-apps-id>"
-        user-agent (get-in request [:headers "user-agent"])
-        is-client-script? (and user-agent
-                               (str/includes? user-agent "script"))]
-    (if-not (:db request)
-      (throw (ex-info "DB was nil!" {})))
+  (let [id-token (:identity request)
+        prov (or (select-keys-with-ns payload "provenance") {})
+        email (or (some-> prov :provenance/who :person/email)
+                  (:email id-token))
+        who (:db/id (d/entity (:db request) [:person/email email]))
+        when (get prov :provenance/when (jt/to-java-date (jt/instant)))
+        how (own-agent/identify id-token)
+        why (:provenance/why prov)]
     (cond-> prov
       (:user/email who)
       (assoc :provenance/who (:db/id

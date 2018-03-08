@@ -73,7 +73,7 @@
   (t/testing "Naming some genes providing provenance."
     (let [name-record {:gene/cgc-name "abc-1"
                        :gene/species {:species/id :species/c-elegans}
-                       :provenance/who {:user/email
+                       :provenance/who {:person/email
                                         "tester@wormbase.org"}}
           [status body] (new-name name-record)]
       (tu/status-is? status 201 body)
