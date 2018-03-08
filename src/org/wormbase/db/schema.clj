@@ -91,9 +91,9 @@
 (defn install [conn run-n]
   (let [schema-ident (keyword (str "schema-" run-n))]
     (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
-          definitions (read-edn (io/resource "schema/definitions.edn"))
+          schema-txes (read-edn (io/resource "schema/definitions.edn"))
           seeds {::seed-data {:txes (-> seed-data vals vec)}}
-          init-schema [(concat db-fns definitions)]]
+          init-schema [(concat db-fns schema-txes)]]
       ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
       ;;       relations without some data installed.
       ;;       i.e schema alone will not draw the arrows between refs.
