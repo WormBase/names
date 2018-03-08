@@ -3,21 +3,8 @@
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [datomic.api :as d]
-   [io.rkn.conformity :as c]
-   [org.wormbase.species :as ows]
-   [org.wormbase.names.agent :as own-agent])
+   [io.rkn.conformity :as c])
   (:import (java.io PushbackReader)))
-
-;; TODO: not sure the canonical species listing should "live" here...
-(def worms ["Caenorhabditis elegans"
-            "Caenorhabditis briggsae"
-            "Caenorhabditis remanei"
-            "Caenorhabditis brenneri"
-            "Pristionchus pacificus"
-            "Caenorhabditis japonica"
-            "Brugia malayi"
-            "Onchocerca volvulus"
-            "Strongyloides ratti"])
 
 (defn definitions [db]
   (d/q '[:find [?attr ...]
@@ -28,10 +15,10 @@
          [(namespace ?attr) ?ns]
          [(= ?ns ?include-ns)]]
        db
-       #{"agent"
-         "biotype"
+       #{"biotype"
          "gene"
          "gene.status"
+         "org.wormbase.names.agent"
          "provenance"
          "species"
          "template"
@@ -69,10 +56,8 @@
           init-schema [(concat db-fns schema-txes)]]
       ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
       ;;       relations without some data installed.
-      ;;       i.e schema alone will not draw the arrows between refs.
-      ;; (println txes)
-      ;; (c/ensure-conforms conn {schema-ident {:txes db-fns}})
+      ;;       i.e schema alone will not draw the  between refs.
+      ;;           (arrows on digagrea)
       (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
-      (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
-      )))
+      (c/ensure-conforms conn {:seed-data {:txes [seed-data]}}))))
 
