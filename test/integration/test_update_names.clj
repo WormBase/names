@@ -7,6 +7,7 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.fake-auth] ;; for side effect
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.test-utils :as tu]))
@@ -16,9 +17,8 @@
 (defn update-gene-name [gene-id name-record]
   (let [uri (str "/gene/" gene-id)
         put (partial tu/raw-put-or-post* service/app uri :put)
-        headers {"auth-user" "tester@wormbase.org"
-                 "authorization" "Bearer TOKEN_HERE"
-                 "user-agent" "wb-ns-script"}
+        headers {;;"auth-user" "tester@wormbase.org"
+                 "authorization" "Token TOKEN_HERE"}
         data (pr-str name-record)
         [status body] (put data nil headers)]
     [status (tu/parse-body body)]))
@@ -55,14 +55,14 @@
                             (dissoc :gene/status)
                             (assoc :gene/cgc-name "cgc-1")
                             (assoc :provenance/who
-                                   [:user/email "tester@wormbase.org"]))
+                                   [:person/email "tester@wormbase.org"]))
                 db (owdb/db conn)]
             (let [response (update-gene-name identifier payload)
                   [status body] response
                   ent (d/entity (d/db conn) [:gene/id identifier])]
               (tu/status-is? status 200 (pr-str response))
               (let [act-prov (tu/query-provenance conn identifier)]
-                (t/is (= (:provenance/how act-prov) :agent/script)
+                (t/is (= (:provenance/how act-prov) ::own-agent/console)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
                 (t/is (= (:provenance/who act-prov)

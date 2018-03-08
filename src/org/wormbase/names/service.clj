@@ -12,8 +12,7 @@
    [org.wormbase.names.auth.restructure] ;; Included for side effects
    [org.wormbase.names.errhandlers :as own-eh]
    [org.wormbase.names.gene :as own-gene]
-   [org.wormbase.names.user :as own-user]
-   [org.wormbase.specs.auth :as auth-spec]
+   [org.wormbase.names.person :as own-person]
    [ring.middleware.gzip :as ring-gzip]
    [ring.util.http-response :as http-response])
   (:import
@@ -71,14 +70,14 @@
      {:name "feature"}
      {:name "gene"}
      {:name "variation"}
-     {:name "user"}]}})
+     {:name "person"}]}})
 
 (def ^{:doc "The main application."} app
   (sweet/api
    {:coercion :spec
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
-                 own-auth/wrap-app-session
+                 own-auth/wrap-auth
                  ow-db/wrap-datomic
                  wrap-not-found]
     :exceptions
@@ -97,7 +96,7 @@
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?
-     own-user/routes
+     own-person/routes
      own-gene/routes)))
 
 (defn init

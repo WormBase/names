@@ -1,4 +1,4 @@
-(ns org.wormbase.specs.user
+(ns org.wormbase.specs.person
   (:require [clojure.spec.alpha :as s]
             [miner.strgen :as sg])
   (:import (java.util UUID)))
@@ -9,7 +9,7 @@
 
 (def email-regexp #"[a-z0-9][a-z0-9.]+?@wormbase\.org")
 
-(s/def :user/email
+(s/def :person/email
   (s/with-gen
     (s/and string? #(re-matches email-regexp %))
     #(sg/string-generator email-regexp)))
@@ -36,16 +36,16 @@
 
 (s/def :role/id (s/keys :req [::role]))
 
-(s/def :user/roles (s/every ::role :into set :kind set? :distinct true))
+(s/def :person/roles (s/every ::role :into set :kind set? :distinct true))
 
 ;; Collections
-(s/def ::new (s/keys :req [:user/email :user/roles]))
+(s/def ::new (s/keys :req [:person/email :person/roles]))
 
-(s/def ::user (s/keys :req [:user/email]
-                      :opt [:user/roles]))
+(s/def ::person (s/keys :req [:person/email]
+                        :opt [:person/roles]))
 
-(s/def ::users (s/coll-of ::user :kind vector? :min-count 1))
+(s/def ::people (s/coll-of ::person :kind vector? :min-count 1))
 
-(s/def ::created (s/keys :req [::users]))
+(s/def ::created (s/keys :req [::people]))
 
-(s/def ::identified (s/keys :req-un [::name :user/email]))
+(s/def ::identified (s/keys :req-un [::name :person/email]))

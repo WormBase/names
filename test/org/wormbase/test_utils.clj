@@ -9,15 +9,16 @@
    ;; TODO
    ;; [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
+   [datomic.api :as d]
    [java-time :as jt]
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
-   [spec-tools.core :as stc]
-   [datomic.api :as d])
+   [spec-tools.core :as stc])
   (:import
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))
@@ -228,10 +229,10 @@
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures [data-samples test-fn
-                     & {:keys [how whence why user status]
-                        :or {how [:agent/id :agent/script]
+                     & {:keys [how whence why person status]
+                        :or {how [:agent/id ::own-agent/console]
                              whence (jt/to-java-date (jt/instant))
-                             user [:user/email "tester@wormbase.org"]}}]
+                             person [:person/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
         sample-data (if (map? data-samples)
                       [data-samples]
@@ -241,7 +242,7 @@
             prov (merge {:db/id "datomic.tx"
                          :provenance/how how
                          :provenance/when whence
-                         :provenance/who user}
+                         :provenance/who person}
                         (when-not (:gene/status data)
                           {:gene/status :gene.status/live})
                         (when why
@@ -259,7 +260,7 @@
                   :where
                   [?gene-id :gene/id _ ?tx]
                   [?tx :provenance/who ?u-id]
-                  [(get-else $ ?u-id :user/email "nobody") ?who]
+                  [(get-else $ ?u-id :person/email "nobody") ?who]
                   [(get-else $ ?tx :provenance/when :unset) ?when]
                   [(get-else $ ?tx :provenance/why "Dunno") ?why]
                   [(get-else $ ?tx :provenance/how :unset) ?how-id]

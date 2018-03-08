@@ -15,7 +15,7 @@
                     {:uri "/aliens"
                      :headers {"content-type" "application/edn"
                                "accept" "application/edn"
-                               "authorization" "Bearer TOKEN_HERE"}
+                               "authorization" "Token TOKEN_HERE"}
                      :query-params {}
                      :request-method :get})]
       (t/is (= 404 (:status response)))

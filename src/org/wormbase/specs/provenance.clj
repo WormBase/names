@@ -2,16 +2,18 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [org.wormbase.specs.agent] ;; needed to load specs for agent
-   [org.wormbase.specs.user :as ows-user]))
+   [org.wormbase.specs.person :as ows-person]))
+
+(s/def :agent/id string?)
 
 ;; TODO: clients should provide zoned-date-time (times in UTC)
 ;;       - db wants instants (java.utl.Date values)
+
 (s/def :provenance/when inst?)
 
 (s/def :provenance/client #{:web :script})
 
-(s/def :provenance/who ::ows-user/user)
+(s/def :provenance/who ::ows-person/person)
 
 (s/def :provenance/how (s/keys :req [:agent/id]))
 

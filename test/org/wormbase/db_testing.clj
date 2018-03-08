@@ -1,11 +1,9 @@
 (ns org.wormbase.db-testing
   (:require
    [clojure.core.cache :as cache]
-   [clj-time.coerce :as ctc]
-   [clj-time.core :as ct]
-   [clj-time.core :as ct]
    [datomock.core :as dm]
    [datomic.api :as d]
+   [java-time :as jt]   
    [mount.core :as mount]
    [org.wormbase.db :as owdb]
    [org.wormbase.db.schema :as schema]))
@@ -18,10 +16,10 @@
   (let [conn (dm/mock-conn)]
     (schema/install conn 1)
     ;; A set of fake users with different roles to test against.
-    @(d/transact conn [{:user/email "tester@wormbase.org"
-                        :user/roles #{:user.role/admin}}
-                       {:user/email "tester2@wormbase.org"}
-                       {:user/email "tester3@wormbase.org"}])
+    @(d/transact conn [{:person/email "tester@wormbase.org"
+                        :person/roles #{:person.role/admin}}
+                       {:person/email "tester2@wormbase.org"}
+                       {:person/email "tester3@wormbase.org"}])
     conn))
 
 (defonce conn-cache
@@ -39,7 +37,8 @@
   (dm/fork-conn (starting-point-conn)))
   
 (defn db-lifecycle [f]
-  (let [uri (str "datomic:mem://" *ns* "-" (ctc/to-long (ct/now)))]
+  (let [uri (str "datomic:mem://" *ns* "-"
+                 (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)]
       (mount/start-with {#'owdb/conn conn})
       (f)
@@ -51,9 +50,9 @@
   ;; (let [test-user-email "tester@wormbase.org"]
   ;;   (when-not (d/q '[:find ?e
   ;;                    :in $ ?email
-  ;;                    :where [?e :user/email ?email]]
+  ;;                    :where [?e :person/email ?email]]
   ;;                  (d/db conn) test-user-email)
-  ;;     @(d/transact conn [{:user/email test-user-email}])))
+  ;;     @(d/transact conn [{:person/email test-user-email}])))
   (d/db conn))
 
 (defn speculate [conn tx]

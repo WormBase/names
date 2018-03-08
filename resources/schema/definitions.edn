@@ -2,11 +2,11 @@
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
- #:db{:ident :agent/script,
+ #:db{:ident :org.wormbase.names.agent/console,
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
- #:db{:ident :agent/web-form,
+ #:db{:ident :org.wormbase.names.agent/web,
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
@@ -81,10 +81,23 @@
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
- #:db{:ident :user/email,
+ #:db {:ident :person/id,
+       :valueType :db.type/string,
+       :cardinality :db.cardinality/one,
+       :unique :db.unique/value}
+ #:db {:ident :person/google-id,
+       :valueType :db.type/bigint,
+       :cardinality :db.cardinality/one,
+       :unique :db.unique/value,
+       :doc "Unique value representing a google user, returned by Google verification APIs"}
+ #:db{:ident :person/email,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
- #:db{:ident :user/roles,
+ #:db{:ident :person/roles,
       :valueType :db.type/keyword,
-      :cardinality :db.cardinality/many}]
+      :cardinality :db.cardinality/many}
+ #:db {:ident :person/name,
+       :valueType :db.type/string,
+       :cardinality :db.cardinality/one,
+       :doc "Person's name as presented by Google APIs"}]

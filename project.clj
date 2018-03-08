@@ -17,6 +17,7 @@
    [danlentz/clj-uuid "0.1.7"]
    [environ "1.1.0"]
    [expound "0.5.0"]
+   [com.google.api-client/google-api-client "1.23.0"]
    [io.rkn/conformity "0.5.1"]
    [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
                                       javax.jms/jms

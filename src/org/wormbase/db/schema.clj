@@ -4,7 +4,8 @@
    [clojure.java.io :as io]
    [datomic.api :as d]
    [io.rkn.conformity :as c]
-   [org.wormbase.species :as ows])
+   [org.wormbase.species :as ows]
+   [org.wormbase.names.agent :as own-agent])
   (:import (java.io PushbackReader)))
 
 ;; TODO: not sure the canonical species listing should "live" here...
@@ -34,7 +35,7 @@
          "provenance"
          "species"
          "template"
-         "user"}))
+         "person"}))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]
@@ -57,14 +58,20 @@
 
 ;; TODO: store seed data in resources/schema as EDN.
 (def seed-data {:agents
-                [{:agent/id :agent/web-form}
-                 {:agent/id :agent/script}]
+                [{:agent/id ::own-agent/web}
+                 {:agent/id ::own-agent/console}]
                 :species
                 (->> (map ows/latin-name->ident worms)
                      (interleave (repeat (count worms) :species/id))
                      (partition 2)
                      (map (partial apply hash-map))
                      (vec))
+                ;; TODO: make biotypes data, not hard-coded
+                ;; :biotypes
+                ;; [{:db/ident :biotype/cds}
+                ;;  {:db/ident :biotype/psuedogene}
+                ;;  {:db/ident :biotype/transcript}
+                ;;  {:db/ident :biotype/transposon}]
                 :templates
                 [{:template/format "WBGene%08d"
                   :template/describes :gene/id}
@@ -72,9 +79,10 @@
                   :template/describes :feature/id}
                  {:template/format "WBVar%08d"
                   :template/describes :variation/id}]
-                :users
-                [{:user/roles #{:user.role/admin}
-                  :user/email "matthew.russell@wormbase.org"}]})
+                :people
+                [{:person/roles #{:person.role/admin}
+                  :person/google-id 111925262522292127085
+                  :person/email "matthew.russell@wormbase.org"}]})
 
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
@@ -84,9 +92,9 @@
 (defn install [conn run-n]
   (let [schema-ident (keyword (str "schema-" run-n))]
     (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
-          definitions (read-edn (io/resource "schema/definitions.edn"))
+          schema-txes (read-edn (io/resource "schema/definitions.edn"))
           seeds {::seed-data {:txes (-> seed-data vals vec)}}
-          init-schema [(concat db-fns definitions)]]
+          init-schema [(concat db-fns schema-txes)]]
       ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
       ;;       relations without some data installed.
       ;;       i.e schema alone will not draw the arrows between refs.
