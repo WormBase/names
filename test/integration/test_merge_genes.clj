@@ -2,17 +2,11 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [java-time :as jt]
    [org.wormbase.db :as owdb]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
-   [org.wormbase.names.util :as ownu]
-   [org.wormbase.test-utils :refer [raw-put-or-post*
-                                    parse-body
-                                    status-is?
-                                    body-contains?]]
    [org.wormbase.test-utils :as tu])
   (:import (java.util Date)))
 
@@ -46,14 +40,14 @@
     (let [data (pr-str payload)
           uri (str "/gene/" into-id "/merge-from/" from-id)
           [status body]
-          (raw-put-or-post*
+          (tu/raw-put-or-post*
            service/app
            uri
            :post
            data
            "application/edn"
            {"authorization" "Token IsnotReleventHere"})]
-      [status (parse-body body)])))
+      [status (tu/parse-body body)])))
 
 (defn undo-merge-genes
   [from-id into-id & {:keys [current-user]
@@ -70,11 +64,11 @@
   (t/testing "Request to merge genes must meet spec."
     (let [response (merge-genes {} "WBGene00000002" "WBGene00000001")
           [status body] response]
-      (status-is? status 400 body)
-      (t/is (contains? (parse-body body) :problems) (pr-str body))))
+      (tu/status-is? status 400 body)
+      (t/is (contains? (tu/parse-body body) :problems) (pr-str body))))
   (t/testing "Target biotype always required when merging genes."
     (let [[status body] (merge-genes {} "WB2" "WB1")]
-      (status-is? status 400 (format "Body: " body)))))
+      (tu/status-is? status 400 (format "Body: " body)))))
 
 (t/deftest response-codes
   (t/testing "404 for gene missing"
