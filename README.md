@@ -1,9 +1,10 @@
 # wormbase-names
 
-Facilitate the sharing of identifiers of certain WormBase types for ACeDB.
+Facilitate the sharing of identifiers and names of a subset of
+WormBase data types.
 
-The ACeDB does not support concurrent writes, so a "name-server"
-service is required to coordinate ACeDB curation.
+ACeDB does not support concurrent writes, so a brokering "name-server"
+service has historically been required to coordinate curation activity.
 
 This library intends to provide:
 
@@ -29,6 +30,9 @@ read in upon starting the web-service, idemopotently using
 
 Provenance (who, when, where and why) is
 modelled as attributes on transactions.
+
+The excewption being that a data-types' status (dead / live /
+supressed) is modelled on the entity, not the transaction.
 
 The latest alpha version of [clojure][2] is used to facilitate the use
 of [clojure.spec][3] to provide validation and test-data-generation for
