@@ -12,7 +12,8 @@
 (defn new-name
   [name-record & {:keys [current-user]
                   :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*current-user* current-user]
+  (binding [fake-auth/*gapi-verify-token-response*
+            {"email" current-user}]
     (let [data (->> name-record (assoc {} :new) pr-str)
           current-user-token (get fake-auth/tokens current-user)
           [status body]
@@ -22,7 +23,7 @@
            :post
            data
            "application/edn"
-           {"authorization" (str "Bearer " current-user-token)})]
+           {"authorization" (str "Token " current-user-token)})]
       [status (tu/parse-body body)])))
 
 (def not-nil? (complement nil?))

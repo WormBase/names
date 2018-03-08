@@ -4,7 +4,8 @@
    [clojure.java.io :as io]
    [datomic.api :as d]
    [io.rkn.conformity :as c]
-   [org.wormbase.species :as ows])
+   [org.wormbase.species :as ows]
+   [org.wormbase.names.agent :as own-agent])
   (:import (java.io PushbackReader)))
 
 ;; TODO: not sure the canonical species listing should "live" here...
@@ -57,8 +58,8 @@
 
 ;; TODO: store seed data in resources/schema as EDN.
 (def seed-data {:agents
-                [{:agent/id :agent/web-form}
-                 {:agent/id :agent/script}]
+                [{:agent/id ::own-agent/web}
+                 {:agent/id ::own-agent/console}]
                 :species
                 (->> (map ows/latin-name->ident worms)
                      (interleave (repeat (count worms) :species/id))

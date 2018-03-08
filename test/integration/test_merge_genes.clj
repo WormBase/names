@@ -6,6 +6,7 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [org.wormbase.names.util :as ownu]
    [org.wormbase.test-utils :refer [raw-put-or-post*
@@ -17,40 +18,32 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn- query-provenance [conn from-gene-id into-gene-id]
-  (some->> (d/q '[:find [?tx ?from-g ?into-g ?how ?when ?who ?why ?status]
-                  :in $ ?from-gene-id ?into-gene-id
-                  :where
-                  [?tx :provenance/merged-from ?from-gene-gid]
-                  [?tx :provenance/merged-into ?into-gene-id]
-                  [(get-else $ ?from-gene-id :gene/id :no-from) ?from-g]
-                  [(get-else $ ?into-gene-id :gene/id :no-into) ?into-g]
-                  [?into-gid :gene/status ?sid]
-                  [?sid :db/ident ?status]
-                  [?tx :provenance/why ?why]
-                  [?tx :provenance/when ?when]
-                  [?tx :provenance/who ?wid]
-                  [?wid :user/email ?who]
-                  [?tx :provenance/how ?hid]
-                  [?hid :agent/id ?how]]
-                (-> conn d/db d/history)
-                [:gene/id from-gene-id]
-                [:gene/id into-gene-id])
-           (zipmap [:provenance/tx
-                    :provenance/merged-from
-                    :provenance/merged-into
-                    :provenance/how
-                    :provenance/when
-                    :provenance/who
-                    :provenance/why])))
+(defn query-provenance [conn from-gene-id into-gene-id]
+  (when-let [mtx (d/q '[:find ?tx .
+                        :in $ ?from ?into
+                        :where
+                        [?tx :provenance/merged-from ?from]
+                        [?tx :provenance/merged-into ?into]
+                        [?from :gene/status :gene.status/dead]]
+                      (-> conn d/db d/history)
+                      [:gene/id from-gene-id]
+                      [:gene/id into-gene-id])]
+    (d/pull (d/db conn)
+            '[:provenance/why
+              :provenance/when
+              {:provenance/merged-into [:gene/id]
+               :provenance/merged-from [:gene/id]
+               :provenance/how [:db/ident]
+               :provenance/who [:person/email]}]
+            mtx)))
 
 (defn merge-genes
   [payload from-id into-id
    & {:keys [current-user]
       :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*current-user* current-user]
+
+  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [data (pr-str payload)
-          current-user-token (get fake-auth/tokens current-user)
           uri (str "/gene/" into-id "/merge-from/" from-id)
           [status body]
           (raw-put-or-post*
@@ -59,18 +52,18 @@
            :post
            data
            "application/edn"
-           {"authorization" (str "Bearer " current-user-token)})]
+           {"authorization" "Token IsnotReleventHere"})]
       [status (parse-body body)])))
 
 (defn undo-merge-genes
   [from-id into-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*current-user* current-user]
+  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/gene/" into-id "/merge-from/" from-id)
                  "application/edn"
-                 {"authorization" (str "Bearer " current-user-token)}))))
+                 {"authorization" (str "Token " current-user-token)}))))
 
 
 (t/deftest must-meet-spec
@@ -135,11 +128,10 @@
         samples
         (fn check-provenance [conn]
           (let [db (d/db conn)
-                user-email "tester@wormbase.org"
-                response (merge-genes {:gene/biotype :biotype/transposon}
-                                      from-id
-                                      into-id
-                                      :current-user user-email)
+                [status body] (merge-genes
+                               {:gene/biotype :biotype/transposon}
+                               from-id
+                               into-id)
                 prov (query-provenance conn from-id into-id)
                 [src tgt] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]
@@ -153,7 +145,8 @@
                      "tester@wormbase.org"))
             ;; TODO: this should be dependent on the client used for the request.
             ;;       at the momment, defaults to web-form.
-            (t/is (= (:provenance/how prov) :agent/web-form))))))))
+            (t/is (= (some-> prov :provenance/how :db/ident)
+                     ::own-agent/web))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
@@ -182,7 +175,7 @@
                       :provenance/merged-into into-seq-name
                       :provenance/why
                       "a gene that has been merged for testing undo"
-                      :provenance/how :agent/script}]
+                      :provenance/how ::own-agent/console}]
           conn (db-testing/fixture-conn)]
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]
@@ -197,12 +190,9 @@
                       (-> init-tx-res :db-after d/history)
                       [:gene/id merged-from]
                       [:gene/id merged-into])
-              xxx (println "TX with merge provenence is:" (format "0x%x" tx))
-              user-email "tester@wormbase.org"
               [status body] (undo-merge-genes merged-from
-                                              merged-into
-                                              :current-user user-email)]
+                                              merged-into)]
           (t/is (= status 200) (pr-str body))
-          (t/is (map? body) (type body))
+          (t/is (map? body) (pr-str (type body)))
           (t/is (= (:dead body) merged-from) (pr-str body))
           (t/is (= (:live body) merged-into) (pr-str body)))))))

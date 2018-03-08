@@ -77,7 +77,7 @@
    {:coercion :spec
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
-                 own-auth/wrap-app-session
+                 own-auth/wrap-auth
                  ow-db/wrap-datomic
                  wrap-not-found]
     :exceptions

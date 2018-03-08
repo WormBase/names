@@ -9,15 +9,16 @@
    ;; TODO
    ;; [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
+   [datomic.api :as d]
    [java-time :as jt]
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
-   [spec-tools.core :as stc]
-   [datomic.api :as d])
+   [spec-tools.core :as stc])
   (:import
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))

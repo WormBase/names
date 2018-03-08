@@ -5,6 +5,7 @@
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [clojure.spec.gen.alpha :as gen]
    [clojure.spec.alpha :as s]
@@ -13,38 +14,28 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn- query-provenance [conn from-gene-id into-seq-name]
-  (some->> (d/q '[:find [?tx ?from-gid ?into-gid
-                         ?how ?when ?who ?why ?status]
-                  :in $ ?from ?into
-                  :where
-                  [?tx :provenance/split-from ?from]
-                  [?tx :provenance/split-into ?into]
-                  [(get-else $ ?from :gene/id :no-from) ?from-gid]
-                  [(get-else $ ?into :gene/id :no-into) ?into-gid]
-                  [?into :gene/status ?sid]
-                  [?sid :db/ident ?status]
-                  [?tx :provenance/why ?why]
-                  [?tx :provenance/when ?when]
-                  [?tx :provenance/who ?wid]
-                  [?wid :user/email ?who]
-                  [?tx :provenance/how ?hid]
-                  [?hid :agent/id ?how]]
-                (-> conn d/db d/history)
-                [:gene/id from-gene-id]
-                [:gene/sequence-name into-seq-name])
-           (zipmap [:provenance/tx
-                    :provenance/split-from
-                    :provenance/split-into
-                    :provenance/how
-                    :provenance/when
-                    :provenance/who
-                    :provenance/why])))
+(defn query-provenance [conn from-gene-id into-seq-name]
+  (when-let [mtx (d/q '[:find ?tx .
+                        :in $ ?from ?into
+                        :where
+                        [?tx :provenance/split-from ?from]
+                        [?tx :provenance/split-into ?into]]
+                      (-> conn d/db d/history)
+                      [:gene/id from-gene-id]
+                      [:gene/sequence-name into-seq-name])]
+    (d/pull (d/db conn)
+            '[:provenance/why
+              :provenance/when
+              {:provenance/split-into [:gene/id]
+               :provenance/split-from [:gene/id]
+               :provenance/how [:db/ident]
+               :provenance/who [:person/email]}]
+            mtx)))
 
 (defn split-gene
   [payload gene-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*current-user* current-user]
+  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [data (pr-str payload)
           current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/raw-put-or-post*
@@ -53,19 +44,19 @@
                          :post
                          data
                          "application/edn"
-                         {"authorization" (str "Bearer "
+                         {"authorization" (str "Token "
                                                current-user-token)})]
       [status (tu/parse-body body)])))
 
 (defn undo-split-gene
   [from-id into-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*current-user* current-user]
+  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/gene/" from-id "/split/" into-id)
                  "application/edn"
-                 {"authorization" (str "Bearer " current-user-token)}))))
+                 {"authorization" (str "Token " current-user-token)}))))
 
 (t/deftest must-meet-spec
   (t/testing "Target biotype and product must be specified."
@@ -195,10 +186,8 @@
             (t/is (= (some-> prov :provenance/who :person/email)
                      user-email))
             (t/is (= (:gene/species src) (:gene/species prod)))
-            ;; TODO: this should be dependent on the client used for
-            ;;       the request.  at the momment, defaults to
-            ;;       web-form.
-            (t/is (= (:provenance/how prov) :agent/web-form))))))))
+            (t/is (= (some-> prov :provenance/how :db/ident)
+                     ::own-agent/web))))))))
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
@@ -223,7 +212,7 @@
           init-txes [[from-gene
                        {:db/id "datomic.tx"
                         :provenance/why "A gene in the system"
-                        :provenance/how :agent/script}]
+                        :provenance/how ::own-agent/console}]
                      [into-gene
                       {:db/id "datomic.tx"
                        :provenance/split-from [:gene/sequence-name
@@ -231,7 +220,7 @@
                        :provenance/split-into into-seq-name
                        :provenance/why
                        "a gene that has been split for testing undo"
-                       :provenance/how :agent/script}]]
+                       :provenance/how ::own-agent/console}]]
           conn (db-testing/fixture-conn)]
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]

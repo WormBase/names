@@ -9,15 +9,13 @@
    [java-time :as jt]
    [org.wormbase.db :as owdb]
    [org.wormbase.names.auth :as own-auth]
+   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.util :as ownu]
    [org.wormbase.names.util :refer [namespace-keywords]]
-   [org.wormbase.specs.auth :as oswa]
-   [org.wormbase.specs.biotype :as owsb]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.specs.provenance :as owsp]
    [ring.util.http-response :as http-response]
-   [ring.util.http-response :as resp]
    [org.wormbase.test-utils :as tu])
   (:refer-clojure :exclude [merge]))
 
@@ -64,26 +62,13 @@
         how (own-agent/identify id-token)
         why (:provenance/why prov)]
     (cond-> prov
-      (:user/email who)
-      (assoc :provenance/who (:db/id
-                              (d/entity (:db request)
-                                        [:user/email (:user/email who)])))
-
-      (not (:provenance/why prov))
-      (assoc :provenance/why "No reason given")
-
-      (not (:provenance/when prov))
-      (assoc :provenance/when (jt/to-java-date (jt/instant)))
-
-
-      is-client-script?
-      (assoc :provenance/how [:agent/id :agent/script])
-
-      (not is-client-script?)
-      (assoc :provenance/how [:agent/id :agent/web-form])
-
+      why
+      (assoc :provenance/why why)
       :always
-      (assoc :db/id "datomic.tx"))))
+      (assoc :db/id "datomic.tx"
+             :provenance/who who
+             :provenance/when when
+             :provenance/how how))))
 
 (defn new-record [request]
   ;; TODO: "who" needs to come from auth problably should ditch
@@ -105,7 +90,7 @@
           ent (d/entity db [:gene/id new-id])
           emap (ownu/entity->map ent)
           result {:created emap}]
-      (resp/created "/gene/" result))))
+      (http-response/created "/gene/" result))))
 
 (defn update-record [request gene-id]
   (let [conn (:conn request)
@@ -124,8 +109,8 @@
               tx-result @(d/transact conn txes)
               ent (d/entity db lur)]
           (if (:db-after tx-result)
-            (resp/ok {:updated (ownu/entity->map ent)})
-            (resp/not-found (format "Gene '%s' does not exist" gene-id)))))))
+            (http-response/ok {:updated (ownu/entity->map ent)})
+            (http-response/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
 (defn merge [request into-id from-id]
   (let [conn (:conn request)
@@ -146,11 +131,11 @@
     (if-let [db (:db-after tx-result (:tx-data tx-result))]
       (let [[from into] (map #(d/entity db [:gene/id %])
                              [from-id into-id])]
-        (resp/ok {:updated (ownu/entity->map into)
+        (http-response/ok {:updated (ownu/entity->map into)
                   :statuses
                   {from-id (:gene/status from)
                    into-id (:gene/status into)}}))
-      (resp/bad-request {:message "Invalid transaction"}))))
+      (http-response/bad-request {:message "Invalid transaction"}))))
 
 (defn undo-merge [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .
@@ -199,10 +184,13 @@
                               :gene/id)
               [ent product] (map #(d/entity db [:gene/id %]) [id new-gene-id])
               updated (-> (ownu/entity->map ent)
-                          (select-keys [:gene/biotype :gene/sequence-name])
+                          (select-keys [:gene/id
+                                        :gene/biotype
+                                        :gene/sequence-name])
                           (assoc :gene/species {:species/id species}))
               created (ownu/entity->map product)]
-          (http-response/ok {:updated updated :created created}))
+          (http-response/created (str "/gene/" new-gene-id)
+                                 {:updated updated :created created}))
         (http-response/not-found {:gene/id id :message "Gene not found"}))
       (let [spec-report (s/explain-data ::owsg/split data)]
         ;; TODO: finer grained error message here would be good.
@@ -282,7 +270,8 @@
        {:summary "Testing auth session."
         :x-name ::read-all
         :handler (fn [request]
-                   (let [response (-> (resp/ok {:message "Hello World!"})
+                   (let [response (-> (http-response/ok
+                                       {:message "Hello World!"})
                                       (assoc-in [:session :identity]
                                                 (if (:identity request)
                                                   (:identity request))))]
@@ -326,9 +315,7 @@
           :x-name ::undo-merge
           :path-params [id :gene/id
                         from-id :gene/id]
-          :responses (assoc default-responses
-                            200
-                            {:schema ::owsg/undone})
+          :responses (assoc default-responses 200 {:schema ::owsg/undone})
           :handler (fn [request]
                      (undo-merge request from-id id))}}))
      (sweet/context "/split" []
@@ -338,9 +325,8 @@
           :x-name ::split
           :path-params [id :- :gene/id]
           :parameters {:body ::owsg/split}
-          :responses (assoc default-responses
-                            200
-                            {:schema ::owsg/split-response})
+          :responses (-> (dissoc default-responses 200)
+                         (assoc 201 {:schema ::owsg/split-response}))
           :handler
           (fn [request]
             (split request id))}}))

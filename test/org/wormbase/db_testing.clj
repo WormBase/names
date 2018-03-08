@@ -1,9 +1,6 @@
 (ns org.wormbase.db-testing
   (:require
    [clojure.core.cache :as cache]
-   [clj-time.coerce :as ctc]
-   [clj-time.core :as ct]
-   [clj-time.core :as ct]
    [datomock.core :as dm]
    [datomic.api :as d]
    [java-time :as jt]   
@@ -53,9 +50,9 @@
   ;; (let [test-user-email "tester@wormbase.org"]
   ;;   (when-not (d/q '[:find ?e
   ;;                    :in $ ?email
-  ;;                    :where [?e :user/email ?email]]
+  ;;                    :where [?e :person/email ?email]]
   ;;                  (d/db conn) test-user-email)
-  ;;     @(d/transact conn [{:user/email test-user-email}])))
+  ;;     @(d/transact conn [{:person/email test-user-email}])))
   (d/db conn))
 
 (defn speculate [conn tx]
