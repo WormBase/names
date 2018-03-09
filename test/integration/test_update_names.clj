@@ -62,7 +62,7 @@
                   ent (d/entity (d/db conn) [:gene/id identifier])]
               (tu/status-is? status 200 (pr-str response))
               (let [act-prov (tu/query-provenance conn identifier)]
-                (t/is (= (:provenance/how act-prov) ::own-agent/console)
+                (t/is (= (-> act-prov :provenance/how) ::own-agent/console)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
                 (t/is (= (:provenance/who act-prov)

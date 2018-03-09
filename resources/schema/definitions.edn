@@ -1,20 +1,4 @@
-[#:db{:ident :agent/id,
-      :valueType :db.type/keyword,
-      :cardinality :db.cardinality/one,
-      :unique :db.unique/value}
- #:db{:ident :org.wormbase.names.agent/console,
-      :valueType :db.type/keyword,
-      :cardinality :db.cardinality/one,
-      :unique :db.unique/value}
- #:db{:ident :org.wormbase.names.agent/web,
-      :valueType :db.type/keyword,
-      :cardinality :db.cardinality/one,
-      :unique :db.unique/value}
- #:db{:ident :biotype/transcript}
- #:db{:ident :biotype/transposon}
- #:db{:ident :biotype/psuedogene}
- #:db{:ident :biotype/cds}
- #:db{:ident :gene/biotype,
+[#:db{:ident :gene/biotype,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
  #:db{:ident :gene/sequence-name,
@@ -35,9 +19,6 @@
  #:db{:ident :gene/status,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
- #:db{:ident :gene.status/dead}
- #:db{:ident :gene.status/suppressed}
- #:db{:ident :gene.status/live}
  #:db{:ident :provenance/compensates
       :valueType :db.type/ref
       :cardinality :db.cardinality/one}
@@ -56,7 +37,7 @@
  #:db{:ident :provenance/merged-from,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
-  #:db{:ident :provenance/merged-into,
+ #:db{:ident :provenance/merged-into,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
  #:db{:ident :provenance/split-from,
