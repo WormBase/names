@@ -16,7 +16,7 @@
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.specs.provenance :as owsp]
    [ring.util.http-response :as http-response]
-   [org.wormbase.test-utils :as tu])
+   [org.wormbase.names.util :as util])
   (:refer-clojure :exclude [merge]))
 
 (defn- extract-id [tx-result]
