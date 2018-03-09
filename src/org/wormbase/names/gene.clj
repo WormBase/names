@@ -9,8 +9,7 @@
    [org.wormbase.names.util :as ownu]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
-   [ring.util.http-response :as http-response])
-  (:refer-clojure :exclude [merge]))
+   [ring.util.http-response :as http-response]))
 
 (defn- extract-id [tx-result]
   (some->> (:tx-data tx-result)
@@ -51,27 +50,25 @@
         email (or (some-> prov :provenance/who :person/email)
                   (:email id-token))
         who (:db/id (d/entity (:db request) [:person/email email]))
-        when (get prov :provenance/when (jt/to-java-date (jt/instant)))
+        whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (own-agent/identify id-token)
         why (:provenance/why prov)]
-    (cond-> prov
-      why
-      (assoc :provenance/why why)
-      :always
-      (assoc :db/id "datomic.tx"
-             :provenance/who who
-             :provenance/when when
-             :provenance/how how))))
+    (merge {:db/id "datomic.tx"
+            :provenance/who who
+            :provenance/when whence
+            :provenance/how how}
+           (when (inst? why)
+             {:provenance/why why}))))
 
-(defn new-record [request]
-  (let [data (some-> request :body-params :new)
-        name-record (select-keys-with-ns data "gene")
-        tempid (-> data ((juxt :gene/sequence-name :gene/cgc-name)) first)
+(defn new [request]
+  (let [payload (some-> request :body-params :new)
+        data (select-keys-with-ns payload "gene")
+        tempid (-> payload ((juxt :gene/sequence-name :gene/cgc-name)) first)
         prov (-> request
-                 (assoc-provenence data)
+                 (assoc-provenence payload)
                  (assoc :db/id tempid))
         spec ::owsg/new
-        txes [[:wormbase.tx-fns/new "gene" name-record spec]
+        txes [[:wormbase.tx-fns/new "gene" data spec]
               prov]]
     (let [tx-result @(d/transact-async (:conn request) txes)
           db (:db-after tx-result)
@@ -81,27 +78,23 @@
           result {:created emap}]
       (http-response/created "/gene/" result))))
 
-(defn update-record [request gene-id]
+(defn update-gene [request gene-id]
   (let [conn (:conn request)
         db (:db request)
         lur [:gene/id gene-id]
         entity (d/entity db lur)]
       (when entity
-        (let [data (some-> request :body-params)
-              name-record (select-keys-with-ns data "gene")
-              prov (assoc-provenence request data)
-              txes [[:wormbase.tx-fns/update-name
-                     lur
-                     name-record
-                     ::owsg/update]
-                    prov]
+        (let [payload (some-> request :body-params)
+              data (select-keys-with-ns payload "gene")
+              prov (assoc-provenence request payload)
+              txes [[:wormbase.tx-fns/update-name lur data ::owsg/update] prov]
               tx-result @(d/transact conn txes)
               ent (d/entity db lur)]
           (if (:db-after tx-result)
             (http-response/ok {:updated (ownu/entity->map ent)})
             (http-response/not-found (format "Gene '%s' does not exist" gene-id)))))))
 
-(defn merge [request into-id from-id]
+(defn merge-genes [request into-id from-id]
   (let [conn (:conn request)
         data (:body-params request)
         into-biotype (:gene/biotype data)
@@ -271,7 +264,7 @@
         :parameters {:body {:new ::owsg/new}}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
-        :handler new-record}}))
+        :handler new}}))
    (sweet/context "/gene/:id" [id]
      :tags ["gene"]
      (sweet/resource
@@ -286,7 +279,7 @@
         :parameters {:body ::owsg/update}
         :responses (dissoc default-responses 409)
         :handler (fn [request]
-                   (update-record request id))}})
+                   (update-gene request id))}})
      (sweet/context "/merge-from/:from-id" [from-id]
        (sweet/resource
         {:post
@@ -298,7 +291,7 @@
           :responses default-responses
           :handler
           (fn [request]
-            (merge request id from-id))}
+            (merge-genes request id from-id))}
          :delete
          {:summary "Undo a merge operation."
           :x-name ::undo-merge
