@@ -1,22 +1,15 @@
 (ns org.wormbase.names.gene
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.string :as str]
-   [clj-http.client :as http]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
-   [expound.core :as expound]
    [java-time :as jt]
    [org.wormbase.db :as owdb]
-   [org.wormbase.names.auth :as own-auth]
    [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.util :as ownu]
-   [org.wormbase.names.util :refer [namespace-keywords]]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
-   [org.wormbase.specs.provenance :as owsp]
-   [ring.util.http-response :as http-response]
-   [org.wormbase.names.util :as util])
+   [ring.util.http-response :as http-response])
   (:refer-clojure :exclude [merge]))
 
 (defn- extract-id [tx-result]
