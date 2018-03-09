@@ -64,10 +64,6 @@
              :provenance/how how))))
 
 (defn new-record [request]
-  ;; TODO: "who" needs to come from auth problably should ditch
-  ;;      WBPerson ids in favour of emails -in sanger-nameserver data,
-  ;;      "log_who" is always a staff member. So instead of :person/id
-  ;;      it should be :staff/id or :wbperson/id etc.
   (let [data (some-> request :body-params :new)
         name-record (select-keys-with-ns data "gene")
         tempid (-> data ((juxt :gene/sequence-name :gene/cgc-name)) first)
