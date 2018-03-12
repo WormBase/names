@@ -39,7 +39,5 @@
  #:db{:ident :gene.status/live}
  ;; person (user)
  #:person{:roles #{:person.role/admin},
-          :google-id
-          111925262522292127085N,
-          :email
-          "matthew.russell@wormbase.org"}]
+          :google-id 111925262522292127085N,
+          :email "matthew.russell@wormbase.org"}]
