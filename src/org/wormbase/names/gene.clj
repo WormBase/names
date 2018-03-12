@@ -52,13 +52,15 @@
         who (:db/id (d/entity (:db request) [:person/email email]))
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (own-agent/identify id-token)
-        why (:provenance/why prov)]
-    (merge {:db/id "datomic.tx"
-            :provenance/who who
-            :provenance/when whence
-            :provenance/how how}
-           (when (inst? why)
-             {:provenance/why why}))))
+        why (:provenance/why prov)
+        prov {:db/id "datomic.tx"
+              :provenance/who who
+              :provenance/when whence
+              :provenance/how how}]
+    (merge
+     prov
+     (when (inst? why)
+       {:provenance/why why}))))
 
 (defn new-gene [request]
   (let [payload (some-> request :body-params :new)
@@ -216,6 +218,19 @@
       (http-response/ok {:live from-id :dead into-id}))
     (http-response/not-found {:message "No transaction to undo"})))
 
+(defn kill-gene [request id]
+  (if (s/valid? :gene/id id)
+    (let [conn (:conn request)
+          payload (some->> request :body-params)
+          prov (assoc-provenence request payload)]
+      (when-let [tx-result @(d/transact-async
+                           conn
+                           [[:wormbase.tx-fns/kill-gene id] prov])]
+        (http-response/ok {:killed true})))
+    (throw (ex-info "Invalid gene identifier"
+                    {:gene/id id
+                     :type :user/validation-error}))))
+
 (defn idents-by-ns [db ns-name]
   (sort (d/q '[:find [?ident ...]
                :in $ ?ns-name
@@ -246,8 +261,8 @@
 (def routes
   (sweet/routes
    (sweet/context "/gene/" []
-    :tags ["gene"]
-    (sweet/resource
+     :tags ["gene"]
+     (sweet/resource
       {:get
        {:summary "Testing auth session."
         :x-name ::read-all
@@ -268,9 +283,17 @@
    (sweet/context "/gene/:id" [id]
      :tags ["gene"]
      (sweet/resource
-      {:get
+      {:delete
+       {:summary "Kill a gene"
+        :x-name ::kill-gene
+        :parameters {:body ::owsg/kill}
+        :responses (assoc default-responses 200 {:schema ::owsg/kill})
+        :path-params [id :- :gene/id]
+        :handler (fn [request]
+                   (kill-gene request id))}
+       :get
        {:summary "Test a single Gene"
-        :x-name ::read-one
+        :x-name ::read-gene
         :handler (fn [request]
                    (http-response/ok {:message "testing"}))}
        :put

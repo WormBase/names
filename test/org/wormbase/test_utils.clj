@@ -15,7 +15,6 @@
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
-   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
    [spec-tools.core :as stc])
@@ -230,7 +229,7 @@
 
 (defn with-fixtures [data-samples test-fn
                      & {:keys [how whence why person status]
-                        :or {how ::own-agent/console
+                        :or {how :agent/console
                              whence (jt/to-java-date (jt/instant))
                              person [:person/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)

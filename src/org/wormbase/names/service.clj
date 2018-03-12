@@ -88,7 +88,6 @@
       ::ow-db/validation-error own-eh/handle-validation-error
       ::ex/request-validation own-eh/handle-request-validation
       ::ex/default own-eh/handle-unexpected-error
-
       ;; TODO: this shouldn't really be here...spec not tight enough?
       datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error}}
     :swagger swagger-ui}

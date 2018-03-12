@@ -5,7 +5,6 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [org.wormbase.test-utils :as tu])
   (:import (java.util Date)))
@@ -140,7 +139,7 @@
             ;; TODO: this should be dependent on the client used for the request.
             ;;       at the momment, defaults to web-form.
             (t/is (= (some-> prov :provenance/how :db/ident)
-                     ::own-agent/web))))))))
+                     :agent/web))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
@@ -169,7 +168,7 @@
                       :provenance/merged-into into-seq-name
                       :provenance/why
                       "a gene that has been merged for testing undo"
-                      :provenance/how ::own-agent/console}]
+                      :provenance/how :agent/console}]
           conn (db-testing/fixture-conn)]
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]

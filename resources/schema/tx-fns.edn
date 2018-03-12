@@ -272,5 +272,22 @@
          tx-data))
      (throw (ex-info \"Gene does not exist\"
                      {:gene-id gene-id
-                      :type :org.wormbase.db/missing})))" }}
-]
+                      :type :org.wormbase.db/missing})))"}}
+ {:db/ident :wormbase.tx-fns/kill-gene
+  :db/doc "Kill a gene"
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db gene-id]
+   :code
+   "(let [{{:keys [:db/ident]} :gene/status} (d/pull
+                                              db
+                                              '[{:gene/status [:db/ident]}]
+                                              [:gene/id gene-id])]
+      (when (= ident :gene.status/dead)
+        (throw (ex-info \"Gene to be killed is already dead!\"
+                        {:type :org.wormbase.db/conflict
+                         :gene/id gene-id})))
+      (let [ent-id [:gene/id gene-id]
+            curr-status (d/entid db ident)]
+        [[:db/cas ent-id :gene/status curr-status :gene.status/dead]]))"}}
+ ]
