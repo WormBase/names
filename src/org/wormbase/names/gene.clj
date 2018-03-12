@@ -60,7 +60,7 @@
            (when (inst? why)
              {:provenance/why why}))))
 
-(defn new [request]
+(defn new-gene [request]
   (let [payload (some-> request :body-params :new)
         data (select-keys-with-ns payload "gene")
         tempid (-> payload ((juxt :gene/sequence-name :gene/cgc-name)) first)
@@ -119,7 +119,7 @@
                    into-id (:gene/status into)}}))
       (http-response/bad-request {:message "Invalid transaction"}))))
 
-(defn undo-merge [request from-id into-id]
+(defn undo-merge-gene [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -138,7 +138,7 @@
       (http-response/ok {:live into-id :dead from-id}))
     (http-response/not-found {:message "No transaction to undo"})))
 
-(defn split [request id]
+(defn split-gene [request id]
   (let [conn (:conn request)
         db (d/db conn)
         data (some-> request :body-params)]
@@ -193,7 +193,7 @@
     :default
     [(if added? :db/retract :db/add) e a v]))
 
-(defn undo-split [request from-id into-id]
+(defn undo-split-gene [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -260,11 +260,11 @@
                      response))}
        :post
        {:summary "Create new names for a gene (cloned or un-cloned)"
-        :x-name ::new
+        :x-name ::new-gene
         :parameters {:body {:new ::owsg/new}}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
-        :handler new}}))
+        :handler new-gene}}))
    (sweet/context "/gene/:id" [id]
      :tags ["gene"]
      (sweet/resource
@@ -294,12 +294,12 @@
             (merge-genes request id from-id))}
          :delete
          {:summary "Undo a merge operation."
-          :x-name ::undo-merge
+          :x-name ::undo-merge-gene
           :path-params [id :gene/id
                         from-id :gene/id]
           :responses (assoc default-responses 200 {:schema ::owsg/undone})
           :handler (fn [request]
-                     (undo-merge request from-id id))}}))
+                     (undo-merge-gene request from-id id))}}))
      (sweet/context "/split" []
        (sweet/resource
         {:post
@@ -311,16 +311,16 @@
                          (assoc 201 {:schema ::owsg/split-response}))
           :handler
           (fn [request]
-            (split request id))}}))
+            (split-gene request id))}}))
      (sweet/context "/split/:into-id" [into-id]
        (sweet/resource
         {:delete
          {:summary "Undo a split gene operation."
-          :x-name ::undo-split
+          :x-name ::undo-split-gene
           :path-params [id :- :gene/id
                         into-id :- :gene/id]
           :responses (assoc default-responses
                             200
                             {:schema ::owsg/undone})
           :handler (fn [request]
-                     (undo-split request id into-id))}})))))
+                     (undo-split-gene request id into-id))}})))))
