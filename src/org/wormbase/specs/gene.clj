@@ -1,6 +1,7 @@
 (ns org.wormbase.specs.gene
   (:require [clojure.spec.alpha :as s]
             [miner.strgen :as sg]
+            [org.wormbase.specs.provenance] ;; fpr specs
             [org.wormbase.specs.biotype :as owsb]))
 
 (def ^{:doc
@@ -181,4 +182,12 @@
 (s/def ::dead :gene/id)
 
 (s/def ::undone (s/keys :req-un [::live ::dead]))
+
+
+(s/def ::kill (s/keys :opt [:provenance/why
+                            :provenance/when
+                            :provenance/who]))
+
+(s/def ::killed boolean?)
+(s/def ::kill-response (s/keys :req-un [::killed]))
 

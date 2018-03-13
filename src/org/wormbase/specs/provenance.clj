@@ -2,7 +2,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [org.wormbase.specs.person :as ows-person]))
+   [org.wormbase.specs.agent :as owsa]
+   [org.wormbase.specs.person :as owsp]))
 
 (s/def :agent/id string?)
 
@@ -11,11 +12,9 @@
 
 (s/def :provenance/when inst?)
 
-(s/def :provenance/client #{:web :script})
+(s/def :provenance/who ::owsp/person)
 
-(s/def :provenance/who ::ows-person/person)
-
-(s/def :provenance/how (s/keys :req [:agent/id]))
+(s/def :provenance/how (s/keys :req-un [::owsa/agent]))
 
 (s/def :provenance/why (s/and string? (complement str/blank?)))
 

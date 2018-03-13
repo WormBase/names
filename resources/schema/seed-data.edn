@@ -30,8 +30,8 @@
  #:template{:format "WBVar%08d", :describes :variation/id}
 
  ;; agent
- #:db{:ident :org.wormbase.names.agent/web}
- #:db{:ident :org.wormbase.names.agent/console}
+ #:db{:ident :agent/web}
+ #:db{:ident :agent/console}
 
  ;; gene status
  #:db{:ident :gene.status/dead}
@@ -39,7 +39,5 @@
  #:db{:ident :gene.status/live}
  ;; person (user)
  #:person{:roles #{:person.role/admin},
-          :google-id
-          111925262522292127085N,
-          :email
-          "matthew.russell@wormbase.org"}]
+          :google-id 111925262522292127085N,
+          :email "matthew.russell@wormbase.org"}]

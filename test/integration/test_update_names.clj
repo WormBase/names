@@ -7,7 +7,6 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.fake-auth] ;; for side effect
-   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.test-utils :as tu]))
@@ -62,7 +61,7 @@
                   ent (d/entity (d/db conn) [:gene/id identifier])]
               (tu/status-is? status 200 (pr-str response))
               (let [act-prov (tu/query-provenance conn identifier)]
-                (t/is (= (-> act-prov :provenance/how) ::own-agent/console)
+                (t/is (= (-> act-prov :provenance/how) :agent/console)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
                 (t/is (= (:provenance/who act-prov)

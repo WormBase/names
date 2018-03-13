@@ -5,7 +5,6 @@
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.service :as service]
    [clojure.spec.gen.alpha :as gen]
    [clojure.spec.alpha :as s]
@@ -187,7 +186,7 @@
                      user-email))
             (t/is (= (:gene/species src) (:gene/species prod)))
             (t/is (= (some-> prov :provenance/how :db/ident)
-                     ::own-agent/web))))))))
+                     :agent/web))))))))
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
@@ -212,7 +211,7 @@
           init-txes [[from-gene
                        {:db/id "datomic.tx"
                         :provenance/why "A gene in the system"
-                        :provenance/how ::own-agent/console}]
+                        :provenance/how :agent/console}]
                      [into-gene
                       {:db/id "datomic.tx"
                        :provenance/split-from [:gene/sequence-name
@@ -220,7 +219,7 @@
                        :provenance/split-into into-seq-name
                        :provenance/why
                        "a gene that has been split for testing undo"
-                       :provenance/how ::own-agent/console}]]
+                       :provenance/how :agent/console}]]
           conn (db-testing/fixture-conn)]
       (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
                     owdb/db (fn get-db [_] (d/db conn))]
