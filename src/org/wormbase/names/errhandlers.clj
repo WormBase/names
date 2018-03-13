@@ -2,14 +2,17 @@
   (:require
    [clojure.spec.alpha :as s]
    [buddy.auth :refer [authenticated?]]
+   [compojure.api.exception :as ex]
    [environ.core :as environ]
-   [org.wormbase.db :as own-db]
+   [org.wormbase.db :as ow-db]
 ;;   TODO: better API error messages
 ;;   [phrase.alpha :as phrase] 
    [ring.util.http-response :as http-response])
   (:import
-   (clojure.lang ExceptionInfo)
+   (clojure.lang ExceptionInfo)   
    (java.util.concurrent ExecutionException)))
+
+(declare handlers)
 
 (defn respond-with [response-fn request data]
   (let [format (-> request
@@ -74,23 +77,14 @@
   ([exc]
    (throw exc)))
 
-;; TODO: consolidate with error handler map passed to sweet/api
-;;       under :exceptions key.
-(def err-type-dispatch
-  {::own-db/validation-error handle-validation-error
-   ::own-db/conflict handle-db-conflict
-   ::own-db/missing handle-missing
-   :db.error/not-an-entity handle-missing
-   :db/error handle-db-conflict
-   :user/validation-error handle-validation-error})
-
 (defn handle-txfn-error [^Exception exc data request]
   (let [txfn-err? (instance? ExecutionException exc)
         cause (.getCause exc)
         cause-data (ex-data cause)
         err-type (:type cause-data)
         db-error (:db/error cause-data)
-        err-handler-key (or err-type db-error)]
+        err-handler-key (or err-type db-error)
+        err-type-dispatch (dissoc handlers ExecutionException)]
     (if (and txfn-err? err-handler-key)
       (if-let [err-handler (get err-type-dispatch err-handler-key)]
         (err-handler cause cause-data request)
@@ -121,3 +115,24 @@
   (if-not (authenticated? request)
     (http-response/unauthorized "Access denied")
     (http-response/forbidden)))
+
+(def ^{:doc "Error handler function for the compojure.api app"} handlers
+  {;; Spec validation errors
+   :user/validation-error handle-validation-error
+   ::ex/request-validation handle-request-validation
+   ::ow-db/validation-error handle-validation-error
+   ::ow-db/conflict handle-db-conflict
+   ::ow-db/missing handle-missing
+
+   ;; Exceptions raised within a transaction function are handled
+   ExecutionException handle-txfn-error
+
+   ;; Datomic db exceptions
+   :db.error/not-an-entity handle-missing
+   :db/error handle-db-conflict
+
+   ;; TODO: this shouldn't really be here...spec not tight enough?
+   datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
+
+   ;; Something else
+   ::ex/default handle-unexpected-error})

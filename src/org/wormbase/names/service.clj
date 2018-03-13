@@ -1,6 +1,5 @@
 (ns org.wormbase.names.service
   (:require
-   [compojure.api.exception :as ex]
    [compojure.api.middleware :as mw]
    [compojure.api.sweet :as sweet]
    [environ.core :as environ]
@@ -14,9 +13,7 @@
    [org.wormbase.names.gene :as own-gene]
    [org.wormbase.names.person :as own-person]
    [ring.middleware.gzip :as ring-gzip]
-   [ring.util.http-response :as http-response])
-  (:import
-   (java.util.concurrent ExecutionException)))
+   [ring.util.http-response :as http-response]))
 
 (def default-format "application/edn")
 
@@ -80,16 +77,7 @@
                  own-auth/wrap-auth
                  ow-db/wrap-datomic
                  wrap-not-found]
-    :exceptions
-    {:handlers
-     {ExecutionException own-eh/handle-txfn-error
-      :user/validation-error own-eh/handle-validation-error
-      ::ow-db/missing own-eh/handle-missing
-      ::ow-db/validation-error own-eh/handle-validation-error
-      ::ex/request-validation own-eh/handle-request-validation
-      ::ex/default own-eh/handle-unexpected-error
-      ;; TODO: this shouldn't really be here...spec not tight enough?
-      datomic.impl.Exceptions$IllegalArgumentExceptionInfo own-eh/handle-txfn-error}}
+    :exceptions {:handlers own-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
      ;; TODO: is it right to be
