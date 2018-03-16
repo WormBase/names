@@ -15,10 +15,10 @@
          [(namespace ?attr) ?ns]
          [(= ?ns ?include-ns)]]
        db
-       #{"biotype"
+       #{"agent"
+         "biotype"
          "gene"
          "gene.status"
-         "org.wormbase.names.agent"
          "provenance"
          "species"
          "template"
