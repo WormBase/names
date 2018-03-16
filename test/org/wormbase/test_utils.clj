@@ -1,5 +1,6 @@
 (ns org.wormbase.test-utils
   (:require
+   [clojure.java.io :as io]
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
@@ -15,6 +16,8 @@
    [muuntaja.core :as muuntaja]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
+   [org.wormbase.gen-specs.gene :as gsg]
+   [org.wormbase.gen-specs.species :as gss]
    [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
    [spec-tools.core :as stc])
@@ -209,7 +212,7 @@
       (pprint (stc/deserialize rspec)))))
 
 (defn sample-to-txes
-  "Convert a sample generated from a spec into a transactable form."  
+  "Convert a sample generated from a spec into a transactable form."
   [sample]
   (let [biotype (:gene/biotype sample)
         species (-> sample :gene/species vec first)
@@ -272,24 +275,21 @@
                     :provenance/why
                     :provenance/how])))
 
-(defn gen-valid-name [name-kw species]
-  (-> species
-      owsg/name-patterns
-      name-kw
-      sg/string-generator
+(defn gen-valid-name [gen-fn species]
+  (-> (gen-fn species)
       (gen/sample 1)
-      first))
+      (first)))
 
-(def gen-valid-seq-name (partial gen-valid-name :gene/sequence-name))
+(def gen-valid-seq-name (partial gen-valid-name gss/sequence-name))
 
-(def gen-valid-cgc-name (partial gen-valid-name :gene/cgc-name))
+(def gen-valid-cgc-name (partial gen-valid-name gss/cgc-name))
 
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (->> n
-                       (gen/sample (s/gen :gene/id))
+                       (gen/sample gsg/id)
                        (map (partial array-map :gene/id)))
-        gene-recs (gen/sample (s/gen ::owsg/update) n)
+        gene-recs (gen/sample gsg/update n)
         data-samples
         (->> (interleave gene-refs gene-recs)
              (partition n)
@@ -306,4 +306,3 @@
                                  (reduce =))]
       (recur n)
       [gene-ids gene-recs data-samples])))
-

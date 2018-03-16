@@ -5,11 +5,12 @@
    [compojure.api.exception :as ex]
    [environ.core :as environ]
    [org.wormbase.db :as ow-db]
-;;   TODO: better API error messages
-;;   [phrase.alpha :as phrase] 
-   [ring.util.http-response :as http-response])
+   ;;   TODO: better API error messages
+   ;;   [phrase.alpha :as phrase]
+   [ring.util.http-response :as http-response]
+   [org.wormbase.names.gene :as own-gene])
   (:import
-   (clojure.lang ExceptionInfo)   
+   (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))
 
 (declare handlers)
@@ -40,7 +41,7 @@
                 cause
                 exc)
           info {:message (.getMessage err) :type type}]
-      (f (if (= type :validation-error)
+      (f (if (or (= type :validation-error) (= (name type) "validation-error"))
            (let [info* (ex-data err)
                  problems (if info*
                             (:problems info*))
@@ -118,14 +119,18 @@
 
 (def ^{:doc "Error handler function for the compojure.api app"} handlers
   {;; Spec validation errors
+   ::ex/request-validation handle-request-validation ;; c-api
    :user/validation-error handle-validation-error
-   ::ex/request-validation handle-request-validation
+   ::own-gene/validation-error handle-validation-error
    ::ow-db/validation-error handle-validation-error
-   ::ow-db/conflict handle-db-conflict
-   ::ow-db/missing handle-missing
+   ExceptionInfo handle-validation-error
 
    ;; Exceptions raised within a transaction function are handled
    ExecutionException handle-txfn-error
+
+   ;; App db errors
+   ::ow-db/conflict handle-db-conflict
+   ::ow-db/missing handle-missing
 
    ;; Datomic db exceptions
    :db.error/not-an-entity handle-missing

@@ -6,6 +6,7 @@
    [datomic.api :as d]
    [miner.strgen :as sg]
    [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.gen-specs.gene :as gs]
    [org.wormbase.db :as owdb]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.specs.gene :as owsg]
@@ -18,76 +19,17 @@
 (t/deftest test-merge-genes
   (let [db (d/db owdb/conn)
         merge-genes (partial d/invoke db :wormbase.tx-fns/merge-genes)]
-    (t/testing "Cannot merge two genes with the same identifier."
-      (let [[[src-id _] gene-recs data-samples] (tu/gene-samples 2)
-            data-sample (first data-samples)]
-        (t/is (thrown-with-msg? ExceptionInfo
-                                #"cannot.*(same|identical)"
-                                (merge-genes db
-                                             src-id
-                                             src-id
-                                             :biotype/transposon
-                                             :gene/id)))))
-    (t/testing "Target biotype must be supplied"
-      (t/is (thrown-with-msg? ExceptionInfo
-                              #"Invalid.*biotype"
-                              (merge-genes db
-                                           "WBGene00000001"
-                                           "WBGene00000002"
-                                           :gene/id
-                                           nil))))
-    (t/testing "Gene to be eaten cannot have a GGC name"
-      (let [[[src-id target-id] gene-recs samples] (tu/gene-samples 2)
-            [sample-1 sample-2] samples
-            data-samples [sample-1
-                          (assoc sample-2
-                                 :gene/species
-                                 (:gene/species sample-1))]]
-        (tu/with-fixtures
-          data-samples
-          (fn check-cgc-name-not-eaten [conn]
-            (t/is (thrown-with-msg?
-                   ExceptionInfo
-                   #"killed.*CGC.*refusing to merge"
-                   (merge-genes (d/db conn)
-                                src-id
-                                target-id
-                                :gene/id
-                                :biotype/transposon)))))))
-    (t/testing "Both merge participants must have the same species"
-      (let [[[src-id target-id] _ samples] (tu/gene-samples 2)
-            [sample-1 sample-2] samples
-            data-samples [(-> sample-1
-                              (assoc :gene/species
-                                     {:species/id :species/c-elegans})
-                              (dissoc :gene/cgc-name))
-                          (assoc sample-2
-                                 :gene/species
-                                 {:species/id :species/c-briggsae})]]
-        (tu/with-fixtures
-          data-samples
-          (fn must-have-same-species [conn]
-            (let [db (d/db conn)]
-              (t/is
-               (thrown-with-msg? ExceptionInfo
-                                 #"Refusing to merge.*diff.*species"
-                                 (merge-genes db
-                                              src-id
-                                              target-id
-                                              :gene/id
-                                              :biotype/transposon))))))))
     (t/testing "Both merge participants must exist in DB"
-      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)]
+      (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)]
         (t/is
          (thrown-with-msg? ExceptionInfo
                            #"Merge participant does not exist"
                            (merge-genes db
-                                        src-id
-                                        target-id
-                                        :gene/id
+                                        from-id
+                                        into-id
                                         :biotype/transposon)))))
     (t/testing "Both source and target of merge should be live"
-      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
+      (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)
             [sample-1 sample-2] [(-> data-samples
                                      first
                                      (assoc :gene/status
@@ -106,14 +48,13 @@
                    ExceptionInfo
                    #".*must be live.*"
                    (merge-genes (d/db conn)
-                                src-id
-                                target-id
-                                :gene/id
+                                from-id
+                                into-id
                                 :biotype/transposon)))))))
     (t/testing (str "When merging cloned to uncloned, "
                     "sequence name is transfered: "
                     "eaten gene's sequence name should be retracted.")
-      (let [[[src-id target-id]
+      (let [[[from-id into-id]
              gene-recs
              [cloned uncloned]] (tu/gene-samples 2)
             data-samples [(dissoc cloned :gene/cgc-name)
@@ -127,23 +68,19 @@
          (fn seq-name-txferred-to-uncloned [conn]
            (let [db (d/db conn)
                  src-seq-name (:gene/sequence-name
-                               (d/entity db [:gene/id src-id]))
-                 txes (merge-genes db
-                                   src-id
-                                   target-id
-                                   :gene/id
-                                   :biotype/transcript)
+                               (d/entity db [:gene/id from-id]))
+                 txes (merge-genes db from-id into-id :biotype/transcript)
                  tx-result (d/with db txes)
                  [src tgt] (map #(d/entity (:db-after tx-result)
                                            [:gene/id %])
-                                [src-id target-id])]
+                                [from-id into-id])]
              (t/is (= (:gene/sequence-name tgt) src-seq-name)
                    (str "Sequence name not transferred?"
                         (pr-str (d/touch tgt)))))))))
     (t/testing (str "When merging one cloned to another cloned gene, "
                     "sequence name is *not* transfered"
                     "Eaten gene's sequence name is left intact.")
-            (let [[[src-id target-id]
+            (let [[[from-id into-id]
                    gene-recs
                    [cloned-1 cloned-2]] (tu/gene-samples 2)
                   tgt-seq-name (:gene/sequence-name cloned-2)
@@ -157,21 +94,17 @@
          (fn seq-name-not-txferred-to-target [conn]
            (let [db (d/db conn)
                  seq-name (:gene/sequence-name
-                           (d/entity db [:gene/id src-id]))
-                 txes (merge-genes db
-                                   src-id
-                                   target-id
-                                   :gene/id
-                                   :biotype/transcript)
+                           (d/entity db [:gene/id from-id]))
+                 txes (merge-genes db from-id into-id :biotype/transcript)
                  tx-result (d/with db txes)
                  [src tgt] (map #(d/entity (:db-after tx-result)
                                            [:gene/id %])
-                                [src-id target-id])]
+                                [from-id into-id])]
              (t/is (= (:gene/sequence-name tgt) tgt-seq-name)
                    (str "Target sequence name should be preserved"
                         (pr-str (d/touch tgt)))))))))
     (t/testing "Valid merge request results in correct TX form"
-      (let [[[src-id target-id] _ data-samples] (tu/gene-samples 2)
+      (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)
             [sample-1 sample-2] [(-> data-samples
                                      first
                                      (dissoc :gene/cgc-name)
@@ -186,9 +119,8 @@
           samples
           (fn check-tx-forms [conn]
             (let [txes (merge-genes (d/db conn)
-                                    src-id
-                                    target-id
-                                    :gene/id
+                                    from-id
+                                    into-id
                                     :biotype/transposon)
                   tx-res (d/with (d/db conn) txes)]
               (t/is (map? tx-res))
@@ -209,7 +141,7 @@
     (t/testing "a valid split operation"
       (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
             p-seq-name (gen-prod-seq-name sample)
-            bt (-> :gene/biotype s/gen (gen/sample 1) first)
+            bt (first (gen/sample gs/biotype 1))
             data (assoc {:gene/biotype bt}
                         :product {:gene/sequence-name p-seq-name
                                   :gene/biotype :biotype/cds})
@@ -218,7 +150,7 @@
           data-sample
           (fn split-ok [conn]
             (let [db (d/db conn)
-                  txes (split-gene db gene-id data ::owsg/new)
+                  txes (split-gene db gene-id data)
                   tx-result @(d/transact conn txes)
                   db (:db-after tx-result)
                   src-gene (d/entity db [:gene/id gene-id])

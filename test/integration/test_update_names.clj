@@ -7,6 +7,8 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.fake-auth] ;; for side effect
+   [org.wormbase.gen-specs.gene :as gsg]
+   [org.wormbase.gen-specs.species :as gss]
    [org.wormbase.names.service :as service]
    [org.wormbase.specs.gene :as owsg]
    [org.wormbase.test-utils :as tu]))
@@ -16,15 +18,14 @@
 (defn update-gene-name [gene-id name-record]
   (let [uri (str "/gene/" gene-id)
         put (partial tu/raw-put-or-post* service/app uri :put)
-        headers {;;"auth-user" "tester@wormbase.org"
-                 "authorization" "Token TOKEN_HERE"}
+        headers {"authorization" "Token TOKEN_HERE"}
         data (pr-str name-record)
         [status body] (put data nil headers)]
     [status (tu/parse-body body)]))
 
 (t/deftest must-meet-spec
-  (let [identifier (first (gen/sample (s/gen :gene/id) 1))
-        sample (-> (gen/sample (s/gen ::owsg/update) 1)
+  (let [identifier (first (gen/sample gsg/id 1))
+        sample (-> (gen/sample gsg/update 1)
                    (first)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
@@ -39,29 +40,45 @@
               (tu/status-is? status 400 (pr-str response))))))
       :why "Updating name")))
 
+(defn- gen-valid-name-for-sample [sample generator]
+  (-> sample :gene/species :species/id generator (gen/sample 1) first))
+
+(defn cgc-name-for-sample [sample]
+  (gen-valid-name-for-sample sample gss/cgc-name))
+
+(defn seq-name-for-sample [sample]
+  (gen-valid-name-for-sample sample gss/sequence-name))
+
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
-    (let [identifier (first (gen/sample (s/gen :gene/id) 1))
-          sample (first (gen/sample (s/gen ::owsg/update) 1))
-          sample-data (merge sample {:gene/id identifier
-                                     :gene/status :gene.status/live})
-          species-id (:species/id sample)
+    (let [identifier (first (gen/sample gsg/id 1))
+          sample (first (gen/sample gsg/update 1))
+          orig-cgc-name (seq-name-for-sample sample)
+          sample-data (merge
+                       sample
+                       {:gene/id identifier
+                        :gene/cgc-name orig-cgc-name
+                        :gene/status :gene.status/live}
+                       (when (contains? sample :gene/sequence-name)
+                         {:gene/sequence-name (seq-name-for-sample sample)}))
+          species-id (:species/id sample-data)
           reason "Updating a cgc-name records provenance"]
       (tu/with-fixtures
         sample-data
         (fn [conn]
-          (let [payload (-> sample-data
+          (let [new-cgc-name (cgc-name-for-sample sample-data)
+                payload (-> sample-data
                             (dissoc :gene/status)
-                            (assoc :gene/cgc-name "cgc-1")
+                            (assoc :gene/cgc-name new-cgc-name)
                             (assoc :provenance/who
-                                   [:person/email "tester@wormbase.org"]))
-                db (owdb/db conn)]
+                                   [:person/email "tester@wormbase.org"]))]
             (let [response (update-gene-name identifier payload)
                   [status body] response
-                  ent (d/entity (d/db conn) [:gene/id identifier])]
-              (tu/status-is? status 200 (pr-str response))
+                  db (d/db conn)
+                  ent (d/entity db [:gene/id identifier])]
+              (tu/status-is? status 200 body)
               (let [act-prov (tu/query-provenance conn identifier)]
-                (t/is (= (-> act-prov :provenance/how) :agent/console)
+                (t/is (= (:provenance/how act-prov) :agent/console)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) reason))
                 (t/is (= (:provenance/who act-prov)
@@ -70,5 +87,6 @@
               (let [gs (:gene/status ent)]
                 (t/is (= :gene.status/live gs)
                       (pr-str (:gene/status ent))))
-              (t/is (= "cgc-1" (:gene/cgc-name ent))))))
+              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
+              (t/is (= new-cgc-name (:gene/cgc-name ent))))))
         :why reason))))

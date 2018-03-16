@@ -54,6 +54,12 @@
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
+ #:db{:ident :species/cgc-name-pattern
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one}
+ #:db{:ident :species/sequence-name-pattern
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one}
  #:db{:ident :template/format,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,

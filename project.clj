@@ -13,7 +13,6 @@
    [cheshire "5.8.0"]
    [clj-http "3.7.0"]
    [clojure.java-time "0.3.1"]
-   [com.velisco/strgen "0.1.5"]
    [danlentz/clj-uuid "0.1.7"]
    [environ "1.1.0"]
    [expound "0.5.0"]
@@ -56,7 +55,7 @@
     :dependencies
     [[org.clojure/test.check "0.9.0"]
      [org.clojure/tools.trace "0.7.9"]
-     [com.gfredericks/test.chuck "0.2.8"]
+     [com.velisco/strgen "0.1.5"]
      [datomic-schema-grapher "0.0.1"]
      [javax.servlet/javax.servlet-api "4.0.0"]
      [ring/ring-devel "1.6.3"]

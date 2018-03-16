@@ -3,6 +3,7 @@
    [clojure.test :as t]
    [datomic.api :as d]
    [org.wormbase.fake-auth :as fake-auth]
+   [org.wormbase.gen-specs.gene :as gs]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.service :as service]
@@ -110,7 +111,7 @@
       (t/is (re-matches #"Invalid.*split.*" (:message body))
             (pr-str body))))
   (t/testing "Get 404 when gene to be operated on is missing"
-    (let [gene-id (-> :gene/id s/gen (gen/sample 1) first)
+    (let [gene-id (first (gen/sample gs/id 1))
           [status body] (split-gene
                          {:gene/biotype :biotype/cds
                           :product

@@ -90,3 +90,13 @@
                         :range (d/tx-range log t (inc t))})))))
     ([log tx provenance]
      (invert-tx log tx provenance (constantly nil))))
+
+(defn extract-id [tx-result identity-kw]
+  (some->> (:tx-data tx-result)
+           (map :e)
+           (map (partial d/entity (:db-after tx-result)))
+           (map identity-kw)
+           (filter identity)
+           (set)
+           (vec)
+           (first)))

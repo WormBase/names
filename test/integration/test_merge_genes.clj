@@ -107,7 +107,7 @@
     (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
                                      "WBGene00000002"
                                      "WBGene00000001")]
-      (t/is (= status 400) (pr-str body))
+      (tu/status-is? status 400 body)
       (t/is (re-seq #"Invalid.*biotype" (:message body))))))
 
 (t/deftest provenance-recorded
@@ -128,7 +128,7 @@
                 prov (query-provenance conn from-id into-id)
                 [src tgt] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]
-            (t/is (= status 200))
+            (tu/status-is? status 200 body)
             (t/is (some-> prov :provenance/when inst?))
             (t/is (= (some-> prov :provenance/merged-into :gene/id)
                      into-id))
@@ -136,8 +136,9 @@
                      from-id))
             (t/is (= (some-> prov :provenance/who :person/email)
                      "tester@wormbase.org"))
-            ;; TODO: this should be dependent on the client used for the request.
-            ;;       at the momment, defaults to web-form.
+            ;; TODO: this should be dependent on the client used for
+            ;;       the request.  at the momment, defaults to
+            ;;       web-form.
             (t/is (= (some-> prov :provenance/how :db/ident)
                      :agent/web))))))))
 

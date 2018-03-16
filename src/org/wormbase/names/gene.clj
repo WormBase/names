@@ -11,38 +11,11 @@
    [org.wormbase.specs.gene :as owsg]
    [ring.util.http-response :as http-response]))
 
-(defn- extract-id [tx-result]
-  (some->> (:tx-data tx-result)
-           (map :e)
-           (map (partial d/entity (:db-after tx-result)))
-           (map :gene/id)
-           (filter identity)
-           (set)
-           (vec)
-           (first)))
-
-(defn- result-seq [new-ids]
-  (some->> new-ids
-           (interleave (repeat (count new-ids) :gene/id))
-           (partition 2)
-           (map (partial apply hash-map))
-           (vec)))
-
-(defmulti resolve-ref
-  (fn [kw db data]
-    (kw data)))
-
-(defmethod resolve-ref :gene/species [_ db data]
-  (let [species-ident (-> data :gene/species vec)
-        species-entid (d/entid db species-ident)]
-    species-entid))
-
-(defmethod resolve-ref :gene/biotype [_ db data]
-  (when (contains? :gene/biotype data)
-    (d/entid db (:gene/biotype data))))
+(defn ident-exists? [db ident]
+  (pos-int? (d/entid db ident)))
 
 (defn select-keys-with-ns [data key-ns]
-  (into {} (filter #(= (namespace (key %)) key-ns)) data))
+  (into {} (filter #(= (namespace (key %)) key-ns) data)))
 
 (defn assoc-provenence [request payload]
   (let [id-token (:identity request)
@@ -62,64 +35,146 @@
      (when (inst? why)
        {:provenance/why why}))))
 
+(defn validate-names [request data]
+  (let [db (:db request)
+        species-lur (some-> data :gene/species vec first)
+        species-ent (d/entity db species-lur)]
+    (if (empty? data)
+      (throw (ex-info "No names to validate (empty data)"
+                      {:type :user/validation-error})))
+    (if-not species-ent
+      (throw (ex-info "Invalid species specied"
+                      {:invalid-species species-lur
+                       :type ::owdb/missing})))
+    (let [patterns ((juxt :species/cgc-name-pattern
+                          :species/sequence-name-pattern) species-ent)
+          regexps (map re-pattern patterns)
+          name-idents [:gene/cgc-name :gene/sequence-name]]
+      (doseq [[regexp name-ident] (partition 2 (interleave regexps name-idents))]
+        (when-let [gname (name-ident data)]
+          (when-not (re-matches regexp gname)
+            (throw (ex-info "Invalid name"
+                            {:type :user/validation-error
+                             :invalid {:name  gname :ident name-ident}})))))))
+  data)
+
 (defn new-gene [request]
   (let [payload (some-> request :body-params :new)
         data (select-keys-with-ns payload "gene")
-        tempid (-> payload ((juxt :gene/sequence-name :gene/cgc-name)) first)
+        tempid (-> payload
+                   ((juxt :gene/sequence-name :gene/cgc-name))
+                   first)        
         prov (-> request
                  (assoc-provenence payload)
                  (assoc :db/id tempid))
         spec ::owsg/new
-        txes [[:wormbase.tx-fns/new "gene" data spec]
-              prov]]
-    (let [tx-result @(d/transact-async (:conn request) txes)
-          db (:db-after tx-result)
-          new-id (extract-id tx-result)
-          ent (d/entity db [:gene/id new-id])
-          emap (ownu/entity->map ent)
-          result {:created emap}]
-      (http-response/created "/gene/" result))))
+        [_ cdata] (if (s/valid? spec data)
+                    (s/conform spec (validate-names request data))
+                    (let [problems (s/explain-data spec data)]
+                      (throw (ex-info "Not valid according to spec."
+                                      {:problems problems
+                                       :type ::validation-error
+                                       :data data}))))
+        tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
+        tx-result @(d/transact-async (:conn request) tx-data)
+        db (:db-after tx-result)
+        new-id (owdb/extract-id tx-result :gene/id)
+        ent (d/entity db [:gene/id new-id])
+        emap (ownu/entity->map ent)
+        result {:created emap}]
+      (http-response/created "/gene/" result)))
 
 (defn update-gene [request gene-id]
   (let [conn (:conn request)
         db (:db request)
         lur [:gene/id gene-id]
         entity (d/entity db lur)]
-      (when entity
-        (let [payload (some-> request :body-params)
-              data (select-keys-with-ns payload "gene")
-              prov (assoc-provenence request payload)
-              txes [[:wormbase.tx-fns/update-name lur data ::owsg/update] prov]
-              tx-result @(d/transact conn txes)
-              ent (d/entity db lur)]
-          (if (:db-after tx-result)
-            (http-response/ok {:updated (ownu/entity->map ent)})
-            (http-response/not-found (format "Gene '%s' does not exist" gene-id)))))))
+    (when entity
+      (let [payload (some-> request :body-params)
+            spec ::owsg/update
+            data (select-keys-with-ns payload "gene")]
+        (if (s/valid? ::owsg/update data)
+          (let [cdata (s/conform spec (validate-names request data))
+                prov (assoc-provenence request payload)
+                txes [[:wormbase.tx-fns/update-gene lur cdata]
+                      prov]
+                tx-result @(d/transact-async conn txes)
+                ent (d/entity db lur)]
+            (if (:db-after tx-result)
+              (http-response/ok {:updated (ownu/entity->map ent)})
+              (http-response/not-found
+               (format "Gene '%s' does not exist" gene-id))))
+          (throw (ex-info "Not valid according to spec."
+                          {:problems (s/explain-data spec data)
+                           :type ::validation-error
+                           :data data})))))))
+
+(defn- validate-merge-request [request into-id from-id into-biotype]
+  (let [db (:db request)
+        id-spec :gene/id
+        participants [[id-spec from-id] [id-spec into-id]]
+        valids (zipmap participants
+                       (map (partial s/valid? id-spec) participants))]
+      (when (some nil? (vals valids))
+        (let [invalids (some->> valids
+                                (mapv (fn [[k v]]
+                                        (if-not v k)))
+                                (remove nil?))]
+          (throw (ex-info "Found one or more invalid identifiers."
+                           {:problems (map #(s/explain-data id-spec %)
+                                           invalids)
+                            :type ::validation-error
+                            :invalid-entities invalids}))))
+      (when (= from-id into-id)
+        (throw (ex-info "Source and into ids cannot be the same!"
+                        {:from-id from-id
+                         :into-id into-id
+                         :type ::validation-error})))
+      (when-not (and (s/valid? :gene/biotype into-biotype)
+                     (ident-exists? db into-biotype))
+        (throw (ex-info "Invalid biotype"
+                        {:problems (s/explain-data
+                                    :gene/biotype
+                                    into-biotype)
+                         :type ::validation-error})))
+      (let [[from into] (map #(d/entity db %) participants)]
+        (when (reduce not=
+                      (map (comp :species/id :gene/species) [from into]))
+          (throw (ex-info
+                  "Refusing to merge: genes have differing species"
+                  {:from {id-spec from-id
+                          :species/id (:gene/species from)}
+                   :into {id-spec into-id
+                          :species/id (:gene/species into)}
+                   :type :org.wormbase.db/conflict})))
+        (when (:gene/cgc-name from)
+          (throw (ex-info (str "Gene to be killed has a CGC name,"
+                               "refusing to merge.")
+                          {:from-id from-id
+                           :from-cgc-name (:gene/cgc-name from)
+                           :type :org.wormbase.db/conflict}))))))
 
 (defn merge-genes [request into-id from-id]
   (let [conn (:conn request)
         data (:body-params request)
-        into-biotype (:gene/biotype data)
-        prov (-> request
-                 (assoc-provenence data)
-                 (assoc :provenance/merged-from [:gene/id from-id])
-                 (assoc :provenance/merged-into [:gene/id into-id]))
-        tx-result @(d/transact-async
-                    conn
-                    [[:wormbase.tx-fns/merge-genes
-                      from-id
-                      into-id
-                      :gene/id
-                      into-biotype]
-                     prov])]
-    (if-let [db (:db-after tx-result (:tx-data tx-result))]
-      (let [[from into] (map #(d/entity db [:gene/id %])
-                             [from-id into-id])]
-        (http-response/ok {:updated (ownu/entity->map into)
-                  :statuses
-                  {from-id (:gene/status from)
-                   into-id (:gene/status into)}}))
-      (http-response/bad-request {:message "Invalid transaction"}))))
+        into-biotype (:gene/biotype data)]
+    (validate-merge-request request into-id from-id into-biotype)
+    (let [prov (-> request
+                   (assoc-provenence data)
+                   (assoc :provenance/merged-from [:gene/id from-id])
+                   (assoc :provenance/merged-into [:gene/id into-id]))
+          tx-result @(d/transact-async
+                      conn
+                      [[:wormbase.tx-fns/merge-genes from-id into-id into-biotype]
+                       prov])]
+      (if-let [db (:db-after tx-result (:tx-data tx-result))]
+        (let [[from into] (map #(d/entity db [:gene/id %])
+                               [from-id into-id])]
+          (http-response/ok {:updated (ownu/entity->map into)
+                             :statuses
+                             {from-id (:gene/status from)
+                              into-id (:gene/status into)}}))
+        (http-response/bad-request {:message "Invalid transaction"})))))
 
 (defn undo-merge-gene [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .
@@ -143,24 +198,23 @@
 (defn split-gene [request id]
   (let [conn (:conn request)
         db (d/db conn)
-        data (some-> request :body-params)]
-    (if (s/valid? ::owsg/split data)
+        data (some-> request :body-params)
+        spec ::owsg/split]
+    (if (s/valid? spec data)
       (if-let [existing-gene (d/entity db [:gene/id id])]
-        (let [{biotype :gene/biotype product :product} data
+        (let [cdata (s/conform spec data)
+              {biotype :gene/biotype product :product} cdata
               {p-seq-name :gene/sequence-name
                p-biotype :gene/biotype} product
-              p-seq-name (get-in data [:product :gene/sequence-name])
+              p-seq-name (get-in cdata [:product :gene/sequence-name])
               prov-from (-> request
-                            (assoc-provenence data)
+                            (assoc-provenence cdata)
                             (assoc :provenance/split-into p-seq-name)
                             (assoc :provenance/split-from [:gene/id id]))
               species (-> existing-gene :gene/species :species/id)
               tx-result @(d/transact-async
                           conn
-                          [[:wormbase.tx-fns/split-gene
-                            id
-                            data
-                            ::owsg/new]
+                          [[:wormbase.tx-fns/split-gene id cdata]
                            prov-from])
               db (:db-after tx-result)
               new-gene-id (-> db
@@ -182,6 +236,7 @@
         ;;           "biotype missing in split product"
         (throw (ex-info "Invalid split request"
                         {:type :user/validation-error
+                         :data data
                          :problems spec-report}))))))
 
 (defn- invert-split-tx [db e a v tx added?]
@@ -220,26 +275,16 @@
 
 (defn kill-gene [request id]
   (if (s/valid? :gene/id id)
-    (let [conn (:conn request)
-          payload (some->> request :body-params)
-          prov (assoc-provenence request payload)]
-      (when-let [tx-result @(d/transact-async
-                           conn
-                           [[:wormbase.tx-fns/kill-gene id] prov])]
-        (http-response/ok {:killed true})))
-    (throw (ex-info "Invalid gene identifier"
-                    {:gene/id id
-                     :type :user/validation-error}))))
-
-(defn idents-by-ns [db ns-name]
-  (sort (d/q '[:find [?ident ...]
-               :in $ ?ns-name
-               :where
-               [?e :db/ident ?ident]
-               [_ :db/valueType ?e]
-               [(namespace ?ident) ?ns]
-               [(= ?ns ?ns-name)]]
-             db ns-name)))
+    (when (d/entity (:db request) [:gene/id id])
+      (let [payload (some->> request :body-params)
+            prov (assoc-provenence request payload)]
+        (when-let [tx-result @(d/transact-async
+                               (:conn request)
+                               [[:wormbase.tx-fns/kill-gene id] prov])]
+          (http-response/ok {:killed true}))))
+      (throw (ex-info "Invalid gene identifier"
+                      {:gene/id id
+                       :type :user/validation-error}))))
 
 (defn responses-map
   [success-code success-spec]

@@ -5,16 +5,17 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.names.service :as service]
    [org.wormbase.test-utils :as tu]
-   [datomic.api :as d]))
+   [datomic.api :as d]
+   [org.wormbase.gen-specs.species :as gss]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn new-name
-  [name-record & {:keys [current-user]
-                  :or {current-user "tester@wormbase.org"}}]
+(defn new-gene
+  [data & {:keys [current-user]
+           :or {current-user "tester@wormbase.org"}}]
   (binding [fake-auth/*gapi-verify-token-response*
             {"email" current-user}]
-    (let [data (->> name-record (assoc {} :new) pr-str)
+    (let [data (->> data (assoc {} :new) pr-str)
           current-user-token (get fake-auth/tokens current-user)
           [status body]
           (tu/raw-put-or-post*
@@ -41,26 +42,41 @@
 
 (t/deftest must-meet-spec
   (t/testing "Incorrectly naming gene reports problems."
-    (let [response (new-name {})
+    (let [response (new-gene {})
           [status body] response]
       (tu/status-is? status 400 body)
-      (t/is (contains? (tu/parse-body body) :problems) (pr-str body))))
+      (t/is (contains? (tu/parse-body body) :message))))
   (t/testing "Species should always be required when creating gene name."
-    (let [[status body] (new-name {:gene/cgc-name "abc-1"})]
+    (let [[status body] (new-gene {:gene/cgc-name (tu/gen-valid-cgc-name
+                                                   :species/c-elegans)})]
       (tu/status-is? status 400 (format "Body: " body)))))
 
 (t/deftest wrong-data-shape
   (t/testing "Non-conformant data should result in HTTP Bad Request 400"
-    (let [[status body] (new-name {})]
+    (let [[status body] (new-gene {})]
       (tu/status-is? status 400 (format "Body: " body)))))
+
+(t/deftest invalid-species-specified
+  (t/testing "What happens when you specify an invalid species"
+    (let [[status body] (new-gene
+                         {:gene/cgc-name "abc-1"
+                          :gene/species {:species/id :species/c-elegant}})]
+      (tu/status-is? status 404 body))))
+
+(t/deftest invalid-names
+  (t/testing "Invalid CGC name for species causes validation error."
+    (let [[status body] (new-gene
+                         {:gene/cgc-name "_INVALID!_"
+                          :gene/species {:species/id :species/c-elegans}})]
+      (tu/status-is? status 400 body))))
 
 (t/deftest naming-uncloned
   (t/testing "Naming one uncloned gene succesfully returns ids"
     (tu/with-fixtures
       []
       (fn new-uncloned [conn]
-        (let [[status body] (new-name
-                             {:gene/cgc-name "abc-1"
+        (let [[status body] (new-gene
+                             {:gene/cgc-name (tu/gen-valid-cgc-name :species/c-elegans)
                               :gene/species {:species/id :species/c-elegans}})
               expected-id "WBGene00000001"]
           (tu/status-is? status 201 body)
@@ -72,11 +88,11 @@
 
 (t/deftest naming-with-provenance
   (t/testing "Naming some genes providing provenance."
-    (let [name-record {:gene/cgc-name "abc-1"
-                       :gene/species {:species/id :species/c-elegans}
-                       :provenance/who {:person/email
-                                        "tester@wormbase.org"}}
-          [status body] (new-name name-record)]
+    (let [data {:gene/cgc-name (tu/gen-valid-cgc-name :species/c-elegans)
+                :gene/species {:species/id :species/c-elegans}
+                :provenance/who {:person/email
+                                 "tester@wormbase.org"}}
+          [status body] (new-gene data)]
       (tu/status-is? status 201 body)
       (t/is (some-> body :created :gene/id) (pr-str body)))))
 
