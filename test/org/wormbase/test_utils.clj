@@ -182,12 +182,12 @@
                                         "/" (str "/" (name k))) v]))))
       spec)))
 
-(defn status-is? [status expected-status body]
-  (t/is (= status expected-status)
-        (format "Response body did not contain expected data:\n%s"
-                (pr-str (if-let [suspec (:spec body)]
-                          (stc/deserialize suspec)
-                          body)))))
+(defmacro status-is? [status expected-status body]
+  `(t/is (= ~status ~expected-status)
+         (format "Response body did not contain expected data:\n%s"
+                 (pr-str (if-let [suspec# (:spec ~body)]
+                           (stc/deserialize suspec#)
+                           ~body)))))
 
 (defn map->set [m]
   (assert (map? m))
