@@ -284,25 +284,35 @@
 
 (def gen-valid-cgc-name (partial gen-valid-name gss/cgc-name))
 
+(defn dup-names? [data-samples]
+  (->> data-samples
+       (map (juxt :gene/sequence-name :gene/cgc-name))
+       (drop-while #(some str/blank? %))
+       (map (partial reduce =))
+       (first)))
+
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (->> n
                        (gen/sample gsg/id)
                        (map (partial array-map :gene/id)))
         gene-recs (gen/sample gsg/update n)
-        data-samples
-        (->> (interleave gene-refs gene-recs)
-             (partition n)
-             (map (partial apply merge))
-             (map (fn correct-seq-name-for-species [m]
-                    (let [sn (-> m
-                                 :gene/species
-                                 :species/id
-                                 gen-valid-seq-name)]
-                      (assoc m :gene/sequence-name sn)))))
+        data-samples (->> (interleave gene-refs gene-recs)
+                          (partition n)
+                          (map (partial apply merge))
+                          (map (fn assoc-valid-names [m]
+                                 (let [cgc (-> m
+                                               :gene/species
+                                               :species/id
+                                               gen-valid-cgc-name)
+                                       sn (-> m
+                                              :gene/species
+                                              :species/id
+                                              gen-valid-seq-name)]
+                                   (assoc m
+                                          :gene/cgc-name cgc
+                                          :gene/sequence-name sn)))))
         gene-ids (map :gene/id (flatten gene-refs))]
-    (if-let [dup-seq-names? (->> data-samples
-                                 (map :gene/sequence-name)
-                                 (reduce =))]
+    (if (dup-names? data-samples)
       (recur n)
       [gene-ids gene-recs data-samples])))
