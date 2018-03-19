@@ -343,7 +343,7 @@
                    (http-response/ok {:message "testing"}))}
        :put
        {:summary "Add new names to an existing gene"
-        :x-name ::update
+        :x-name ::update-gene
         :parameters {:body ::owsg/update}
         :responses (dissoc default-responses 409)
         :handler (fn [request]
@@ -352,7 +352,7 @@
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
-          :x-name ::merge
+          :x-name ::merge-gene
           :path-params [id :gene/id
                         from-id :gene/id]
           :parameters {:body {:gene/biotype :gene/biotype}}
@@ -372,7 +372,7 @@
        (sweet/resource
         {:post
          {:summary "Split a gene."
-          :x-name ::split
+          :x-name ::split-genes
           :path-params [id :- :gene/id]
           :parameters {:body ::owsg/split}
           :responses (-> (dissoc default-responses 200)
