@@ -57,10 +57,17 @@
  #:db{:ident :gene.status/live}
 
  ;; Person's roles
- #:db {:ident :person.role/admin}
- #:db {:ident :person.role/sequence-curator}
- #:db {:ident :person.role/viewer}
- 
+ #:db{:ident :person.role/admin}
+ #:db{:ident :person.role/sequence-curator}
+ #:db{:ident :person.role/viewer}
+
+ ;; Events
+ #:db{:ident :event/new}
+ #:db{:ident :event/update}
+ #:db{:ident :event/merge}
+ #:db{:ident :event/split}
+ #:db{:ident :event/kill}
+
  ;; person (user)
  #:person{:roles #{:person.role/admin},
           :google-id 111925262522292127085N,

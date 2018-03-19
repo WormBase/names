@@ -1,6 +1,7 @@
 (ns org.wormbase.names.gene
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
@@ -17,7 +18,7 @@
 (defn select-keys-with-ns [data key-ns]
   (into {} (filter #(= (namespace (key %)) key-ns) data)))
 
-(defn assoc-provenence [request payload]
+(defn assoc-provenence [request payload what]
   (let [id-token (:identity request)
         prov (or (select-keys-with-ns payload "provenance") {})
         email (or (some-> prov :provenance/who :person/email)
@@ -27,13 +28,16 @@
         how (own-agent/identify id-token)
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
+              :provenance/what what
               :provenance/who who
               :provenance/when whence
               :provenance/how how}]
     (merge
      prov
-     (when (inst? why)
-       {:provenance/why why}))))
+     (when-not (str/blank? why)
+       {:provenance/why why})
+     (when (inst? whence)
+       {:provenance/when whence}))))
 
 (defn validate-names [request data]
   (let [db (:db request)
@@ -65,7 +69,7 @@
                    ((juxt :gene/sequence-name :gene/cgc-name))
                    first)        
         prov (-> request
-                 (assoc-provenence payload)
+                 (assoc-provenence payload :event/new)
                  (assoc :db/id tempid))
         spec ::owsg/new
         [_ cdata] (if (s/valid? spec data)
@@ -95,7 +99,7 @@
             data (select-keys-with-ns payload "gene")]
         (if (s/valid? ::owsg/update data)
           (let [cdata (s/conform spec (validate-names request data))
-                prov (assoc-provenence request payload)
+                prov (assoc-provenence request payload :event/update)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
                 tx-result @(d/transact-async conn txes)
@@ -160,7 +164,7 @@
         into-biotype (:gene/biotype data)]
     (validate-merge-request request into-id from-id into-biotype)
     (let [prov (-> request
-                   (assoc-provenence data)
+                   (assoc-provenence data :event/merge)
                    (assoc :provenance/merged-from [:gene/id from-id])
                    (assoc :provenance/merged-into [:gene/id into-id]))
           tx-result @(d/transact-async
@@ -208,7 +212,7 @@
                p-biotype :gene/biotype} product
               p-seq-name (get-in cdata [:product :gene/sequence-name])
               prov-from (-> request
-                            (assoc-provenence cdata)
+                            (assoc-provenence cdata :event/split)
                             (assoc :provenance/split-into p-seq-name)
                             (assoc :provenance/split-from [:gene/id id]))
               species (-> existing-gene :gene/species :species/id)
@@ -277,7 +281,7 @@
   (if (s/valid? :gene/id id)
     (when (d/entity (:db request) [:gene/id id])
       (let [payload (some->> request :body-params)
-            prov (assoc-provenence request payload)]
+            prov (assoc-provenence request payload :event/kill)]
         (when-let [tx-result @(d/transact-async
                                (:conn request)
                                [[:wormbase.tx-fns/kill-gene id] prov])]

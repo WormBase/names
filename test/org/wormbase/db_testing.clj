@@ -19,7 +19,8 @@
     @(d/transact conn [{:person/email "tester@wormbase.org"
                         :person/roles #{:person.role/admin}}
                        {:person/email "tester2@wormbase.org"}
-                       {:person/email "tester3@wormbase.org"}])
+                       {:person/email "tester3@wormbase.org"}
+                       {:db/ident :event/test-fixture-assertion}])
     conn))
 
 (defonce conn-cache

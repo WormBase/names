@@ -17,6 +17,7 @@
        db
        #{"agent"
          "biotype"
+         "event"
          "gene"
          "gene.status"
          "provenance"

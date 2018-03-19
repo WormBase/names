@@ -21,19 +21,28 @@
       :cardinality :db.cardinality/one}
  #:db{:ident :provenance/compensates
       :valueType :db.type/ref
-      :cardinality :db.cardinality/one}
+      :cardinality :db.cardinality/one
+      :doc "A transaction that this provenance compensates for."}
  #:db{:ident :provenance/why,
       :valueType :db.type/string,
-      :cardinality :db.cardinality/one}
+      :cardinality :db.cardinality/one
+      :doc "An optional string describing the reason for an event."}
  #:db{:ident :provenance/how,
       :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
+      :cardinality :db.cardinality/one
+      :doc "A reference to an agent (client) that made the change."}
+ #:db{:ident :provenance/what
+      :valueType :db.type/ref,
+      :cardinality :db.cardinality/one
+      :doc "The event that occurred."}
  #:db{:ident :provenance/who,
       :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
+      :cardinality :db.cardinality/one
+      :doc "A reference to the person who performed the event."}
  #:db{:ident :provenance/when,
       :valueType :db.type/instant,
-      :cardinality :db.cardinality/one}
+      :cardinality :db.cardinality/one
+      :doc "When the event occurred."}
  #:db{:ident :provenance/merged-from,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}

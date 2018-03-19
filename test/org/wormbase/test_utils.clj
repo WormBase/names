@@ -234,6 +234,7 @@
                      & {:keys [how whence why person status]
                         :or {how :agent/console
                              whence (jt/to-java-date (jt/instant))
+                             what :event/test-fixture-assertion
                              person [:person/email "tester@wormbase.org"]}}]
   (let [conn (db-testing/fixture-conn)
         sample-data (if (map? data-samples)
@@ -256,24 +257,23 @@
                             (d/db conn))]
       (test-fn conn))))
 
-(defn query-provenance [conn gene-id]
-  (some->> (d/q '[:find [?tx ?who ?when ?why ?how]
-                  :in $ ?gene-id
-                  :where
-                  [?gene-id :gene/id _ ?tx]
-                  [?tx :provenance/who ?u-id]
-                  [(get-else $ ?u-id :person/email "nobody") ?who]
-                  [(get-else $ ?tx :provenance/when :unset) ?when]
-                  [(get-else $ ?tx :provenance/why "Dunno") ?why]
-                  [(get-else $ ?tx :provenance/how :unset) ?how-id]
-                  [?how-id :db/ident ?how]]
-                (-> conn d/db d/history)
-                [:gene/id gene-id])
-           (zipmap [:tx-id
-                    :provenance/who
-                    :provenance/when
-                    :provenance/why
-                    :provenance/how])))
+(defn query-provenance [conn gene-id event]
+  (when-let [tx-ids (d/q '[:find [?tx]
+                           :in $ ?lur ?event
+                           :where
+                           [?ev :db/ident ?event]
+                           [?tx :provenance/what ?ev]
+                           [?lur :gene/id _ ?tx]]
+                         (-> conn d/db d/history)
+                         [:gene/id gene-id]
+                         event)]
+    (map #(d/pull (d/db conn)
+                  '[*
+                    {:provenance/how [:db/ident]
+                    :provenance/what [:db/ident]
+                     :provenance/who [:person/email]}]
+                  %)
+         tx-ids)))
 
 (defn gen-valid-name [gen-fn species]
   (-> (gen-fn species)

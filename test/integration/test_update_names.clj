@@ -49,6 +49,24 @@
 (defn seq-name-for-sample [sample]
   (gen-valid-name-for-sample sample gss/sequence-name))
 
+(defn query-provenance [conn changed-attr]
+  (when-let [tx-ids (d/q '[:find [?tx]
+                           :in $ ?event ?changed-attr
+                           :where
+                           [_ ?changed-attr]
+                           [?ev :db/ident ?event]
+                           [?tx :provenance/what ?ev]]
+                         (-> conn d/db d/history)
+                         :event/update
+                         changed-attr)]
+    (map #(d/pull (d/db conn)
+                  '[*
+                    {:provenance/how [:db/ident]
+                     :provenance/what [:db/ident]
+                     :provenance/who [:person/email]}]
+                  %)
+         tx-ids)))
+
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
     (let [identifier (first (gen/sample gsg/id 1))
@@ -67,22 +85,28 @@
         sample-data
         (fn [conn]
           (let [new-cgc-name (cgc-name-for-sample sample-data)
+                why "udpate prov test"
                 payload (-> sample-data
                             (dissoc :gene/status)
                             (assoc :gene/cgc-name new-cgc-name)
                             (assoc :provenance/who
-                                   [:person/email "tester@wormbase.org"]))]
+                                   [:person/email "tester@wormbase.org"])
+                            (assoc :provenance/why
+                                   why))]
             (let [response (update-gene-name identifier payload)
                   [status body] response
                   db (d/db conn)
                   ent (d/entity db [:gene/id identifier])]
               (tu/status-is? status 200 body)
-              (let [act-prov (tu/query-provenance conn identifier)]
-                (t/is (= (:provenance/how act-prov) :agent/console)
+              (let [provs (query-provenance conn :gene/cgc-name)
+                    act-prov (first provs)]
+                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update)
                       (pr-str act-prov))
-                (t/is (= (:provenance/why act-prov) reason))
-                (t/is (= (:provenance/who act-prov)
-                         "tester@wormbase.org"))
+                (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
+                      (pr-str act-prov))
+                (t/is (= (:provenance/why act-prov) why))
+                (t/is (= (-> act-prov :provenance/who :person/email))
+                      "tester@wormbase.org")
                 (t/is (not= nil (:provenance/when act-prov))))
               (let [gs (:gene/status ent)]
                 (t/is (= :gene.status/live gs)
