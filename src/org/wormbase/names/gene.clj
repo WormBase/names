@@ -65,15 +65,26 @@
                              :invalid {:name  gname :ident name-ident}})))))))
   data)
 
-(defn about-gene [request id]
-  ;; TODO: validate names against the correct regex (using species lookup)
-  ;;
-  (when (s/valid? ::owsg/identifier id)
+(defn- transform-result
+  "Removes datomic internals from a pull-result map."
+  [pull-result]
+  (reduce-kv (fn unravel-enums [m k v]
+               (assoc m k (if (and (map? v) (:db/ident v))
+                            (:db/ident v)
+                            v)))
+             (empty pull-result)
+             (dissoc pull-result :db/id)))
+
+(defn about-gene [request identifier]
+  (when (s/valid? ::owsg/identifier identifier)
     (let [db (:db request)
-          lookup-ref (s/conform ::owsg/identifier id)
-          data (d/pull db '[*] lookup-ref)]
-      (when (:db/id data)
-        (http-response/ok data)))))
+          [lur ent] (identify request identifier)
+          info-expr '[*
+                      {:gene/biotype [[:db/ident]]
+                       :gene/species [[:species/id]]
+                       :gene/status [[:db/ident]]}]
+          data (d/pull db info-expr lur)]
+      (http-response/ok (transform-result data)))))
 
 (defn new-gene [request]
   (let [payload (some-> request :body-params :new)
