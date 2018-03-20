@@ -89,7 +89,7 @@
                 db (d/db conn)
                 ent (d/entity db [:gene/id gene-id])
                 provs (query-provenance conn gene-id)]
-            (t/is (count provs) 1)
+            (t/is (= (count provs) 1))
             (let [prov (first provs)]
               (t/is (= (some-> prov :provenance/how :db/ident)
                        :agent/web))
