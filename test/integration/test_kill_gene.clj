@@ -14,10 +14,14 @@
 (defn- gen-sample-for-kill []
   (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
         species (-> sample :gene/species :species/id)
-        prod-seq-name (tu/gen-valid-seq-name species)]
-    [gene-id (assoc sample
+        prod-seq-name (tu/seq-name-for-species species)
+        data-sample (assoc sample
                     :gene/id gene-id
-                    :gene/status :gene.status/live)]))
+                    :gene/sequence-name (tu/seq-name-for-species species)
+                    :gene/cgc-name (tu/cgc-name-for-species species)
+                    :gene/status :gene.status/live)]
+    (prn "SAMPLE FOR KILL pre any modification:" data-sample)
+    [gene-id data-sample]))
 
 (defn kill-gene
   [gene-id & {:keys [current-user]
@@ -43,8 +47,8 @@
       (tu/with-fixtures
         fixture-data
         (fn attempt-kill-dead-gene [conn]
-          (let [[status body] (kill-gene (:gene/id sample))]
-            (t/is (= status 409))))))))
+          (let [[status body] (kill-gene gene-id)]
+            (tu/status-is? status 409 body)))))))
 
 (t/deftest successful-assassination
   (t/testing "Succesfully killing a gene"

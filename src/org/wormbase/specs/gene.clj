@@ -85,10 +85,18 @@
 (s/def ::kill (s/keys :opt [:provenance/why
                             :provenance/when
                             :provenance/who]))
-(s/def ::killed boolean?)
 
 (s/def ::kill-response (s/keys :req-un [::killed]))
 
-(s/def ::identity (s/or :gene/cgc-name :gene/cgc-name
-                        :gene/sequence-name :gene/sequence-name
-                        :gene/id :gene/id))
+(s/def ::info (s/keys :req [:gene/id
+                            :gene/species
+                            :gene/status]
+                      :opt [:gene/biotype
+                            :gene/sequence-name
+                            :gene/cgc-name]))
+
+(s/def ::identifier (s/or :gene/id :gene/id
+                          :gene/cgc-name :gene/cgc-name
+                          :gene/sequence-name :gene/sequence-name))
+
+(s/def ::killed ::identifier)

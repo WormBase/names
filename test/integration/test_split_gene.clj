@@ -129,7 +129,7 @@
       (tu/with-fixtures
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
-          (let [seq-name (tu/gen-valid-seq-name
+          (let [seq-name (tu/seq-name-for-species
                           (-> sample :gene/species :species/id))
                 [status body] (split-gene
                                {:gene/biotype :biotype/cds
@@ -150,7 +150,7 @@
 (defn- gen-sample-for-split []
   (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
         species (-> sample :gene/species :species/id)
-        prod-seq-name (tu/gen-valid-seq-name species)]
+        prod-seq-name (tu/seq-name-for-species species)]
     [gene-id
      (-> sample
          (assoc :gene/id gene-id)
@@ -194,8 +194,8 @@
     (let [species :species/c-elegans
           split-from "WBGene00000001"
           split-into "WBGene00000002"
-          from-seq-name (tu/gen-valid-seq-name species)
-          into-seq-name (tu/gen-valid-seq-name species)
+          from-seq-name (tu/seq-name-for-species species)
+          into-seq-name (tu/seq-name-for-species species)
           from-gene {:db/id from-seq-name
                      :gene/id split-from
                      :gene/sequence-name from-seq-name

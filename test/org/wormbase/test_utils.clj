@@ -275,14 +275,30 @@
                   %)
          tx-ids)))
 
-(defn gen-valid-name [gen-fn species]
+(defn- gen-valid-name-for-sample [sample generator]
+  (-> sample
+      :gene/species
+      :species/id
+      generator
+      (gen/sample 1)
+      first))
+
+(defn cgc-name-for-sample [sample]
+  (gen-valid-name-for-sample sample gss/cgc-name))
+
+(defn seq-name-for-sample [sample]
+  (gen-valid-name-for-sample sample gss/sequence-name))
+
+(defn gen-valid-name-for-species [gen-fn species]
   (-> (gen-fn species)
       (gen/sample 1)
       (first)))
 
-(def gen-valid-seq-name (partial gen-valid-name gss/sequence-name))
+(def seq-name-for-species (partial gen-valid-name-for-species
+                                   gss/sequence-name))
 
-(def gen-valid-cgc-name (partial gen-valid-name gss/cgc-name))
+(def cgc-name-for-species (partial gen-valid-name-for-species
+                                   gss/cgc-name))
 
 (defn dup-names? [data-samples]
   (->> data-samples
@@ -304,11 +320,11 @@
                                  (let [cgc (-> m
                                                :gene/species
                                                :species/id
-                                               gen-valid-cgc-name)
+                                               cgc-name-for-species)
                                        sn (-> m
                                               :gene/species
                                               :species/id
-                                              gen-valid-seq-name)]
+                                              seq-name-for-species)]
                                    (assoc m
                                           :gene/cgc-name cgc
                                           :gene/sequence-name sn)))))
@@ -316,3 +332,4 @@
     (if (dup-names? data-samples)
       (recur n)
       [gene-ids gene-recs data-samples])))
+

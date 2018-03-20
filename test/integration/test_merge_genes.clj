@@ -58,16 +58,14 @@
                  "application/edn"
                  {"authorization" (str "Token " current-user-token)}))))
 
-
 (t/deftest must-meet-spec
   (t/testing "Request to merge genes must meet spec."
-    (let [response (merge-genes {} "WBGene00000002" "WBGene00000001")
+    (let [response (merge-genes {} "WBGene0000001" "WBGene0000002")
           [status body] response]
-      (tu/status-is? status 400 body)
-      (t/is (contains? (tu/parse-body body) :problems) (pr-str body))))
+      (tu/status-is? status 400 body)))
   (t/testing "Target biotype always required when merging genes."
-    (let [[status body] (merge-genes {} "WB2" "WB1")]
-      (tu/status-is? status 400 (format "Body: " body)))))
+    (let [[status body] (merge-genes {} "WB000000002" "WBGene00000001")]
+      (tu/status-is? status 400 body))))
 
 (t/deftest response-codes
   (t/testing "404 for gene missing"
@@ -104,11 +102,15 @@
                                            into-id)]
             (t/is (= status 409) (pr-str body)))))))
   (t/testing "400 for validation errors"
-    (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
-                                     "WBGene00000002"
-                                     "WBGene00000001")]
-      (tu/status-is? status 400 body)
-      (t/is (re-seq #"Invalid.*biotype" (:message body))))))
+    (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)]
+      (tu/with-fixtures
+        data-samples
+        (fn check-biotype-validation-error [conn]
+          (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
+                                           from-id
+                                           into-id)]
+            (tu/status-is? status 400 body)
+            (t/is (re-seq #"Invalid.*biotype" (:message body)))))))))
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
@@ -147,8 +149,8 @@
     (let [species :species/c-elegans
           merged-into "WBGene00000001"
           merged-from "WBGene00000002"
-          from-seq-name (tu/gen-valid-seq-name species)
-          into-seq-name (tu/gen-valid-seq-name species)
+          from-seq-name (tu/seq-name-for-species species)
+          into-seq-name (tu/seq-name-for-species species)
           from-gene {:db/id from-seq-name
                      :gene/id merged-from
                      :gene/sequence-name from-seq-name
@@ -159,7 +161,7 @@
                      :gene/id merged-into
                      :gene/species [:species/id species]
                      :gene/sequence-name into-seq-name
-                     :gene/cgc-name (tu/gen-valid-cgc-name species)
+                     :gene/cgc-name (tu/cgc-name-for-species species)
                      :gene/status :gene.status/live
                      :gene/biotype :biotype/transcript}
           init-txes [from-gene

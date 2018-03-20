@@ -152,7 +152,7 @@
   {:lang "clojure"
    :params [db from-id into-id into-biotype]
    :code
-   "(let [participants (->> [from-id into-id] 
+   "(let [participants (->> [from-id into-id]
                             (interleave (repeat :gene/id))
                             (partition 2))]
        (let [[from into] (map #(d/entity db %) participants)]
@@ -191,7 +191,7 @@
                                 :gene/sequence-name nil from-seq-name]))
                           txes)]
              tx-data)))"}}
- 
+
  {:db/ident :wormbase.tx-fns/split-gene
   :db/doc "Split gene `src` into a new gene."
   :db/fn #db/fn
@@ -214,9 +214,9 @@
                            :gene/biotype p-bt
                            :gene/sequence-name p-seq-name
                            :db/id p-seq-name}
-            tx-data [[:db.fn/cas [:gene/id gene-id] 
-                                  :gene/biotype 
-                                   existing-bt-id 
+            tx-data [[:db.fn/cas [:gene/id gene-id]
+                                  :gene/biotype
+                                   existing-bt-id
                                    bt-id]
                      [:wormbase.tx-fns/new \"gene\" new-gene-data]]]
          tx-data))
@@ -227,17 +227,17 @@
   :db/doc "Kill a gene"
   :db/fn #db/fn
   {:lang "clojure"
-   :params [db gene-id]
+   :params [db lookup-ref]
    :code
    "(let [{{:keys [:db/ident]} :gene/status} (d/pull
                                               db
                                               '[{:gene/status [:db/ident]}]
-                                              [:gene/id gene-id])]
+                                              lookup-ref)]
       (when (= ident :gene.status/dead)
         (throw (ex-info \"Gene to be killed is already dead!\"
-                        {:type :org.wormbase.db/conflict
-                         :gene/id gene-id})))
-      (let [ent-id [:gene/id gene-id]
-            curr-status (d/entid db ident)]
-        [[:db/cas ent-id :gene/status curr-status :gene.status/dead]]))"}}
+                        (merge
+                          {:type :org.wormbase.db/conflict}
+                          (apply array-map lookup-ref)))))
+      (let [curr-status (d/entid db ident)]
+        [[:db/cas lookup-ref :gene/status curr-status :gene.status/dead]]))"}}
  ]

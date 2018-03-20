@@ -130,7 +130,7 @@
   (let [sn (-> sample
                :gene/species
                :species/id
-               tu/gen-valid-seq-name)]
+               tu/seq-name-for-species)]
     (if (= sn (:gene/sequence-name sample))
       (recur sample)
       sn)))
