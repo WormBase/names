@@ -20,7 +20,6 @@
                     :gene/sequence-name (tu/seq-name-for-species species)
                     :gene/cgc-name (tu/cgc-name-for-species species)
                     :gene/status :gene.status/live)]
-    (prn "SAMPLE FOR KILL pre any modification:" data-sample)
     [gene-id data-sample]))
 
 (defn kill-gene
