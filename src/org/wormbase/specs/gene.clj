@@ -100,3 +100,12 @@
                           :gene/sequence-name :gene/sequence-name))
 
 (s/def ::killed ::identifier)
+
+(s/def ::find-match (s/keys :req [:gene/id
+                                  (or
+                                   :gene/cgc-name
+                                   :gene/sequence-name)]))
+(s/def ::matches (s/coll-of ::find-match :kind vector?))
+(s/def ::find-result (s/keys :req-un [::matches]))
+
+

@@ -65,6 +65,39 @@
                              :invalid {:name  gname :ident name-ident}})))))))
   data)
 
+(def name-matching-rules
+  '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
+     [(re-seq ?pattern ?name)]
+     [?a :db/ident ?attr]
+     [?eid ?a ?name]]
+    [(gene-name ?pattern ?name ?eid ?attr)
+     (matches-name :gene/cgc-name ?pattern ?name ?eid ?attr)]
+    [(gene-name ?pattern ?name ?eid ?attr)
+     (matches-name :gene/sequence-name ?pattern ?name ?eid ?attr)]
+    [(gene-name ?pattern ?name ?eid ?attr)
+     (matches-name :gene/id ?pattern ?name ?eid ?attr)]])
+
+(defn find-gene [request]
+  (when-let [pattern (some-> request :query-params :pattern)]
+    (let [db (:db request)
+          q-result (d/q '[:find ?gid ?attr ?name
+                          :in $ % ?pattern
+                          :where
+                          (gene-name ?pattern ?name ?eid ?attr)
+                          [?eid :gene/id ?gid]]
+                        db
+                        name-matching-rules
+                        (re-pattern pattern))
+          res {:matches (or (some->> q-result
+                                     (map (fn matched [[gid attr name*]]
+                                            {:gene/id gid attr name*}))
+                                     (vec))
+                            [])}]
+      (println "RESU:T:")
+      (prn res)
+      (println "END-RESULT")
+      (http-response/ok res))))
+
 (defn- transform-result
   "Removes datomic internals from a pull-result map."
   [pull-result]
@@ -330,14 +363,13 @@
      (sweet/resource
       {:get
        {:summary "Testing auth session."
+        :responses (assoc default-responses
+                          200
+                          {:schema ::owsg/find-result})
+        :parameters {:query-params {:pattern string?}}
         :x-name ::read-all
-        :handler (fn [request]
-                   (let [response (-> (http-response/ok
-                                       {:message "Hello World!"})
-                                      (assoc-in [:session :identity]
-                                                (if (:identity request)
-                                                  (:identity request))))]
-                     response))}
+        :handler (fn find-by-any-name [request]
+                   (find-gene request))}
        :post
        {:summary "Create new names for a gene (cloned or un-cloned)"
         :x-name ::new-gene
