@@ -2,12 +2,10 @@
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
-   [datomic.api :as d]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.specs.agent :as owsa]))
+   [org.wormbase.names.service :as service]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -23,7 +21,7 @@
 
 (defn about-gene
   [identifier & {:keys [current-user]
-              :or {current-user "tester@wormbase.org"}}]
+                 :or {current-user "tester@wormbase.org"}}]
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)
           params {}
