@@ -62,4 +62,3 @@
             (t/is (some #(= (:gene/id %) gid) matches))
             (t/is (some #(str/starts-with? (:gene/cgc-name %) valid-prefix)
                         matches))))))))
-      
