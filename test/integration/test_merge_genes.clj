@@ -72,9 +72,10 @@
     (let [[status body] (merge-genes {:gene/biotype :biotype/transposon}
                                      "WB2"
                                      "WB1")]
-      (t/is (= status 404) (pr-str body))))
+      (tu/status-is? status 404 body)))
   (t/testing "409 for conflicting state"
-    (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)
+    (let [data-samples (tu/gene-samples 2)
+          [from-id into-id] (map :gene/id data-samples)
           [sample-1 sample-2] [(-> data-samples
                                    first
                                    (assoc :gene/status :gene.status/dead)
@@ -100,9 +101,10 @@
           (let [[status body] (merge-genes {:gene/biotype :biotype/cds}
                                            from-id
                                            into-id)]
-            (t/is (= status 409) (pr-str body)))))))
+            (tu/status-is? status 409 body))))))
   (t/testing "400 for validation errors"
-    (let [[[from-id into-id] _ data-samples] (tu/gene-samples 2)]
+    (let [data-samples (tu/gene-samples 2)
+          [from-id into-id] (map :gene/id data-samples)]
       (tu/with-fixtures
         data-samples
         (fn check-biotype-validation-error [conn]
@@ -114,7 +116,9 @@
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
-    (let [[[from-id into-id] _ [gene-from gene-into]] (tu/gene-samples 2)
+    (let [data-samples (tu/gene-samples 2)
+          [gene-from gene-into] data-samples
+          [from-id into-id] (map :gene/id data-samples)
           samples [(dissoc gene-from :gene/cgc-name)
                    (-> gene-into
                        (assoc :gene/species (:gene/species gene-from))
@@ -188,7 +192,7 @@
                       [:gene/id merged-into])
               [status body] (undo-merge-genes merged-from
                                               merged-into)]
-          (t/is (= status 200) (pr-str body))
+          (tu/status-is? status 200 body)
           (t/is (map? body) (pr-str (type body)))
           (t/is (= (:dead body) merged-from) (pr-str body))
           (t/is (= (:live body) merged-into) (pr-str body)))))))

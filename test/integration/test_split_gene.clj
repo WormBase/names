@@ -63,14 +63,14 @@
     (let [[status body] (split-gene {:gene/cgc-name "abc-1"} "WB1")]
       (tu/status-is? status 400 (format "Body: " body))))
   (t/testing "Request to split gene must meet spec."
-    (let [[[gene-id] _ [_  data-sample]] (tu/gene-samples 1)]
+    (let [[data-sample] (tu/gene-samples 1)]
       (tu/with-fixtures
         data-sample
         (fn check-validation-error [conn]
           (let [[status body] (split-gene
                                {:gene/biotype :biotype/godzilla
                                 :product {}}
-                               gene-id)]
+                               (:gene/id data-sample))]
             (tu/status-is? status 400 body)
             (t/is (contains? (tu/parse-body body) :problems)
                   (pr-str body))))))))
@@ -120,7 +120,8 @@
                          gene-id)]
       (tu/status-is? status 404 body)))
   (t/testing "409 for conflicting state"
-    (let [[[gene-id] _ [_  data-sample]] (tu/gene-samples 1)
+    (let [[data-sample] (tu/gene-samples 1)
+          gene-id (:gene/id data-sample)
           sample (-> data-sample
                      (assoc :gene/biotype :biotype/cds)
                      (assoc :gene/status :gene.status/dead)
@@ -137,18 +138,17 @@
                                 {:gene/biotype :biotype/transcript
                                  :gene/sequence-name seq-name}}
                                gene-id)]
-            (t/is (= status 409) (pr-str body)))))))
-
+            (tu/status-is? status 409 body))))))
   (t/testing "400 for validation errors"
     (let [[status body] (split-gene {:gene/biotype :biotype/godzilla}
                                     "WBGene00000001")]
-      (t/is (= status 400) (pr-str body))
+      (tu/status-is? status 400 body)
       (t/is (re-seq #"Invalid.*split" (:message body))
             (str "\nBODY:" (pr-str body))))))
 
-
 (defn- gen-sample-for-split []
-  (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
+  (let [[sample] (tu/gene-samples 1)
+        gene-id (:gene/id sample)
         species (-> sample :gene/species :species/id)
         prod-seq-name (tu/seq-name-for-species species)]
     [gene-id
@@ -177,7 +177,7 @@
                 src (d/entity (d/db conn) [:gene/id gene-id])
                 prod (d/entity (d/db conn)
                                [:gene/sequence-name prod-seq-name])]
-            (t/is (= status 201) (pr-str body))
+            (tu/status-is? status 201 body)
             (t/is (some-> prov :provenance/when inst?))
             (t/is (= (some-> prov :provenance/split-from :gene/id)
                      gene-id))

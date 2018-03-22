@@ -10,7 +10,8 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn- gen-sample []
-  (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
+  (let [[sample] (tu/gene-samples 1)
+        gene-id (:gene/id sample)
         prod-seq-name (tu/seq-name-for-sample sample)]
     [gene-id (assoc
               sample

@@ -25,23 +25,8 @@
                          headers)]
       [status (tu/parse-body body)])))
 
-(defn indexes-of [e coll]
-  (keep-indexed #(if (= e %2) %1) coll))
-
 (t/deftest find-by-any-name
-  (let [[identifiers samples] (tu/gene-samples 10)
-        ids-indexed (keep-indexed (fn [idx id] [idx id]) identifiers)
-        data-samples (keep-indexed (fn [idx sample]
-                                     (let [cgc-name (partial tu/cgc-name-for-sample
-                                                             sample)
-                                           seq-name (partial tu/seq-name-for-sample
-                                                             sample)]
-                                       (assoc sample
-                                              :gene/id (second (nth ids-indexed idx))
-                                              :gene/cgc-name (cgc-name)
-                                              :gene/sequence-name (seq-name))))
-                                   samples)]
-    (println "DATA SAMPLES 1:" data-samples)
+  (let [data-samples (tu/gene-samples 10)]
     (tu/with-fixtures
       data-samples
       (fn test-find-cases [conn]
@@ -49,13 +34,11 @@
           (let [[status body] (find-gene "foobar")
                 matches (:matches body)]
             (tu/status-is? 200 status body)
-
             (t/is (empty? matches))))
         (t/testing "Results found for matching CGC name prefix"
           (let [sample (rand-nth data-samples)
-                gid (nth identifiers (first (indexes-of sample data-samples)))
+                gid (:gene/id sample)
                 valid-prefix (-> sample :gene/cgc-name (subs 0 2))
-                _ (prn "testing with valid prefix?:" valid-prefix)
                 [status body] (find-gene valid-prefix)
                 matches (:matches body)]
             (tu/status-is? 200 status body)
