@@ -93,9 +93,6 @@
                                             {:gene/id gid attr name*}))
                                      (vec))
                             [])}]
-      (println "RESU:T:")
-      (prn res)
-      (println "END-RESULT")
       (http-response/ok res))))
 
 (defn- transform-result
