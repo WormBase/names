@@ -144,7 +144,7 @@
                                     "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-seq #"Invalid.*split" (:message body))
-            (str "\nBODY:" (pr-str body))))))
+            (pr-str body)))))
 
 (defn- gen-sample-for-split []
   (let [[sample] (tu/gene-samples 1)
