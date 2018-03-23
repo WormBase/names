@@ -77,23 +77,32 @@
     [(gene-name ?pattern ?name ?eid ?attr)
      (matches-name :gene/id ?pattern ?name ?eid ?attr)]])
 
-(defn find-gene [request]
-  (when-let [pattern (some-> request :query-params :pattern)]
-    (let [db (:db request)
-          q-result (d/q '[:find ?gid ?attr ?name
-                          :in $ % ?pattern
-                          :where
-                          (gene-name ?pattern ?name ?eid ?attr)
-                          [?eid :gene/id ?gid]]
-                        db
-                        name-matching-rules
-                        (re-pattern pattern))
-          res {:matches (or (some->> q-result
-                                     (map (fn matched [[gid attr name*]]
-                                            {:gene/id gid attr name*}))
-                                     (vec))
-                            [])}]
-      (http-response/ok res))))
+(defn find-gene
+  "Perform a prefix search against names in the DB.
+  Match any unique gene identifier (cgc, sequence names or id)."
+  [request]
+  (when-let [pattern (some-> request :query-params :pattern str/trim)]
+    (if (s/valid? ::owsg/find-term pattern)
+      (let [db (:db request)
+            term (s/conform ::owsg/find-term pattern)
+            q-result (d/q '[:find ?gid ?attr ?name
+                            :in $ % ?term
+                            :where
+                            (gene-name ?term ?name ?eid ?attr)
+                            [?eid :gene/id ?gid]]
+                          db
+                          name-matching-rules
+                          (re-pattern (str "^" term)))
+            res {:matches (or (some->> q-result
+                                       (map (fn matched [[gid attr name*]]
+                                              (array-map :gene/id gid attr name*)))
+                                       (vec))
+                              [])}]
+        (http-response/ok res))
+      (http-response/bad-request {:message "Invalid find term"
+                                  :value pattern
+                                  :problems (s/explain-data ::owsg/find-term
+                                                            pattern)}))))
 
 (defn- transform-result
   "Removes datomic internals from a pull-result map."
@@ -336,18 +345,6 @@
         (when tx-result
           (http-response/ok {:killed id}))))))
 
-(defn responses-map
-  [success-code success-spec]
-  (let [err-codes (range 400 501)
-        default (->> {:schema "owsc/error-response"}
-                     (repeat (count err-codes))
-                     (interleave err-codes)
-                     (apply sorted-map))
-        response-map (assoc default
-                            success-code
-                            {:schema success-spec})]
-    response-map))
-
 (def default-responses
   {200 {:schema {:updated ::owsg/updated}}
    400 {:schema {:errors ::owsc/error-response}}
@@ -363,8 +360,8 @@
         :responses (assoc default-responses
                           200
                           {:schema ::owsg/find-result})
-        :parameters {:query-params {:pattern string?}}
-        :x-name ::read-all
+        :parameters {:query-params ::owsg/find-request}
+        :x-name ::find-gene
         :handler (fn find-by-any-name [request]
                    (find-gene request))}
        :post

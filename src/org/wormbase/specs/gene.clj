@@ -1,8 +1,9 @@
 (ns org.wormbase.specs.gene
   (:require [clojure.spec.alpha :as s]
-            ;; fpr specs
+            ;; for specs
             [org.wormbase.specs.provenance]
-            [org.wormbase.specs.species]))
+            [org.wormbase.specs.species]
+            [clojure.string :as str]))
 
 (def gene-id-regexp #"WBGene\d{8}")
 
@@ -101,11 +102,19 @@
 
 (s/def ::killed ::identifier)
 
-(s/def ::find-match (s/keys :req [:gene/id
-                                  (or
-                                   :gene/cgc-name
-                                   :gene/sequence-name)]))
+(s/def ::find-term (s/and string?
+                          (complement str/blank?)))
+
+(s/def ::pattern ::find-term)
+
+(s/def ::find-request (s/keys :req-un [::pattern]))
+
+(s/def ::find-match (s/keys :req [:gene/id]
+                            :opt [:gene/cgc-name
+                                  :gene/sequence-name]))
+
 (s/def ::matches (s/coll-of ::find-match :kind vector?))
+
 (s/def ::find-result (s/keys :req-un [::matches]))
 
 
