@@ -48,7 +48,7 @@
                            [?ev :db/ident ?event]
                            [?tx :provenance/what ?ev]]
                          (-> conn d/db d/history)
-                         :event/update
+                         :event/update-gene
                          changed-attr)]
     (map #(d/pull (d/db conn)
                   '[*
@@ -91,7 +91,7 @@
               (tu/status-is? status 200 body)
               (let [provs (query-provenance conn :gene/cgc-name)
                     act-prov (first provs)]
-                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update)
+                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
                       (pr-str act-prov))
                 (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
                       (pr-str act-prov))

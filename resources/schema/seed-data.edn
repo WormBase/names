@@ -62,11 +62,11 @@
  #:db{:ident :person.role/viewer}
 
  ;; Events
- #:db{:ident :event/new}
- #:db{:ident :event/update}
- #:db{:ident :event/merge}
- #:db{:ident :event/split}
- #:db{:ident :event/kill}
+ #:db{:ident :event/new-gene}
+ #:db{:ident :event/update-gene}
+ #:db{:ident :event/merge-genes}
+ #:db{:ident :event/split-gene}
+ #:db{:ident :event/kill-gene}
 
  ;; person (user)
  #:person{:roles #{:person.role/admin},

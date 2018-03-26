@@ -136,7 +136,7 @@
                                       {:problems problems
                                        :type ::validation-error
                                        :data data}))))
-        prov (assoc-provenence request payload :event/new)
+        prov (assoc-provenence request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
@@ -155,7 +155,7 @@
             data (select-keys-with-ns payload "gene")]
         (if (s/valid? ::owsg/update data)
           (let [cdata (s/conform spec (validate-names request data))
-                prov (assoc-provenence request payload :event/update)
+                prov (assoc-provenence request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
                 tx-result @(d/transact-async conn txes)
@@ -213,7 +213,7 @@
                                            from-id
                                            into-biotype)
         prov (-> request
-                 (assoc-provenence data :event/merge)
+                 (assoc-provenence data :event/merge-genes)
                  (assoc :provenance/merged-from from-lur)
                  (assoc :provenance/merged-into into-lur))
         tx-result @(d/transact-async
@@ -261,7 +261,7 @@
                p-biotype :gene/biotype} product
               p-seq-name (get-in cdata [:product :gene/sequence-name])
               prov-from (-> request
-                            (assoc-provenence cdata :event/split)
+                            (assoc-provenence cdata :event/split-gene)
                             (assoc :provenance/split-into p-seq-name)
                             (assoc :provenance/split-from [:gene/id id]))
               species (-> existing-gene :gene/species :species/id)
@@ -338,7 +338,7 @@
                        :lookup-ref lur})))
     (when ent
       (let [payload (some->> request :body-params)
-            prov (assoc-provenence request payload :event/kill)
+            prov (assoc-provenence request payload :event/kill-gene)
             tx-result @(d/transact-async
                         (:conn request)
                         [[:wormbase.tx-fns/kill-gene lur] prov])]
