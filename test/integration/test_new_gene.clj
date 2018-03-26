@@ -47,8 +47,9 @@
       (tu/status-is? status 400 body)
       (t/is (contains? (tu/parse-body body) :message))))
   (t/testing "Species should always be required when creating gene name."
-    (let [[status body] (new-gene {:gene/cgc-name (tu/gen-valid-cgc-name
-                                                   :species/c-elegans)})]
+    (let [[status
+           body] (new-gene {:gene/cgc-name (tu/cgc-name-for-species
+                                            :species/c-elegans)})]
       (tu/status-is? status 400 (format "Body: " body)))))
 
 (t/deftest wrong-data-shape
@@ -61,7 +62,7 @@
     (let [[status body] (new-gene
                          {:gene/cgc-name "abc-1"
                           :gene/species {:species/id :species/c-elegant}})]
-      (tu/status-is? status 404 body))))
+      (tu/status-is? status 400 body))))
 
 (t/deftest invalid-names
   (t/testing "Invalid CGC name for species causes validation error."
@@ -76,7 +77,7 @@
       []
       (fn new-uncloned [conn]
         (let [[status body] (new-gene
-                             {:gene/cgc-name (tu/gen-valid-cgc-name :species/c-elegans)
+                             {:gene/cgc-name (tu/cgc-name-for-species :species/c-elegans)
                               :gene/species {:species/id :species/c-elegans}})
               expected-id "WBGene00000001"]
           (tu/status-is? status 201 body)
@@ -88,7 +89,7 @@
 
 (t/deftest naming-with-provenance
   (t/testing "Naming some genes providing provenance."
-    (let [data {:gene/cgc-name (tu/gen-valid-cgc-name :species/c-elegans)
+    (let [data {:gene/cgc-name (tu/cgc-name-for-species :species/c-elegans)
                 :gene/species {:species/id :species/c-elegans}
                 :provenance/who {:person/email
                                  "tester@wormbase.org"}}

@@ -1,8 +1,9 @@
 (ns org.wormbase.specs.gene
   (:require [clojure.spec.alpha :as s]
-            ;; fpr specs
+            ;; for specs
             [org.wormbase.specs.provenance]
-            [org.wormbase.specs.species]))
+            [org.wormbase.specs.species]
+            [clojure.string :as str]))
 
 (def gene-id-regexp #"WBGene\d{8}")
 
@@ -85,10 +86,35 @@
 (s/def ::kill (s/keys :opt [:provenance/why
                             :provenance/when
                             :provenance/who]))
-(s/def ::killed boolean?)
 
 (s/def ::kill-response (s/keys :req-un [::killed]))
 
-(s/def ::identity (s/or :gene/cgc-name :gene/cgc-name
-                        :gene/sequence-name :gene/sequence-name
-                        :gene/id :gene/id))
+(s/def ::info (s/keys :req [:gene/id
+                            :gene/species
+                            :gene/status]
+                      :opt [:gene/biotype
+                            :gene/sequence-name
+                            :gene/cgc-name]))
+
+(s/def ::identifier (s/or :gene/id :gene/id
+                          :gene/cgc-name :gene/cgc-name
+                          :gene/sequence-name :gene/sequence-name))
+
+(s/def ::killed ::identifier)
+
+(s/def ::find-term (s/and string?
+                          (complement str/blank?)))
+
+(s/def ::pattern ::find-term)
+
+(s/def ::find-request (s/keys :req-un [::pattern]))
+
+(s/def ::find-match (s/keys :req [:gene/id]
+                            :opt [:gene/cgc-name
+                                  :gene/sequence-name]))
+
+(s/def ::matches (s/coll-of ::find-match :kind vector?))
+
+(s/def ::find-result (s/keys :req-un [::matches]))
+
+

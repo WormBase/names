@@ -48,7 +48,7 @@
   :profiles
   {:provided
    {:dependencies
-    [[com.datomic/datomic-pro "0.9.5561"]]}
+    [[com.datomic/datomic-pro "0.9.5661"]]}
    :dev
    {:aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}

@@ -108,7 +108,7 @@
 (defn handle-request-validation
   ([^Exception exc data request]
    (respond-bad-request request {:message (.getMessage exc)
-                                 :probems (:problems data)}))
+                                 :problems (:problems data)}))
   ([err]
    err))
 

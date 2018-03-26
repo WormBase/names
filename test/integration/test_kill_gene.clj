@@ -12,12 +12,16 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn- gen-sample-for-kill []
-  (let [[[gene-id] _ [_ sample]] (tu/gene-samples 1)
+  (let [[sample] (tu/gene-samples 1)
+        gene-id (:gene/id sample)
         species (-> sample :gene/species :species/id)
-        prod-seq-name (tu/gen-valid-seq-name species)]
-    [gene-id (assoc sample
+        prod-seq-name (tu/seq-name-for-species species)
+        data-sample (assoc sample
                     :gene/id gene-id
-                    :gene/status :gene.status/live)]))
+                    :gene/sequence-name (tu/seq-name-for-species species)
+                    :gene/cgc-name (tu/cgc-name-for-species species)
+                    :gene/status :gene.status/live)]
+    [gene-id data-sample]))
 
 (defn kill-gene
   [gene-id & {:keys [current-user]
@@ -34,7 +38,7 @@
 (t/deftest must-meet-spec
   (t/testing "Invalid Gene ID causes a 400 response"
     (let [[status body] (kill-gene "Bill")]
-      (t/is (= status 400)))))
+      (tu/status-is? status 400 body))))
 
 (t/deftest gene-must-be-live
   (t/testing "Attempting to kill a dead gene results in a conflict."
@@ -43,8 +47,8 @@
       (tu/with-fixtures
         fixture-data
         (fn attempt-kill-dead-gene [conn]
-          (let [[status body] (kill-gene (:gene/id sample))]
-            (t/is (= status 409))))))))
+          (let [[status body] (kill-gene gene-id)]
+            (tu/status-is? status 409 body)))))))
 
 (t/deftest successful-assassination
   (t/testing "Succesfully killing a gene"
@@ -56,7 +60,7 @@
                 [status body] (kill-gene gene-id)
                 db (d/db conn)
                 ent (d/entity db [:gene/id gene-id])]
-            (t/is (= status 200) (pr-str body))
+            (tu/status-is? status 200 body)
             (t/is (= (:gene/status ent) :gene.status/dead))))))))
 
 (defn query-provenance [conn gene-id]
@@ -85,13 +89,12 @@
                 db (d/db conn)
                 ent (d/entity db [:gene/id gene-id])
                 provs (query-provenance conn gene-id)]
-            (t/is (count provs) 1)
+            (t/is (= (count provs) 1))
             (let [prov (first provs)]
               (t/is (= (some-> prov :provenance/how :db/ident)
                        :agent/web))
               (t/is (= (some-> prov :provenance/who :person/email)
-                       "tester@wormbase.org")
-                    (str "PROV BACK:" (pr-str prov))))
-            (t/is (= status 200) (pr-str body))
+                       "tester@wormbase.org")))
+            (tu/status-is? status 200 body)
             (t/is (= (:gene/status ent) :gene.status/dead))))))))
 

@@ -40,15 +40,6 @@
               (tu/status-is? status 400 (pr-str response))))))
       :why "Updating name")))
 
-(defn- gen-valid-name-for-sample [sample generator]
-  (-> sample :gene/species :species/id generator (gen/sample 1) first))
-
-(defn cgc-name-for-sample [sample]
-  (gen-valid-name-for-sample sample gss/cgc-name))
-
-(defn seq-name-for-sample [sample]
-  (gen-valid-name-for-sample sample gss/sequence-name))
-
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
                            :in $ ?event ?changed-attr
@@ -71,20 +62,20 @@
   (t/testing (str "Provenance is recorded for successful transactions")
     (let [identifier (first (gen/sample gsg/id 1))
           sample (first (gen/sample gsg/update 1))
-          orig-cgc-name (seq-name-for-sample sample)
+          orig-cgc-name (tu/cgc-name-for-sample sample)
           sample-data (merge
                        sample
                        {:gene/id identifier
                         :gene/cgc-name orig-cgc-name
                         :gene/status :gene.status/live}
                        (when (contains? sample :gene/sequence-name)
-                         {:gene/sequence-name (seq-name-for-sample sample)}))
+                         {:gene/sequence-name (tu/seq-name-for-sample sample)}))
           species-id (:species/id sample-data)
           reason "Updating a cgc-name records provenance"]
       (tu/with-fixtures
         sample-data
         (fn [conn]
-          (let [new-cgc-name (cgc-name-for-sample sample-data)
+          (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                 why "udpate prov test"
                 payload (-> sample-data
                             (dissoc :gene/status)
@@ -105,8 +96,8 @@
                 (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
                       (pr-str act-prov))
                 (t/is (= (:provenance/why act-prov) why))
-                (t/is (= (-> act-prov :provenance/who :person/email))
-                      "tester@wormbase.org")
+                (t/is (= (-> act-prov :provenance/who :person/email)
+                         "tester@wormbase.org"))
                 (t/is (not= nil (:provenance/when act-prov))))
               (let [gs (:gene/status ent)]
                 (t/is (= :gene.status/live gs)
