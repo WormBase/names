@@ -16,8 +16,6 @@
                       :ReceiveMessageWaitTimeSeconds 10}})
 
 (defn- create-queue [& args]
-  ;; TODO: really call the sqs fn with args of course:
-  ;; sqs/create-queue
   (apply sqs/create-queue args))
 
 (defn sqs-queue []
