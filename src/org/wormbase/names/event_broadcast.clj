@@ -1,4 +1,4 @@
-(ns org.wormbase.names.ace-relay
+(ns org.wormbase.names.event-broadcast
   "Relay messages for consumption by parties interested (primarily ACeDB clients).
   Ueses Amazon Simple Queueing Service (SQS) as the message queue provider."
   (:require
@@ -8,31 +8,22 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.names.util :as ownu]))
 
-(def ace-queue-conf {:queue-name "org-wormbase-names-ace-relay_messages"
-                     :attributes
+(def sqs-queue-conf {:queue-name "org-wormbase-names-tx_messages"
+                     :attributes []
                      {:VisibilityTimeout 30 ;; sec
                       :MaximumMessageSize 65536 ;; bytes
                       :MessageRetentionPeriod 3628800 ;; sec
                       :ReceiveMessageWaitTimeSeconds 10}})
 
-;; TODO: superfluous?
-;; (defmulti send-message (fn [tx] :noop))
-;; (defmethod send-message :event/new-gene [tx-data])
-;; (defmethod send-message :event/update-gene [tx-data])
-;; (defmethod send-message :event/kill-gene [tx-data])
-;; (defmethod send-message :event/split-gene [tx-data]) 
-;; (defmethod send-message :event/merge-genes [tx-data])
-
 (defn- create-queue [& args]
   ;; TODO: really call the sqs fn with args of course:
   ;; sqs/create-queue
-  (println "Faking AWS SQS CREATE QUEUE")
-  "urn:fake:fake:fake")
+  (apply sqs/create-queue args))
 
-(defn ace-queue []
-  (if-let [aq (-> ace-queue-conf :queue-name sqs/find-queue)]
+(defn sqs-queue []
+  (if-let [aq (-> sqs-queue-conf :queue-name sqs/find-queue)]
     aq
-    (apply create-queue (-> ace-queue-conf vec flatten))))
+    (apply create-queue (-> sqs-queue-conf vec flatten))))
 
 (defn read-changes [{:keys [db-after tx-data] :as report}]
   (d/q '[:find ?aname ?val
@@ -74,7 +65,7 @@
   :start (fn []
            (start-queue-monitor
             owdb/conn
-            (partial send-changes-via-aws-sqs (ace-queue))))
+            (partial send-changes-via-aws-sqs (sqs-queue))))
   :stop (fn []
           (println "CANCELLING FUTURE")
           (future-cancel change-queue-monitor)

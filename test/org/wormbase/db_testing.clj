@@ -7,7 +7,7 @@
    [mount.core :as mount]
    [org.wormbase.db :as owdb]
    [org.wormbase.db.schema :as schema]
-   [org.wormbase.names.ace-relay :as own-ar]))
+   [org.wormbase.names.event-broadcast :as own-eb]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -47,9 +47,9 @@
                  (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)
           tx-reqort-queue (d/tx-report-queue conn)
-          monitor (partial own-ar/start-queue-monitor conn send-changes-test)]
+          monitor (partial own-eb/start-queue-monitor conn send-changes-test)]
       (mount/start-with {#'owdb/conn conn
-                         #'own-ar/change-queue-monitor (monitor)})
+                         #'own-eb/change-queue-monitor (monitor)})
       (f)
       (owdb/checked-delete uri)
       (mount/stop))))
