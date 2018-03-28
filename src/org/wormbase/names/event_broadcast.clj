@@ -9,7 +9,7 @@
    [org.wormbase.names.util :as ownu]))
 
 (def sqs-queue-conf {:queue-name "org-wormbase-names-tx_messages"
-                     :attributes []
+                     :attributes
                      {:VisibilityTimeout 30 ;; sec
                       :MaximumMessageSize 65536 ;; bytes
                       :MessageRetentionPeriod 3628800 ;; sec
@@ -40,7 +40,8 @@
 
   `send-changes-fn` should be a functio accepting a map of changes to be sent.
   e.g: via AWS SQS, or possibly email."
-  [tx-report-queue send-changes-fn]
+  [tx-report-queue send-changes-fn & {:keys [broadcast-events-from]
+                                      :or {broadcast-events-from #{:agent/web}}}]
   (while true
     ;; TODO: factor out fn that works on the report queue? (.take...)
     (let [report (.take tx-report-queue) ;; blocks until message is availableb
@@ -49,9 +50,10 @@
                        read-changes
                        (into {})
                        (ownu/resolve-refs db-after))]
-      (comment "TODO: LOGGING")
-      (println "CHANGES:" changes)
-      (send-changes-fn changes))))
+      (when (broadcast-events-from (:provenance/how changes))
+        (comment "TODO: LOGGING")
+        (println "CHANGES:" changes)
+        (send-changes-fn changes)))))
 
 (defn start-queue-monitor [conn send-changes-fn]
   (comment "TODO: LOGGING")
