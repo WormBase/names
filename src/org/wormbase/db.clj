@@ -50,13 +50,16 @@
         state-key (pr-str #'conn)]
     (states state-key)))
 
-;; factored out so can be mocked in tests.
+;; factoring out so can be mocked in tests.
+
 (defn db
   [conn]
   (d/db conn))
 
 (defn connection []
   conn)
+
+;; end factoring
 
 (defn wrap-datomic
   "Annotates request with datomic connection and current db."

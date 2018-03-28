@@ -6,7 +6,8 @@
    [java-time :as jt]   
    [mount.core :as mount]
    [org.wormbase.db :as owdb]
-   [org.wormbase.db.schema :as schema]))
+   [org.wormbase.db.schema :as schema]
+   [org.wormbase.names.ace-relay :as own-ar]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -36,25 +37,22 @@
   installed."
   []
   (dm/fork-conn (starting-point-conn)))
+
+(defn send-changes-test [changes]
+  (println "FAKE SENDING CHANGES FOR GENEACE CONSUMPTION:")
+  (prn changes))
   
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
                  (jt/to-millis-from-epoch (jt/instant)))]
-    (let [conn (fixture-conn)]
-      (mount/start-with {#'owdb/conn conn})
+    (let [conn (fixture-conn)
+          tx-reqort-queue (d/tx-report-queue conn)
+          monitor (partial own-ar/start-queue-monitor conn send-changes-test)]
+      (mount/start-with {#'owdb/conn conn
+                         #'own-ar/change-queue-monitor (monitor)})
       (f)
       (owdb/checked-delete uri)
       (mount/stop))))
-
-(defn empty-db [conn]
-  (schema/install conn 1)
-  ;; (let [test-user-email "tester@wormbase.org"]
-  ;;   (when-not (d/q '[:find ?e
-  ;;                    :in $ ?email
-  ;;                    :where [?e :person/email ?email]]
-  ;;                  (d/db conn) test-user-email)
-  ;;     @(d/transact conn [{:person/email test-user-email}])))
-  (d/db conn))
 
 (defn speculate [conn tx]
   (:db-after (d/with (d/db conn) tx)))
