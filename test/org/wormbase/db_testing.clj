@@ -17,6 +17,7 @@
     (schema/install conn 1)
     ;; A set of fake users with different roles to test against.
     @(d/transact conn [{:person/email "tester@wormbase.org"
+                        :person/id "WBPerson007"
                         :person/roles #{:person.role/admin}}
                        {:person/email "tester2@wormbase.org"}
                        {:person/email "tester3@wormbase.org"}

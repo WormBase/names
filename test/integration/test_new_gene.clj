@@ -1,31 +1,17 @@
 (ns integration.test-new-gene
   (:require
    [clojure.test :as t]
+   [datomic.api :as d]
+   [org.wormbase.api-test-client :as api-tc]
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.db-testing :as db-testing]
+   [org.wormbase.gen-specs.species :as gss]
    [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :as tu]
-   [datomic.api :as d]
-   [org.wormbase.gen-specs.species :as gss]))
+   [org.wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn new-gene
-  [data & {:keys [current-user]
-           :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response*
-            {"email" current-user}]
-    (let [data (->> data (assoc {} :new) pr-str)
-          current-user-token (get fake-auth/tokens current-user)
-          [status body]
-          (tu/raw-put-or-post*
-           service/app
-           "/gene/"
-           :post
-           data
-           "application/edn"
-           {"authorization" (str "Token " current-user-token)})]
-      [status (tu/parse-body body)])))
+(def new-gene (partial api-tc/new "gene"))
 
 (def not-nil? (complement nil?))
 

@@ -5,7 +5,8 @@
    [org.wormbase.fake-auth :as fake-auth]
    [org.wormbase.test-utils :as tu]
    [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.service :as service]))
+   [org.wormbase.names.service :as service]
+   [org.wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -20,20 +21,7 @@
               :gene/sequence-name (tu/seq-name-for-sample sample)
               :gene/status :gene.status/live)]))
 
-(defn about-gene
-  [identifier & {:keys [current-user]
-                 :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [current-user-token (get fake-auth/tokens current-user)
-          params {}
-          headers {"content-type" "application/edn"
-                   "authorization" (str "Token " current-user-token)}
-          [status body] (tu/get*
-                         service/app
-                         (str "/gene/" identifier)
-                         params
-                         headers)]
-      [status (tu/parse-body body)])))
+(def about-gene (partial api-tc/info "gene"))
 
 (defn- check-gene-data []
   (assert false "TBD"))

@@ -80,7 +80,8 @@
  #:db {:ident :person/id,
        :valueType :db.type/string,
        :cardinality :db.cardinality/one,
-       :unique :db.unique/value}
+       :unique :db.unique/value
+       :doc "WBPerson ID"}
  #:db {:ident :person/google-id,
        :valueType :db.type/bigint,
        :cardinality :db.cardinality/one,

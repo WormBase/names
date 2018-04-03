@@ -66,3 +66,6 @@
            "tx" (format "0x%x" tx)
            "added" added}))
        (pp/print-table ["part" "e" "a" "v" "tx" "added"])))
+
+(defn select-keys-with-ns [data key-ns]
+  (into {} (filter #(= (namespace (key %)) key-ns) data)))

@@ -17,6 +17,7 @@
    [org.wormbase.db-testing :as db-testing]
    [org.wormbase.db :as owdb]
    [org.wormbase.gen-specs.gene :as gsg]
+   [org.wormbase.gen-specs.person :as gsp]
    [org.wormbase.gen-specs.species :as gss]
    [org.wormbase.specs.gene :as owsg]
    [peridot.core :as p]
@@ -326,3 +327,6 @@
         (recur n)
         data-samples))))
 
+(defn person-samples [n]
+  (let [data-samples (gen/sample gsp/person n)]
+    data-samples))

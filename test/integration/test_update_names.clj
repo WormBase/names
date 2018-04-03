@@ -11,17 +11,12 @@
    [org.wormbase.gen-specs.species :as gss]
    [org.wormbase.names.service :as service]
    [org.wormbase.specs.gene :as owsg]
-   [org.wormbase.test-utils :as tu]))
+   [org.wormbase.test-utils :as tu]
+   [org.wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn update-gene-name [gene-id name-record]
-  (let [uri (str "/gene/" gene-id)
-        put (partial tu/raw-put-or-post* service/app uri :put)
-        headers {"authorization" "Token TOKEN_HERE"}
-        data (pr-str name-record)
-        [status body] (put data nil headers)]
-    [status (tu/parse-body body)]))
+(def update-gene (partial api-tc/update "gene"))
 
 (t/deftest must-meet-spec
   (let [identifier (first (gen/sample gsg/id 1))
@@ -35,7 +30,7 @@
         (t/testing (str "Updating name for existing gene requires "
                         "correct data structure.")
           (let [data {}]
-            (let [response (update-gene-name identifier data)
+            (let [response (update-gene identifier data)
                   [status body] response]
               (tu/status-is? status 400 (pr-str response))))))
       :why "Updating name")))
@@ -84,7 +79,7 @@
                                    [:person/email "tester@wormbase.org"])
                             (assoc :provenance/why
                                    why))]
-            (let [response (update-gene-name identifier payload)
+            (let [response (update-gene identifier payload)
                   [status body] response
                   db (d/db conn)
                   ent (d/entity db [:gene/id identifier])]

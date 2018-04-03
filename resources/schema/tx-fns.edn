@@ -1,5 +1,5 @@
-[{:db/ident :wormbase.tx-fns/new-user
-  :db/doc "Create a new user."
+[{:db/ident :wormbase.tx-fns/new-person
+  :db/doc "Create a new person."
   :db/fn #db/fn
   {:lang "clojure"
    :params [db data]

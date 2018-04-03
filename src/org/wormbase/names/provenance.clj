@@ -1,17 +1,30 @@
-(ns org.wormbase.names.provenance)
+(ns org.wormbase.names.provenance
+  (:require
+   [clojure.string :as str]
+   [datomic.api :as d]
+   [java-time :as jt]
+   [org.wormbase.db :as owdb]
+   [org.wormbase.names.agent :as owna]
+   [org.wormbase.names.util :as ownu]))
 
-
-  ;; For each key in the provenance schema:
-  ;;  if the key does not exist in a name record, then infer from the request
-  ;;  finally conform each name record to the spec.
-
-  ;; TODO: don't bother allowing them to be specied in header
-  ;;        use provenance from payload(s) or infer programmatically
-  ;;        from the request.
-
-(defn obtain
-  "Obtain a provenenace map from name-records and/or the request.
-  Attributes found in `name-records` take precedence over those in the
-  request."
-  [request record]
-  (into {} (filter #(= (namespace (key %)) "provenance") record)))
+(defn assoc-provenence [request payload what]
+  (let [id-token (:identity request)
+        prov (or (ownu/select-keys-with-ns payload "provenance") {})
+        ;; TODO: accept :person/email OR :person/id (s/conform...)
+        email (or (some-> prov :provenance/who :person/email)
+                  (:email id-token))
+        who (:db/id (d/entity (:db request) [:person/email email]))
+        whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
+        how (owna/identify id-token)
+        why (:provenance/why prov)
+        prov {:db/id "datomic.tx"
+              :provenance/what what
+              :provenance/who who
+              :provenance/when whence
+              :provenance/how how}]
+    (merge
+     prov
+     (when-not (str/blank? why)
+       {:provenance/why why})
+     (when (inst? whence)
+       {:provenance/when whence}))))
