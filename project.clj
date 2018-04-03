@@ -8,6 +8,7 @@
    ;; [org.clojure/tools.logging "0.4.0"]
    [org.clojure/core.cache "0.6.5"]
    [aero "1.1.2"]
+   [amazonica "0.3.121"]
    [bk/ring-gzip "0.2.1"]
    [buddy/buddy-auth "2.1.0"]
    [cheshire "5.8.0"]
@@ -23,7 +24,7 @@
                                       com.sun.jdmk/jmxtools
                                       com.sun.jmx/jmxri]]
    [me.raynes/fs "1.4.6"]
-   [metosin/compojure-api "2.0.0-alpha16" :exclusions [potemkin
+   [metosin/compojure-api "2.0.0-alpha19" :exclusions [potemkin
                                                        instaparse]]
    [metosin/spec-tools "0.5.1"]
    [mount "0.1.12"]

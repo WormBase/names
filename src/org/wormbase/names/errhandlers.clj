@@ -117,7 +117,7 @@
     (http-response/unauthorized "Access denied")
     (http-response/forbidden)))
 
-(def ^{:doc "Error handler function for the compojure.api app"} handlers
+(def ^{:doc "Error handler dispatch map for the compojure.api app"} handlers
   {;; Spec validation errors
    ::ex/request-validation handle-request-validation ;; c-api
    :user/validation-error handle-validation-error

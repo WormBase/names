@@ -67,5 +67,22 @@
            "added" added}))
        (pp/print-table ["part" "e" "a" "v" "tx" "added"])))
 
+
 (defn select-keys-with-ns [data key-ns]
   (into {} (filter #(= (namespace (key %)) key-ns) data)))
+
+(defn- resolve-ref [db m k v]
+  (cond
+    (pos-int? v)
+    (if-let [ident (d/ident db v)]
+      (assoc m k ident)
+      (assoc m k (->> v (d/entity db) entity->map)))
+    :default
+    (assoc m k v)))
+
+(defn resolve-refs [db entity-like-mapping]
+  (walk/prewalk (fn [xs]
+                  (if (map? xs)
+                    (reduce-kv (partial resolve-ref db) (empty xs) xs)
+                    xs))
+                entity-like-mapping))

@@ -71,7 +71,7 @@
                 identifier (some-> body :created :gene/id)]
             (t/is (= identifier expected-id))
             (check-db db identifier)
-            (tu/query-provenance conn identifier :event/new)))))))
+            (tu/query-provenance conn identifier :event/new-gene)))))))
 
 (t/deftest naming-with-provenance
   (t/testing "Naming some genes providing provenance."
