@@ -18,6 +18,7 @@
     (schema/install conn 1)
     ;; A set of fake users with different roles to test against.
     @(d/transact conn [{:person/email "tester@wormbase.org"
+                        :person/id "WBPerson007"
                         :person/roles #{:person.role/admin}}
                        {:person/email "tester2@wormbase.org"}
                        {:person/email "tester3@wormbase.org"}
@@ -38,9 +39,12 @@
   []
   (dm/fork-conn (starting-point-conn)))
 
-(defn send-changes-test [changes]
-  (println "FAKE SENDING CHANGES FOR GENEACE CONSUMPTION:")
-  (prn changes))
+(defn send-changes-test [changes & {:keys [verbose]
+                                    :or {verbose false}}]
+  (print "FAKING SENDING CHANGES FOR GENEACE CONSUMPTION")
+  (if verbose
+    (prn ":" changes)
+    (println)))
   
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"

@@ -61,6 +61,7 @@
    :gene/species (constantly (s/gen ::species))
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
    :gene/sequence-name (constantly (s/gen :gene/sequence-name))
+   [:provenance/who :person/id] (constantly owgs-person/id)
    [:provenance/who :person/email] (constantly owgs-person/email)
    [:provenance/who :person/roles] (constantly owgs-person/roles)})
 

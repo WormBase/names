@@ -9,9 +9,19 @@
 
 (def email (sg/string-generator owsp/email-regexp))
 
+(def id (sg/string-generator owsp/id-regexp))
+
 (def roles (s/gen :person/roles
                   {::owsp/role
                    #(s/gen
                      (->> (util/load-enum-samples "person.role")
                           (map :db/ident)
                           (set)))}))
+
+
+(def person-overrides
+  {[:person/id] (constantly id)
+   [:person/email] (constantly email)
+   [:person/roles] (constantly roles)})
+
+(def person (s/gen ::owsp/person person-overrides))

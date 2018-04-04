@@ -44,7 +44,7 @@
   (t/testing "Attempting to kill a dead gene results in a conflict."
     (let [[gene-id sample] (gen-sample-for-kill)
           fixture-data (assoc sample :gene/status :gene.status/dead)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         fixture-data
         (fn attempt-kill-dead-gene [conn]
           (let [[status body] (kill-gene gene-id)]
@@ -53,7 +53,7 @@
 (t/deftest successful-assassination
   (t/testing "Succesfully killing a gene"
     (let [[gene-id sample] (gen-sample-for-kill)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         sample
         (fn check-dead-after-kill [conn]
           (let [gene-id (:gene/id sample)
@@ -81,7 +81,7 @@
 (t/deftest provenance
   (t/testing "Succesfully killing a gene"
     (let [[gene-id sample] (gen-sample-for-kill)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         sample
         (fn check-dead-after-kill [conn]
           (let [gene-id (:gene/id sample)

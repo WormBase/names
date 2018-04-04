@@ -103,3 +103,6 @@
            (set)
            (vec)
            (first)))
+
+(defn ident-exists? [db ident]
+  (pos-int? (d/entid db ident)))

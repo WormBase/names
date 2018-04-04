@@ -8,39 +8,13 @@
    [org.wormbase.db :as owdb]
    [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.entity :as owne]
+   [org.wormbase.names.provenance :as ownp]
    [org.wormbase.names.util :as ownu]
    [org.wormbase.specs.common :as owsc]
    [org.wormbase.specs.gene :as owsg]
    [ring.util.http-response :as http-response]))
 
 (def identify (partial owne/identify ::owsg/identifier))
-
-(defn ident-exists? [db ident]
-  (pos-int? (d/entid db ident)))
-
-(defn select-keys-with-ns [data key-ns]
-  (into {} (filter #(= (namespace (key %)) key-ns) data)))
-
-(defn assoc-provenence [request payload what]
-  (let [id-token (:identity request)
-        prov (or (select-keys-with-ns payload "provenance") {})
-        email (or (some-> prov :provenance/who :person/email)
-                  (:email id-token))
-        who (:db/id (d/entity (:db request) [:person/email email]))
-        whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
-        how (own-agent/identify id-token)
-        why (:provenance/why prov)
-        prov {:db/id "datomic.tx"
-              :provenance/what what
-              :provenance/who who
-              :provenance/when whence
-              :provenance/how how}]
-    (merge
-     prov
-     (when-not (str/blank? why)
-       {:provenance/why why})
-     (when (inst? whence)
-       {:provenance/when whence}))))
 
 (defn validate-names [request data]
   (let [db (:db request)
@@ -126,8 +100,8 @@
       (http-response/ok (transform-result data)))))
 
 (defn new-gene [request]
-  (let [payload (some-> request :body-params :new)
-        data (select-keys-with-ns payload "gene")
+  (let [payload (:body-params request)
+        data (ownu/select-keys-with-ns payload "gene")
         spec ::owsg/new
         [_ cdata] (if (s/valid? spec data)
                     (s/conform spec (validate-names request data))
@@ -136,7 +110,7 @@
                                       {:problems problems
                                        :type ::validation-error
                                        :data data}))))
-        prov (assoc-provenence request payload :event/new-gene)
+        prov (ownp/assoc-provenence request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
@@ -152,10 +126,10 @@
     (when entity
       (let [payload (some-> request :body-params)
             spec ::owsg/update
-            data (select-keys-with-ns payload "gene")]
+            data (ownu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::owsg/update data)
           (let [cdata (s/conform spec (validate-names request data))
-                prov (assoc-provenence request payload :event/update-gene)
+                prov (ownp/assoc-provenence request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
                 tx-result @(d/transact-async conn txes)
@@ -179,7 +153,7 @@
                        :into-id into-id
                        :type ::validation-error})))
     (when-not (and (s/valid? :gene/biotype into-biotype)
-                   (ident-exists? db into-biotype))
+                   (owdb/ident-exists? db into-biotype))
       (throw (ex-info "Invalid biotype"
                       {:problems (s/explain-data
                                   :gene/biotype
@@ -213,7 +187,7 @@
                                            from-id
                                            into-biotype)
         prov (-> request
-                 (assoc-provenence data :event/merge-genes)
+                 (ownp/assoc-provenence data :event/merge-genes)
                  (assoc :provenance/merged-from from-lur)
                  (assoc :provenance/merged-into into-lur))
         tx-result @(d/transact-async
@@ -261,7 +235,7 @@
                p-biotype :gene/biotype} product
               p-seq-name (get-in cdata [:product :gene/sequence-name])
               prov-from (-> request
-                            (assoc-provenence cdata :event/split-gene)
+                            (ownp/assoc-provenence cdata :event/split-gene)
                             (assoc :provenance/split-into p-seq-name)
                             (assoc :provenance/split-from [:gene/id id]))
               species (-> existing-gene :gene/species :species/id)
@@ -338,7 +312,7 @@
                        :lookup-ref lur})))
     (when ent
       (let [payload (some->> request :body-params)
-            prov (assoc-provenence request payload :event/kill-gene)
+            prov (ownp/assoc-provenence request payload :event/kill-gene)
             tx-result @(d/transact-async
                         (:conn request)
                         [[:wormbase.tx-fns/kill-gene lur] prov])]
@@ -367,7 +341,7 @@
        :post
        {:summary "Create new names for a gene (cloned or un-cloned)"
         :x-name ::new-gene
-        :parameters {:body {:new ::owsg/new}}
+        :parameters {:body ::owsg/new}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
         :handler new-gene}}))

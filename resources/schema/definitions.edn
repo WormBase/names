@@ -80,7 +80,8 @@
  #:db {:ident :person/id,
        :valueType :db.type/string,
        :cardinality :db.cardinality/one,
-       :unique :db.unique/value}
+       :unique :db.unique/identity
+       :doc "WBPerson ID"}
  #:db {:ident :person/google-id,
        :valueType :db.type/bigint,
        :cardinality :db.cardinality/one,
@@ -89,11 +90,14 @@
  #:db{:ident :person/email,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,
-      :unique :db.unique/value}
+      :unique :db.unique/identity}
  #:db{:ident :person/roles,
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/many}
- #:db {:ident :person/name,
-       :valueType :db.type/string,
-       :cardinality :db.cardinality/one,
-       :doc "Person's name as presented by Google APIs"}]
+ #:db{:ident :person/name,
+      :valueType :db.type/string,
+      :cardinality :db.cardinality/one,
+      :doc "Person's name as presented by Google APIs"}
+ #:db{:ident :person/active?
+      :valueType :db.type/boolean,
+      :cardinality :db.cardinality/one}]

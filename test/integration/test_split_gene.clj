@@ -64,7 +64,7 @@
       (tu/status-is? status 400 (format "Body: " body))))
   (t/testing "Request to split gene must meet spec."
     (let [[data-sample] (tu/gene-samples 1)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-sample
         (fn check-validation-error [conn]
           (let [[status body] (split-gene
@@ -127,7 +127,7 @@
                      (assoc :gene/status :gene.status/dead)
                      (assoc :gene/id gene-id))]
       (assert (contains? sample :gene/id))
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
           (let [seq-name (tu/seq-name-for-species
@@ -160,7 +160,7 @@
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful split is recorded."
     (let [[gene-id data-sample prod-seq-name] (gen-sample-for-split)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-sample
         (fn check-provenance [conn]
           (let [db (d/db conn)
@@ -172,22 +172,22 @@
                       :provenance/who {:person/email user-email}}
                 [status body] (split-gene data
                                           gene-id
-                                          :current-user user-email)
-                prov (query-provenance conn gene-id prod-seq-name)
-                src (d/entity (d/db conn) [:gene/id gene-id])
-                prod (d/entity (d/db conn)
-                               [:gene/sequence-name prod-seq-name])]
+                                          :current-user user-email)]
             (tu/status-is? status 201 body)
-            (t/is (some-> prov :provenance/when inst?))
-            (t/is (= (some-> prov :provenance/split-from :gene/id)
-                     gene-id))
-            (t/is (= (some-> prov :provenance/split-into :gene/id)
-                     (:gene/id prod)))
-            (t/is (= (some-> prov :provenance/who :person/email)
-                     user-email))
-            (t/is (= (:gene/species src) (:gene/species prod)))
-            (t/is (= (some-> prov :provenance/how :db/ident)
-                     :agent/web))))))))
+            (let [prov (query-provenance conn gene-id prod-seq-name)
+                  src (d/entity (d/db conn) [:gene/id gene-id])
+                  prod (d/entity (d/db conn)
+                                 [:gene/sequence-name prod-seq-name])]
+              (t/is (some-> prov :provenance/when inst?))
+              (t/is (= (some-> prov :provenance/split-from :gene/id)
+                       gene-id))
+              (t/is (= (some-> prov :provenance/split-into :gene/id)
+                       (:gene/id prod)))
+              (t/is (= (some-> prov :provenance/who :person/email)
+                       user-email))
+              (t/is (= (:gene/species src) (:gene/species prod)))
+              (t/is (= (some-> prov :provenance/how :db/ident)
+                       :agent/web)))))))))
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."

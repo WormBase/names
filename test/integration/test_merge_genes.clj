@@ -86,7 +86,7 @@
                                 (assoc :gene/status :gene.status/live)
                                 (dissoc :gene/sequence-name)
                                 (dissoc :gene/biotype))]]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         samples
         (fn check-conflict-when-both-not-live [conn]
           (let [db (d/db conn)
@@ -105,7 +105,7 @@
   (t/testing "400 for validation errors"
     (let [data-samples (tu/gene-samples 2)
           [from-id into-id] (map :gene/id data-samples)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-samples
         (fn check-biotype-validation-error [conn]
           (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
@@ -123,7 +123,7 @@
                    (-> gene-into
                        (assoc :gene/species (:gene/species gene-from))
                        (dissoc :gene/sequence-name))]]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         samples
         (fn check-provenance [conn]
           (let [db (d/db conn)

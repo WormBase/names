@@ -62,6 +62,7 @@
  #:db{:ident :person.role/viewer}
 
  ;; Events
+ #:db{:ident :event/new-person}
  #:db{:ident :event/new-gene}
  #:db{:ident :event/update-gene}
  #:db{:ident :event/merge-genes}

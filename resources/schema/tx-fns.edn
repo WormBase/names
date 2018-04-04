@@ -1,10 +1,20 @@
-[{:db/ident :wormbase.tx-fns/new-user
-  :db/doc "Create a new user."
+[{:db/ident :wormbase.tx-fns/new-person
+  :db/doc "Create a new person."
   :db/fn #db/fn
   {:lang "clojure"
    :params [db data]
    :code
    "(println \"TBD\")"}}
+
+ {:db/ident :wormbase.tx-fns/deactivate-person
+  :db/doc "Deactivate a person"
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db lookup-ref]
+   :code
+   "(when-let [person (d/entity db lookup-ref)]
+      (let [active? (:person/active? person)]
+        [[:db/cas lookup-ref :person/active? active? false]]))"}}
 
  {:db/ident :wormbase.tx-fns/latest-id
   :db/doc "Get the latest identifier for a given `ident`."
