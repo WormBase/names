@@ -39,9 +39,12 @@
   []
   (dm/fork-conn (starting-point-conn)))
 
-(defn send-changes-test [changes]
-  (println "FAKE SENDING CHANGES FOR GENEACE CONSUMPTION:")
-  (prn changes))
+(defn send-changes-test [changes & {:keys [verbose]
+                                    :or {verbose false}}]
+  (print "FAKING SENDING CHANGES FOR GENEACE CONSUMPTION")
+  (if verbose
+    (prn ":" changes)
+    (println)))
   
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"

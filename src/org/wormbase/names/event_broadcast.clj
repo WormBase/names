@@ -52,12 +52,11 @@
                        (ownu/resolve-refs db-after))]
       (when (broadcast-events-from (:provenance/how changes))
         (comment "TODO: LOGGING")
-        (println "CHANGES:" changes)
         (send-changes-fn changes)))))
 
 (defn start-queue-monitor [conn send-changes-fn]
   (comment "TODO: LOGGING")
-  (println "Start Queue Service")
+  ;; (println "Start Queue Service")
   (let [tx-report-queue (d/tx-report-queue conn)]
     (future (monitor-tx-changes tx-report-queue send-changes-fn))))
 

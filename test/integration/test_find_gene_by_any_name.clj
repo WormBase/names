@@ -33,7 +33,7 @@
 
 (t/deftest find-by-any-name
   (let [data-samples (tu/gene-samples 10)]
-    (tu/with-fixtures
+    (tu/with-gene-fixtures
       data-samples
       (fn test-find-cases [conn]
         (t/testing "Get a 200 response for a non-matching find term"

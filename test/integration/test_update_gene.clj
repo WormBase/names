@@ -1,4 +1,4 @@
-(ns integration.test-update-names
+(ns integration.test-update-gene
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
@@ -24,7 +24,7 @@
                    (first)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
-    (tu/with-fixtures
+    (tu/with-gene-fixtures
       sample-data
       (fn [conn]
         (t/testing (str "Updating name for existing gene requires "
@@ -32,8 +32,7 @@
           (let [data {}]
             (let [response (update-gene identifier data)
                   [status body] response]
-              (tu/status-is? status 400 (pr-str response))))))
-      :why "Updating name")))
+              (tu/status-is? status 400 (pr-str response)))))))))
 
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -65,9 +64,8 @@
                         :gene/status :gene.status/live}
                        (when (contains? sample :gene/sequence-name)
                          {:gene/sequence-name (tu/seq-name-for-sample sample)}))
-          species-id (:species/id sample-data)
-          reason "Updating a cgc-name records provenance"]
-      (tu/with-fixtures
+          species-id (:species/id sample-data)]
+      (tu/with-gene-fixtures
         sample-data
         (fn [conn]
           (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
@@ -98,5 +96,4 @@
                 (t/is (= :gene.status/live gs)
                       (pr-str (:gene/status ent))))
               (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
-              (t/is (= new-cgc-name (:gene/cgc-name ent))))))
-        :why reason))))
+              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))

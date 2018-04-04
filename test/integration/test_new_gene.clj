@@ -59,7 +59,7 @@
 
 (t/deftest naming-uncloned
   (t/testing "Naming one uncloned gene succesfully returns ids"
-    (tu/with-fixtures
+    (tu/with-gene-fixtures
       []
       (fn new-uncloned [conn]
         (let [[status body] (new-gene

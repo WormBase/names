@@ -1,6 +1,6 @@
 (ns org.wormbase.specs.person
-  (:require [clojure.spec.alpha :as s]
-            [miner.strgen :as sg]))
+  (:require
+   [clojure.spec.alpha :as s]))
 
 (def email-regexp #"[a-z0-9][a-z0-9.]+?@wormbase\.org")
 
@@ -12,7 +12,10 @@
 
 (s/def :person/name ::name)
 
+(s/def :person/active? boolean?)
+
 (s/def ::email (s/and string? #(re-matches email-regexp %)))
+
 (s/def :person/email ::email)
 
 (s/def :person/id ::id)
@@ -38,6 +41,7 @@
  
 (s/def ::person (s/keys :req [:person/email :person/id]
                         :opt [:person/roles
+                              :person/active?
                               :person/name]))
 (s/def ::created ::person)
 

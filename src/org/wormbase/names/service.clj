@@ -13,7 +13,8 @@
    [org.wormbase.names.gene :as own-gene]
    [org.wormbase.names.person :as own-person]
    [ring.middleware.gzip :as ring-gzip]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [buddy.auth :as auth]))
 
 (def default-format "application/edn")
 
@@ -74,8 +75,8 @@
    {:coercion :spec
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
-                 own-auth/wrap-auth
                  ow-db/wrap-datomic
+                 own-auth/wrap-auth
                  wrap-not-found]
     :exceptions {:handlers own-eh/handlers}
     :swagger swagger-ui}

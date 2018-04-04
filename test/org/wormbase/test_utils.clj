@@ -212,7 +212,7 @@
     (when-let [rspec (:spec body)]
       (pprint (stc/deserialize rspec)))))
 
-(defn sample-to-txes
+(defn gene-sample-to-txes
   "Convert a sample generated from a spec into a transactable form."
   [sample]
   (let [biotype (:gene/biotype sample)
@@ -231,32 +231,47 @@
         (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
-(defn with-fixtures [data-samples test-fn
-                     & {:keys [how whence why person status]
-                        :or {how :agent/console
-                             whence (jt/to-java-date (jt/instant))
-                             what :event/test-fixture-assertion
-                             person [:person/email "tester@wormbase.org"]}}]
+(defn with-fixtures
+  [sample-transform provenance-fn data-samples test-fn]
   (let [conn (db-testing/fixture-conn)
         sample-data (if (map? data-samples)
                       [data-samples]
                       data-samples)]
     (doseq [data-sample sample-data]
-      (let [data (sample-to-txes data-sample)
-            prov (merge {:db/id "datomic.tx"
-                         :provenance/how how
-                         :provenance/when whence
-                         :provenance/who person}
-                        (when-not (:gene/status data)
-                          {:gene/status :gene.status/live})
-                        (when why
-                          {:provenance/why why}))
-            tx-fixtures [data prov]]
+      (let [data (sample-transform data-sample)
+            prov (when (ifn? provenance-fn)
+                   (provenance-fn data))
+            tx-fixtures (if prov
+                          (conj [data] prov)
+                          [data])]
         @(d/transact-async conn tx-fixtures)))
     (with-redefs [owdb/connection (fn [] conn)
-                  owdb/db (fn speculative-db [_]
+                  owdb/db (fn speculate [_]
                             (d/db conn))]
       (test-fn conn))))
+
+(defn gene-provenance
+  [data & {:keys [how whence why person status]
+           :or {how :agent/console
+                whence (jt/to-java-date (jt/instant))
+                what :event/test-fixture-assertion
+                person [:person/email "tester@wormbase.org"]}}]
+  (merge {:db/id "datomic.tx"
+          :provenance/how how
+          :provenance/when whence
+          :provenance/who person}
+         (when-not (:gene/status data)
+           {:gene/status :gene.status/live})
+         (when why
+           {:provenance/why why})))
+
+(def with-gene-fixtures (partial with-fixtures
+                                 gene-sample-to-txes
+                                 gene-provenance))
+
+(def with-person-fixtures (partial with-fixtures
+                                   identity
+                                   nil))
 
 (defn query-provenance [conn gene-id event]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -271,7 +286,7 @@
     (map #(d/pull (d/db conn)
                   '[*
                     {:provenance/how [:db/ident]
-                    :provenance/what [:db/ident]
+                     :provenance/what [:db/ident]
                      :provenance/who [:person/email]}]
                   %)
          tx-ids)))
@@ -319,8 +334,9 @@
                                 :gene/cgc-name (cgc-name-for-sample m)
                                 :gene/sequence-name (seq-name-for-sample m)))
                        (gen/sample gsg/update n))
-        data-samples (keep-indexed (fn [i gr]
-                                     (merge (get gene-refs i) gr)) gene-recs)
+        data-samples (keep-indexed
+                      (fn [i gr]
+                        (merge (get gene-refs i) gr)) gene-recs)
         gene-ids (map :gene/id (-> gene-refs vals flatten))]
     (let [dn (dup-names? data-samples)]
       (if dn

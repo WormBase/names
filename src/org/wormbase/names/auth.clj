@@ -6,7 +6,10 @@
    [buddy.auth.middleware :as auth-mw]
    [org.wormbase.names.agent :as own-agent]
    [org.wormbase.names.util :as util]
-   [ring.middleware.defaults :as rmd]);
+   [ring.middleware.defaults :as rmd]
+   [datomic.api :as d]
+   [org.wormbase.names.util :as ownu]
+   [clojure.string :as str]);
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken
                                                  GoogleIdToken$Payload
@@ -51,7 +54,15 @@
       nil)))
 
 (defn identify [request token]
-  (verify-token token))
+  (when-let [tok (verify-token token)]
+    (let [lur [:person/email (:email tok)]
+          db (:db request)]
+      (when-let [person (d/entity db lur)]
+        (let [x (merge tok (ownu/entity->map person))]
+          (when (str/starts-with? (:email x) "tester2")
+            (println "ROLES for person in identify:"
+                     (:person/roles x)))
+          x)))))
 
 (def backend (babt/token-backend {:authfn identify}))
 

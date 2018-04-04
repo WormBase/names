@@ -29,7 +29,7 @@
 (t/deftest test-about-live
   (t/testing "Info about a live gene can be retrieved by WBGene ID."
     (let [[id data-sample] (gen-sample)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-sample
         (fn check-gene-info [conn]
           (let [[status body] (about-gene id)]

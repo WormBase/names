@@ -43,7 +43,7 @@
                                          (:gene/species sample-1))
                                   (dissoc :gene/sequence-name)
                                   (dissoc :gene/biotype))]]
-        (tu/with-fixtures
+        (tu/with-gene-fixtures
           samples
           (fn check-participants-both-live [conn]
             (t/is (thrown-with-msg?
@@ -64,7 +64,7 @@
                               (dissoc :gene/biotype)
                               (assoc :gene/species
                                      (:gene/species cloned)))]]
-       (tu/with-fixtures
+       (tu/with-gene-fixtures
          data-samples
          (fn seq-name-txferred-to-uncloned [conn]
            (let [db (d/db conn)
@@ -89,7 +89,7 @@
                                     (dissoc :gene/cgc-name)
                                     (assoc :gene/species
                                            (:gene/species cloned-1)))]]
-       (tu/with-fixtures
+       (tu/with-gene-fixtures
          data-samples
          (fn seq-name-not-txferred-to-target [conn]
            (let [db (d/db conn)
@@ -116,7 +116,7 @@
                      (assoc sample-2
                             :gene/species
                             (:gene/species sample-1))]]
-        (tu/with-fixtures
+        (tu/with-gene-fixtures
           samples
           (fn check-tx-forms [conn]
             (let [txes (merge-genes (d/db conn)
@@ -148,7 +148,7 @@
                         :product {:gene/sequence-name p-seq-name
                                   :gene/biotype :biotype/cds})
             data-sample (assoc sample :gene/biotype bt :gene/id gene-id)]
-        (tu/with-fixtures
+        (tu/with-gene-fixtures
           data-sample
           (fn split-ok [conn]
             (let [db (d/db conn)
@@ -170,7 +170,7 @@
                                      db
                                      ident))]
     (t/testing "Getting an id number when no other data exists"
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         []
         (fn no-gnmes [conn]
           (t/is (zero? (latest-id-number (d/db conn) :gene/id))))))
@@ -182,7 +182,7 @@
                                    :gene/id
                                    (format "WBGene%08d" (inc idx))))
                           samples)]
-        (tu/with-fixtures
+        (tu/with-gene-fixtures
           data-samples
           (fn latest-id-with-data [conn]
             (let [db (d/db conn)

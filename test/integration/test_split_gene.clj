@@ -64,7 +64,7 @@
       (tu/status-is? status 400 (format "Body: " body))))
   (t/testing "Request to split gene must meet spec."
     (let [[data-sample] (tu/gene-samples 1)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-sample
         (fn check-validation-error [conn]
           (let [[status body] (split-gene
@@ -127,7 +127,7 @@
                      (assoc :gene/status :gene.status/dead)
                      (assoc :gene/id gene-id))]
       (assert (contains? sample :gene/id))
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
           (let [seq-name (tu/seq-name-for-species
@@ -160,7 +160,7 @@
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful split is recorded."
     (let [[gene-id data-sample prod-seq-name] (gen-sample-for-split)]
-      (tu/with-fixtures
+      (tu/with-gene-fixtures
         data-sample
         (fn check-provenance [conn]
           (let [db (d/db conn)
