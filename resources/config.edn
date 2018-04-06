@@ -1,4 +1,15 @@
-{:google-apps
+{:event-broadcast
+ {:gmail #include #join [#env HOME "/.wb-ns-gmail-secrets.edn"]
+  :aws-sqs
+  {:queue-name "org-wormbase-names-tx_messages"
+   :attributes
+   {:VisibilityTimeout 30 ;; sec
+    :MaximumMessageSize 65536 ;; bytes
+    :MessageRetentionPeriod 1209600 ;; sec
+    :ReceiveMessageWaitTimeSeconds 10}}
+  :aws-s3
+  {:bucket-name "wormbase"}}
+ :google-apps
  {:web #include #join [#env HOME "/.wb-ns-google-secrets-web.edn"]
   :console #include #join [#env HOME "/.wb-ns-google-secrets-console.edn"]}
  :cookie-name "WBNS-COOKIE"
