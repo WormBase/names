@@ -1,27 +1,12 @@
 (ns org.wormbase.names.event-broadcast
-  "Relay messages for consumption by parties interested (primarily ACeDB clients).
-  Ueses Amazon Simple Queueing Service (SQS) as the message queue provider."
+  "Relay messages for consumption by parties interested (primarily ACeDB clients)."
   (:require
-   [amazonica.aws.sqs :as sqs]
    [datomic.api :as d]
-   [mount.core :as mount :refer [defstate]]
+   [mount.core :as mount]
    [org.wormbase.db :as owdb]
-   [org.wormbase.names.util :as ownu]))
-
-(def sqs-queue-conf {:queue-name "org-wormbase-names-tx_messages"
-                     :attributes
-                     {:VisibilityTimeout 30 ;; sec
-                      :MaximumMessageSize 65536 ;; bytes
-                      :MessageRetentionPeriod 3628800 ;; sec
-                      :ReceiveMessageWaitTimeSeconds 10}})
-
-(defn- create-queue [& args]
-  (apply sqs/create-queue args))
-
-(defn sqs-queue []
-  (if-let [aq (-> sqs-queue-conf :queue-name sqs/find-queue)]
-    aq
-    (apply create-queue (-> sqs-queue-conf vec flatten))))
+   [org.wormbase.names.util :as ownu]
+   [org.wormbase.names.event-broadcast.proto :as owneb]
+   [org.wormbase.names.event-broadcast.aws-s3 :as owneb-s3]))
 
 (defn read-changes [{:keys [db-after tx-data] :as report}]
   (d/q '[:find ?aname ?val
@@ -31,8 +16,41 @@
        db-after
        tx-data))
 
-(defn send-changes-via-aws-sqs [queue changes]
-  (sqs/send-message queue changes))
+(defn process-report
+  "Process a transaction report using `event-brodcaster`.
+
+  `include-agents` can be used to filter which events can be sent by
+  the agent described in `:provenance/how`. It should be function
+  accepting a single argument, and should return a boolean.
+
+  `tx-report-queue` should be an instance of the blocking queue returned by
+  `datomic.api/tx-report-queue`.
+
+  `report` should be the element from the `tx-report-queue` queue to be processed."
+  [event-broadcaster include-agents tx-report-queue report]
+  (let [db-after (:db-after report)
+        changes (->> report
+                     read-changes
+                     (into {})
+                     (ownu/resolve-refs db-after))
+        tx-k->db-id (->> (:tx-data report)
+                         (map (fn [datom]
+                                (list (d/ident db-after (.a datom)) (.e datom))))
+                         (map (partial apply array-map))
+                         (into {}))]
+    ;; debugging:
+    ;; (ownu/datom-table db-after (:tx-data report))
+    (when (include-agents (:provenance/how changes))
+      (comment "LOGGING")
+      (owneb/send-message event-broadcaster
+                          (assoc changes
+                                 :tx-id
+                                 (format "0x%016x" (:db/txInstant tx-k->db-id))))
+      (while (not (owneb/message-persisted? event-broadcaster changes))
+        (comment "LOGGING")
+        ;; Perhaps terminate this loop and abort if unable to get a result?
+        (Thread/sleep 5000))
+      (.remove tx-report-queue report))))
 
 (defn monitor-tx-changes
   "Monitor datomic transactions for events that are desired for later consumption
@@ -40,32 +58,31 @@
 
   `send-changes-fn` should be a functio accepting a map of changes to be sent.
   e.g: via AWS SQS, or possibly email."
-  [tx-report-queue send-changes-fn & {:keys [broadcast-events-from]
-                                      :or {broadcast-events-from #{:agent/web}}}]
-  (while true
-    ;; TODO: factor out fn that works on the report queue? (.take...)
-    (let [report (.take tx-report-queue) ;; blocks until message is availableb
-          db-after (:db-after report)
-          changes (->> report
-                       read-changes
-                       (into {})
-                       (ownu/resolve-refs db-after))]
-      (when (broadcast-events-from (:provenance/how changes))
-        (comment "TODO: LOGGING")
-        (send-changes-fn changes)))))
+  [tx-report-queue event-broadcaster & {:keys [include-agents]
+                                        :or {include-agents #{:agent/web}}}]
+  (let [peek-report #(.peek tx-report-queue)
+        qsize #(.size tx-report-queue)]
+    (loop [report (peek-report)]
+      (cond
+        (nil? report) (Thread/sleep 5000)
+        report (process-report event-broadcaster
+                               include-agents
+                               tx-report-queue
+                               report))
+      (recur (peek-report)))))
 
-(defn start-queue-monitor [conn send-changes-fn]
+(defn start-queue-monitor [conn event-broadcaster]
   (comment "TODO: LOGGING")
-  ;; (println "Start Queue Service")
   (let [tx-report-queue (d/tx-report-queue conn)]
-    (future (monitor-tx-changes tx-report-queue send-changes-fn))))
+    (future (monitor-tx-changes tx-report-queue event-broadcaster))))
 
 (mount/defstate change-queue-monitor
   :start (fn []
+           (comment "LOGGING")
            (start-queue-monitor
             owdb/conn
-            (partial send-changes-via-aws-sqs (sqs-queue))))
+            (-> {} owneb-s3/map->TxEventBroadcaster owneb/configure)))
   :stop (fn []
-          (println "CANCELLING FUTURE")
+          (comment "LOGGING")
           (future-cancel change-queue-monitor)
           (println "Stop Queue Service")))

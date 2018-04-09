@@ -14,6 +14,7 @@
    [cheshire "5.8.0"]
    [clj-http "3.7.0"]
    [clojure.java-time "0.3.1"]
+   [com.draines/postal "2.0.2"]
    [danlentz/clj-uuid "0.1.7"]
    [environ "1.1.0"]
    [expound "0.5.0"]

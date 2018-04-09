@@ -19,7 +19,7 @@
     (if (s/valid? spec person)
       (let [tempid "datomic.tx"
             prov (ownp/assoc-provenence request person :event/new-person)
-            tx-res @(d/transact conn [person prov])
+            tx-res @(d/transact conn [(assoc person :person/active? true) prov])
             pid (owdb/extract-id tx-res :person/id)]
         (http-response/created (str "/person/" pid) person))
       (let [problems (s/explain-data spec person)]

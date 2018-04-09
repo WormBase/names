@@ -3,11 +3,12 @@
    [clojure.core.cache :as cache]
    [datomock.core :as dm]
    [datomic.api :as d]
-   [java-time :as jt]   
+   [java-time :as jt]
    [mount.core :as mount]
    [org.wormbase.db :as owdb]
    [org.wormbase.db.schema :as schema]
-   [org.wormbase.names.event-broadcast :as own-eb]))
+   [org.wormbase.names.event-broadcast :as owneb]
+   [org.wormbase.names.event-broadcast.proto :as ownebp]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -39,25 +40,28 @@
   []
   (dm/fork-conn (starting-point-conn)))
 
-(defn send-changes-test [changes & {:keys [verbose]
-                                    :or {verbose false}}]
-  (print "FAKING SENDING CHANGES FOR GENEACE CONSUMPTION")
-  (if verbose
-    (prn ":" changes)
-    (println)))
-  
+(def print-only-event-brodcaster
+  (reify ownebp/TxEventBroadcaster
+    (message-persisted? [this changes]
+      true)
+    (send-message [this changes]
+      (print "FAKING SENDING CHANGES FOR GENEACE CONSUMPTION")
+      (prn ":" changes)
+      (println))))
+
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
                  (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)
           tx-reqort-queue (d/tx-report-queue conn)
-          monitor (partial own-eb/start-queue-monitor conn send-changes-test)]
+          monitor (partial owneb/start-queue-monitor
+                           conn
+                           print-only-event-brodcaster)]
       (mount/start-with {#'owdb/conn conn
-                         #'own-eb/change-queue-monitor (monitor)})
+                         #'owneb/change-queue-monitor (monitor)})
       (f)
       (owdb/checked-delete uri)
       (mount/stop))))
 
 (defn speculate [conn tx]
   (:db-after (d/with (d/db conn) tx)))
-
