@@ -1,16 +1,19 @@
-import { MuiThemeProvider, createMuiTheme } from 'material-ui/styles';
+import { MuiThemeProvider, createMuiTheme, withStyles } from 'material-ui/styles';
 
 import blue from 'material-ui/colors/blue';
+import lightBlue from 'material-ui/colors/lightBlue';
 import yellow from 'material-ui/colors/yellow';
 import red from 'material-ui/colors/red';
 
 export {
   AppBar,
-  ToolBar
+  Toolbar,
+  Typography,
 } from 'material-ui';
 
 export const colors = {
   blue,
+  lightBlue,
   yellow,
   red,
 };
@@ -18,7 +21,9 @@ export const colors = {
 // We try our best to provide a great default value.
 export const theme = createMuiTheme({
   palette: {
-    primary: blue,
+    primary: {
+      main: blue[600],
+    },
     secondary: yellow,
     error: red,
     // Used by `getContrastText()` to maximize the contrast between the background and
@@ -33,4 +38,5 @@ export const theme = createMuiTheme({
 
 export {
   MuiThemeProvider,
+  withStyles,
 }
