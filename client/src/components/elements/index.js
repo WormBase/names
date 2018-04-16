@@ -9,6 +9,8 @@ export {
   AppBar,
   Toolbar,
   Typography,
+  Tabs,
+  Tab,
 } from 'material-ui';
 
 export const colors = {
@@ -24,7 +26,9 @@ export const theme = createMuiTheme({
     primary: {
       main: blue[600],
     },
-    secondary: yellow,
+    secondary: {
+      main: yellow['A700'],
+    },
     error: red,
     // Used by `getContrastText()` to maximize the contrast between the background and
     // the text.
