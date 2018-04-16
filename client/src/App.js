@@ -1,14 +1,12 @@
 import React, { Component } from 'react';
 import { Route , Link } from 'react-router-dom';
 import 'typeface-roboto';
-import { createMuiTheme, MuiThemeProvider } from './components/elements';
+import { MuiThemeProvider, theme } from './components/elements';
 import {startMock, stopMock} from './mock';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
 import './App.css';
 
-const theme = createMuiTheme({
-});
 
 class App extends Component {
   componentDidMount() {
