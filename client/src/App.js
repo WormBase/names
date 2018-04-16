@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Route , Link } from 'react-router-dom';
 import 'typeface-roboto';
-import { MuiThemeProvider, theme } from './components/elements';
+import { withStyles } from './components/elements';
+import Header from './containers/Header';
+import Footer from './containers/Footer';
 import {startMock, stopMock} from './mock';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
@@ -22,9 +25,9 @@ class App extends Component {
 
   render() {
     return (
-      <MuiThemeProvider theme={theme}>
-        <div className="App">
-          <p>a header and sidebar</p>
+      <div className={this.props.classes.root}>
+        <Header />
+        <div className={this.props.classes.content}>
           <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/gene/new">Create a new gene</Link></li>
@@ -41,9 +44,25 @@ class App extends Component {
           ])} />
           <Route path="/variation" component={() => 'variation page' } />
         </div>
-      </MuiThemeProvider>
+        <Footer />
+      </div>
     );
   }
 }
 
-export default App;
+App.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+const styles = (theme) => ({
+  root: {
+    display : 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+  },
+  content: {
+    flex: '1 0 auto',
+  }
+});
+
+export default withStyles(styles)(App);
