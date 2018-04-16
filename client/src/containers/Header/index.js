@@ -17,7 +17,6 @@ const Header = (props) => {
           </Typography>
         </Toolbar>
       </AppBar>
-      <NavBar />
     </div>
   );
 };
@@ -35,3 +34,7 @@ const styles = (theme) => ({
 });
 
 export default withStyles(styles)(Header);
+
+export {
+  NavBar,
+};
