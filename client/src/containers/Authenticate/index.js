@@ -7,24 +7,36 @@ export default class Authenticate extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isAuthenticated: true,
+      isAuthenticated: false,
       user: {
         name: null,
         email: null,
+        id_token: null,
       },
-      errorMessage: null,
+      errorMessage: JSON.stringify({a: 100}, undefined, 2),
     }
   }
 
-  handleLoginSuccess = () => {
-
+  handleLoginSuccess = (user) => {
+    const {name, email, id_token} = user;
+    this.setState({
+      user: {
+        name,
+        email,
+        id_token,
+      },
+      isAuthenticated: true,
+    });
   }
 
-  handleLoginError = () => {
-
+  handleLoginError = (error) => {
+    this.setState({
+      errorMessage: JSON.stringify(error, undefined, 2),
+    });
   }
 
   render() {
+    console.log(this.state);
     return this.props.children(
       {
         isAuthenticated: this.state.isAuthenticated,
@@ -32,6 +44,7 @@ export default class Authenticate extends Component {
         login: <Login
           onSuccess={this.handleLoginSuccess}
           onError={this.handleLoginError}
+          errorMessage={this.state.errorMessage}
         />,
         logout: <Logout />,
         profile: <Profile />,
