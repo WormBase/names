@@ -4,17 +4,21 @@ import Logout from './Logout';
 import Profile from './Profile';
 import ProfileButton from './ProfileButton';
 
+const DEFAULT_AUTHENTICATION_STATE = {
+  isAuthenticated: false,
+  user: {
+    name: null,
+    email: null,
+    id_token: null,
+  },
+  errorMessage: JSON.stringify({a: 100}, undefined, 2),
+};
+
 export default class Authenticate extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isAuthenticated: false,
-      user: {
-        name: null,
-        email: null,
-        id_token: null,
-      },
-      errorMessage: JSON.stringify({a: 100}, undefined, 2),
+      ...DEFAULT_AUTHENTICATION_STATE,
     }
   }
 
@@ -36,19 +40,29 @@ export default class Authenticate extends Component {
     });
   }
 
+  handleLogout = () => {
+    this.setState({
+      ...DEFAULT_AUTHENTICATION_STATE,
+    });
+  }
+
   render() {
     console.log(this.state);
+    const {user} = this.state;
+    const logout = <Logout onLogout={this.handleLogout} />;
     return this.props.children(
       {
         isAuthenticated: this.state.isAuthenticated,
-        user: {...this.state.user},
+        user: {...user},
         login: <Login
           onSuccess={this.handleLoginSuccess}
           onError={this.handleLoginError}
           errorMessage={this.state.errorMessage}
         />,
-        logout: <Logout />,
-        profile: <Profile />,
+        logout: logout,
+        profile: <Profile {...user}>
+          {logout}
+        </Profile>,
       }
     );
   }
