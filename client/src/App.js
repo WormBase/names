@@ -4,7 +4,7 @@ import { Route , Link } from 'react-router-dom';
 import 'typeface-roboto';
 import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
-import Authenticate from './containers/Authenticate';
+import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
 import {startMock, stopMock} from './mock';
 import logo from './logo.svg';
@@ -30,7 +30,9 @@ class App extends Component {
         {
           ({isAuthenticated, user, login, profile}) => (
             <div className={this.props.classes.root}>
-              <Header />
+              <Header>
+                <ProfileButton name={user.name}/>
+              </Header>
               <div className={this.props.classes.content}>
               {
                 isAuthenticated ? [

@@ -8,6 +8,7 @@ import red from 'material-ui/colors/red';
 export {
   AppBar,
   Button,
+  Icon,
   Toolbar,
   Typography,
   Tabs,
