@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
+import ProfileButton from './ProfileButton';
 
 export default class Authenticate extends Component {
   constructor(props) {
@@ -51,4 +52,8 @@ export default class Authenticate extends Component {
       }
     );
   }
+}
+
+export {
+  ProfileButton,
 }
