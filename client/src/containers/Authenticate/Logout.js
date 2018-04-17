@@ -1,9 +1,21 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Button, withStyles } from '../../components/elements';
 
-const Login = (props) => {
+const Logout = (props) => {
   return (
-    <div>this is the logOUT page</div>
+    <Button
+      variant="raised"
+
+      onClick={() => props.onLogout()}
+    >
+      Logout
+    </Button>
   );
 }
 
-export default Login;
+Logout.propTypes = {
+  onLogout: PropTypes.func.isRequired,
+};
+
+export default Logout;
