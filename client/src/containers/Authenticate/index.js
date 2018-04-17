@@ -11,8 +11,10 @@ const DEFAULT_AUTHENTICATION_STATE = {
     email: null,
     id_token: null,
   },
-  errorMessage: JSON.stringify({a: 100}, undefined, 2),
+  errorMessage: null, //JSON.stringify({a: 100}, undefined, 2),
 };
+
+const sessionStorageKey = 'AUTHENTICATION_STATE';
 
 export default class Authenticate extends Component {
   constructor(props) {
@@ -31,12 +33,16 @@ export default class Authenticate extends Component {
         id_token,
       },
       isAuthenticated: true,
+    }, () => {
+      window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
     });
   }
 
   handleLoginError = (error) => {
     this.setState({
       errorMessage: JSON.stringify(error, undefined, 2),
+    }, () => {
+      window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
     });
   }
 
@@ -44,6 +50,17 @@ export default class Authenticate extends Component {
     this.setState({
       ...DEFAULT_AUTHENTICATION_STATE,
     });
+    window.sessionStorage.removeItem(sessionStorageKey);
+  }
+
+  componentDidMount() {
+    const saveStateJSON = window.sessionStorage.getItem(sessionStorageKey);
+    const saveState = saveStateJSON && JSON.parse(saveStateJSON);
+    if (saveState) {
+      this.setState({
+        ...saveState
+      });
+    }
   }
 
   render() {

@@ -4,6 +4,7 @@ import { Button, withStyles } from '../../components/elements';
 
 class Login extends Component {
 
+  // adapted from https://developers.google.com/identity/sign-in/web/build-button
   initializeSignIn = (element) => {
     const gapi = window.gapi;
     gapi.load('auth2', () => {
