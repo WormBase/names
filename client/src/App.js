@@ -6,6 +6,7 @@ import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
+import Gene from './containers/Gene';
 import {startMock, stopMock} from './mock';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
@@ -38,8 +39,9 @@ class App extends Component {
                 isAuthenticated ? [
                   <NavBar />,
                   <Route exact path="/" component={() => <Redirect to="/gene" /> } />,
-                  <Route path="/gene" component={({match}) => ([
-                    <Route path="/" exact={false} strict={false} component={() => (
+                  <Route exact path="/gene" component={() => (
+                    <div>
+                      <Gene />
                       <ul>
                         <li><Link to="/">Home</Link></li>
                         <li><Link to="/gene/new">Create a new gene</Link></li>
@@ -47,7 +49,9 @@ class App extends Component {
                         <li><Link to="/gene/merge">Merge two genes</Link></li>
                         <li><Link to="/gene/split">Split a gene</Link></li>
                       </ul>
-                    )} />,
+                    </div>
+                  )} />,
+                  <Route path="/gene" component={({match}) => ([
                     <Route path={`${match.url}/new`} component={() => 'form to create new gene'} />,
                     <Route path={`${match.url}/id/:id`} component={() => 'form edit an existing new gene'} />,
                     <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
