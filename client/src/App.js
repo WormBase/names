@@ -34,35 +34,35 @@ class App extends Component {
               <Header>
                 <ProfileButton name={user.name}/>
               </Header>
-              <div className={this.props.classes.content}>
               {
                 isAuthenticated ? [
                   <NavBar />,
-                  <Route exact path="/" component={() => <Redirect to="/gene" /> } />,
-                  <Route exact path="/gene" component={() => (
-                    <div>
-                      <Gene />
-                      <ul>
-                        <li><Link to="/">Home</Link></li>
-                        <li><Link to="/gene/new">Create a new gene</Link></li>
-                        <li><Link to="/gene/id/WB1">Edit an exiting gene (example)</Link></li>
-                        <li><Link to="/gene/merge">Merge two genes</Link></li>
-                        <li><Link to="/gene/split">Split a gene</Link></li>
-                      </ul>
-                    </div>
-                  )} />,
-                  <Route path="/gene" component={({match}) => ([
-                    <Route path={`${match.url}/new`} component={() => 'form to create new gene'} />,
-                    <Route path={`${match.url}/id/:id`} component={() => 'form edit an existing new gene'} />,
-                    <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
-                    <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
-                  ])} />,
-                  <Route path="/variation" component={() => 'variation page' } />,
-                  <Route path="/me" component={() => profile } />,
+                  <div className={this.props.classes.content}>
+                    <Route exact path="/" component={() => <Redirect to="/gene" /> } />
+                    <Route exact path="/gene" component={() => (
+                      <div>
+                        <Gene />
+                        <ul>
+                          <li><Link to="/">Home</Link></li>
+                          <li><Link to="/gene/new">Create a new gene</Link></li>
+                          <li><Link to="/gene/id/WB1">Edit an exiting gene (example)</Link></li>
+                          <li><Link to="/gene/merge">Merge two genes</Link></li>
+                          <li><Link to="/gene/split">Split a gene</Link></li>
+                        </ul>
+                      </div>
+                    )} />
+                    <Route path="/gene" component={({match}) => ([
+                      <Route path={`${match.url}/new`} component={() => 'form to create new gene'} />,
+                      <Route path={`${match.url}/id/:id`} component={() => 'form edit an existing new gene'} />,
+                      <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
+                      <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
+                    ])} />
+                    <Route path="/variation" component={() => 'variation page' } />
+                    <Route path="/me" component={() => profile } />
+                  </div>
                 ] :
                 login
               }
-              </div>
               <Footer />
             </div>
           )
@@ -86,6 +86,7 @@ const styles = (theme) => ({
     flex: '1 0 auto',
     display: 'flex',
     flexDirection: 'column',
+    padding: theme.spacing.unit * 4,
   }
 });
 
