@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { withRouter } from 'react-router-dom';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -16,7 +18,7 @@ const DEFAULT_AUTHENTICATION_STATE = {
 
 const sessionStorageKey = 'AUTHENTICATION_STATE';
 
-export default class Authenticate extends Component {
+class Authenticate extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -51,6 +53,7 @@ export default class Authenticate extends Component {
       ...DEFAULT_AUTHENTICATION_STATE,
     });
     window.sessionStorage.removeItem(sessionStorageKey);
+    this.props.history.push('/');
   }
 
   componentDidMount() {
@@ -84,6 +87,14 @@ export default class Authenticate extends Component {
     );
   }
 }
+
+Authenticate.propTypes = {
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }),
+}
+
+export default withRouter(Authenticate);
 
 export {
   ProfileButton,
