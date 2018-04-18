@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route , Link } from 'react-router-dom';
+import { Route , Link, Redirect } from 'react-router-dom';
 import 'typeface-roboto';
 import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
@@ -37,7 +37,7 @@ class App extends Component {
               {
                 isAuthenticated ? [
                   <NavBar />,
-                  <Route exact path="/" component={() => 'home page' } />,
+                  <Route exact path="/" component={() => <Redirect to="/gene" /> } />,
                   <Route path="/gene" component={({match}) => ([
                     <Route path="/" exact={false} strict={false} component={() => (
                       <ul>
