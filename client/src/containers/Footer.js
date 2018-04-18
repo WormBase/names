@@ -5,7 +5,7 @@ const Footer = (props) => {
   const {classes} = props;
   return (
     <div className={classes.root}>
-      For help and questions, please contact us as developers@wormbase.org.
+      For help and questions, please contact us at developers@wormbase.org.
     </div>
   );
 };
