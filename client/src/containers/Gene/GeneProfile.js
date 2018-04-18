@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { withStyles, Button, Icon } from '../../components/elements';
+import GeneForm from './GeneForm';
 
 const GeneProfile = (props) => {
   const {classes} = props;
@@ -17,6 +18,7 @@ const GeneProfile = (props) => {
       </div>
       <div className={classes.main}>
         <h2>Add Gene</h2>
+        <GeneForm />
       </div>
       <div className={classes.right}>
         right

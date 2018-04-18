@@ -13,7 +13,10 @@ export {
   Typography,
   Tabs,
   Tab,
+  TextField,
 } from 'material-ui';
+
+//export { default as TextField} from './TextField';
 
 export const colors = {
   blue,
