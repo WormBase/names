@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { withStyles, Button, Icon } from '../../components/elements';
 
+import GeneProfile from './GeneProfile';
+
 const Gene = (props) => {
   const {classes} = props;
   return (
@@ -43,5 +45,5 @@ const styles = (theme) => ({
 export default withStyles(styles)(Gene);
 
 export {
-
+  GeneProfile,
 };
