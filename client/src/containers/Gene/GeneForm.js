@@ -4,47 +4,27 @@ import { withStyles, Button, Icon, TextField } from '../../components/elements';
 import BaseForm from './BaseForm';
 
 class GeneForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      fields: Object.keys(props.fields).reduce((result, fieldId) => {
-        const field = props.fields[fieldId];
-        return {
-          ...result,
-          [fieldId]: {
-            ...field,
-            id: fieldId,
-          },
-        }
-      }, {}),
-    }
-  }
-
-  handleChange = (fieldId) => {
-    return (event) => {
-      const value = event.target.value;
-      this.setState((prevState) => ({
-        fields: {
-          ...prevState.fields,
-          [fieldId]: value,
-        }
-      }));
-    };
-  }
 
   render() {
-    const {classes} = this.props;
-    const {fields} = this.state;
+    const {classes, fields} = this.props;
     return (
       <BaseForm>
         {
-          ({withData}) => {
+          ({withData, getAllFieldData}) => {
             const CgcNameField = withData(TextField, 'cgcName');
+            const SequenceNameField = withData(TextField, 'sequenceName');
             return (
-              <CgcNameField
-                label="CGC Name"
-                helperText="Enter the CGC name of the gene"
-              />
+              <div>
+                <CgcNameField
+                  label="CGC name"
+                  helperText="Enter the CGC name of the gene"
+                />
+                <SequenceNameField
+                  label="Sequence name"
+                  helperText="Sequence name"
+                />
+                <Button onClick={() => console.log(getAllFieldData())}>Submit</Button>
+              </div>
             );
           }
         }
