@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, Button, Icon, TextField } from '../../components/elements';
+import BaseForm from './BaseForm';
 
 class GeneForm extends Component {
   constructor(props) {
@@ -35,26 +36,19 @@ class GeneForm extends Component {
     const {classes} = this.props;
     const {fields} = this.state;
     return (
-      <form className={classes.root} noValidate autoComplete="off">
-        <div>
-          <TextField
-            id="cgcName"
-            label="CGC Name"
-            helperText="Enter the CGC name of the gene"
-            value={fields.cgcName ? fields.cgcName : null}
-            onChange={this.handleChange('cgcName')}
-          />
-        </div>
-        <div>
-          <TextField
-            id="cgcName"
-            label="CGC Name"
-            helperText="Enter the CGC name of the gene"
-            value={fields.cgcName ? fields.cgcName : null}
-            onChange={this.handleChange('cgcName')}
-          />
-        </div>
-      </form>
+      <BaseForm>
+        {
+          ({withData}) => {
+            const CgcNameField = withData(TextField, 'cgcName');
+            return (
+              <CgcNameField
+                label="CGC Name"
+                helperText="Enter the CGC name of the gene"
+              />
+            );
+          }
+        }
+      </BaseForm>
     );
   }
 }
