@@ -2,6 +2,24 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, Button, Icon, TextField } from '../../components/elements';
 
+/*
+  BaseForm intends to **centrally** track the state of the (controlled) form
+  as users modifies it (https://reactjs.org/docs/forms.html#controlled-components),
+  as well as passing the values back to the individual Field components as props
+  for display and validation.
+
+  `withData` associates a input field with a value tracked by the state.
+  `withData` is a higher order component takes a input component and a identifier (fieldId),
+  that identifies the value in the state object.
+
+  The state of the form was initialy implemented as the state of the BaseForm.
+  However rerender of BaseForm caused by state change makes input fields losing focus.
+  To get around the problem, the current implementation gave up storing state in BaseForm,
+  by store it in the FormDataStore, and use eventListeners to re-render Field component,
+  without rerendering the BaseForm.
+
+*/
+
 class FormDataStore {
   constructor(fields) {
     this.fields = {...fields};
