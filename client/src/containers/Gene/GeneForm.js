@@ -30,15 +30,11 @@ class GeneForm extends Component {
                   label="CGC name"
                   helperText="Enter the CGC name of the gene"
                 />
-                <br/>
                 <SequenceNameField
                   label="Sequence name"
                 />
-                <br/>
                 <SpeciesSelectField />
-                <br/>
                 <BiotypeSelectField />
-                <br/>
                 <Button onClick={() => console.log(getFormData())}>Submit</Button>
               </div>
             );

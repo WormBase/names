@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { TextField, MenuItem, withStyles } from 'material-ui';
+import { MenuItem, withStyles } from 'material-ui';
+import TextField from './TextField';
 
 const SpeciesSelect = (props) => {
   const SPECIES = [
