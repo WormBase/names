@@ -79,17 +79,27 @@ class FormDataStore {
 class BaseForm extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      fields: {...props.fields}
-    };
-    this.dataStore = new FormDataStore(this.state.fields);
+    this.initializeFields(props);
   }
 
   componentWillReceiveProps(nextProps) {
+    this.initializeFields(nextProps);
+  }
+
+  initializeFields = (props) => {
     this.state = {
-      fields: {...nextProps.fields}
+      fields: {
+        ...Object.keys(props.data || {}).reduce((result, fieldId) => {
+          result[fieldId] = {
+            value: props.data[fieldId],
+            error: null,
+          };
+          return result;
+        }, {}),
+        ...props.fields,
+      }
     };
-    this.dataStore = new FormDataStore(nextProps.fields);
+    this.dataStore = new FormDataStore(this.state.fields);
   }
 
   withFieldData = (WrappedComponent, fieldId) => {
@@ -154,9 +164,10 @@ class BaseForm extends Component {
 BaseForm.propTypes = {
   classes: PropTypes.object.isRequired,
   fields: PropTypes.objectOf({
-    value: PropTypes.string,
+    value: PropTypes.any,
     error: PropTypes.string,
   }),
+  data: PropTypes.objectOf(PropTypes.any), // alternative to fields, but the value is simply the value, instead of a map of value and error
   children: PropTypes.func.isRequired,
 };
 
