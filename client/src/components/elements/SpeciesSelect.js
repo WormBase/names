@@ -1,5 +1,6 @@
 import React from 'react';
-import { TextField, MenuItem } from 'material-ui';
+import PropTypes from 'prop-types';
+import { TextField, MenuItem, withStyles } from 'material-ui';
 
 const SpeciesSelect = (props) => {
   const SPECIES = [
@@ -17,6 +18,7 @@ const SpeciesSelect = (props) => {
     <TextField
       select
       label="Species"
+      className={props.classes.root}
       {...props}
     >
       {[null, ...SPECIES,].map(species => (
@@ -28,4 +30,14 @@ const SpeciesSelect = (props) => {
   );
 };
 
-export default SpeciesSelect;
+SpeciesSelect.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+const styles = (theme) => ({
+  root: {
+    minWidth: 100,
+  },
+});
+
+export default withStyles(styles)(SpeciesSelect);
