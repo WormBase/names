@@ -26,17 +26,6 @@ class FormDataStore {
     this.eventListeners = [];
   }
 
-  // setEventListener = (fieldId, handler) => {
-  //   this.fields[fieldId] = this.fields[fieldId] || {};
-  //   this.fields[fieldId].changeHandler = handler;
-  // }
-  //
-  // removeEventListener = (fieldId) => {
-  //   if (this.fields[fieldId]) {
-  //       this.fields[fieldId].changeHandler = null;
-  //   }
-  // }
-
   setEventListener = (fieldId, handler) => {
     this.eventListeners = [
       ...this.eventListeners,
@@ -121,6 +110,7 @@ class BaseForm extends Component {
         dataStore.setEventListener(fieldId, (value) => {
           this.setState({
             value: value,
+            error: null,
           });
         });
       }
@@ -135,6 +125,8 @@ class BaseForm extends Component {
             {...this.props}
             id={fieldId}
             value={this.state.value || ''}
+            error={Boolean(this.state.error)} //Boolean function not constructor
+            helperText={this.state.error || this.props.helperText}
             onChange={
               (event) => {
                 dataStore.getFieldUpdater(fieldId)(event.target.value)
