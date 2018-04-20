@@ -8,8 +8,8 @@ import { withStyles, Button, Icon, TextField } from '../../components/elements';
   as well as passing the values back to the individual Field components as props
   for display and validation.
 
-  `withData` associates a input field with a value tracked by the state.
-  `withData` is a higher order component takes a input component and a identifier (fieldId),
+  `withFieldData` associates a input field with a value tracked by the state.
+  `withFieldData` is a higher order component takes a input component and a identifier (fieldId),
   that identifies the value in the state object.
 
   The state of the form was initialy implemented as the state of the BaseForm.
@@ -42,7 +42,7 @@ class FormDataStore {
     });
   }
 
-  getFieldUpdater = (fieldId) => {
+  getUpdateFunction = (fieldId) => {
     return (value) => {
       this.fields = {
         ...this.fields,
@@ -81,10 +81,6 @@ class BaseForm extends Component {
     this.dataStore = new FormDataStore(this.state.fields);
   }
 
-  componentDidMount() {
-
-  }
-
   componentWillReceiveProps(nextProps) {
     this.state = {
       fields: {...nextProps.fields}
@@ -92,10 +88,7 @@ class BaseForm extends Component {
     this.dataStore = new FormDataStore(nextProps.fields);
   }
 
-  componentWillUnmount() {
-  }
-
-  withData = (WrappedComponent, fieldId) => {
+  withFieldData = (WrappedComponent, fieldId) => {
     const dataStore = this.dataStore;
     const {value, onChange,} = dataStore.getField(fieldId);
     class Field extends Component {
@@ -120,6 +113,7 @@ class BaseForm extends Component {
       }
 
       render() {
+        const updateStoreField = dataStore.getUpdateFunction(fieldId);
         return (
           <WrappedComponent
             {...this.props}
@@ -129,7 +123,7 @@ class BaseForm extends Component {
             helperText={this.state.error || this.props.helperText}
             onChange={
               (event) => {
-                dataStore.getFieldUpdater(fieldId)(event.target.value)
+                updateStoreField(event.target.value)
               }
             }
           />
@@ -142,10 +136,12 @@ class BaseForm extends Component {
   render() {
     return (
       <form noValidate autoComplete="off">
-        {this.props.children({
-          withData: this.withData,
-          getAllFieldData: this.dataStore.getAllFields,
-        })}
+        {
+          this.props.children({
+            withFieldData: this.withFieldData,
+            getFormData: this.dataStore.getAllFields,
+          })
+        }
       </form>
     );
   }
