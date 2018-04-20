@@ -53,7 +53,7 @@ class App extends Component {
                     )} />
                     <Route path="/gene" component={({match}) => ([
                       <Route path={`${match.url}/new`} component={() => <GeneProfile />} />,
-                      <Route path={`${match.url}/id/:id`} component={() => 'form edit an existing new gene'} />,
+                      <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />,
                       <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
                       <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
                     ])} />
