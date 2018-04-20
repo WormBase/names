@@ -35,7 +35,12 @@ class GeneForm extends Component {
                 />
                 <SpeciesSelectField />
                 <BiotypeSelectField />
-                <Button onClick={() => console.log(getFormData())}>Submit</Button>
+                <br/>
+                <Button
+                  variant="raised"
+                  color="secondary"
+                  onClick={() => console.log(getFormData())}
+                >Submit</Button>
               </div>
             );
           }
