@@ -10,9 +10,9 @@ class GeneForm extends Component {
     return (
       <BaseForm>
         {
-          ({withData, getAllFieldData}) => {
-            const CgcNameField = withData(TextField, 'cgcName');
-            const SequenceNameField = withData(TextField, 'sequenceName');
+          ({withFieldData, getFormData}) => {
+            const CgcNameField = withFieldData(TextField, 'cgcName');
+            const SequenceNameField = withFieldData(TextField, 'sequenceName');
             return (
               <div>
                 <CgcNameField
@@ -23,7 +23,7 @@ class GeneForm extends Component {
                   label="Sequence name"
                   helperText="Sequence name"
                 />
-                <Button onClick={() => console.log(getAllFieldData())}>Submit</Button>
+                <Button onClick={() => console.log(getFormData())}>Submit</Button>
               </div>
             );
           }
