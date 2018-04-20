@@ -64,10 +64,14 @@ class FormDataStore {
     };
   }
 
-  getAllFields = () => {
-    return {
-      ...this.fields,
-    };
+  getData = () => {
+    return Object.keys(this.fields).reduce(
+      (result, fieldId) => {
+        result[fieldId] = this.fields[fieldId] && this.fields[fieldId].value;
+        return result;
+      },
+      {}
+    );
   }
 
 }
@@ -139,7 +143,7 @@ class BaseForm extends Component {
         {
           this.props.children({
             withFieldData: this.withFieldData,
-            getFormData: this.dataStore.getAllFields,
+            getFormData: this.dataStore.getData,
           })
         }
       </form>
