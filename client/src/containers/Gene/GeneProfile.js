@@ -44,6 +44,7 @@ const styles = (theme) => ({
   },
   main: {
     flexGrow: 1,
+     margin: `0px ${theme.spacing.unit * 10}px`,
   },
   right: {
     minWidth: '20%',
