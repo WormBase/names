@@ -9,6 +9,7 @@ export {
   AppBar,
   Button,
   Icon,
+  MenuItem,
   Toolbar,
   Typography,
   Tabs,
@@ -17,6 +18,7 @@ export {
 } from 'material-ui';
 
 //export { default as TextField} from './TextField';
+export { default as SpeciesSelect } from './SpeciesSelect';
 
 export const colors = {
   blue,
