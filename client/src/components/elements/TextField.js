@@ -1,24 +1,20 @@
 import React from 'react';
-import { TextField as MuiTextField } from 'material-ui';
+import { TextField as MuiTextField, withStyles } from 'material-ui';
 
-const TextField = (props) => {
-  const {data, required, helperText, ...others} = props;
-  const {id, error, value} = data;
-  return (
-    <MuiTextField
-      {...others}
-      id={id}
-      error={Boolean(error)}  //use Boolean as a function
-      helperText={
-        <span>
-          {required ? 'Required - ' : null}
-          {helperText}
-          <br/>
-          {error}
-        </span>
-      }
-    />
-  );
+const TextField = (props) => (
+  <div>
+    <MuiTextField {...props} />
+  </div>
+);
+
+const styles = (theme) => ({
+  root: {
+    marginBottom: theme.spacing.unit * 2,
+  },
+});
+
+export default withStyles(styles)(TextField);
+
+export {
+  TextField,
 };
-
-export default TextField;
