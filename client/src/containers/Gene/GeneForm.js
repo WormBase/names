@@ -7,6 +7,7 @@ import {
   MenuItem,
   TextField,
   SpeciesSelect,
+  BiotypeSelect,
 } from '../../components/elements';
 
 import BaseForm from './BaseForm';
@@ -22,16 +23,22 @@ class GeneForm extends Component {
             const CgcNameField = withFieldData(TextField, 'cgcName');
             const SequenceNameField = withFieldData(TextField, 'sequenceName');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'sequence');
+            const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
             return (
               <div>
                 <CgcNameField
                   label="CGC name"
                   helperText="Enter the CGC name of the gene"
                 />
+                <br/>
                 <SequenceNameField
                   label="Sequence name"
                 />
+                <br/>
                 <SpeciesSelectField />
+                <br/>
+                <BiotypeSelectField />
+                <br/>
                 <Button onClick={() => console.log(getFormData())}>Submit</Button>
               </div>
             );

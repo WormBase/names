@@ -19,6 +19,7 @@ export {
 
 //export { default as TextField} from './TextField';
 export { default as SpeciesSelect } from './SpeciesSelect';
+export { default as BiotypeSelect } from './BiotypeSelect';
 
 export const colors = {
   blue,
