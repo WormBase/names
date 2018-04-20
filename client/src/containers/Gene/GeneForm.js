@@ -1,6 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withStyles, Button, Icon, TextField } from '../../components/elements';
+import {
+  withStyles,
+  Button,
+  Icon,
+  MenuItem,
+  TextField,
+  SpeciesSelect,
+} from '../../components/elements';
+
 import BaseForm from './BaseForm';
 
 class GeneForm extends Component {
@@ -13,6 +21,7 @@ class GeneForm extends Component {
           ({withFieldData, getFormData}) => {
             const CgcNameField = withFieldData(TextField, 'cgcName');
             const SequenceNameField = withFieldData(TextField, 'sequenceName');
+            const SpeciesSelectField = withFieldData(SpeciesSelect, 'sequence');
             return (
               <div>
                 <CgcNameField
@@ -21,8 +30,8 @@ class GeneForm extends Component {
                 />
                 <SequenceNameField
                   label="Sequence name"
-                  helperText="Sequence name"
                 />
+                <SpeciesSelectField />
                 <Button onClick={() => console.log(getFormData())}>Submit</Button>
               </div>
             );
