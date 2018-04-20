@@ -1,11 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { withStyles, Button, Icon } from '../../components/elements';
+import { withStyles, Button, Icon, } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 const GeneProfile = (props) => {
-  const {classes} = props;
+  const {classes, wbId} = props;
   return (
     <div className={classes.root}>
       <div className={classes.left}>
@@ -21,7 +21,15 @@ const GeneProfile = (props) => {
         <GeneForm />
       </div>
       <div className={classes.right}>
-        right
+        {
+          wbId ?
+            <div className={classes.operations}>
+              <Button variant="raised">Split Gene</Button>
+              <Button variant="raised">Merge Gene</Button>
+              <Button className={classes.killButton} variant="raised">Kill Gene</Button>
+            </div> :
+            null
+        }
       </div>
     </div>
   );
@@ -29,6 +37,7 @@ const GeneProfile = (props) => {
 
 GeneProfile.propTypes = {
   classes: PropTypes.object.isRequired,
+  wbId: PropTypes.string,
 };
 
 const styles = (theme) => ({
@@ -52,6 +61,18 @@ const styles = (theme) => ({
       width: `100%`,
     },
   },
+  operations: {
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: 150,
+    '& > *': {
+      marginBottom: theme.spacing.unit,
+    },
+  },
+  killButton: {
+    backgroundColor: theme.palette.error.main,
+    color: theme.palette.error.contrastText,
+  }
 });
 
 export default withStyles(styles)(GeneProfile);
