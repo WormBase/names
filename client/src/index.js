@@ -11,7 +11,9 @@ import App from './App';
 ReactDOM.render((
   <BrowserRouter>
     <MuiThemeProvider theme={theme}>
-      <App/>
+      <React.StrictMode>
+        <App/>
+      </React.StrictMode>
     </MuiThemeProvider>
   </BrowserRouter>
 ), document.getElementById('root'));
