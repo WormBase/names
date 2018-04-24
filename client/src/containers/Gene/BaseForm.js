@@ -82,24 +82,31 @@ class BaseForm extends Component {
     this.initializeFields(props);
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.initializeFields(nextProps);
+  initializeFields = (props) => {
+    const fields = this.unpackFields(props);
+    this.dataStore = new FormDataStore(fields);
   }
 
-  initializeFields = (props) => {
-    this.state = {
-      fields: {
-        ...Object.keys(props.data || {}).reduce((result, fieldId) => {
-          result[fieldId] = {
-            value: props.data[fieldId],
-            error: null,
-          };
-          return result;
-        }, {}),
-        ...props.fields,
-      }
+  unpackFields = (props) => {
+    return {
+      ...Object.keys(props.data || {}).reduce((result, fieldId) => {
+        result[fieldId] = {
+          value: props.data[fieldId],
+          error: null,
+        };
+        return result;
+      }, {}),
+      ...props.fields,
     };
-    this.dataStore = new FormDataStore(this.state.fields);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevProps.fields !== this.props.fields ||
+      prevProps.data !== this.props.data
+    ) {
+      this.initializeFields(this.props);
+    }
   }
 
   withFieldData = (WrappedComponent, fieldId) => {
