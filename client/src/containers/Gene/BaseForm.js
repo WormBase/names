@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Prompt } from 'react-router';
 import { withStyles, Button, Icon, TextField } from '../../components/elements';
 
 /*
@@ -23,6 +24,7 @@ import { withStyles, Button, Icon, TextField } from '../../components/elements';
 class FormDataStore {
   constructor(fields) {
     this.fields = {...fields};
+    this.originalFields = {...fields};
     this.eventListeners = [];
   }
 
@@ -51,7 +53,7 @@ class FormDataStore {
         },
       };
       this.eventListeners.filter((eventListener) => {
-        return eventListener.fieldId === fieldId;
+        return eventListener.fieldId === fieldId || eventListener.fieldId === 'ALL_FIELDS';
       }).map((eventListener) => {
         eventListener.eventHandler(value);
       });
@@ -64,10 +66,11 @@ class FormDataStore {
     };
   }
 
-  getData = () => {
-    return Object.keys(this.fields).reduce(
+  getData = (otherFields) => {
+    const fields = otherFields || this.fields;
+    return Object.keys(fields).reduce(
       (result, fieldId) => {
-        result[fieldId] = this.fields[fieldId] && this.fields[fieldId].value;
+        result[fieldId] = fields[fieldId] && fields[fieldId].value;
         return result;
       },
       {}
@@ -154,9 +157,59 @@ class BaseForm extends Component {
     return Field;
   }
 
+  renderDirtyFormPrompt(fields) {
+    const dataStore = this.dataStore;
+    class DirtyFormPrompt extends Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          dirty: false,
+        };
+      }
+
+      componentDidMount() {
+        const originalData = dataStore.getData(fields);
+        dataStore.setEventListener('ALL_FIELDS', () => {
+          const currentData = dataStore.getData();
+          const isDirty = [
+            ...Object.keys(originalData),
+            ...Object.keys(currentData)
+          ].reduce(
+            (result, fieldId) => {
+              return result || (
+                (originalData[fieldId] || '') !== (currentData[fieldId] || '')
+              );
+            },
+            false
+          );
+          this.setState({
+            dirty: isDirty,
+          });
+        });
+      }
+
+      componentWillUnmount() {
+        dataStore.removeEventListener('ALL_FIELDS');
+      }
+
+      render() {
+        return (
+          <Prompt
+            when={this.state.dirty}
+            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+          />
+        );
+      }
+    }
+
+    return <DirtyFormPrompt />;
+  }
+
   render() {
+    const dirtyFormPrompt = this.renderDirtyFormPrompt(this.unpackFields(this.props));
     return (
       <form noValidate autoComplete="off">
+        {dirtyFormPrompt}
         {
           this.props.children({
             withFieldData: this.withFieldData,
