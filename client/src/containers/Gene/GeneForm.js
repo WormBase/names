@@ -15,17 +15,26 @@ import BaseForm from './BaseForm';
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields} = this.props;
+    const {classes, fields, createMode} = this.props;
     return (
       <BaseForm>
         {
           ({withFieldData, getFormData}) => {
+            const WBIdField = withFieldData(TextField, 'id');
             const CgcNameField = withFieldData(TextField, 'cgcName');
             const SequenceNameField = withFieldData(TextField, 'sequenceName');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'sequence');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
             return (
               <div>
+                {
+                  createMode ?
+                    null :
+                    <WBIdField
+                      label="WormBase gene ID"
+                      disabled={true}
+                    />
+                }
                 <CgcNameField
                   label="CGC name"
                   helperText="Enter the CGC name of the gene"
@@ -58,6 +67,7 @@ GeneForm.propTypes = {
       error: PropTypes.string,
     }),
   }),
+  createMode: PropTypes.bool,
 };
 
 GeneForm.defaultProps = {

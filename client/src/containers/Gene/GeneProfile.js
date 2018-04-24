@@ -17,8 +17,8 @@ const GeneProfile = (props) => {
         </Button>
       </div>
       <div className={classes.main}>
-        <Typography variant="headline" gutterBottom>Add Gene</Typography>
-        <GeneForm />
+        <Typography variant="headline" gutterBottom>{wbId ? 'Edit Gene' : 'Add gene'}</Typography>
+        <GeneForm createMode={!Boolean(wbId)}/>
       </div>
       <div className={classes.right}>
         {
