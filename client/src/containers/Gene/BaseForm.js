@@ -162,7 +162,6 @@ class BaseForm extends Component {
 }
 
 BaseForm.propTypes = {
-  classes: PropTypes.object.isRequired,
   fields: PropTypes.objectOf({
     value: PropTypes.any,
     error: PropTypes.string,
