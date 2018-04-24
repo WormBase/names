@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { withStyles, Button, Icon, } from '../../components/elements';
+import { withStyles, Button, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 const GeneProfile = (props) => {
@@ -17,7 +17,7 @@ const GeneProfile = (props) => {
         </Button>
       </div>
       <div className={classes.main}>
-        <h2>Add Gene</h2>
+        <Typography variant="headline" gutterBottom>Add Gene</Typography>
         <GeneForm />
       </div>
       <div className={classes.right}>
