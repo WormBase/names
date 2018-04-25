@@ -19,7 +19,7 @@ class GeneForm extends Component {
     return (
       <BaseForm data={data}>
         {
-          ({withFieldData, getFormData}) => {
+          ({withFieldData, getFormData, resetData}) => {
             const WBIdField = withFieldData(TextField, 'id');
             const CgcNameField = withFieldData(TextField, 'cgcName');
             const SequenceNameField = withFieldData(TextField, 'sequenceName');
@@ -50,6 +50,10 @@ class GeneForm extends Component {
                   color="secondary"
                   onClick={() => this.props.onSubmit(getFormData())}
                 >Submit</Button>
+                <Button
+                  variant="raised"
+                  onClick={() => resetData()}
+                >Cancel</Button>
               </div>
             );
           }

@@ -222,6 +222,9 @@ class BaseForm extends Component {
           this.props.children({
             withFieldData: this.withFieldData,
             getFormData: this.dataStore.getData,
+            resetData: () => {
+              this.dataStore.replaceFields(this.unpackFields(this.props));
+            }
           })
         }
       </form>
