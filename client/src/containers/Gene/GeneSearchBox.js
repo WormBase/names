@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 import SearchIcon from '@material-ui/icons/Search';
+import { Link } from 'react-router-dom';
 import {
   withStyles,
   Button,
@@ -45,7 +46,7 @@ function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, sele
       {...itemProps}
       key={suggestion.label}
       selected={isHighlighted}
-      component="div"
+      component={({...props}) => <Link to={`/gene/id/${suggestion.id}`} {...props} />}
       style={{
         fontWeight: isSelected ? 500 : 400,
       }}
@@ -59,7 +60,10 @@ renderSuggestion.propTypes = {
   index: PropTypes.number,
   itemProps: PropTypes.object,
   selectedItem: PropTypes.string,
-  suggestion: PropTypes.shape({ label: PropTypes.string }).isRequired,
+  suggestion: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string,
+  }).isRequired,
 };
 
 class GeneSearchBox extends Component {
