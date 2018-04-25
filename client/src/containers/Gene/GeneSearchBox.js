@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Downshift from 'downshift';
+import SearchIcon from '@material-ui/icons/Search';
 import {
   withStyles,
   Button,
   Icon,
+  InputAdornment,
   Paper,
   MenuItem,
   TextField,
@@ -22,6 +24,11 @@ function renderInput(inputProps) {
         classes: {
           root: classes.inputRoot,
         },
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon />
+          </InputAdornment>
+        ),
         ...InputProps,
       }}
       {...other}
