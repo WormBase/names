@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
+import KillGeneDialog from './KillGeneDialog';
 
 class GeneProfile extends Component {
   constructor(props) {
@@ -11,6 +12,7 @@ class GeneProfile extends Component {
     this.state = {
       status: null,
       data: null,
+      showKillGeneDialog: false,
     };
   }
 
@@ -39,6 +41,18 @@ class GeneProfile extends Component {
           status: 'SUCCESS',
         });
       }).catch((e) => console.log('error', e));
+    });
+  }
+
+  openKillGeneDialog = () => {
+    this.setState({
+      showKillGeneDialog: true,
+    });
+  }
+
+  closeKillGeneDialog = () => {
+    this.setState({
+      showKillGeneDialog: false,
     });
   }
 
@@ -74,11 +88,19 @@ class GeneProfile extends Component {
               <div className={classes.operations}>
                 <Button variant="raised">Split Gene</Button>
                 <Button variant="raised">Merge Gene</Button>
-                <Button className={classes.killButton} variant="raised">Kill Gene</Button>
+                <Button
+                  className={classes.killButton}
+                  variant="raised"
+                  onClick={this.openKillGeneDialog}
+                >Kill Gene</Button>
               </div> :
               null
           }
         </div>
+        <KillGeneDialog
+          open={this.state.showKillGeneDialog}
+          onClose={this.closeKillGeneDialog}
+        />
       </div>
     );
   }

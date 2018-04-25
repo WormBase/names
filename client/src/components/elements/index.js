@@ -4,10 +4,15 @@ import blue from 'material-ui/colors/blue';
 import lightBlue from 'material-ui/colors/lightBlue';
 import yellow from 'material-ui/colors/yellow';
 import red from 'material-ui/colors/red';
+import { default as MuiDialog, withMobileDialog } from 'material-ui/Dialog';
 
 export {
   AppBar,
   Button,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Icon,
   InputAdornment,
   MenuItem,
@@ -21,6 +26,16 @@ export {
 export { default as TextField} from './TextField';
 export { default as SpeciesSelect } from './SpeciesSelect';
 export { default as BiotypeSelect } from './BiotypeSelect';
+
+export const Dialog = withMobileDialog()(withStyles((theme) => ({
+  paper: {
+    minWidth: '50%',
+    marginTop: theme.spacing.unit * -10,
+    [theme.breakpoints.down('sm')]:{
+      marginTop: 0,
+    }
+  },
+}))(MuiDialog));
 
 export const colors = {
   blue,
