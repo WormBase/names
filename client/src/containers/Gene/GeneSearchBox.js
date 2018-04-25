@@ -24,7 +24,6 @@ function renderInput(inputProps) {
         },
         ...InputProps,
       }}
-      onChange={() => console.log('uuuuuuuu')}
       {...other}
     />
   );
@@ -70,7 +69,6 @@ class GeneSearchBox extends Component {
     this.setState({
       query: query,
     }, () => {
-      console.log('aaaaaaa');
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', {
@@ -92,8 +90,6 @@ class GeneSearchBox extends Component {
         },
         true
       ).then((response) => response.json()).then((content) => {
-        console.log(content);
-        console.log(this.state);
         if (content.query === this.state.query) {
           // compare query to produce suggestion with current query,
           // to avoid problem caused by response coming back in the wrong order
