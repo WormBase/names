@@ -35,7 +35,6 @@ class GeneProfile extends Component {
         },
         true
       ).then((response) => response.json()).then((response) => {
-        console.log(response);
         this.setState({
           data: response,
           status: 'SUCCESS',
@@ -54,6 +53,27 @@ class GeneProfile extends Component {
     this.setState({
       showKillGeneDialog: false,
     });
+  }
+
+  killGene = () => {
+    mockFetchOrNot(
+      (mockFetch) => {
+        return mockFetch.delete('*', {
+          id: this.props.wbId,
+          dead: true,
+        });
+      },
+      () => {
+        return fetch(`/api/gene/${this.props.wbId}`, {
+          method: 'DELETE'
+        });
+      },
+      true
+    ).then((response) => response.json()).then((response) => {
+      this.setState({
+        data: {...response},
+      });
+    }).catch((e) => console.log('error', e));
   }
 
   render() {
@@ -98,8 +118,13 @@ class GeneProfile extends Component {
           }
         </div>
         <KillGeneDialog
+          geneName={this.state.data && this.state.data.cgcName}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
+          onSubmit={() => {
+            this.closeKillGeneDialog();
+            this.killGene();
+          }}
         />
       </div>
     );

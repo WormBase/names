@@ -72,7 +72,8 @@ class FormDataStore {
       if (eventListener.fieldId === 'ALL_FIELDS') {
         eventListener.eventHandler();
       } else {
-        eventListener.eventHandler(this.fields[eventListener.fieldId].value);
+        const field = this.fields[eventListener.fieldId];
+        eventListener.eventHandler(field ? field.value : null);
       }
     });
   }
