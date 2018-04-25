@@ -1,38 +1,69 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { withStyles, Button, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 
-const GeneProfile = (props) => {
-  const {classes, wbId} = props;
-  return (
-    <div className={classes.root}>
-      <div className={classes.left}>
-        <Button
-          variant="raised"
-          component={({...props}) => <Link to='/gene' {...props} />}
-        >
-          Back to directory
-        </Button>
+class GeneProfile extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      status: null,
+      data: null,
+    };
+  }
+
+  componentDidMount() {
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      fetch('/api/gene').then((response) => {
+        return response.json();
+      }).then((response) => {
+        this.setState({
+          data: response,
+          status: 'SUCCESS',
+        });
+      });
+    });
+  }
+
+  render() {
+    const {classes, wbId} = this.props;
+    return (
+      <div className={classes.root}>
+        <div className={classes.left}>
+          <Button
+            variant="raised"
+            component={({...props}) => <Link to='/gene' {...props} />}
+          >
+            Back to directory
+          </Button>
+        </div>
+        <div className={classes.main}>
+          <Typography variant="headline" gutterBottom>{wbId ? 'Edit Gene' : 'Add gene'}</Typography>
+          <GeneForm
+            data={this.state.data}
+            createMode={!Boolean(wbId)}
+            onSubmit={(data) => this.setState({
+              data: data,
+            })}
+          />
+        </div>
+        <div className={classes.right}>
+          {
+            wbId ?
+              <div className={classes.operations}>
+                <Button variant="raised">Split Gene</Button>
+                <Button variant="raised">Merge Gene</Button>
+                <Button className={classes.killButton} variant="raised">Kill Gene</Button>
+              </div> :
+              null
+          }
+        </div>
       </div>
-      <div className={classes.main}>
-        <Typography variant="headline" gutterBottom>{wbId ? 'Edit Gene' : 'Add gene'}</Typography>
-        <GeneForm createMode={!Boolean(wbId)}/>
-      </div>
-      <div className={classes.right}>
-        {
-          wbId ?
-            <div className={classes.operations}>
-              <Button variant="raised">Split Gene</Button>
-              <Button variant="raised">Merge Gene</Button>
-              <Button className={classes.killButton} variant="raised">Kill Gene</Button>
-            </div> :
-            null
-        }
-      </div>
-    </div>
-  );
+    );
+  }
 }
 
 GeneProfile.propTypes = {
