@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { withStyles, Button, Icon } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
+import GeneSearchBox from './GeneSearchBox';
 
 const Gene = (props) => {
   const {classes} = props;
@@ -18,7 +19,7 @@ const Gene = (props) => {
           Add New Gene
         </Button>
         OR
-        <Button>This is supposed to be a text field</Button>
+        <GeneSearchBox />
       </div>
       <div className={classes.main}>
         tables and charts
