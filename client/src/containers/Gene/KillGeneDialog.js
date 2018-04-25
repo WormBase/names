@@ -29,7 +29,7 @@ class KillGeneDialog extends Component {
                 <DialogTitle id="form-dialog-title">Kill gene</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Gene <strong>{'zzzz'}</strong> will be killed. Are you sure?
+                    Gene <strong>{this.props.geneName}</strong> will be killed. Are you sure?
                   </DialogContentText>
                 <ReasonField
                   label="Reason"
@@ -38,11 +38,17 @@ class KillGeneDialog extends Component {
                 />
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={() => this.onSubmit(getFormData())} color="primary">
+                  <Button
+                    onClick={this.props.onClose}
+                    color="primary"
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={this.handleClose} color="primary">
-                    Subscribe
+                  <Button
+                    onClick={() => this.props.onSubmit(getFormData())}
+                    color="primary"
+                  >
+                    Kill {this.props.geneName}
                   </Button>
                 </DialogActions>
               </Dialog>
@@ -55,6 +61,7 @@ class KillGeneDialog extends Component {
 }
 
 KillGeneDialog.propTypes = {
+  geneName: PropTypes.string.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmit: PropTypes.func,
