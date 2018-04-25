@@ -10,6 +10,7 @@ export {
   Button,
   Icon,
   MenuItem,
+  Paper,
   Toolbar,
   Typography,
   Tabs,
