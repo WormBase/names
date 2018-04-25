@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 
@@ -17,14 +18,27 @@ class GeneProfile extends Component {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
-      fetch('/api/gene').then((response) => {
-        return response.json();
-      }).then((response) => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          return mockFetch.get('*', {
+            id: 'WB1',
+            cgcName: 'ab',
+            sequenceName: 'AB',
+            species: 'Caenorhabditis elegans',
+            biotype: 'cds',
+          });
+        },
+        () => {
+          return fetch('/api/gene');
+        },
+        true
+      ).then((response) => response.json()).then((response) => {
+        console.log(response);
         this.setState({
           data: response,
           status: 'SUCCESS',
         });
-      });
+      }).catch((e) => console.log('error', e));
     });
   }
 

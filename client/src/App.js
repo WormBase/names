@@ -7,23 +7,12 @@ import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
 import Gene, { GeneProfile } from './containers/Gene';
-import {startMock, stopMock} from './mock';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
 import './App.css';
 
 
 class App extends Component {
-  componentDidMount() {
-    startMock();
-    fetch('/aaaa').then(function(data) {
-      console.log('got data', data);
-    });
-  }
-
-  componentWillUnmount() {
-    stopMock();
-  }
 
   render() {
     return (
