@@ -9,6 +9,7 @@ export {
   AppBar,
   Button,
   Icon,
+  InputAdornment,
   MenuItem,
   Paper,
   Toolbar,
