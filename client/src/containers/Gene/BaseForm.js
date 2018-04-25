@@ -66,6 +66,17 @@ class FormDataStore {
     };
   }
 
+  replaceFields = (fields) => {
+    this.fields = {...fields};
+    this.eventListeners.map((eventListener) => {
+      if (eventListener.fieldId === 'ALL_FIELDS') {
+        eventListener.eventHandler();
+      } else {
+        eventListener.eventHandler(this.fields[eventListener.fieldId].value);
+      }
+    });
+  }
+
   getData = (otherFields) => {
     const fields = otherFields || this.fields;
     return Object.keys(fields).reduce(
@@ -82,10 +93,6 @@ class FormDataStore {
 class BaseForm extends Component {
   constructor(props) {
     super(props);
-    this.initializeFields(props);
-  }
-
-  initializeFields = (props) => {
     const fields = this.unpackFields(props);
     this.dataStore = new FormDataStore(fields);
   }
@@ -108,7 +115,8 @@ class BaseForm extends Component {
       prevProps.fields !== this.props.fields ||
       prevProps.data !== this.props.data
     ) {
-      this.initializeFields(this.props);
+      const fields = this.unpackFields(this.props);
+      this.dataStore.replaceFields(fields);
     }
   }
 

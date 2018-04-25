@@ -15,15 +15,15 @@ import BaseForm from './BaseForm';
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields, createMode} = this.props;
+    const {classes, fields, data, createMode} = this.props;
     return (
-      <BaseForm>
+      <BaseForm data={data}>
         {
           ({withFieldData, getFormData}) => {
             const WBIdField = withFieldData(TextField, 'id');
             const CgcNameField = withFieldData(TextField, 'cgcName');
             const SequenceNameField = withFieldData(TextField, 'sequenceName');
-            const SpeciesSelectField = withFieldData(SpeciesSelect, 'sequence');
+            const SpeciesSelectField = withFieldData(SpeciesSelect, 'species');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
             return (
               <div>
@@ -48,7 +48,7 @@ class GeneForm extends Component {
                 <Button
                   variant="raised"
                   color="secondary"
-                  onClick={() => console.log(getFormData())}
+                  onClick={() => this.props.onSubmit(getFormData())}
                 >Submit</Button>
               </div>
             );
@@ -68,6 +68,7 @@ GeneForm.propTypes = {
     }),
   }),
   createMode: PropTypes.bool,
+  onSubmit: PropTypes.func.isRequired,
 };
 
 GeneForm.defaultProps = {
