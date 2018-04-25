@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 import SearchIcon from '@material-ui/icons/Search';
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import {
   withStyles,
   Button,
@@ -16,11 +16,11 @@ import { mockFetchOrNot } from '../../mock';
 
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, ...other } = inputProps;
-
+  const { InputProps, classes, ref, history, match, location, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
+        ...InputProps,
         inputRef: ref,
         classes: {
           root: classes.inputRoot,
@@ -30,7 +30,13 @@ function renderInput(inputProps) {
             <SearchIcon />
           </InputAdornment>
         ),
-        ...InputProps,
+        onKeyDown: event => {
+          if (event.key === 'Enter') {
+            // Prevent Downshift's default 'Enter' behavior.
+            event.preventDownshiftDefault = true;
+            history.push(`/gene/id/${InputProps.value}`);
+          }
+        },
       }}
       {...other}
     />
@@ -118,7 +124,7 @@ class GeneSearchBox extends Component {
       <Downshift>
         {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
           <div className={classes.root}>
-            {renderInput({
+            {withRouter(renderInput)({
               fullWidth: true,
               classes,
               InputProps: getInputProps({
@@ -133,7 +139,7 @@ class GeneSearchBox extends Component {
                   renderSuggestion({
                     suggestion,
                     index,
-                    itemProps: getItemProps({item: suggestion.label}),
+                    itemProps: getItemProps({item: suggestion.id}),
                     highlightedIndex,
                     selectedItem,
                   }),
