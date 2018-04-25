@@ -147,6 +147,14 @@ GeneSearchBox.propTypes = {
 const styles = (theme) => ({
   root: {
     width: '20em',
+    position: 'relative',
+  },
+  paper: {
+    position: 'absolute',
+    zIndex: 1,
+    marginTop: -1 * theme.spacing.unit,
+    left: 0,
+    right: 0,
   },
 });
 

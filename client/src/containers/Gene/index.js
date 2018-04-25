@@ -11,15 +11,13 @@ const Gene = (props) => {
   return (
     <div className={classes.root}>
       <div className={classes.header}>
-        <div>
-          <Button
-            variant="raised"
-            color="secondary"
-            component={({...props}) => <Link to='/gene/new' {...props} />}
-          >
-            Add New Gene
-          </Button>
-        </div>
+        <Button
+          variant="raised"
+          color="secondary"
+          component={({...props}) => <Link to='/gene/new' {...props} />}
+        >
+          Add New Gene
+        </Button>
         OR
         <GeneSearchBox />
       </div>
@@ -41,6 +39,7 @@ const styles = (theme) => ({
     display: 'flex',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
+    alignItems: 'center',
     marginBottom: theme.spacing.unit * 4,
   },
 });
