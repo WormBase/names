@@ -121,6 +121,9 @@ const styles = (theme) => ({
   killButton: {
     backgroundColor: theme.palette.error.main,
     color: theme.palette.error.contrastText,
+    '&:hover': {
+      backgroundColor: theme.palette.error.dark,
+    },
   }
 });
 
