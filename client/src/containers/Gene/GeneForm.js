@@ -45,15 +45,17 @@ class GeneForm extends Component {
                 <SpeciesSelectField />
                 <BiotypeSelectField />
                 <br/>
-                <Button
-                  variant="raised"
-                  color="secondary"
-                  onClick={() => this.props.onSubmit(getFormData())}
-                >Submit</Button>
-                <Button
-                  variant="raised"
-                  onClick={() => resetData()}
-                >Cancel</Button>
+                <div className={classes.actions}>
+                  <Button
+                    variant="raised"
+                    color="secondary"
+                    onClick={() => this.props.onSubmit(getFormData())}
+                  >Submit</Button>
+                  <Button
+                    variant="raised"
+                    onClick={() => resetData()}
+                  >Cancel</Button>
+                </div>
               </div>
             );
           }
@@ -83,6 +85,12 @@ const styles = (theme) => ({
   root: {
     // display: 'flex',
     // flexDirection: 'column',
+  },
+  actions: {
+    marginTop: theme.spacing.unit * 2,
+    '& > *': {
+      marginRight: theme.spacing.unit,
+    },
   },
 });
 
