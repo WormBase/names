@@ -110,13 +110,13 @@ class GeneSearchBox extends Component {
     return (
       <Downshift>
         {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
-          <div className={classes.container}>
+          <div className={classes.root}>
             {renderInput({
               fullWidth: true,
               classes,
               InputProps: getInputProps({
-                placeholder: 'Search a country (start with a)',
-                id: 'integration-downshift-simple',
+                placeholder: 'Search a gene...',
+                id: 'gene-search-box',
                 onChange: (event) => this.handleQueryChange(event),
               }),
             })}
@@ -145,7 +145,9 @@ GeneSearchBox.propTypes = {
 }
 
 const styles = (theme) => ({
-
+  root: {
+    width: '20em',
+  },
 });
 
 export default withStyles(styles)(GeneSearchBox);
