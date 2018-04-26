@@ -31,9 +31,13 @@ class KillGeneDialog extends Component {
                   <DialogContentText>
                     Gene <strong>{this.props.geneName}</strong> will be killed. Are you sure?
                   </DialogContentText>
+                  <DialogContentText>
+                    <Typography color="error">{this.props.errorMessage}</Typography>
+                  </DialogContentText>
                 <ReasonField
                   label="Reason"
                   helperText="Enter the reason for killing the gene"
+                  required
                   fullWidth
                 />
                 </DialogContent>
@@ -62,6 +66,7 @@ class KillGeneDialog extends Component {
 
 KillGeneDialog.propTypes = {
   geneName: PropTypes.string.isRequired,
+  errorMessage: PropTypes.string,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmit: PropTypes.func,

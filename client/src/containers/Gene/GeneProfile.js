@@ -13,6 +13,7 @@ class GeneProfile extends Component {
       status: null,
       data: null,
       showKillGeneDialog: false,
+      killGeneDialogError: null,
     };
   }
 
@@ -55,13 +56,24 @@ class GeneProfile extends Component {
     });
   }
 
-  killGene = () => {
+  killGene = (data) => {
     mockFetchOrNot(
       (mockFetch) => {
-        return mockFetch.delete('*', {
-          id: this.props.wbId,
-          dead: true,
-        });
+        console.log(data.reason);
+        if (data.reason) {
+          return mockFetch.delete('*', {
+            id: this.props.wbId,
+            reason: data.reason,
+            dead: true,
+          });
+        } else {
+          return mockFetch.delete('*', {
+            body: {
+              error: 'Reason for killing a gene is required',
+            },
+            status: 400,
+          })
+        }
       },
       () => {
         return fetch(`/api/gene/${this.props.wbId}`, {
@@ -70,9 +82,18 @@ class GeneProfile extends Component {
       },
       true
     ).then((response) => response.json()).then((response) => {
-      this.setState({
-        data: {...response},
-      });
+      if (!response.error) {
+        this.setState({
+          data: {...response},
+          killGeneDialogError: null,
+        }, () => {
+          this.closeKillGeneDialog();
+        });
+      } else {
+        this.setState({
+          killGeneDialogError: response.error,
+        });
+      }
     }).catch((e) => console.log('error', e));
   }
 
@@ -119,12 +140,10 @@ class GeneProfile extends Component {
         </div>
         <KillGeneDialog
           geneName={this.state.data && this.state.data.cgcName}
+          errorMessage={this.state.killGeneDialogError}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
-          onSubmit={() => {
-            this.closeKillGeneDialog();
-            this.killGene();
-          }}
+          onSubmit={this.killGene}
         />
       </div>
     );
