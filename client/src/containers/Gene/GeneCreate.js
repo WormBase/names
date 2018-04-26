@@ -1,11 +1,38 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Page, PageLeft, PageMain, PageRight, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
+
+  handleCreateGene = (data) => {
+    mockFetchOrNot(
+      (mockFetch) => {
+        return mockFetch.put('*', {
+          data: {
+            id: 'WB10',
+          },
+        });
+      },
+      () => {
+        return fetch(`/api/gene`, {
+          method: 'PUT'
+        });
+      },
+      true
+    ).then((response) => response.json()).then((response) => {
+      if (response.error) {
+        this.setState({
+          error: response.error,
+        });
+      } else {
+        this.props.history.push(`/gene/id/${response.data.id}`);
+      }
+    }).catch((e) => console.log('error', e));
+  }
+
   render() {
     return (
       <Page>
@@ -20,7 +47,7 @@ class GeneCreate extends Component {
         <PageMain>
           <Typography variant="headline" gutterBottom>Add gene</Typography>
           <GeneForm
-            onSubmit={(data) => {console.log('create gene', data);}}
+            onSubmit={this.handleCreateGene}
           />
         </PageMain>
       </Page>
@@ -28,4 +55,10 @@ class GeneCreate extends Component {
   }
 }
 
-export default GeneCreate;
+GeneCreate.propTypes = {
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default withRouter(GeneCreate);
