@@ -6,15 +6,31 @@ import { withStyles, Button, Page, PageLeft, PageMain, PageRight, Icon, Typograp
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: null,
+    };
+  }
 
   handleCreateGene = (data) => {
     mockFetchOrNot(
       (mockFetch) => {
-        return mockFetch.put('*', {
-          data: {
-            id: 'WB10',
-          },
-        });
+        const filled = ['cgcName', 'species', 'biotype'].reduce((result, fieldId) => {
+          return result && data[fieldId];
+        }, true);
+        if (filled) {
+          return mockFetch.put('*', {
+            data: {
+              ...data,
+              id: 'WB10',
+            },
+          });
+        } else {
+          return mockFetch.put('*', {
+            error: 'Form is not completed.'
+          });
+        }
       },
       () => {
         return fetch(`/api/gene`, {
@@ -28,9 +44,22 @@ class GeneCreate extends Component {
           error: response.error,
         });
       } else {
-        this.props.history.push(`/gene/id/${response.data.id}`);
+        this.setState({
+          data: response.data,
+          error: null,
+        }, () => {
+          this.props.history.push(`/gene/id/${response.data.id}`);
+        });
       }
     }).catch((e) => console.log('error', e));
+  }
+
+  handleClear = () => {
+    this.setState({
+      error: null,
+    }, () => {
+      this.props.history.push('/gene');
+    });
   }
 
   render() {
@@ -46,8 +75,10 @@ class GeneCreate extends Component {
         </PageLeft>
         <PageMain>
           <Typography variant="headline" gutterBottom>Add gene</Typography>
+          <Typography color="error">{this.state.error}</Typography>
           <GeneForm
             onSubmit={this.handleCreateGene}
+            onCancel={this.handleClear}
           />
         </PageMain>
       </Page>

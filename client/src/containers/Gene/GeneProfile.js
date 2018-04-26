@@ -24,7 +24,7 @@ class GeneProfile extends Component {
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', {
-            id: 'WB1',
+            id: this.props.wbId,
             cgcName: 'ab',
             sequenceName: 'AB',
             species: 'Caenorhabditis elegans',

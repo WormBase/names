@@ -53,7 +53,10 @@ class GeneForm extends Component {
                   >Submit</Button>
                   <Button
                     variant="raised"
-                    onClick={() => resetData()}
+                    onClick={() => {
+                      resetData();
+                      this.props.onCancel && this.props.onCancel();
+                    }}
                   >Cancel</Button>
                 </div>
               </div>
@@ -74,6 +77,7 @@ GeneForm.propTypes = {
     }),
   }),
   onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
 };
 
 GeneForm.defaultProps = {
