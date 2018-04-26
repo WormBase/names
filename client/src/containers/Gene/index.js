@@ -23,7 +23,7 @@ const Gene = (props) => {
         <GeneSearchBox />
       </div>
       <div className={classes.main}>
-        tables and charts
+        {/* tables and charts */}
       </div>
     </div>
   );
