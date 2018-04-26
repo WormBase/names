@@ -15,7 +15,7 @@ import BaseForm from './BaseForm';
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields, data, createMode} = this.props;
+    const {classes, fields, data} = this.props;
     return (
       <BaseForm data={data}>
         {
@@ -28,12 +28,12 @@ class GeneForm extends Component {
             return (
               <div>
                 {
-                  createMode ?
-                    null :
+                  data.id ?
                     <WBIdField
                       label="WormBase gene ID"
                       disabled={true}
-                    />
+                    /> :
+                    null
                 }
                 <CgcNameField
                   label="CGC name"
@@ -73,7 +73,6 @@ GeneForm.propTypes = {
       error: PropTypes.string,
     }),
   }),
-  createMode: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
 };
 
