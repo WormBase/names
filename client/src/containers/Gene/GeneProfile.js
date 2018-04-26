@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { withStyles, Button, Icon, Typography } from '../../components/elements';
+import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 
@@ -100,17 +100,17 @@ class GeneProfile extends Component {
   render() {
     const {classes, wbId} = this.props;
     return (
-      <div className={classes.root}>
-        <div className={classes.left}>
+      <Page>
+        <PageLeft>
           <Button
             variant="raised"
             component={({...props}) => <Link to='/gene' {...props} />}
           >
             Back to directory
           </Button>
-        </div>
-        <div className={classes.main}>
-          <Typography variant="headline" gutterBottom>{wbId ? ['Gene ', <em>{wbId}</em>] : 'Add gene'}</Typography>
+        </PageLeft>
+        <PageMain>
+          <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           {
             this.state.status === 'SUCCESS' && !this.state.data.dead ?
               <GeneForm
@@ -121,22 +121,18 @@ class GeneProfile extends Component {
               /> :
               null
           }
-        </div>
-        <div className={classes.right}>
-          {
-            wbId ?
-              <div className={classes.operations}>
-                <Button variant="raised">Split Gene</Button>
-                <Button variant="raised">Merge Gene</Button>
-                <Button
-                  className={classes.killButton}
-                  variant="raised"
-                  onClick={this.openKillGeneDialog}
-                >Kill Gene</Button>
-              </div> :
-              null
-          }
-        </div>
+        </PageMain>
+        <PageRight>
+          <div className={classes.operations}>
+            <Button variant="raised">Split Gene</Button>
+            <Button variant="raised">Merge Gene</Button>
+            <Button
+              className={classes.killButton}
+              variant="raised"
+              onClick={this.openKillGeneDialog}
+            >Kill Gene</Button>
+          </div>
+        </PageRight>
         <KillGeneDialog
           geneName={this.state.data && this.state.data.cgcName}
           errorMessage={this.state.killGeneDialogError}
@@ -144,14 +140,14 @@ class GeneProfile extends Component {
           onClose={this.closeKillGeneDialog}
           onSubmit={this.killGene}
         />
-      </div>
+      </Page>
     );
   }
 }
 
 GeneProfile.propTypes = {
   classes: PropTypes.object.isRequired,
-  wbId: PropTypes.string,
+  wbId: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({

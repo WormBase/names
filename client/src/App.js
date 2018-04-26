@@ -6,7 +6,7 @@ import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
-import Gene, { GeneProfile } from './containers/Gene';
+import Gene, { GeneProfile, GeneCreate } from './containers/Gene';
 import logo from './logo.svg';
 import wormbaseLogo from './logo_wormbase_solid.svg';
 import './App.css';
@@ -41,7 +41,7 @@ class App extends Component {
                       </div>
                     )} />
                     <Route path="/gene" component={({match}) => ([
-                      <Route path={`${match.url}/new`} component={() => <GeneProfile />} />,
+                      <Route path={`${match.url}/new`} component={() => <GeneCreate />} />,
                       <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />,
                       <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
                       <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
