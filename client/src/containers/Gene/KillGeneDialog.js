@@ -50,9 +50,9 @@ class KillGeneDialog extends Component {
                   </Button>
                   <Button
                     onClick={() => this.props.onSubmit(getFormData())}
-                    color="primary"
+                    className={this.props.classes.killButton}
                   >
-                    Kill {this.props.geneName}
+                    KILL {this.props.geneName}
                   </Button>
                 </DialogActions>
               </Dialog>
@@ -72,4 +72,11 @@ KillGeneDialog.propTypes = {
   onSubmit: PropTypes.func,
 };
 
-export default KillGeneDialog;
+const styles = (theme) => ({
+  killButton: {
+    color: theme.palette.error.main,
+    textTransform: 'inherit',
+  },
+});
+
+export default withStyles(styles)(KillGeneDialog);
