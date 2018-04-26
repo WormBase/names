@@ -124,8 +124,8 @@ class GeneProfile extends Component {
         </PageMain>
         <PageRight>
           <div className={classes.operations}>
-            <Button variant="raised">Split Gene</Button>
-            <Button variant="raised">Merge Gene</Button>
+            {/* <Button variant="raised">Split Gene</Button> */}
+            {/* <Button variant="raised">Merge Gene</Button> */}
             <Button
               className={classes.killButton}
               variant="raised"
