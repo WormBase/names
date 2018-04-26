@@ -151,26 +151,6 @@ GeneProfile.propTypes = {
 };
 
 const styles = (theme) => ({
-  root: {
-    display: 'flex',
-    flexWrap: 'wrap',
-  },
-  left: {
-    minWidth: '20%',
-    [theme.breakpoints.down('sm')]: {
-      width: `100%`,
-    },
-  },
-  main: {
-    flexGrow: 1,
-     margin: `0px ${theme.spacing.unit * 10}px`,
-  },
-  right: {
-    minWidth: '20%',
-    [theme.breakpoints.down('sm')]: {
-      width: `100%`,
-    },
-  },
   operations: {
     display: 'flex',
     flexDirection: 'column',
