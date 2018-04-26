@@ -119,19 +119,23 @@ class GeneProfile extends Component {
                   data: data,
                 })}
               /> :
-              null
+              <Typography variant="caption">Dead</Typography>
           }
         </PageMain>
         <PageRight>
-          <div className={classes.operations}>
-            {/* <Button variant="raised">Split Gene</Button> */}
-            {/* <Button variant="raised">Merge Gene</Button> */}
-            <Button
-              className={classes.killButton}
-              variant="raised"
-              onClick={this.openKillGeneDialog}
-            >Kill Gene</Button>
-          </div>
+          {
+            this.state.data && this.state.data.dead ?
+              null :
+              <div className={classes.operations}>
+                {/* <Button variant="raised">Split Gene</Button> */}
+                {/* <Button variant="raised">Merge Gene</Button> */}
+                <Button
+                  className={classes.killButton}
+                  variant="raised"
+                  onClick={this.openKillGeneDialog}
+                >Kill Gene</Button>
+              </div>
+          }
         </PageRight>
         <KillGeneDialog
           geneName={this.state.data && this.state.data.cgcName}
