@@ -110,12 +110,11 @@ class GeneProfile extends Component {
           </Button>
         </div>
         <div className={classes.main}>
-          <Typography variant="headline" gutterBottom>{wbId ? 'Edit Gene' : 'Add gene'}</Typography>
+          <Typography variant="headline" gutterBottom>{wbId ? ['Gene ', <em>{wbId}</em>] : 'Add gene'}</Typography>
           {
-            this.state.status === 'SUCCESS' ?
+            this.state.status === 'SUCCESS' && !this.state.data.dead ?
               <GeneForm
                 data={this.state.data}
-                createMode={!Boolean(wbId)}
                 onSubmit={(data) => this.setState({
                   data: data,
                 })}
