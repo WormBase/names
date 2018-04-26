@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { withStyles, Button, Icon } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
+import GeneCreate from './GeneCreate';
 import GeneSearchBox from './GeneSearchBox';
 
 const Gene = (props) => {
@@ -48,4 +49,5 @@ export default withStyles(styles)(Gene);
 
 export {
   GeneProfile,
+  GeneCreate,
 };

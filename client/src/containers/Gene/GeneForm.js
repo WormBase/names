@@ -28,7 +28,7 @@ class GeneForm extends Component {
             return (
               <div>
                 {
-                  data.id ?
+                  data && data.id ?
                     <WBIdField
                       label="WormBase gene ID"
                       disabled={true}
