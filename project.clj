@@ -39,13 +39,13 @@
             [lein-ring "0.12.0"]]
   :uberjar-name "server.jar"
   :uberjar {:aot :all}
-  :ring {:handler org.wormbase.names.service/app
+  :ring {:handler wormbase.names.service/app
          :host "0.0.0.0"
-         :init org.wormbase.names.service/init}
+         :init wormbase.names.service/init}
   :source-paths ["src"]
   :resource-paths ["resources"]
   :target-path "target/%s"
-  :main ^:skip-aot org.wormbase.names.service
+  :main ^:skip-aot wormbase.names.service
   :monkeypatch-clojure-test false
   :profiles
   {:provided

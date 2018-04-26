@@ -170,13 +170,13 @@
                                   [from into])]
            (when-not (empty? deads)
              (throw (ex-info \"Both merge participants must be live\"
-                             {:type :org.wormbase.db/conflict
+                             {:type :wormbase.db/conflict
                               :dead-genes (map :gene/id deads)}))))
          (when (some nil? [from into])
            (throw (ex-info \"Merge participant does not exist!\"
                             {:missing (remove (comp not nil?)
                                               (map :gene/id [from into]))
-                             :type :org.wormbase.db/missing
+                             :type :wormbase.db/missing
                              :participants participants})))
           (let [entid (partial d/entid db)
                 from-seq-name (:gene/sequence-name from)
@@ -212,7 +212,7 @@
       (if (= (:gene/status gene) :gene.status/dead)
         (throw (ex-info \"Cannot split, gene specified is dead.\"
                         {:gene-id gene-id
-                         :type :org.wormbase.db/conflict}))
+                         :type :wormbase.db/conflict}))
       (let [{biotype :gene/biotype product :product} data
             {p-seq-name :gene/sequence-name p-bt :gene/biotype} product
             entid (partial d/entid db)
@@ -232,7 +232,7 @@
          tx-data))
      (throw (ex-info \"Gene does not exist\"
                      {:gene-id gene-id
-                      :type :org.wormbase.db/missing})))"}}
+                      :type :wormbase.db/missing})))"}}
  {:db/ident :wormbase.tx-fns/kill-gene
   :db/doc "Kill a gene"
   :db/fn #db/fn
@@ -246,7 +246,7 @@
       (when (= ident :gene.status/dead)
         (throw (ex-info \"Gene to be killed is already dead!\"
                         (merge
-                          {:type :org.wormbase.db/conflict}
+                          {:type :wormbase.db/conflict}
                           (apply array-map lookup-ref)))))
       (let [curr-status (d/entid db ident)]
         [[:db/cas lookup-ref :gene/status curr-status :gene.status/dead]]))"}}

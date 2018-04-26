@@ -3,10 +3,10 @@
    [clojure.spec.alpha :as s]
    [clojure.test :as t]
    [datomic.api :as d]
-   [org.wormbase.api-test-client :as api-tc]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.specs.person :as owsp]
-   [org.wormbase.test-utils :as tu]))
+   [wormbase.api-test-client :as api-tc]
+   [wormbase.db-testing :as db-testing]
+   [wormbase.specs.person :as owsp]
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

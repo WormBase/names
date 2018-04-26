@@ -2,12 +2,12 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [org.wormbase.api-test-client :as api-tc]
-   [org.wormbase.fake-auth :as fake-auth]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.gen-specs.species :as gss]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :as tu]))
+   [wormbase.api-test-client :as api-tc]
+   [wormbase.fake-auth :as fake-auth]
+   [wormbase.db-testing :as db-testing]
+   [wormbase.gen-specs.species :as gss]
+   [wormbase.names.service :as service]
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

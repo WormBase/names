@@ -2,9 +2,9 @@
   (:require
    [clojure.string :as str]
    [clojure.test :as t]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.fake-auth]
+   [wormbase.db-testing :as db-testing]
+   [wormbase.names.service :as service]
+   [wormbase.fake-auth]
    [ring.util.http-response :as http-response]))
 
 (t/use-fixtures :once db-testing/db-lifecycle)

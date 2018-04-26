@@ -3,11 +3,11 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
-   [org.wormbase.fake-auth :as fake-auth]
-   [org.wormbase.test-utils :as tu]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.specs.agent :as owsa]))
+   [wormbase.fake-auth :as fake-auth]
+   [wormbase.test-utils :as tu]
+   [wormbase.db-testing :as db-testing]
+   [wormbase.names.service :as service]
+   [wormbase.specs.agent :as owsa]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

@@ -2,11 +2,11 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [org.wormbase.db :as owdb]
-   [org.wormbase.fake-auth :as fake-auth]
-   [org.wormbase.db-testing :as db-testing]
-   [org.wormbase.names.service :as service]
-   [org.wormbase.test-utils :as tu])
+   [wormbase.db :as owdb]
+   [wormbase.fake-auth :as fake-auth]
+   [wormbase.db-testing :as db-testing]
+   [wormbase.names.service :as service]
+   [wormbase.test-utils :as tu])
   (:import (java.util Date)))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
