@@ -11,7 +11,6 @@
    [clojure.spec.alpha :as s]
    [wormbase.db :as owdb]))
 
-
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn query-provenance [conn from-gene-id into-seq-name]
