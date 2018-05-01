@@ -40,14 +40,13 @@
   []
   (dm/fork-conn (starting-point-conn)))
 
-(def print-only-event-brodcaster
+(def ^{:doc "Fake event broadcaster that doesn't do anything."}
+  silent-event-brodcaster
   (reify ownebp/TxEventBroadcaster
     (message-persisted? [this changes]
       true)
     (send-message [this changes]
-      (print "FAKING SENDING CHANGES FOR GENEACE CONSUMPTION")
-      (prn ":" changes)
-      (println))))
+      nil)))
 
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
@@ -56,7 +55,7 @@
           tx-reqort-queue (d/tx-report-queue conn)
           monitor (partial owneb/start-queue-monitor
                            conn
-                           print-only-event-brodcaster)]
+                           silent-event-brodcaster)]
       (mount/start-with {#'owdb/conn conn
                          #'owneb/change-queue-monitor (monitor)})
       (f)
