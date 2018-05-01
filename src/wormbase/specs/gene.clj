@@ -83,9 +83,9 @@
 
 (s/def ::undone (s/keys :req-un [::live ::dead]))
 
-(s/def ::kill (s/keys :opt [:provenance/why
-                            :provenance/when
-                            :provenance/who]))
+(s/def ::kill (stc/spec (s/nilable (s/keys :opt [:provenance/why
+                                                 :provenance/when
+                                                 :provenance/who]))))
 
 (s/def ::kill-response (s/keys :req-un [::killed]))
 

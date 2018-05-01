@@ -23,9 +23,9 @@
   (muuntaja/create
     (muuntaja/select-formats
       muuntaja/default-options
-      ["application/edn"
+      ["application/json"
        "application/transit+json"
-       "application/json"])))
+       "application/edn"])))
 
 (defn- wrap-not-found
   "Fallback 404 handler."

@@ -35,14 +35,14 @@
   [payload gene-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [data (pr-str payload)
+    (let [data (tu/->json payload)
           current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/raw-put-or-post*
                          service/app
                          (str "/gene/" gene-id "/split/")
                          :post
                          data
-                         "application/edn"
+                         "application/json"
                          {"authorization" (str "Token "
                                                current-user-token)})]
       [status (tu/parse-body body)])))
@@ -54,7 +54,7 @@
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/gene/" from-id "/split/" into-id)
-                 "application/edn"
+                 "application/json"
                  {"authorization" (str "Token " current-user-token)}))))
 
 (t/deftest must-meet-spec
@@ -83,14 +83,14 @@
                            :gene/biotype "transcript"}}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
-      (t/is (re-matches #"Invalid.*split.*" (:message body))
+      (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 response for product must be specified"
     (let [[status body] (split-gene
                          {:gene/biotype :biotype/transcript}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
-      (t/is (re-matches #"Invalid.*split.*" (:message body)))))
+      (t/is (re-matches #".*validation failed.*" (:message body)))))
   (t/testing "Get 400 if product biotype not supplied"
     (let [[status body] (split-gene 
                          {:product
@@ -98,7 +98,7 @@
                            :gene/biotype "transcript"}}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
-      (t/is (re-matches #"Invalid.*split.*" (:message body))
+      (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 if sequence-name not supplied"
     (let [[status body] (split-gene
@@ -107,7 +107,7 @@
                           {:gene/biotype :biotype/transposon}}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
-      (t/is (re-matches #"Invalid.*split.*" (:message body))
+      (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 404 when gene to be operated on is missing"
     (let [gene-id (first (gen/sample gs/id 1))
@@ -142,7 +142,7 @@
     (let [[status body] (split-gene {:gene/biotype :biotype/godzilla}
                                     "WBGene00000001")]
       (tu/status-is? status 400 body)
-      (t/is (re-seq #"Invalid.*split" (:message body))
+      (t/is (re-seq #".*validation failed" (:message body))
             (pr-str body)))))
 
 (defn- gen-sample-for-split []

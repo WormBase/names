@@ -1,13 +1,15 @@
 (ns wormbase.specs.biotype
-  (:require [clojure.spec.alpha :as s]))
+  (:require
+   [clojure.spec.alpha :as s]
+   [spec-tools.spec :as sts]))
 
-(s/def :biotype/cds keyword?)
+(s/def :biotype/cds sts/keyword?)
 
-(s/def :biotype/psuedogene keyword?)
+(s/def :biotype/psuedogene sts/keyword?)
 
-(s/def :biotype/transcript keyword?)
+(s/def :biotype/transcript sts/keyword?)
 
-(s/def :biotype/transposon keyword?)
+(s/def :biotype/transposon sts/keyword?)
 
 (def all-biotypes #{:biotype/cds
                     :biotype/psuedogene

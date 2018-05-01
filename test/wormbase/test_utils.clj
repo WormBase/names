@@ -19,6 +19,7 @@
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
+   [wormbase.names.service :as wns]
    [wormbase.specs.gene :as owsg]
    [peridot.core :as p]
    [spec-tools.core :as stc])
@@ -54,7 +55,7 @@
   (let [body (read-body body)
         body (if (instance? String body)
                (try
-                 (muuntaja/decode mformats "application/edn" body)
+                 (muuntaja/decode mformats "application/json" body)
                  (catch ExceptionInfo exc
                    (print-decode-err exc body)
                    (throw exc)))
@@ -69,11 +70,7 @@
     (get-in spec [:definitions schema-name])))
 
 (defn edn-stream [x]
-  (try
-    (muuntaja/encode mformats "application/edn" x)
-    (catch Exception e
-      (println  "********** COULD NOT ENCODE " x "as EDN")
-      (throw e))))
+  (muuntaja/encode mformats "application/edn" x))
 
 (defn follow-redirect [state]
   (if (some-> state :response :headers (get "Location"))
@@ -346,3 +343,10 @@
 (defn person-samples [n]
   (let [data-samples (gen/sample gsp/person n)]
     data-samples))
+
+(defn ->json [data]
+  (let [formats (deref #'wns/mformats)]
+    (-> formats
+        (muuntaja/encode "application/json" data)
+        (slurp))))
+

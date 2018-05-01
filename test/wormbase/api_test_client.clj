@@ -13,7 +13,7 @@
   [entity-kind data & {:keys [current-user]
                        :or {current-user default-user}}]
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [data (pr-str data)
+    (let [data (tu/->json data)
           token (get fake-auth/tokens current-user)
           [status body]
           (tu/raw-put-or-post*
@@ -21,7 +21,7 @@
            (str "/" entity-kind "/")
            :post
            data
-           "application/edn"
+           "application/json"
            {"authorization" (str "Token " token)})]
       [status (tu/parse-body body)])))
 
@@ -33,7 +33,7 @@
           put (partial tu/raw-put-or-post* service/app uri :put)
           token (get fake-auth/tokens current-user)
           headers {"authorization" (str "Token " token)}
-          [status body] (put (pr-str data) nil headers)]
+          [status body] (put (tu/->json data) "application/json" headers)]
       [status (tu/parse-body body)])))
 
 (defn info

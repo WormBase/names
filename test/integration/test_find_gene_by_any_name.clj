@@ -16,7 +16,7 @@
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)
           params {:pattern pattern}
-          headers {"content-type" "application/edn"
+          headers {"content-type" "application/json"
                    "authorization" (str "Token " current-user-token)}
           [status body] (tu/get*
                          service/app
@@ -64,7 +64,7 @@
                   [status body] (find-gene valid-prefix)
                   matches (:matches body)]
               (tu/status-is? 200 status body)
-              (t/is (not (empty? matches))
+              (t/is (seq matches)
                     (str "No matches found for " valid-prefix))
               (t/is (some (fn [match] (= (:gene/id match) gid)) matches)
                     (str "Could not find any GeneID matching " gid

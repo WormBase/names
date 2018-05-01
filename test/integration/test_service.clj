@@ -13,18 +13,18 @@
   (t/testing "When no routes are matched in request processing"
     (let [response (service/app
                     {:uri "/aliens"
-                     :headers {"content-type" "application/edn"
-                               "accept" "application/edn"
+                     :headers {"content-type" "application/json"
+                               "accept" "application/json"
                                "authorization" "Token TOKEN_HERE"}
                      :query-params {}
                      :request-method :get})]
       (t/is (= 404 (:status response)))
       (t/is (str/starts-with?
              (peek (http-response/find-header response "Content-Type"))
-             "application/edn")
+             "application/json")
             (str "Wrong content-type?:" (pr-str (:headers response))))
       (t/is (contains? response :body))
-      (let [decode #(service/decode-content "application/edn" %)
+      (let [decode #(service/decode-content "application/json" %)
             response-text (some-> response :body slurp)]
         (t/is (not= nil (:reason (decode response-text)))
               (str response-text))))))

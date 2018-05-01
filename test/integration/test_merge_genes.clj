@@ -36,7 +36,7 @@
       :or {current-user "tester@wormbase.org"}}]
 
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [data (pr-str payload)
+    (let [data (tu/->json payload)
           uri (str "/gene/" into-id "/merge-from/" from-id)
           [status body]
           (tu/raw-put-or-post*
@@ -44,7 +44,7 @@
            uri
            :post
            data
-           "application/edn"
+           "application/json"
            {"authorization" "Token IsnotReleventHere"})]
       [status (tu/parse-body body)])))
 
@@ -55,7 +55,7 @@
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/gene/" into-id "/merge-from/" from-id)
-                 "application/edn"
+                 "application/json"
                  {"authorization" (str "Token " current-user-token)}))))
 
 (t/deftest must-meet-spec

@@ -12,7 +12,8 @@
    [wormbase.names.util :as ownu]
    [wormbase.specs.common :as owsc]
    [wormbase.specs.gene :as owsg]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [spec-tools.core :as stc]))
 
 (def identify (partial owne/identify ::owsg/identifier))
 
@@ -58,7 +59,7 @@
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (if (s/valid? ::owsg/find-term pattern)
       (let [db (:db request)
-            term (s/conform ::owsg/find-term pattern)
+            term (st/conform ::owsg/find-term pattern)
             q-result (d/q '[:find ?gid ?attr ?name
                             :in $ % ?term
                             :where
@@ -103,13 +104,14 @@
   (let [payload (:body-params request)
         data (ownu/select-keys-with-ns payload "gene")
         spec ::owsg/new
-        [_ cdata] (if (s/valid? spec data)
-                    (s/conform spec (validate-names request data))
-                    (let [problems (s/explain-data spec data)]
-                      (throw (ex-info "Not valid according to spec."
-                                      {:problems problems
-                                       :type ::validation-error
-                                       :data data}))))
+        [_ cdata] (let [conformed (stc/conform spec (validate-names request data))]
+                    (if (= ::s/invalid conformed)
+                      (let [problems (s/explain-data spec data)]
+                        (throw (ex-info "Not valid according to spec."
+                                        {:problems (str problems)
+                                         :type ::validation-error
+                                         :data data})))
+                      conformed))
         prov (ownp/assoc-provenence request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
@@ -128,7 +130,7 @@
             spec ::owsg/update
             data (ownu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::owsg/update data)
-          (let [cdata (s/conform spec (validate-names request data))
+          (let [cdata (st/conform spec (validate-names request data))
                 prov (ownp/assoc-provenence request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
@@ -229,7 +231,7 @@
         spec ::owsg/split]
     (if (s/valid? spec data)
       (if-let [[lur existing-gene] (identify request id)]
-        (let [cdata (s/conform spec data)
+        (let [cdata (st/conform spec data)
               {biotype :gene/biotype product :product} cdata
               {p-seq-name :gene/sequence-name
                p-biotype :gene/biotype} product
@@ -341,7 +343,7 @@
        :post
        {:summary "Create new names for a gene (cloned or un-cloned)"
         :x-name ::new-gene
-        :parameters {:body ::owsg/new}
+        :parameters {:body-params ::owsg/new}
         :responses {201 {:schema {:created ::owsg/created}}
                     400 {:schema  ::owsc/error-response}}
         :handler new-gene}}))
