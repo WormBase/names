@@ -41,7 +41,7 @@
                              :or {current-user "tester@wormbase.org"
                                   params {}}}]
   (let [current-user-token (get fake-auth/tokens current-user)
-        headers {"content-type" "application/edn"
+        headers {"content-type" "application/json"
                  "authorization" (str "Token " current-user-token)}
         [status body] (tu/get*
                        service/app
@@ -58,5 +58,5 @@
           uri (str "/" entity-kind "/" (str/replace-first path #"^/" ""))]
       (tu/delete service/app
                  uri
-                 "application/edn"
+                 "application/json"
                  {"authorization" (str "Token " current-user-token)}))))

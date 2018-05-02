@@ -16,7 +16,7 @@
    [ring.util.http-response :as http-response]
    [buddy.auth :as auth]))
 
-(def default-format "application/edn")
+(def default-format "application/json")
 
 (def ^{:private true
        :doc "Request/Response format configuration"} mformats
