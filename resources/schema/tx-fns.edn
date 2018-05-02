@@ -129,7 +129,7 @@
                                       (into {} %)
                                       %)
                                    ent))
-          existing (resolve-refs (entity->map entity))
+          existing (resolve-refs (select-keys (entity->map entity) (keys data)))
           new (resolve-refs data)
           res (some->> (mapv (fn [[old-k old-v] [new-k new-v]]
                                (when-not (nil? new-v)
