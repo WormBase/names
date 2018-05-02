@@ -50,17 +50,6 @@
                        headers)]
     [status (tu/parse-body body)]))
 
-
-(defn undo-merge-genes
-  [from-id into-id & {:keys [current-user]
-                      :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [current-user-token (get fake-auth/tokens current-user)]
-      (tu/delete service/app
-                 (str "/gene/" into-id "/merge-from/" from-id)
-                 "application/edn"
-                 {"authorization" (str "Token " current-user-token)}))))
-
 (defn delete
   [entity-kind path & {:keys [current-user]
                        :or {current-user default-user}}]
