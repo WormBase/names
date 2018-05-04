@@ -74,7 +74,7 @@
                             (dissoc :gene/status)
                             (assoc :gene/cgc-name new-cgc-name)
                             (assoc :provenance/who
-                                   [:person/email "tester@wormbase.org"])
+                                   {:person/email "tester@wormbase.org"})
                             (assoc :provenance/why
                                    why))]
             (let [response (update-gene identifier payload)

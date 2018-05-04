@@ -4,6 +4,7 @@
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
    [environ.core :as environ]
+   [expound.alpha :refer [expound-str]]
    [wormbase.db :as ow-db]
    ;;   TODO: better API error messages
    ;;   [phrase.alpha :as phrase]
@@ -44,7 +45,7 @@
       (f (if (or (= type :validation-error) (= (name type) "validation-error"))
            (let [info* (ex-data err)
                  problems (if info*
-                            (:problems info*))
+                            (:problems (str info*)))
                  info* (when problems
                          (assoc info* :problems problems))]
                                 ;; (pr-str problems)))]
@@ -59,7 +60,7 @@
 (defn handle-validation-error [^Exception exc data request]
   (let [problems (get-in data [:data :problems])
         info (if problems
-               (assoc data :problems problems)
+               (assoc data :problems (str problems))
                data)]
     (respond-bad-request request (assoc-error-message info exc))))
 
@@ -108,7 +109,7 @@
 (defn handle-request-validation
   ([^Exception exc data request]
    (respond-bad-request request {:message (.getMessage exc)
-                                 :problems (:problems data)}))
+                                 :problems (str (:problems data))}))
   ([err]
    err))
 

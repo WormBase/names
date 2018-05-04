@@ -31,7 +31,7 @@
           [status body] (tu/delete
                          service/app
                          (str "/gene/" gene-id)
-                         "application/edn"
+                         "application/json"
                          {"authorization" (str "Token " current-user-token)})]
       [status (tu/parse-body body)])))
 

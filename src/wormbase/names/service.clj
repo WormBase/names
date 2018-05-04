@@ -16,16 +16,16 @@
    [ring.util.http-response :as http-response]
    [buddy.auth :as auth]))
 
-(def default-format "application/edn")
+(def default-format "application/json")
 
 (def ^{:private true
        :doc "Request/Response format configuration"} mformats
   (muuntaja/create
     (muuntaja/select-formats
       muuntaja/default-options
-      ["application/edn"
+      ["application/json"
        "application/transit+json"
-       "application/json"])))
+       "application/edn"])))
 
 (defn- wrap-not-found
   "Fallback 404 handler."

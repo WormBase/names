@@ -10,22 +10,26 @@
    [wormbase.names.auth :as owna]
    [wormbase.names.util :as ownu]
    [wormbase.names.provenance :as ownp]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [spec-tools.core :as stc]))
 
 (defn create-person [request]
   (let [conn (:conn request)
         spec ::owsp/person
         person (some-> request :body-params)]
-    (if (s/valid? spec person)
-      (let [tempid "datomic.tx"
-            prov (ownp/assoc-provenence request person :event/new-person)
-            tx-res @(d/transact conn [(assoc person :person/active? true) prov])
-            pid (owdb/extract-id tx-res :person/id)]
-        (http-response/created (str "/person/" pid) person))
-      (let [problems (s/explain-data spec person)]
-        (throw (ex-info "Invalid person data"
-                        {:type :user/validation-error
-                         :problems problems}))))))
+    (let [conformed (stc/conform spec person stc/json-conforming)]
+      (if (= conformed ::s/invalid)
+        (let [problems (str (s/explain-data spec person))]
+          (throw (ex-info "Invalid person data"
+                          {:type :user/validation-error
+                           :problems problems})))
+        (let [tempid "datomic.tx"
+              prov (ownp/assoc-provenence request person :event/new-person)
+              tx-data [(assoc person :person/active? true) prov]
+              _ (println "TX-DATA FOR NEW PERSON:" (pr-str tx-data))
+              tx-res @(d/transact conn tx-data)
+              pid (owdb/extract-id tx-res :person/id)]
+          (http-response/created (str "/person/" pid) person))))))
 
 (defn about-person
   "Return info about a WBPerson."
@@ -92,7 +96,7 @@
        :post
        {:summary "Create a new person."
         :x-name ::new-person
-        :parameters {:body ::owsp/person}
+        :parameters {:body-params ::owsp/person}
         :responses {201 {:schema ::owsp/person}}
         :roles #{:admin}
         :handler create-person}}))
@@ -110,7 +114,7 @@
        {:summary "Update information about a person."
         :x-name ::update-person
         :path-params [identifier :- ::owsp/identifier]
-        :parameters {:body ::owsp/person}
+        :parameters {:body-params ::owsp/person}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
