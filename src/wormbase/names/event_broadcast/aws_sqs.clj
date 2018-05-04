@@ -1,7 +1,7 @@
 (ns wormbase.names.event-broadcast.aws-sqs
   (:require
    [amazonica.aws.sqs :as sqs]
-   [wormbase.names.util :as ownu]
+   [wormbase.names.util :as wnu]
    [wormbase.names.event-broadcast.proto :as evb-proto]))
 
 (defn- sqs-queue [config]

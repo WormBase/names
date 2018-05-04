@@ -1,14 +1,14 @@
 (ns wormbase.names.agent
   (:require
    [clojure.spec.alpha :as s]
-   [wormbase.specs.agent :as owsa]
-   [wormbase.names.util :as ownu]))
+   [wormbase.specs.agent :as wsa]
+   [wormbase.names.util :as wnu]))
 
-(def gapps-conf (:google-apps (ownu/read-app-config)))
+(def gapps-conf (:google-apps (wnu/read-app-config)))
 
 (defn identify [token]
-  (let [app-conf (ownu/read-app-config)
-        client-types owsa/all-agents
+  (let [app-conf (wnu/read-app-config)
+        client-types wsa/all-agents
         client-id-map (zipmap
                        (map #(-> gapps-conf % :client-id)
                             (map (comp keyword name) client-types))

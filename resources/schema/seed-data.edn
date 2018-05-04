@@ -1,6 +1,6 @@
 [;; biotypes
  #:db{:ident :biotype/transcript}
- #:db{:ident :biotype/transposon}
+ #:db{:ident :biotype/transposable-element-gene}
  #:db{:ident :biotype/psuedogene}
  #:db{:ident :biotype/cds}
 
@@ -48,6 +48,7 @@
  #:template{:format "WBVar%08d", :describes :variation/id}
 
  ;; agent
+ #:db{:ident :agent/importer}
  #:db{:ident :agent/web}
  #:db{:ident :agent/console}
 
@@ -62,12 +63,15 @@
  #:db{:ident :person.role/viewer}
 
  ;; Events
+ #:db{:ident :event/import-gene}
  #:db{:ident :event/new-person}
  #:db{:ident :event/new-gene}
+ #:db{:ident :event/new-unnamed-gene}
  #:db{:ident :event/update-gene}
  #:db{:ident :event/merge-genes}
  #:db{:ident :event/split-gene}
  #:db{:ident :event/kill-gene}
+ #:db{:ident :event/resurrect-gene}
 
  ;; person (user)
  #:person{:roles #{:person.role/admin},

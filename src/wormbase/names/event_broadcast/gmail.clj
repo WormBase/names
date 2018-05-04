@@ -1,6 +1,6 @@
 (ns wormbase.names.event-broadcast.gmail
   (:require
-   [wormbase.names.util :as ownu]
+   [wormbase.names.util :as wnu]
    [wormbase.names.event-broadcast.proto :as evb-proto]
    [postal.core :as postal]
    [clojure.string :as str]))

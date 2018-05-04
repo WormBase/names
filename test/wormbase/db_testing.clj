@@ -5,10 +5,10 @@
    [datomic.api :as d]
    [java-time :as jt]
    [mount.core :as mount]
-   [wormbase.db :as owdb]
+   [wormbase.db :as wdb]
    [wormbase.db.schema :as schema]
-   [wormbase.names.event-broadcast :as owneb]
-   [wormbase.names.event-broadcast.proto :as ownebp]))
+   [wormbase.names.event-broadcast :as wneb]
+   [wormbase.names.event-broadcast.proto :as wnebp]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -42,7 +42,7 @@
 
 (def ^{:doc "Fake event broadcaster that doesn't do anything."}
   silent-event-brodcaster
-  (reify ownebp/TxEventBroadcaster
+  (reify wnebp/TxEventBroadcaster
     (message-persisted? [this changes]
       true)
     (send-message [this changes]
@@ -53,13 +53,13 @@
                  (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)
           tx-reqort-queue (d/tx-report-queue conn)
-          monitor (partial owneb/start-queue-monitor
+          monitor (partial wneb/start-queue-monitor
                            conn
                            silent-event-brodcaster)]
-      (mount/start-with {#'owdb/conn conn
-                         #'owneb/change-queue-monitor (monitor)})
+      (mount/start-with {#'wdb/conn conn
+                         #'wneb/change-queue-monitor (monitor)})
       (f)
-      (owdb/checked-delete uri)
+      (wdb/checked-delete uri)
       (mount/stop))))
 
 (defn speculate [conn tx]

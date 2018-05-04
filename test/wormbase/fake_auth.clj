@@ -4,11 +4,11 @@
    ;; [clojure.tools.logging :as log]
    [cheshire.core :as json]
    [environ.core :as environ]
-   [wormbase.names.auth :as own-auth]))
+   [wormbase.names.auth :as wn-auth]))
 
-(def console-client-id (own-auth/client-id :console))
+(def console-client-id (wn-auth/client-id :console))
 
-(def web-client-id (own-auth/client-id :web))
+(def web-client-id (wn-auth/client-id :web))
 
 (def tokens {"tester@wormbase.org" "TOKEN_HERE_tester1"
              "tester2@wormbase.org" "TOKEN_HERE_tester2"
@@ -29,7 +29,7 @@
 (def ^:dynamic *gapi-verify-token-response* nil)
 
 (alter-var-root
- (var own-auth/verify-token-gapi)
+ (var wn-auth/verify-token-gapi)
  (fn fake-google-api-verify-token [token]
    (fn verify-token-pretend [token]
      ;; TODO: use logging

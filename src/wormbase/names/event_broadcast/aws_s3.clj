@@ -2,7 +2,7 @@
   (:require
    [clojure.edn :as edn]
    [amazonica.aws.s3 :as s3]
-   [wormbase.names.util :as ownu]
+   [wormbase.names.util :as wnu]
    [wormbase.names.event-broadcast.proto :as evb-proto]
    [clojure.string :as str])
   (:import

@@ -19,3 +19,5 @@
 (s/def :species/latin-name (stc/spec
                             (s/and sts/string? #(re-matches latin-name-regexp %))))
 
+(s/def ::identifier (s/or :species/id :species/id
+                          :species/latin-name :species/latin-name))

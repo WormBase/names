@@ -66,25 +66,40 @@
             (filter identity)
             (first)))"}}
 
- {:db/ident :wormbase.tx-fns/new
-  :db/doc "Allocate a new name for entity"
+ {:db/ident :wormbase.tx-fns/new-unnamed-gene
+  :db/doc "Create a new entity assigning an existing identifier."
   :db/fn #db/fn
   {:lang "clojure"
-   :params [db entity-type data]
+   :params [db data]
    :code
    "(let [invoke (partial d/invoke db)
-          ident (keyword entity-type \"id\")
+          identifier (:gene/id data)
+          species-lur (-> data :gene/species vec first)]
+     [(-> data
+          (assoc :gene/species species-lur)
+          (assoc :gene/status :gene.status/live))])"}}
+
+ {:db/ident :wormbase.tx-fns/new-gene
+  :db/doc "Allocate a new WBGene identifier."
+  :db/fn #db/fn
+  {:lang "clojure"
+   :params [db data import?]
+   :code
+   "(let [invoke (partial d/invoke db)
+          ident :gene/id
           template (-> (d/entity db [:template/describes ident])
                        :template/format)
           new-gene-ref (invoke :wormbase.tx-fns/gene-dbid-ref db data)
           identify (fn [rec]
-                     (let [next-id (invoke
-                                    :wormbase.tx-fns/next-identifier
-                                    db
-                                    ident
-                                    template)
+                     (let [
+                           gid (if import?
+                                   (:gene/id data)
+                                   (invoke :wormbase.tx-fns/next-identifier
+                                           db
+                                           ident
+                                           template))
                            species-lur (-> rec :gene/species vec first)]
-                       (-> (assoc rec ident next-id)
+                       (-> (assoc rec ident gid)
                            (assoc :gene/species species-lur)
                            (assoc :gene/status :gene.status/live))))
           new (-> data
@@ -213,26 +228,38 @@
         (throw (ex-info \"Cannot split, gene specified is dead.\"
                         {:gene-id gene-id
                          :type :wormbase.db/conflict}))
-      (let [{biotype :gene/biotype product :product} data
-            {p-seq-name :gene/sequence-name p-bt :gene/biotype} product
-            entid (partial d/entid db)
-            bt-id (entid biotype)
-            src (d/entity db [:gene/id gene-id])
-            existing-bt-id (-> src :gene/biotype entid)
-            species (-> src :gene/species :species/id)
-            new-gene-data {:gene/species {:species/id species}
-                           :gene/biotype p-bt
-                           :gene/sequence-name p-seq-name
-                           :db/id p-seq-name}
-            tx-data [[:db.fn/cas [:gene/id gene-id]
-                                  :gene/biotype
-                                   existing-bt-id
-                                   bt-id]
-                     [:wormbase.tx-fns/new \"gene\" new-gene-data]]]
-         tx-data))
-     (throw (ex-info \"Gene does not exist\"
-                     {:gene-id gene-id
-                      :type :wormbase.db/missing})))"}}
+        (let [{biotype :gene/biotype product :product} data
+               _ (println \"S1\")
+              {p-seq-name :gene/sequence-name p-bt :gene/biotype} product
+               _ (println \"S2\")
+              entid (partial d/entid db)
+               _ (println \"S3\")
+              bt-id (entid biotype)
+               _ (println \"S4\")
+              src (d/entity db [:gene/id gene-id])
+               _ (println \"S5\")
+              existing-bt-id (-> src :gene/biotype entid)
+               _ (println \"S6\")
+              species (-> src :gene/species :species/id)
+               _ (println \"S7\")
+              new-gene-data {:gene/species {:species/id species}
+                             :gene/biotype p-bt
+                             :gene/sequence-name p-seq-name
+                             :db/id p-seq-name}
+               _ (println \"S8\")
+              tx-data [[:db.fn/cas [:gene/id gene-id]
+                                    :gene/biotype
+                                    existing-bt-id
+                                    bt-id]
+                      [:wormbase.tx-fns/new-gene new-gene-data false]]
+               _ (println \"S9-endlet\")]
+           (println \"TX-DATA for split:\")
+           (prn tx-data)
+           tx-data))
+       (throw (ex-info \"Gene does not exist\"
+                       {:gene-id gene-id
+                        :type :wormbase.db/missing})))"}}
+ 
  {:db/ident :wormbase.tx-fns/kill-gene
   :db/doc "Kill a gene"
   :db/fn #db/fn
@@ -249,5 +276,4 @@
                           {:type :wormbase.db/conflict}
                           (apply array-map lookup-ref)))))
       (let [curr-status (d/entid db ident)]
-        [[:db/cas lookup-ref :gene/status curr-status :gene.status/dead]]))"}}
- ]
+        [[:db/cas lookup-ref :gene/status curr-status :gene.status/dead]]))"}}]

@@ -3,16 +3,15 @@
    [clojure.spec.alpha :as s]
    [miner.strgen :as sg]
    [wormbase.gen-specs.util :as util]
-   [wormbase.specs.person :as ows-person]
    [clojure.spec.gen.alpha :as gen]
-   [wormbase.specs.person :as owsp]))
+   [wormbase.specs.person :as wsp]))
 
-(def email (sg/string-generator owsp/email-regexp))
+(def email (sg/string-generator wsp/email-regexp))
 
-(def id (sg/string-generator owsp/id-regexp))
+(def id (sg/string-generator wsp/id-regexp))
 
 (def roles (s/gen :person/roles
-                  {::owsp/role
+                  {::wsp/role
                    #(s/gen
                      (->> (util/load-enum-samples "person.role")
                           (map :db/ident)
@@ -24,4 +23,4 @@
    [:person/email] (constantly email)
    [:person/roles] (constantly roles)})
 
-(def person (s/gen ::owsp/person person-overrides))
+(def person (s/gen ::wsp/person person-overrides))

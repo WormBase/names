@@ -8,11 +8,15 @@
 
 (def ^:dynamic *wb-db-uri* nil)
 
+(def ^{:dynamic true
+       :doc "Incremetn this number each time a schema change is made"}
+  schema-version 1)
+
 (defn connect
   "Connects to the datomic database and transacts schema if required."
   [uri]
   (let [conn (d/connect uri)]
-    (db-schema/install conn 1)
+    (db-schema/install conn schema-version)
     conn))
 
 (defn checked-connect

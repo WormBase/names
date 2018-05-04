@@ -7,7 +7,7 @@
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
-   [wormbase.specs.agent :as owsa]))
+   [wormbase.specs.agent :as wsa]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

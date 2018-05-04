@@ -7,9 +7,9 @@
    [miner.strgen :as sg]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gs]
-   [wormbase.db :as owdb]
+   [wormbase.db :as wdb]
    [wormbase.test-utils :as tu]
-   [wormbase.specs.gene :as owsg]
+   [wormbase.specs.gene :as wsg]
    [clojure.string :as str])
   (:import
    (clojure.lang ExceptionInfo)))
@@ -17,7 +17,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (t/deftest test-merge-genes
-  (let [db (d/db owdb/conn)
+  (let [db (d/db wdb/conn)
         merge-genes (partial d/invoke db :wormbase.tx-fns/merge-genes)]
     (t/testing "Both merge participants must exist in DB"
       (let [data-samples (tu/gene-samples 2)
@@ -28,7 +28,7 @@
                            (merge-genes db
                                         from-id
                                         into-id
-                                        :biotype/transposon)))))
+                                        :biotype/transposable-element-gene)))))
     (t/testing "Both source and target of merge should be live"
       (let [data-samples (tu/gene-samples 2)
             [from-id into-id] (map :gene/id data-samples)
@@ -52,7 +52,7 @@
                    (merge-genes (d/db conn)
                                 from-id
                                 into-id
-                                :biotype/transposon)))))))
+                                :biotype/transposable-element-gene)))))))
     (t/testing (str "When merging cloned to uncloned, "
                     "sequence name is transfered: "
                     "eaten gene's sequence name should be retracted.")
@@ -122,7 +122,7 @@
             (let [txes (merge-genes (d/db conn)
                                     from-id
                                     into-id
-                                    :biotype/transposon)
+                                    :biotype/transposable-element-gene)
                   tx-res (d/with (d/db conn) txes)]
               (t/is (map? tx-res))
               (t/is (:db-after tx-res)))))))))
@@ -137,7 +137,7 @@
       sn)))
 
 (t/deftest test-split-genes
-  (let [db (d/db owdb/conn)
+  (let [db (d/db wdb/conn)
         split-gene (partial d/invoke db :wormbase.tx-fns/split-gene)]
     (t/testing "a valid split operation"
       (let [[sample] (tu/gene-samples 1)

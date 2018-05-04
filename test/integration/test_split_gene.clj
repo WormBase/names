@@ -9,7 +9,7 @@
    [wormbase.names.service :as service]
    [clojure.spec.gen.alpha :as gen]
    [clojure.spec.alpha :as s]
-   [wormbase.db :as owdb]))
+   [wormbase.db :as wdb]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -104,7 +104,7 @@
     (let [[status body] (split-gene
                          {:gene/biotype :biotype/cds
                           :product
-                          {:gene/biotype :biotype/transposon}}
+                          {:gene/biotype :biotype/transposable-element-gene}}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body))
@@ -164,7 +164,7 @@
         (fn check-provenance [conn]
           (let [db (d/db conn)
                 user-email "tester@wormbase.org"
-                data {:product {:gene/biotype :biotype/transposon
+                data {:product {:gene/biotype :biotype/transposable-element-gene
                                 :gene/sequence-name prod-seq-name}
                       :gene/biotype :biotype/cds
                       :provenance/why "testing"
@@ -221,8 +221,8 @@
                        "a gene that has been split for testing undo"
                        :provenance/how :agent/console}]]
           conn (db-testing/fixture-conn)]
-      (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
-                    owdb/db (fn get-db [_] (d/db conn))]
+      (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+                    wdb/db (fn get-db [_] (d/db conn))]
         (doseq [init-tx init-txes]
           @(d/transact-async conn init-tx))
         (let [tx (d/q '[:find ?tx .

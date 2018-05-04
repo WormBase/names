@@ -3,16 +3,16 @@
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
-   [wormbase.db.schema :as owdbs]
-   [wormbase.specs.gene :as owsg]
+   [wormbase.db.schema :as wdbs]
+   [wormbase.specs.gene :as wsg]
    [wormbase.specs.species]
    [wormbase.gen-specs.util :as util]
-   [wormbase.gen-specs.person :as owgs-person]
+   [wormbase.gen-specs.person :as wgsp]
    [wormbase.gen-specs.species :as gss])
   (:refer-clojure :exclude [identity update]))
 
 (def id (s/gen :gene/id
-               {:gene/id #(sg/string-generator owsg/gene-id-regexp)}))
+               {:gene/id #(sg/string-generator wsg/gene-id-regexp)}))
 
 (def biotype-overrides
   {:gene/biotype #(s/gen (->> (util/load-enum-samples "biotype")
@@ -51,7 +51,7 @@
                  (map (partial array-map :species/id))
                  set))))
 
-(def identity (s/gen ::owsg/identifier
+(def identity (s/gen ::wsg/identifier
                      {:gene/id (constantly id)
                       :gene/cgc-name (constantly cgc-name)
                       :gene/sequence-name (constantly sequence-name)}))
@@ -61,8 +61,8 @@
    :gene/species (constantly (s/gen ::species))
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
    :gene/sequence-name (constantly (s/gen :gene/sequence-name))
-   [:provenance/who :person/id] (constantly owgs-person/id)
-   [:provenance/who :person/email] (constantly owgs-person/email)
-   [:provenance/who :person/roles] (constantly owgs-person/roles)})
+   [:provenance/who :person/id] (constantly wgsp/id)
+   [:provenance/who :person/email] (constantly wgsp/email)
+   [:provenance/who :person/roles] (constantly wgsp/roles)})
 
-(def update (s/gen ::owsg/update update-overrides))
+(def update (s/gen ::wsg/update update-overrides))

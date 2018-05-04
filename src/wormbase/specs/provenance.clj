@@ -3,8 +3,7 @@
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [wormbase.specs.person] ;; for specs
-   [wormbase.specs.agent :as owsa]
-   [spec-tools.spec :as sts]
+   [wormbase.specs.agent :as wsa]
    [spec-tools.core :as stc]))
 
 (s/def :agent/id sts/string?)

@@ -3,10 +3,10 @@
   (:require
    [datomic.api :as d]
    [mount.core :as mount]
-   [wormbase.db :as owdb]
-   [wormbase.names.util :as ownu]
-   [wormbase.names.event-broadcast.proto :as owneb]
-   [wormbase.names.event-broadcast.aws-s3 :as owneb-s3]))
+   [wormbase.db :as wdb]
+   [wormbase.names.util :as wnu]
+   [wormbase.names.event-broadcast.proto :as wneb]
+   [wormbase.names.event-broadcast.aws-s3 :as wneb-s3]))
 
 (defn read-changes [{:keys [db-after tx-data] :as report}]
   (d/q '[:find ?aname ?val
@@ -32,7 +32,7 @@
         changes (->> report
                      read-changes
                      (into {})
-                     (ownu/resolve-refs db-after))
+                     (wnu/resolve-refs db-after))
         tx-k->db-id (->> (:tx-data report)
                          (map (fn [datom]
                                 (list (d/ident db-after (.a datom)) (.e datom))))
@@ -42,11 +42,11 @@
     ;; (ownu/datom-table db-after (:tx-data report))
     (when (include-agents (:provenance/how changes))
       (comment "LOGGING")
-      (owneb/send-message event-broadcaster
+      (wneb/send-message event-broadcaster
                           (assoc changes
                                  :tx-id
                                  (format "0x%016x" (:db/txInstant tx-k->db-id))))
-      (while (not (owneb/message-persisted? event-broadcaster changes))
+      (while (not (wneb/message-persisted? event-broadcaster changes))
         (comment "LOGGING")
         ;; Perhaps terminate this loop and abort if unable to get a result?
         (Thread/sleep 5000))
@@ -80,8 +80,8 @@
   :start (fn []
            (comment "LOGGING")
            (start-queue-monitor
-            owdb/conn
-            (-> {} owneb-s3/map->TxEventBroadcaster owneb/configure)))
+            wdb/conn
+            (-> {} wneb-s3/map->TxEventBroadcaster wneb/configure)))
   :stop (fn []
           (comment "LOGGING")
           (future-cancel change-queue-monitor)

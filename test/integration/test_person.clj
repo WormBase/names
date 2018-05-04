@@ -5,7 +5,7 @@
    [datomic.api :as d]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
-   [wormbase.specs.person :as owsp]
+   [wormbase.specs.person :as wsp]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)

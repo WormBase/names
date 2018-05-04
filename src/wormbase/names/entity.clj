@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [datomic.api :as d]
-   [wormbase.db :as owdb]))
+   [wormbase.db :as wdb]))
 
 (defn identify
   "Return an lookup ref and entity for a given identifier.

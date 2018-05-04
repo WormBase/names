@@ -15,12 +15,12 @@
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [wormbase.db-testing :as db-testing]
-   [wormbase.db :as owdb]
+   [wormbase.db :as wdb]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as wns]
-   [wormbase.specs.gene :as owsg]
+   [wormbase.specs.gene :as wsg]
    [peridot.core :as p]
    [spec-tools.core :as stc])
   (:import
@@ -242,9 +242,9 @@
                           (conj [data] prov)
                           [data])]
         @(d/transact-async conn tx-fixtures)))
-    (with-redefs [owdb/connection (fn [] conn)
-                  owdb/db (fn speculate [_]
-                            (d/db conn))]
+    (with-redefs [wdb/connection (fn [] conn)
+                  wdb/db (fn speculate [_]
+                           (d/db conn))]
       (test-fn conn))))
 
 (defn gene-provenance

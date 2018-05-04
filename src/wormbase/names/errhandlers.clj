@@ -4,12 +4,11 @@
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
    [environ.core :as environ]
-   [expound.alpha :refer [expound-str]]
-   [wormbase.db :as ow-db]
+   [wormbase.db :as wdb]
    ;;   TODO: better API error messages
    ;;   [phrase.alpha :as phrase]
    [ring.util.http-response :as http-response]
-   [wormbase.names.gene :as own-gene])
+   [wormbase.names.gene :as wn-gene])
   (:import
    (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))
@@ -32,10 +31,10 @@
 
 (defn custom-exc-handler [f type]
   (fn [^Exception exc data request]
-    ;; Exceptions thrown in a transaction function are wrapped
+    ;; Exceptions thrwn in a transaction function are wrapped
     ;; in a concurrent.ExecutionException -
     ;; override custom exc handler to be bad-request if the
-    ;; cause was thrown with `exc-info`
+    ;; cause was thrwn with `exc-info`
     (let [txfn-err? (instance? ExecutionException exc)
           cause (.getCause exc)
           err (if (and txfn-err? (instance? ExceptionInfo cause))
@@ -122,16 +121,16 @@
   {;; Spec validation errors
    ::ex/request-validation handle-request-validation ;; c-api
    :user/validation-error handle-validation-error
-   ::own-gene/validation-error handle-validation-error
-   ::ow-db/validation-error handle-validation-error
+   ::wn-gene/validation-error handle-validation-error
+   ::wdb/validation-error handle-validation-error
    ExceptionInfo handle-validation-error
 
    ;; Exceptions raised within a transaction function are handled
    ExecutionException handle-txfn-error
 
    ;; App db errors
-   ::ow-db/conflict handle-db-conflict
-   ::ow-db/missing handle-missing
+   ::wdb/conflict handle-db-conflict
+   ::wdb/missing handle-missing
 
    ;; Datomic db exceptions
    :db.error/not-an-entity handle-missing

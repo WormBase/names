@@ -1,7 +1,7 @@
 (ns wormbase.species
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [wormbase.specs.species :as owss]))
+            [wormbase.specs.species :as wss]))
 
 (s/fdef latin-name->ident
         :args (s/cat :species :species/latin-name)
@@ -23,7 +23,7 @@
       (s/valid? :species/latin-name s)
       (latin-name->ident s)
 
-      (s/valid? ::owss/short-name s)
+      (s/valid? ::wss/short-name s)
       (-to-ident (keyword "species" s))      
 
       s
@@ -55,7 +55,7 @@
 (s/fdef convert-to-ident
         :args (s/cat :s-or-kw
                      (s/or
-                      :short-name ::owss/short-name
+                      :short-name ::wss/short-name
                       :id :species/id))
         :ret (s/nilable :species/id))
 (defn convert-to-ident

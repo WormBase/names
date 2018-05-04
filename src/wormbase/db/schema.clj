@@ -3,7 +3,8 @@
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [datomic.api :as d]
-   [io.rkn.conformity :as c])
+   [io.rkn.conformity :as c]
+   [wormbase.util :refer [read-edn]])
   (:import (java.io PushbackReader)))
 
 (defn definitions [db]
@@ -37,13 +38,6 @@
                   vec)]
       (prn se))))
 
-(defn read-edn [readable]
-  (let [edn-read (partial edn/read {:readers *data-readers*})]
-    (-> readable
-        io/reader
-        (PushbackReader.)
-        (edn-read))))
-
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
 ;;       schema transactions.
@@ -54,11 +48,13 @@
     (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
           schema-txes (read-edn (io/resource "schema/definitions.edn"))
           seed-data (read-edn (io/resource "schema/seed-data.edn"))
+          people (read-edn (io/resource "schema/wbpeople.edn"))
           init-schema [(concat db-fns schema-txes)]]
       ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
       ;;       relations without some data installed.
       ;;       i.e schema alone will not draw the  between refs.
       ;;           (arrows on digagrea)
       (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
-      (c/ensure-conforms conn {:seed-data {:txes [seed-data]}}))))
+      (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
+      (c/ensure-conforms conn {:people {:txes [people]}}))))
 

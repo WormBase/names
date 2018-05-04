@@ -4,18 +4,18 @@
    [compojure.api.routes :as route]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
-   [wormbase.db :as owdb]
-   [wormbase.names.auth.restructure :as ownar] ;; TBD: side effects?
-   [wormbase.specs.person :as owsp]
-   [wormbase.names.auth :as owna]
-   [wormbase.names.util :as ownu]
-   [wormbase.names.provenance :as ownp]
+   [wormbase.db :as wdb]
+   [wormbase.names.auth.restructure :as wnar] ;; TBD: side effects?
+   [wormbase.specs.person :as wsp]
+   [wormbase.names.auth :as wna]
+   [wormbase.names.util :as wnu]
+   [wormbase.names.provenance :as wnp]
    [ring.util.http-response :as http-response]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]))))
 
 (defn create-person [request]
   (let [conn (:conn request)
-        spec ::owsp/person
+        spec ::wsp/person
         person (some-> request :body-params)]
     (let [conformed (stc/conform spec person stc/json-conforming)]
       (if (= conformed ::s/invalid)
@@ -35,24 +35,24 @@
   "Return info about a WBPerson."
   [identifier request]
   (let [db (:db request)
-        lur (s/conform ::owsp/identifier identifier)
-        person (ownu/entity->map (d/pull db '[*] lur))]
+        lur (s/conform ::wsp/identifier identifier)
+        person (wnu/entity->map (d/pull db '[*] lur))]
     (when (:db/id person)
       (http-response/ok person))))
 
 (defn info [db lur]
   (let [person (d/pull db '[*] lur)]
     (when (:db/id person)
-      (ownu/entity->map person))))
+      (wnu/entity->map person))))
 
 (defn update-person
   "Handler for apply an update a person."
   [identifier request]
   (let [db (:db request)
-        lur (s/conform ::owsp/identifier identifier)
+        lur (s/conform ::wsp/identifier identifier)
         person (info db lur)]
     (if (:db/id person)
-      (let [spec ::owsp/person
+      (let [spec ::wsp/person
             conn (:conn request)
             data (some-> request
                          :body-params
@@ -73,18 +73,18 @@
 
 (defn deactivate-person [identifier request]
   (let [conn (:conn request)
-        lur (s/conform ::owsp/identifier identifier)
+        lur (s/conform ::wsp/identifier identifier)
         tx-result @(d/transact-async conn
                                      [[:wormbase.tx-fns/deactivate-person lur]])]
     (http-response/ok)))
   
 (defn wrap-id-validation [handler identifier]
   (fn [request]
-    (if (s/valid? ::owsp/identifier identifier)
+    (if (s/valid? ::wsp/identifier identifier)
       (handler identifier request)
       (throw (ex-info "Invalid person identifier"
                       {:type :user/validation-error
-                       :problems (s/explain-data ::owsp/identifier identifier)})))))
+                       :problems (s/explain-data ::wsp/identifier identifier)})))))
 
 (def routes
   (sweet/routes
@@ -108,7 +108,7 @@
        :get
        {:summary "Information about a person."
         :x-name ::about-person
-        :path-params [identifier :- ::owsp/identifier]
+        :path-params [identifier :- ::wsp/identifier]
         :handler (wrap-id-validation about-person identifier)}
        :put
        {:summary "Update information about a person."
@@ -119,6 +119,6 @@
        :delete
        {:summary "Deactivate a person."
         :x-name ::deactivate-person
-        :path-params [identifier :- ::owsp/identifier]
+        :path-params [identifier :- ::wsp/identifier]
         :handler (wrap-id-validation deactivate-person identifier)}}))))
 

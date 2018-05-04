@@ -2,7 +2,7 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [wormbase.db :as owdb]
+   [wormbase.db :as wdb]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
@@ -37,7 +37,7 @@
 
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [data (tu/->json payload)
-          uri (str "/gene/" into-id "/merge-from/" from-id)
+          uri (str "/gene/" into-id "/merge/" from-id)
           [status body]
           (tu/raw-put-or-post*
            service/app
@@ -69,9 +69,10 @@
 
 (t/deftest response-codes
   (t/testing "404 for gene missing"
-    (let [[status body] (merge-genes {:gene/biotype :biotype/transposon}
-                                     "WB2"
-                                     "WB1")]
+    (let [[status body] (merge-genes
+                         {:gene/biotype :biotype/transposable-element-gene}
+                         "WB2"
+                         "WB1")]
       (tu/status-is? status 404 body)))
   (t/testing "409 for conflicting state"
     (let [data-samples (tu/gene-samples 2)
@@ -128,7 +129,7 @@
         (fn check-provenance [conn]
           (let [db (d/db conn)
                 [status body] (merge-genes
-                               {:gene/biotype :biotype/transposon}
+                               {:gene/biotype :biotype/transposable-element-gene}
                                from-id
                                into-id)
                 prov (query-provenance conn from-id into-id)
@@ -177,8 +178,8 @@
                       "a gene that has been merged for testing undo"
                       :provenance/how :agent/console}]
           conn (db-testing/fixture-conn)]
-      (with-redefs [owdb/connection (fn get-fixture-conn [] conn)
-                    owdb/db (fn get-db [_] (d/db conn))]
+      (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+                    wdb/db (fn get-db [_] (d/db conn))]
         (let [init-tx-res @(d/transact-async conn init-txes)
               tx (d/q '[:find ?tx .
                         :in $ ?from-lur ?into-lur

@@ -1,10 +1,10 @@
 (ns wormbase.gen-specs.util
   (:require
    [clojure.java.io :as io]
-   [wormbase.db.schema :as owdbs]))
+   [wormbase.util :as util]))
 
 (defn load-seed-data []
-  (owdbs/read-edn (io/resource "schema/seed-data.edn")))
+  (util/read-edn (io/resource "schema/seed-data.edn")))
 
 (defn load-enum-samples [sd-ns]
   (->> (load-seed-data)

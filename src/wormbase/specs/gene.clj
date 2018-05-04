@@ -55,6 +55,12 @@
 (s/def ::new (stc/spec (s/or :cloned ::cloned
                              :uncloned ::uncloned)))
 
+(s/def ::new-unnamed (s/keys :req [:gene/id
+                                   :gene/species]
+                             :opt [:provenance/who
+                                   :provenance/how
+                                   :provenance/why]))
+
 (s/def ::created (stc/spec (s/keys :req [:gene/id :gene/status])))
 
 (s/def ::update (stc/spec (s/keys :opt [:gene/biotype

@@ -5,8 +5,8 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
-   [wormbase.db :as owdb]
-   [wormbase.names.agent :as wna] ;; specs
+   [wormbase.db :as wdb]
+   [wormbase.names.agent :as wn-agent]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
@@ -100,7 +100,22 @@
           data (d/pull db info-expr lur)]
       (http-response/ok (transform-result data)))))
 
-(defn new-gene [request]
+(defn new-unnamed-gene [request payload]
+  (let [prov (wnp/assoc-provenence request payload :event/new-gene)
+        data (wnu/select-keys-with-ns payload "gene")
+        spec ::wsg/new-unnamed
+        cdata (if (s/valid? spec data)
+                (s/conform spec data)
+                (let [problems (s/explain-data spec data)]
+                  (throw (ex-info "Invalid data"
+                                  {:problems problems
+                                   :type ::validation-error
+                                   :data data}))))
+        tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
+    @(d/transact-async (:conn request) tx-data)))
+
+(defn new-gene [request {:keys [import?]
+                         :or {import? false}}]
   (let [payload (:body-params request)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new
@@ -116,7 +131,7 @@
         tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
-        new-id (owdb/extract-id tx-result :gene/id)
+        new-id (wdb/extract-id tx-result :gene/id)
         ent (d/entity db [:gene/id new-id])
         emap (wnu/entity->map ent)
         result {:created emap}]
@@ -149,28 +164,32 @@
   (let [db (:db request)
         [[into-lur into] [from-lur from]] (map (partial identify request)
                                                [into-id from-id])]
+    (when (some nil? [into from])
+      (throw (ex-info "Missing gene in database, cannot merge."
+                      {:missing (if-not into
+                                  into-id
+                                  from-id)
+                       :type :wormbase.db/conflict})))
     (when (= from-id into-id)
       (throw (ex-info "Source and into ids cannot be the same!"
                       {:from-id from-id
                        :into-id into-id
                        :type ::validation-error})))
     (when-not (and (s/valid? :gene/biotype into-biotype)
-                   (owdb/ident-exists? db into-biotype))
+                   (wdb/ident-exists? db into-biotype))
       (throw (ex-info "Invalid biotype"
                       {:problems (str (s/explain-data
                                        :gene/biotype
                                        into-biotype))
                        :type ::validation-error})))
     (when (reduce not=
-                  (map (comp :species/id :gene/species) [from into]))
+                  (map :gene/species [from into]))
       (throw (ex-info
               "Refusing to merge: genes have differing species"
-              (apply
-               merge
-               {:type :wormbase.db/conflict}
-               (map (fn [[lur ent]]
-                      (apply array-map
-                             (conj into-lur :species/id (:gene/species ent)))))))))
+              {:from {:gen/species (-> from :gene/species :species/id)
+                      :gene/id from-id}
+               :into {:species (-> into :gene/species :species/id)
+                      :gene/id into-id}})))
     (when (:gene/cgc-name from)
       (throw (ex-info (str "Gene to be killed has a CGC name,"
                            "refusing to merge.")
@@ -219,7 +238,7 @@
           prov {:db/id "datomic.tx"
                 :provenance/compensates tx
                 :provenance/why "Undoing merge"}
-          compensating-txes (owdb/invert-tx (d/log conn) tx prov)
+          compensating-txes (wdb/invert-tx (d/log conn) tx prov)
           tx-result @(d/transact-async conn compensating-txes)]
       (http-response/ok {:live into-id :dead from-id}))
     (http-response/not-found {:message "No transaction to undo"})))
@@ -259,6 +278,17 @@
                                {:updated updated :created created}))
       (http-response/not-found {:gene/id id :message "Gene not found"}))))
 
+(defn ressurect-gene [request identifier]
+  (if (s/valid? ::wsg/identifier identifier)
+    (let [[ident val] (s/conform ::wsg/identifier identifier)
+          tx-res @(d/transact-async (:conn request)
+                                    [[:db.fn/cas
+                                      [ident val]
+                                      :gene/status
+                                      :gene.status/dead
+                                      :gene.status/live]])]
+      (http-response/ok {:gene/id identifier}))))
+
 (defn- invert-split-tx [db e a v tx added?]
   (cond
     (= (d/ident db a) :gene/status)
@@ -285,7 +315,7 @@
                 :provenance/compensates tx
                 :provenance/why "Undoing split"}
           fact-mapper (partial invert-split-tx (d/db conn))
-          compensating-txes (owdb/invert-tx (d/log conn)
+          compensating-txes (wdb/invert-tx (d/log conn)
                                             tx
                                             prov
                                             fact-mapper)
@@ -301,7 +331,7 @@
     (validate-names request data)
     (when (= (:gene/status ent) :gene.status/dead)
       (throw (ex-info "Cannot kill dead gene"
-                      {:type ::owdb/conflict
+                      {:type ::wdb/conflict
                        :lookup-ref lur})))
     (when ent
       (let [payload (some->> request :body-params)
@@ -407,4 +437,12 @@
           :handler (fn [request]
                      (undo-split-gene request
                                       identifier
-                                      into-identifier))}})))))
+                                      into-identifier))}}))
+     (sweet/context "/resurrect" []
+       (sweet/resource
+        {:post
+         {:summary "Ressurect a gene."
+          :x-name ::ressurect-gene
+          :responses default-responses
+          :handler (fn [request]
+                     (ressurect-gene request identifier))}})))))

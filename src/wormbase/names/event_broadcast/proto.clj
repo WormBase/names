@@ -1,5 +1,5 @@
 (ns wormbase.names.event-broadcast.proto
-  (:require [wormbase.names.util :as ownu]))
+  (:require [wormbase.names.util :as wnu]))
 
 
 (defprotocol TxEventBroadcaster
@@ -9,5 +9,5 @@
 
 
 (defn make [ctor config-kw]
-  (let [config (get-in (ownu/read-app-config) [:event-broadcast config-kw])]
+  (let [config (get-in (wnu/read-app-config) [:event-broadcast config-kw])]
     (ctor {:config config})))

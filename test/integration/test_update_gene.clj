@@ -4,13 +4,13 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
-   [wormbase.db :as owdb]
+   [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth] ;; for side effect
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]
-   [wormbase.specs.gene :as owsg]
+   [wormbase.specs.gene :as wsg]
    [wormbase.test-utils :as tu]
    [wormbase.api-test-client :as api-tc]))
 

@@ -6,12 +6,12 @@
    [mount.core :as mount]
    [muuntaja.core :as m]
    [muuntaja.core :as muuntaja]
-   [wormbase.db :as ow-db]
-   [wormbase.names.auth :as own-auth]
+   [wormbase.db :as wdb]
+   [wormbase.names.auth :as wn-auth]
    [wormbase.names.auth.restructure] ;; Included for side effects
-   [wormbase.names.errhandlers :as own-eh]
-   [wormbase.names.gene :as own-gene]
-   [wormbase.names.person :as own-person]
+   [wormbase.names.errhandlers :as wn-eh]
+   [wormbase.names.gene :as wn-gene]
+   [wormbase.names.person :as wn-person]
    [ring.middleware.gzip :as ring-gzip]
    [ring.util.http-response :as http-response]
    [buddy.auth :as auth]))
@@ -75,17 +75,17 @@
    {:coercion :spec
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
-                 ow-db/wrap-datomic
-                 own-auth/wrap-auth
+                 wdb/wrap-datomic
+                 wn-auth/wrap-auth
                  wrap-not-found]
-    :exceptions {:handlers own-eh/handlers}
+    :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?
-     own-person/routes
-     own-gene/routes)))
+     wn-person/routes
+     wn-gene/routes)))
 
 (defn init
   "Entry-point for ring server initialization."
