@@ -41,6 +41,10 @@
            :id :species/s-ratti
            :cgc-name-pattern "^[a-z]{3,4}-[1-9]{1}\\d*"
            :sequence-name-pattern "^SRAE_[\\dXM]\\d+$"}
+ #:species{:latin-name "Trichuris muris"
+           :id :species/t-muris
+           :cgc-name-pattern "^Tmu-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+           :sequence-name-pattern "^TMUE_(0|1|2|3|M)\\d{9}$"}
 
  ;; templates for identifiers
  #:template{:format "WBGene%08d", :describes :gene/id}
