@@ -11,7 +11,7 @@
  #:db{:ident :gene/id,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,
-      :unique :db.unique/value}
+      :unique :db.unique/identity}
  #:db{:ident :gene/cgc-name,
       :valueType :db.type/string,
       :cardinality :db.cardinality/one,
