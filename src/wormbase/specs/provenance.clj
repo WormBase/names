@@ -4,7 +4,8 @@
    [clojure.string :as str]
    [wormbase.specs.person] ;; for specs
    [wormbase.specs.agent :as wsa]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]
+   [spec-tools.spec :as sts]))
 
 (s/def :agent/id sts/string?)
 
@@ -15,7 +16,7 @@
 
 (s/def :provenance/who (stc/spec (s/keys :req [(or :person/id :person/email)])))
 
-(s/def :provenance/how (stc/spec (s/keys :req-un [::owsa/agent])))
+(s/def :provenance/how (stc/spec (s/keys :req-un [::wsa/agent])))
 
 (s/def :provenance/why (stc/spec (s/and sts/string? (complement str/blank?))))
 
