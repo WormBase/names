@@ -1,0 +1,30 @@
+[{:person/name "Bill Nash" :person/id "WBPerson10213" :person/active? false}
+ {:person/name "Bernard Lakowski" :person/id "WBPerson1826" :person/active? false}
+ {:person/name "Kimberly Van Auken" :person/id "WBPerson1843" :person/active? true}
+ {:person/name "Chao-Kung Chen" :person/id "WBPerson1845"}
+ {:person/name "Daniel Lawson" :person/id "WBPerson1846"}
+ {:person/name "Anthony Rodgers" :person/id "WBPerson1847"}
+ {:person/name "Darin Blasiar" :person/id "WBPerson1848"}
+ {:person/name "Tamberlyn Bieri" :person/id "WBPerson1849"}
+ {:person/name "Philip Ozersky" :person/id "WBPerson1867"}
+ {:person/name "Charlotte Kenning" :person/id "WBPerson1876"}
+ {:person/name "Keith Bradnam" :person/id "WBPerson1971"}
+ {:person/name "Paul Davis" :person/id "WBPerson1983"}
+ {:person/name "Eleanor Stanley" :person/id "WBPerson2062"},
+ {:person/name "Yvonne Hajdu-Cronin" :person/id "WBPerson231"},
+ {:person/name "Jame Lomax" :person/id "WBPerson28994" :person/active? false},
+ {:person/name "Esther Neufeld" :person/id "WBPerson2960"},
+ {:person/name "Mary Ann Tuli" :person/id "WBPerson2970" :person/active? false},
+ {:person/name "Jujiao Kuang" :person/id "WBPerson2971"},
+ {:person/name "Erik Jorgensen" :person/id "WBPerson298"},
+ {:person/name "Kevin Howe" :person/id "WBPerson3111"},
+ {:person/name "Gary Williams" :person/id "WBPerson4025"}
+ {:person/name "Jie Yan" :person/id "WBPerson4036"}
+ {:person/name "Michael Paulini" :person/id "WBPerson4055"}
+ {:person/name "Tuco" :person/id "WBPerson480"}
+ {:person/name "Erich Schwar
+" :person/id "WBPerson567"}
+ {:person/name "John Spieth" :person/id "WBPerson615"}
+ {:person/name "Paul Sternberg" :person/id "WBPerson625"},
+ {:person/name "Margaret Duesbury" :person/id "WBPerson9133" :person/active? false},
+ {:person/name "Alan Mark Zahler" :person/id "WBPerson713" :person/active? false}]
