@@ -152,7 +152,7 @@
           data-sample
           (fn split-ok [conn]
             (let [db (d/db conn)
-                  txes (split-gene db gene-id data)
+                  txes (split-gene db gene-id data true)
                   tx-result @(d/transact conn txes)
                   db (:db-after tx-result)
                   src-gene (d/entity db [:gene/id gene-id])
