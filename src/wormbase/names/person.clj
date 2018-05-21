@@ -11,7 +11,7 @@
    [wormbase.names.util :as wnu]
    [wormbase.names.provenance :as wnp]
    [ring.util.http-response :as http-response]
-   [spec-tools.core :as stc]))))
+   [spec-tools.core :as stc]))
 
 (defn create-person [request]
   (let [conn (:conn request)
@@ -24,11 +24,10 @@
                           {:type :user/validation-error
                            :problems problems})))
         (let [tempid "datomic.tx"
-              prov (ownp/assoc-provenence request person :event/new-person)
+              prov (wnp/assoc-provenence request person :event/new-person)
               tx-data [(assoc person :person/active? true) prov]
-              _ (println "TX-DATA FOR NEW PERSON:" (pr-str tx-data))
               tx-res @(d/transact conn tx-data)
-              pid (owdb/extract-id tx-res :person/id)]
+              pid (wdb/extract-id tx-res :person/id)]
           (http-response/created (str "/person/" pid) person))))))
 
 (defn about-person
@@ -96,8 +95,8 @@
        :post
        {:summary "Create a new person."
         :x-name ::new-person
-        :parameters {:body-params ::owsp/person}
-        :responses {201 {:schema ::owsp/person}}
+        :parameters {:body-params ::wsp/person}
+        :responses {201 {:schema ::wsp/person}}
         :roles #{:admin}
         :handler create-person}}))
    (sweet/context "/person/:identifier" [identifier]
@@ -113,8 +112,8 @@
        :put
        {:summary "Update information about a person."
         :x-name ::update-person
-        :path-params [identifier :- ::owsp/identifier]
-        :parameters {:body-params ::owsp/person}
+        :path-params [identifier :- ::wsp/identifier]
+        :parameters {:body-params ::wsp/person}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
