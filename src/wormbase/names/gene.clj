@@ -114,8 +114,8 @@
         tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
     @(d/transact-async (:conn request) tx-data)))
 
-(defn new-gene [request {:keys [import?]
-                         :or {import? false}}]
+(defn new-gene [request & {:keys [mint-new-id?]
+                           :or {mint-new-id? true}}]
   (let [payload (:body-params request)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new
@@ -128,7 +128,7 @@
                                          :data data})))
                       conformed))
         prov (wnp/assoc-provenence request payload :event/new-gene)
-        tx-data [[:wormbase.tx-fns/new "gene" cdata] prov]
+        tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
         new-id (wdb/extract-id tx-result :gene/id)
@@ -160,20 +160,22 @@
                            :type ::validation-error
                            :data data})))))))
 
-(defn- validate-merge-request [request into-id from-id into-biotype]
+(defn- validate-merge-request
+  [request into-gene-id from-gene-id into-biotype]
   (let [db (:db request)
-        [[into-lur into] [from-lur from]] (map (partial identify request)
-                                               [into-id from-id])]
-    (when (some nil? [into from])
+        [[into-lur into-gene]
+         [from-lur from-gene]] (map (partial identify request)
+                                    [into-gene-id from-gene-id])]
+    (when (some nil? [into-gene from-gene])
       (throw (ex-info "Missing gene in database, cannot merge."
                       {:missing (if-not into
-                                  into-id
-                                  from-id)
-                       :type :wormbase.db/conflict})))
-    (when (= from-id into-id)
+                                  into-gene-id
+                                  from-gene-id)
+                       :type :wormbase.db/missing})))
+    (when (= from-gene-id into-gene-id)
       (throw (ex-info "Source and into ids cannot be the same!"
-                      {:from-id from-id
-                       :into-id into-id
+                      {:from-id from-gene-id
+                       :into-id into-gene-id
                        :type ::validation-error})))
     (when-not (and (s/valid? :gene/biotype into-biotype)
                    (wdb/ident-exists? db into-biotype))
@@ -183,20 +185,20 @@
                                        into-biotype))
                        :type ::validation-error})))
     (when (reduce not=
-                  (map :gene/species [from into]))
+                  (map :gene/species [from-gene into-gene]))
       (throw (ex-info
               "Refusing to merge: genes have differing species"
-              {:from {:gen/species (-> from :gene/species :species/id)
-                      :gene/id from-id}
+              {:from {:gen/species (-> from-gene :gene/species :species/id)
+                      :gene/id from-gene-id}
                :into {:species (-> into :gene/species :species/id)
-                      :gene/id into-id}})))
-    (when (:gene/cgc-name from)
+                      :gene/id into-gene-id}})))
+    (when (:gene/cgc-name from-gene)
       (throw (ex-info (str "Gene to be killed has a CGC name,"
                            "refusing to merge.")
-                      {:from-id from-id
-                       :from-cgc-name (:gene/cgc-name from)
+                      {:from-id from-gene-id
+                       :from-cgc-name (:gene/cgc-name from-gene)
                        :type :wormbase.db/conflict})))
-    [[into-lur into] [from-lur from]]))
+    [[into-lur into-gene] [from-lur from-gene]]))
 
 (defn merge-genes [request into-id from-id]
   (let [conn (:conn request)
@@ -259,9 +261,10 @@
                           (assoc :provenance/split-into p-seq-name)
                           (assoc :provenance/split-from [:gene/id id]))
             species (-> existing-gene :gene/species :species/id)
+            mint-new-id? true
             tx-result @(d/transact-async
                         conn
-                        [[:wormbase.tx-fns/split-gene id cdata]
+                        [[:wormbase.tx-fns/split-gene id cdata mint-new-id?]
                          prov-from])
             db (:db-after tx-result)
             new-gene-id (-> db
@@ -392,7 +395,7 @@
         :responses (dissoc default-responses 409)
         :handler (fn [request]
                    (update-gene request identifier))}})
-     (sweet/context "/merge-from/:from-identifier" [from-identifier]
+     (sweet/context "/merge/:from-identifier" [from-identifier]
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
