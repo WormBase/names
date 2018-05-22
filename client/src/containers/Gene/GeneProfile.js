@@ -5,6 +5,7 @@ import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
+import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
 
 class GeneProfile extends Component {
@@ -14,6 +15,7 @@ class GeneProfile extends Component {
       status: null,
       data: null,
       showKillGeneDialog: false,
+      showMergeGeneDialog: false,
       showSplitGeneDialog: false,
     };
   }
@@ -54,6 +56,18 @@ class GeneProfile extends Component {
   closeKillGeneDialog = () => {
     this.setState({
       showKillGeneDialog: false,
+    });
+  }
+
+  openMergeGeneDialog = () => {
+    this.setState({
+      showMergeGeneDialog: true,
+    });
+  }
+
+  closeMergeGeneDialog = () => {
+    this.setState({
+      showMergeGeneDialog: false,
     });
   }
 
@@ -101,9 +115,12 @@ class GeneProfile extends Component {
               <div className={classes.operations}>
                 <Button
                   variant="raised"
+                  onClick={this.openMergeGeneDialog}
+                >Merge Gene</Button>
+                <Button
+                  variant="raised"
                   onClick={this.openSplitGeneDialog}
                 >Split Gene</Button>
-                {/* <Button variant="raised">Merge Gene</Button> */}
                 <Button
                   className={classes.killButton}
                   variant="raised"
@@ -121,6 +138,18 @@ class GeneProfile extends Component {
               data: data,
             }, () => {
               this.closeKillGeneDialog();
+            });
+          }}
+        />
+        <MergeGeneDialog
+          geneName={this.state.data && this.state.data.cgcName}
+          open={this.state.showMergeGeneDialog}
+          onClose={this.closeMergeGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState({
+              data: data,
+            }, () => {
+              this.closeMergeGeneDialog();
             });
           }}
         />
