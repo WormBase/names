@@ -5,7 +5,7 @@ import { withStyles, Button, Icon } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
 import GeneCreate from './GeneCreate';
-import GeneSearchBox from './GeneSearchBox';
+import GeneSearchBox from './GeneAutocomplete';
 
 const Gene = (props) => {
   const {classes} = props;
