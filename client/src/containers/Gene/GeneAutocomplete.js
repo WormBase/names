@@ -30,13 +30,6 @@ function renderInput(inputProps) {
             <SearchIcon />
           </InputAdornment>
         ),
-        onKeyDown: event => {
-          if (event.key === 'Enter') {
-            // Prevent Downshift's default 'Enter' behavior.
-            event.preventDownshiftDefault = true;
-            history.push(`/gene/id/${InputProps.value}`);
-          }
-        },
       }}
       {...other}
     />
@@ -52,7 +45,7 @@ function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, sele
       {...itemProps}
       key={suggestion.label}
       selected={isHighlighted}
-      component={({...props}) => <Link to={`/gene/id/${suggestion.id}`} {...props} />}
+      component={'div'}
       style={{
         fontWeight: isSelected ? 500 : 400,
       }}
@@ -119,7 +112,7 @@ class GeneSearchBox extends Component {
   }
 
   render() {
-    const {classes} = this.props;
+    const {classes, ...otherProps} = this.props;
     return (
       <Downshift>
         {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
@@ -131,7 +124,24 @@ class GeneSearchBox extends Component {
                 placeholder: 'Search a gene...',
                 id: 'gene-search-box',
                 onChange: (event) => this.handleQueryChange(event),
+                onKeyDown: event => {
+                  if (event.key === 'Enter' && (highlightedIndex || highlightedIndex ===0)) {
+                    const highlightedSuggestion = this.state.suggestions[highlightedIndex];
+                    if (highlightedSuggestion) {
+                      console.log(`/gene/id/${highlightedSuggestion.id}`);
+                    } else {
+                      console.log(`/gene/id/${inputValue}`);
+                    }
+                  }
+                  //InputProps.onKeyDown && InputProps.onKeyDown(event);
+                  // if (event.key === 'Enter') {
+                  //   // Prevent Downshift's default 'Enter' behavior.
+                  //    // event.preventDownshiftDefault = true;
+                  //   history.push(`/gene/id/${InputProps.value}`);
+                  // }
+                },
               }),
+              ...otherProps,
             })}
             {isOpen ? (
               <Paper className={classes.paper} square>

@@ -13,6 +13,7 @@ import {
   Typography,
 } from '../../components/elements';
 import BaseForm from './BaseForm';
+import GeneSearchBox from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
   constructor(props) {
@@ -25,7 +26,7 @@ class MergeGeneDialog extends Component {
   handleSubmit = (data) => {
     mockFetchOrNot(
       (mockFetch) => {
-        console.log(data.reason);
+        console.log(data.geneIdMergeInto);
         if (data.reason) {
           return mockFetch.delete('*', {
             id: this.props.wbId,
@@ -65,7 +66,7 @@ class MergeGeneDialog extends Component {
         {
           ({withFieldData, getFormData, resetData}) => {
             const ReasonField = withFieldData(TextField, 'reason');
-            const GeneIdMergeIntoField = withFieldData(TextField, 'geneIdMergeInto');
+            const GeneIdMergeIntoField = withFieldData(GeneSearchBox, 'geneIdMergeInto');
             return (
               <Dialog
                 open={this.props.open}
