@@ -3,6 +3,7 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BiotypeSelect,
   Button,
   Dialog,
   DialogActions,
@@ -14,7 +15,7 @@ import {
 } from '../../components/elements';
 import BaseForm from './BaseForm';
 
-class KillGeneDialog extends Component {
+class SplitGeneDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -26,24 +27,40 @@ class KillGeneDialog extends Component {
     mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
-        if (data.reason) {
-          return mockFetch.delete('*', {
+        const emptyFields = ['reason', 'biotypeOriginal', 'sequenceName', 'biotype'].filter(
+          (fieldId) => {
+            return !data[fieldId];
+          }
+        );
+        let errorMessage;
+        switch (emptyFields.length) {
+          case 0:
+            break;
+          case 1:
+            errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
+            break;
+          default:
+            errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
+        }
+
+        if (errorMessage) {
+          return mockFetch.post('*', {
+            body: {
+              error: errorMessage,
+            },
+            status: 400,
+          });
+        } else {
+          return mockFetch.post('*', {
             id: this.props.wbId,
             reason: data.reason,
             dead: true,
           });
-        } else {
-          return mockFetch.delete('*', {
-            body: {
-              error: 'Reason for killing a gene is required',
-            },
-            status: 400,
-          })
         }
       },
       () => {
         return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE'
+          method: 'POST'
         });
       },
       true
@@ -61,30 +78,47 @@ class KillGeneDialog extends Component {
 
   render() {
     return (
-      <BaseForm>
+      <BaseForm data={{biotypeOriginal: this.props.biotypeOriginal}}>
         {
           ({withFieldData, getFormData, resetData}) => {
+            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'biotypeOriginal');
             const ReasonField = withFieldData(TextField, 'reason');
+            const SequenceNameField = withFieldData(TextField, 'sequenceName');
+            const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
             return (
               <Dialog
                 open={this.props.open}
                 onClose={this.props.onClose}
                 aria-labelledby="form-dialog-title"
               >
-                <DialogTitle id="form-dialog-title">Kill gene</DialogTitle>
+                <DialogTitle id="form-dialog-title">Split gene</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Gene <strong>{this.props.geneName}</strong> will be killed. Are you sure?
+                    Gene <strong>{this.props.geneName}</strong> will be split.
                   </DialogContentText>
                   <DialogContentText>
                     <Typography color="error">{this.state.errorMessage}</Typography>
                   </DialogContentText>
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for killing the gene"
-                  required
-                  fullWidth
-                />
+                  <ReasonField
+                    label="Reason"
+                    helperText="Enter the reason for splitting the gene"
+                    required
+                    fullWidth
+                  />
+                  <BiotypeSelectOriginalField
+                    label={`Modify the biotype of ${this.props.geneName}`}
+                    classes={{
+                      root: this.props.classes.biotypeSelectField,
+                    }}
+                  />
+                  <br />
+                  <DialogContentText>
+                    Please provide information of the gene to be created.
+                  </DialogContentText>
+                  <SequenceNameField
+                    label="Sequence name"
+                  />
+                  <BiotypeSelectField />
                 </DialogContent>
                 <DialogActions>
                   <Button
@@ -95,9 +129,9 @@ class KillGeneDialog extends Component {
                   </Button>
                   <Button
                     onClick={() => this.handleSubmit(getFormData())}
-                    className={this.props.classes.killButton}
+                    className={this.props.classes.splitButton}
                   >
-                    KILL {this.props.geneName}
+                    split {this.props.geneName}
                   </Button>
                 </DialogActions>
               </Dialog>
@@ -109,8 +143,9 @@ class KillGeneDialog extends Component {
   }
 }
 
-KillGeneDialog.propTypes = {
+SplitGeneDialog.propTypes = {
   geneName: PropTypes.string.isRequired,
+  biotypeOriginal: PropTypes.string.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmitSuccess: PropTypes.func,
@@ -118,10 +153,13 @@ KillGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  killButton: {
+  splitButton: {
     color: theme.palette.error.main,
     textTransform: 'inherit',
   },
+  biotypeSelectField: {
+    minWidth: 200,
+  }
 });
 
-export default withStyles(styles)(KillGeneDialog);
+export default withStyles(styles)(SplitGeneDialog);

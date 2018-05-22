@@ -5,6 +5,7 @@ import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
+import SplitGeneDialog from './SplitGeneDialog';
 
 class GeneProfile extends Component {
   constructor(props) {
@@ -13,6 +14,7 @@ class GeneProfile extends Component {
       status: null,
       data: null,
       showKillGeneDialog: false,
+      showSplitGeneDialog: false,
     };
   }
 
@@ -55,6 +57,18 @@ class GeneProfile extends Component {
     });
   }
 
+  openSplitGeneDialog = () => {
+    this.setState({
+      showSplitGeneDialog: true,
+    });
+  }
+
+  closeSplitGeneDialog = () => {
+    this.setState({
+      showSplitGeneDialog: false,
+    });
+  }
+
   render() {
     const {classes, wbId} = this.props;
     return (
@@ -85,7 +99,10 @@ class GeneProfile extends Component {
             this.state.data && this.state.data.dead ?
               null :
               <div className={classes.operations}>
-                {/* <Button variant="raised">Split Gene</Button> */}
+                <Button
+                  variant="raised"
+                  onClick={this.openSplitGeneDialog}
+                >Split Gene</Button>
                 {/* <Button variant="raised">Merge Gene</Button> */}
                 <Button
                   className={classes.killButton}
@@ -99,11 +116,24 @@ class GeneProfile extends Component {
           geneName={this.state.data && this.state.data.cgcName}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
-          onKillSuccess={(data) => {
+          onSubmitSuccess={(data) => {
             this.setState({
               data: data,
             }, () => {
               this.closeKillGeneDialog();
+            });
+          }}
+        />
+        <SplitGeneDialog
+          geneName={this.state.data && this.state.data.cgcName}
+          biotypeOriginal={this.state.data && this.state.data.biotype}
+          open={this.state.showSplitGeneDialog}
+          onClose={this.closeSplitGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState({
+              data: data,
+            }, () => {
+              this.closeSplitGeneDialog();
             });
           }}
         />
