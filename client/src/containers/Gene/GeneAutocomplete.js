@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 import SearchIcon from '@material-ui/icons/Search';
-import { Link, withRouter } from 'react-router-dom';
 import {
   withStyles,
   Button,
@@ -16,7 +15,7 @@ import { mockFetchOrNot } from '../../mock';
 
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, history, match, location, ...other } = inputProps;
+  const { InputProps, classes, ref, history, match, location, onChange, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
@@ -38,7 +37,7 @@ function renderInput(inputProps) {
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
   const isHighlighted = highlightedIndex === index;
-  const isSelected = (selectedItem || '').indexOf(suggestion.label) > -1;
+  const isSelected = selectedItem === suggestion.id;
 
   return (
     <MenuItem
@@ -70,19 +69,21 @@ class GeneSearchBox extends Component {
     super(props);
     this.state = {
       suggestions: [],
-      query: null,
+      inputValue: null,
+      selectedItem: null,
+      isOpen: false,
     };
   }
 
-  handleQueryChange(event) {
-    const query = event.target.value;
+  handleInputChange = (event) => {
+    const inputValue = event.target.value;
     this.setState({
-      query: query,
+      inputValue: inputValue,
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', {
-            query: query,
+            inputValue: inputValue,
             suggestions: [
               {
                 id: 'WB1',
@@ -100,30 +101,68 @@ class GeneSearchBox extends Component {
         },
         true
       ).then((response) => response.json()).then((content) => {
-        if (content.query === this.state.query) {
-          // compare query to produce suggestion with current query,
+        if (content.inputValue === this.state.inputValue) {
+          // compare inputValue to produce suggestion with current inputValue,
           // to avoid problem caused by response coming back in the wrong order
-          this.setState({
-            suggestions: content.suggestions,
-          });
+          const {suggestions} = content;
+          const [selectedItem] = suggestions.filter((item) => item.id === this.state.inputValue || item.label === this.state.inputValue);
+          if (selectedItem) {
+            this.setState({
+              suggestions: suggestions,
+              selectedItem: selectedItem.id,
+            });
+          } else {
+            this.setState({
+              suggestions: suggestions,
+            });
+          }
         }
       }).catch((e) => console.log('error', e));
+    });
+  }
+
+  changeHandler = selectedItem => {
+    this.setState({
+      selectedItem,
+      isOpen: false,
+    });
+  }
+
+  stateChangeHandler = changes => {
+    let {
+      selectedItem = this.state.selectedItem,
+      isOpen = this.state.isOpen,
+      inputValue = this.state.inputValue,
+      type,
+    } = changes;
+    isOpen = type === Downshift.stateChangeTypes.mouseUp ? this.state.isOpen : isOpen;
+    this.setState({
+      selectedItem: selectedItem,
+      isOpen,
+      inputValue,
     });
   }
 
   render() {
     const {classes, ...otherProps} = this.props;
     return (
-      <Downshift>
+      <Downshift
+        selectedItem={this.state.selectedItem}
+  //      itemToString={(item) => item ? item.id : ''}
+        isOpen={this.state.isOpen}
+        inputValue={this.state.inputValue}
+        onChange={this.changeHandler}
+        onStateChange={this.stateChangeHandler}
+      >
         {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
           <div className={classes.root}>
-            {withRouter(renderInput)({
+            {renderInput({
               fullWidth: true,
               classes,
               InputProps: getInputProps({
                 placeholder: 'Search a gene...',
                 id: 'gene-search-box',
-                onChange: (event) => this.handleQueryChange(event),
+                onChange: (event) => this.handleInputChange(event),
                 onKeyDown: event => {
                   if (event.key === 'Enter' && (highlightedIndex || highlightedIndex ===0)) {
                     const highlightedSuggestion = this.state.suggestions[highlightedIndex];
