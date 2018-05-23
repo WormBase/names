@@ -15,7 +15,7 @@ import { mockFetchOrNot } from '../../mock';
 
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, history, match, location, onChange, ...other } = inputProps;
+  const { InputProps, classes, ref, history, match, location, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
@@ -75,6 +75,13 @@ class GeneSearchBox extends Component {
     };
   }
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return {
+      selectedItem: nextProps.value,
+      inputValue: nextProps.value,
+    };
+  }
+
   handleInputChange = (event) => {
     const inputValue = event.target.value;
     this.setState({
@@ -125,6 +132,14 @@ class GeneSearchBox extends Component {
     this.setState({
       selectedItem,
       isOpen: false,
+    }, () => {
+      if (this.props.onChange) {
+        this.props.onChange({
+          target: {
+            value: selectedItem,
+          },
+        })
+      }
     });
   }
 
@@ -140,11 +155,19 @@ class GeneSearchBox extends Component {
       selectedItem: selectedItem,
       isOpen,
       inputValue,
+    }, () => {
+      if (changes.selectedItem && this.props.onChange) {
+        this.props.onChange({
+          target: {
+            value: selectedItem,
+          },
+        });
+      }
     });
   }
 
   render() {
-    const {classes, ...otherProps} = this.props;
+    const {classes, onChange, ...otherProps} = this.props;
     return (
       <Downshift
         selectedItem={this.state.selectedItem}
