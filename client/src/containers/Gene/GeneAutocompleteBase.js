@@ -26,6 +26,7 @@ class GeneAutocompleteBase extends Component {
     this.setState({
       inputValue: inputValue,
       selectedItem: inputValue,
+      suggestions: [],
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
@@ -146,7 +147,21 @@ class GeneAutocompleteBase extends Component {
                 onKeyDown: (event) => {
                   inputProps.onKeyDown && inputProps.onKeyDown(event);
                   this.handleKeyDown(event);
-                }
+                },
+                onBlur: (event) => {
+                  inputProps.onBlur && inputProps.onBlur();
+                  this.setState({
+                    isOpen: false,
+                  });
+                },
+                onFocus: (event) => {
+                  inputProps.onFocus && inputProps.onFocus();
+                  if (this.state.inputValue) {
+                    this.setState({
+                      isOpen: true,
+                    });
+                  }
+                },
               });
             },
             isOpen,
