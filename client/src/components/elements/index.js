@@ -9,6 +9,7 @@ import { default as MuiDialog, withMobileDialog } from 'material-ui/Dialog';
 export {
   AppBar,
   Button,
+  Chip,
   DialogActions,
   DialogContent,
   DialogContentText,

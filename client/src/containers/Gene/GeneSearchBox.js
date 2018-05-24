@@ -92,7 +92,7 @@ class GeneSearchBox extends Component {
                       const [nextSelectedItem] = suggestions.filter(
                         (item) => item.id === inputValue || item.label === inputValue
                       );
-                      id = nextSelectedItem.id;
+                      id = nextSelectedItem && nextSelectedItem.id;
                     }
 
                     if (!id) {
