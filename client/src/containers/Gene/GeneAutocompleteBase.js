@@ -8,7 +8,7 @@ class GeneAutocompleteBase extends Component {
     super(props);
     this.state = {
       suggestions: [],
-      inputValue: null,
+      inputValue: '',
       selectedItem: null,
       isOpen: false,
     };
@@ -25,6 +25,7 @@ class GeneAutocompleteBase extends Component {
     const inputValue = event.target.value;
     this.setState({
       inputValue: inputValue,
+      selectedItem: inputValue,
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
@@ -48,23 +49,38 @@ class GeneAutocompleteBase extends Component {
         true
       ).then((response) => response.json()).then((content) => {
         if (content.inputValue === this.state.inputValue) {
-          // compare inputValue to produce suggestion with current inputValue,
           // to avoid problem caused by response coming back in the wrong order
+
+          // compare inputValue to produce suggestion with current inputValue,
           const {suggestions} = content;
-          const [selectedItem] = suggestions.filter((item) => item.id === this.state.inputValue || item.label === this.state.inputValue);
-          if (selectedItem) {
+          // const [selectedItem] = suggestions.filter((item) => item.id === this.state.inputValue || item.label === this.state.inputValue);
+          // if (selectedItem) {
+          //   this.setState({
+          //     suggestions: suggestions,
+          //     selectedItem: selectedItem.id,
+          //   });
+          // } else {
             this.setState({
               suggestions: suggestions,
-              selectedItem: selectedItem.id,
             });
-          } else {
-            this.setState({
-              suggestions: suggestions,
-            });
-          }
+          // }
         }
       }).catch((e) => console.log('error', e));
     });
+  }
+
+  handleKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      const [selectedItem] = this.state.suggestions.filter(
+        (item) => item.id === this.state.inputValue || item.label === this.state.inputValue
+      );
+      if (selectedItem) {
+        this.setState({
+          selectedItem: selectedItem.id,
+          isOpen: false,
+        });
+      }
+    }
   }
 
   changeHandler = selectedItem => {
@@ -83,6 +99,7 @@ class GeneAutocompleteBase extends Component {
   }
 
   stateChangeHandler = changes => {
+    console.log(changes);
     let {
       selectedItem = this.state.selectedItem,
       isOpen = this.state.isOpen,
@@ -95,10 +112,10 @@ class GeneAutocompleteBase extends Component {
       isOpen,
       inputValue,
     }, () => {
-      if (changes.selectedItem && this.props.onChange) {
+      if (changes.inputValue && this.props.onChange) {
         this.props.onChange({
           target: {
-            value: selectedItem,
+            value: inputValue,
           },
         });
       }
@@ -118,13 +135,25 @@ class GeneAutocompleteBase extends Component {
       >
         {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
           this.props.children({
-            getInputProps,
             getItemProps,
+            getInputProps: (inputProps) => {
+              return getInputProps({
+                ...inputProps,
+                onChange: (event) => {
+                  inputProps.onChange && inputProps.onChange(event);
+                  this.handleInputChange(event);
+                },
+                onKeyDown: (event) => {
+                  inputProps.onKeyDown && inputProps.onKeyDown(event);
+                  this.handleKeyDown(event);
+                }
+              });
+            },
             isOpen,
             inputValue,
             selectedItem,
             highlightedIndex,
-            handleInputChange: this.handleInputChange,
+            //handleInputChange: this.handleInputChange,
             suggestions: this.state.suggestions,
           })
         )}

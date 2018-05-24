@@ -22,11 +22,6 @@ function renderInput(inputProps) {
         classes: {
           root: classes.inputRoot,
         },
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
       }}
       {...other}
     />
@@ -67,31 +62,13 @@ class GeneAutocomplete extends Component {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
       <GeneAutocompleteBase onChange={onChange} value={value}>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, handleInputChange, suggestions}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
               classes,
               InputProps: getInputProps({
-                placeholder: 'Search a gene...',
-                id: 'gene-search-box',
-                onChange: (event) => handleInputChange(event),
-                onKeyDown: event => {
-                  if (event.key === 'Enter' && (highlightedIndex || highlightedIndex ===0)) {
-                    const highlightedSuggestion = suggestions[highlightedIndex];
-                    if (highlightedSuggestion) {
-                      console.log(`/gene/id/${highlightedSuggestion.id}`);
-                    } else {
-                      console.log(`/gene/id/${inputValue}`);
-                    }
-                  }
-                  //InputProps.onKeyDown && InputProps.onKeyDown(event);
-                  // if (event.key === 'Enter') {
-                  //   // Prevent Downshift's default 'Enter' behavior.
-                  //    // event.preventDownshiftDefault = true;
-                  //   history.push(`/gene/id/${InputProps.value}`);
-                  // }
-                },
+                id: 'gene-id',
               }),
               ...otherProps,
             })}
