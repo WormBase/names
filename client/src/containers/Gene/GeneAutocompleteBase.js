@@ -70,7 +70,7 @@ class GeneAutocompleteBase extends Component {
   }
 
   handleKeyDown = (event) => {
-    if (event.key === 'Enter' || event.key === 'Tab') {
+    if (event.key === 'Enter') {
       const [selectedItem] = this.state.suggestions.filter(
         (item) => item.id === this.state.inputValue || item.label === this.state.inputValue
       );
