@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Downshift from 'downshift';
 import SearchIcon from '@material-ui/icons/Search';
 import {
   withStyles,
@@ -11,11 +10,10 @@ import {
   MenuItem,
   TextField,
 } from '../../components/elements';
-import { mockFetchOrNot } from '../../mock';
-
+import GeneAutocompleteBase from './GeneAutocompleteBase';
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, history, match, location, ...other } = inputProps;
+  const { InputProps, classes, ref, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
@@ -64,120 +62,12 @@ renderSuggestion.propTypes = {
   }).isRequired,
 };
 
-class GeneSearchBox extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      suggestions: [],
-      inputValue: null,
-      selectedItem: null,
-      isOpen: false,
-    };
-  }
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    return {
-      selectedItem: nextProps.value,
-      inputValue: nextProps.value,
-    };
-  }
-
-  handleInputChange = (event) => {
-    const inputValue = event.target.value;
-    this.setState({
-      inputValue: inputValue,
-    }, () => {
-      mockFetchOrNot(
-        (mockFetch) => {
-          return mockFetch.get('*', {
-            inputValue: inputValue,
-            suggestions: [
-              {
-                id: 'WB1',
-                label: 'ab',
-              },
-              {
-                id: 'WB2',
-                label: 'ac',
-              },
-            ],
-          });
-        },
-        () => {
-          return fetch('/api/search/gene');
-        },
-        true
-      ).then((response) => response.json()).then((content) => {
-        if (content.inputValue === this.state.inputValue) {
-          // compare inputValue to produce suggestion with current inputValue,
-          // to avoid problem caused by response coming back in the wrong order
-          const {suggestions} = content;
-          const [selectedItem] = suggestions.filter((item) => item.id === this.state.inputValue || item.label === this.state.inputValue);
-          if (selectedItem) {
-            this.setState({
-              suggestions: suggestions,
-              selectedItem: selectedItem.id,
-            });
-          } else {
-            this.setState({
-              suggestions: suggestions,
-            });
-          }
-        }
-      }).catch((e) => console.log('error', e));
-    });
-  }
-
-  changeHandler = selectedItem => {
-    this.setState({
-      selectedItem,
-      isOpen: false,
-    }, () => {
-      if (this.props.onChange) {
-        this.props.onChange({
-          target: {
-            value: selectedItem,
-          },
-        })
-      }
-    });
-  }
-
-  stateChangeHandler = changes => {
-    let {
-      selectedItem = this.state.selectedItem,
-      isOpen = this.state.isOpen,
-      inputValue = this.state.inputValue,
-      type,
-    } = changes;
-    isOpen = type === Downshift.stateChangeTypes.mouseUp ? this.state.isOpen : isOpen;
-    this.setState({
-      selectedItem: selectedItem,
-      isOpen,
-      inputValue,
-    }, () => {
-      if (changes.selectedItem && this.props.onChange) {
-        this.props.onChange({
-          target: {
-            value: selectedItem,
-          },
-        });
-      }
-    });
-  }
-
+class GeneAutocomplete extends Component {
   render() {
-    const {classes, onChange, ...otherProps} = this.props;
+    const {classes, onChange, value, ...otherProps} = this.props;
     return (
-      <Downshift
-        selectedItem={this.state.selectedItem}
-  //      itemToString={(item) => item ? item.id : ''}
-        isOpen={this.state.isOpen}
-        inputValue={this.state.inputValue}
-        onChange={this.changeHandler}
-        onStateChange={this.stateChangeHandler}
-      >
-        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
+      <GeneAutocompleteBase onChange={onChange} value={value}>
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, handleInputChange, suggestions}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -185,10 +75,10 @@ class GeneSearchBox extends Component {
               InputProps: getInputProps({
                 placeholder: 'Search a gene...',
                 id: 'gene-search-box',
-                onChange: (event) => this.handleInputChange(event),
+                onChange: (event) => handleInputChange(event),
                 onKeyDown: event => {
                   if (event.key === 'Enter' && (highlightedIndex || highlightedIndex ===0)) {
-                    const highlightedSuggestion = this.state.suggestions[highlightedIndex];
+                    const highlightedSuggestion = suggestions[highlightedIndex];
                     if (highlightedSuggestion) {
                       console.log(`/gene/id/${highlightedSuggestion.id}`);
                     } else {
@@ -207,7 +97,7 @@ class GeneSearchBox extends Component {
             })}
             {isOpen ? (
               <Paper className={classes.paper} square>
-                {this.state.suggestions.map((suggestion, index) =>
+                {suggestions.map((suggestion, index) =>
                   renderSuggestion({
                     suggestion,
                     index,
@@ -220,13 +110,15 @@ class GeneSearchBox extends Component {
             ) : null}
           </div>
         )}
-      </Downshift>
+      </GeneAutocompleteBase>
     );
   }
 }
 
-GeneSearchBox.propTypes = {
+GeneAutocomplete.propTypes = {
   classes: PropTypes.object.isRequired,
+  value: PropTypes.value,
+  onChange: PropTypes.func,
 }
 
 const styles = (theme) => ({
@@ -243,4 +135,4 @@ const styles = (theme) => ({
   },
 });
 
-export default withStyles(styles)(GeneSearchBox);
+export default withStyles(styles)(GeneAutocomplete);
