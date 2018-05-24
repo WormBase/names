@@ -94,7 +94,7 @@ class GeneAutocomplete extends Component {
 
 GeneAutocomplete.propTypes = {
   classes: PropTypes.object.isRequired,
-  value: PropTypes.value,
+  value: PropTypes.string,
   onChange: PropTypes.func,
 }
 

@@ -128,7 +128,7 @@ class GeneSearchBox extends Component {
 
 GeneSearchBox.propTypes = {
   classes: PropTypes.object.isRequired,
-  value: PropTypes.value,
+  value: PropTypes.string,
   onChange: PropTypes.func,
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,

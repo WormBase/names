@@ -129,43 +129,55 @@ class GeneProfile extends Component {
               </div>
           }
         </PageRight>
-        <KillGeneDialog
-          geneName={this.state.data && this.state.data.cgcName}
-          open={this.state.showKillGeneDialog}
-          onClose={this.closeKillGeneDialog}
-          onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
-              this.closeKillGeneDialog();
-            });
-          }}
-        />
-        <MergeGeneDialog
-          geneName={this.state.data && this.state.data.cgcName}
-          open={this.state.showMergeGeneDialog}
-          onClose={this.closeMergeGeneDialog}
-          onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
-              this.closeMergeGeneDialog();
-            });
-          }}
-        />
-        <SplitGeneDialog
-          geneName={this.state.data && this.state.data.cgcName}
-          biotypeOriginal={this.state.data && this.state.data.biotype}
-          open={this.state.showSplitGeneDialog}
-          onClose={this.closeSplitGeneDialog}
-          onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
-              this.closeSplitGeneDialog();
-            });
-          }}
-        />
+        {
+          this.state.data ?
+            <KillGeneDialog
+              geneName={this.state.data.cgcName}
+              open={this.state.showKillGeneDialog}
+              onClose={this.closeKillGeneDialog}
+              onSubmitSuccess={(data) => {
+                this.setState({
+                  data: data,
+                }, () => {
+                  this.closeKillGeneDialog();
+                });
+              }}
+            /> :
+            null
+        }
+        {
+          this.state.data ?
+            <MergeGeneDialog
+              geneName={this.state.data.cgcName}
+              open={this.state.showMergeGeneDialog}
+              onClose={this.closeMergeGeneDialog}
+              onSubmitSuccess={(data) => {
+                this.setState({
+                  data: data,
+                }, () => {
+                  this.closeMergeGeneDialog();
+                });
+              }}
+            /> :
+            null
+        }
+        {
+          this.state.data ?
+            <SplitGeneDialog
+              geneName={this.state.data.cgcName}
+              biotypeOriginal={this.state.data.biotype}
+              open={this.state.showSplitGeneDialog}
+              onClose={this.closeSplitGeneDialog}
+              onSubmitSuccess={(data) => {
+                this.setState({
+                  data: data,
+                }, () => {
+                  this.closeSplitGeneDialog();
+                });
+              }}
+            /> :
+            null
+        }
       </Page>
     );
   }

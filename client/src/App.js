@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route , Link, Redirect } from 'react-router-dom';
+import { Route , Link, Redirect, Switch } from 'react-router-dom';
 import 'typeface-roboto';
 import { withStyles } from './components/elements';
 import Header, { NavBar } from './containers/Header';
@@ -25,16 +25,18 @@ class App extends Component {
               </Header>
               {
                 isAuthenticated ? [
-                  <NavBar />,
-                  <div className={this.props.classes.content}>
+                  <NavBar key="nav-bar" />,
+                  <div key="content" className={this.props.classes.content}>
                     <Route exact path="/" component={() => <Redirect to="/gene" /> } />
                     <Route exact path="/gene" component={() => <Gene />} />
-                    <Route path="/gene" component={({match}) => ([
-                      <Route path={`${match.url}/new`} component={() => <GeneCreate />} />,
-                      <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />,
-                      <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />,
-                      <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />,
-                    ])} />
+                    <Route path="/gene" component={({match}) => (
+                      <Switch>
+                        <Route path={`${match.url}/new`} component={() => <GeneCreate />} />
+                        <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />
+                        <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />
+                        <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />
+                      </Switch>
+                    )} />
                     <Route path="/variation" component={() => 'Variation page (coming soon ..ish)' } />
                     <Route path="/feature" component={() => 'Feature page (coming soon ..ish)' } />
                     <Route path="/me" component={() => profile } />
