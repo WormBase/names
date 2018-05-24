@@ -26,7 +26,7 @@ class MergeGeneDialog extends Component {
   handleSubmit = (data) => {
     mockFetchOrNot(
       (mockFetch) => {
-        console.log(data.geneIdMergeInto);
+        console.log(data);
         if (data.reason) {
           return mockFetch.delete('*', {
             id: this.props.wbId,
