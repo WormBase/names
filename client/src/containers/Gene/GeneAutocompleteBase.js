@@ -21,6 +21,12 @@ class GeneAutocompleteBase extends Component {
     };
   }
 
+  componentDidMount() {
+    if (this.state.inputValue) {
+      this.loadSuggestions(this.state.inputValue);
+    }
+  }
+
   handleInputChange = (event) => {
     const inputValue = event.target.value;
     this.setState({
@@ -28,46 +34,44 @@ class GeneAutocompleteBase extends Component {
       selectedItem: inputValue,
       suggestions: [],
     }, () => {
-      mockFetchOrNot(
-        (mockFetch) => {
-          return mockFetch.get('*', {
-            inputValue: inputValue,
-            suggestions: [
-              {
-                id: 'WB1',
-                label: 'ab',
-              },
-              {
-                id: 'WB2',
-                label: 'ac',
-              },
-            ],
-          });
-        },
-        () => {
-          return fetch('/api/search/gene');
-        },
-        true
-      ).then((response) => response.json()).then((content) => {
-        if (content.inputValue === this.state.inputValue) {
-          // to avoid problem caused by response coming back in the wrong order
-
-          // compare inputValue to produce suggestion with current inputValue,
-          const {suggestions} = content;
-          // const [selectedItem] = suggestions.filter((item) => item.id === this.state.inputValue || item.label === this.state.inputValue);
-          // if (selectedItem) {
-          //   this.setState({
-          //     suggestions: suggestions,
-          //     selectedItem: selectedItem.id,
-          //   });
-          // } else {
-            this.setState({
-              suggestions: suggestions,
-            });
-          // }
-        }
-      }).catch((e) => console.log('error', e));
+      this.loadSuggestions(inputValue);
     });
+  }
+
+  loadSuggestions = (inputValue) => {
+    mockFetchOrNot(
+      (mockFetch) => {
+        const mockResult = {
+          inputValue: inputValue,
+          suggestions: [
+            {
+              id: 'WB1',
+              label: 'ab',
+            },
+            {
+              id: 'WB2',
+              label: 'ac',
+            },
+          ],
+        };
+        return mockFetch.get('*', new Promise((resolve) => {
+          setTimeout(() => resolve(mockResult), 500);
+        }));
+      },
+      () => {
+        return fetch('/api/search/gene');
+      },
+      true
+    ).then((response) => response.json()).then((content) => {
+      if (content.inputValue === this.state.inputValue) {
+        // to avoid problem caused by response coming back in the wrong order
+        // compare inputValue to produce suggestion with current inputValue,
+        const {suggestions} = content;
+        this.setState({
+          suggestions: suggestions,
+        });
+      }
+    }).catch((e) => console.log('error', e));
   }
 
   handleKeyDown = (event) => {
@@ -109,7 +113,7 @@ class GeneAutocompleteBase extends Component {
     } = changes;
     isOpen = type === Downshift.stateChangeTypes.mouseUp ? this.state.isOpen : isOpen;
     this.setState({
-      selectedItem: selectedItem,
+      selectedItem,
       isOpen,
       inputValue,
     }, () => {
@@ -170,6 +174,14 @@ class GeneAutocompleteBase extends Component {
             highlightedIndex,
             //handleInputChange: this.handleInputChange,
             suggestions: this.state.suggestions,
+            reset: () => {
+              this.setState({
+                suggestions: [],
+                inputValue: '',
+                selectedItem: null,
+                isOpen: false,
+              });
+            }
           })
         )}
       </Downshift>
