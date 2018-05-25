@@ -22,6 +22,11 @@ export {
   Typography,
   Tabs,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
 } from 'material-ui';
 
 export { default as TextField} from './TextField';
