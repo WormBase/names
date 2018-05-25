@@ -23,6 +23,8 @@ class Login extends Component {
             name: googleUserProfile.getName(),
             email: googleUserProfile.getEmail(),
             id_token: googleUser.getAuthResponse().id_token,
+          }, () => {
+            auth2.disconnect();
           });
         }, (error) => {
           this.props.onError(error);
