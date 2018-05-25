@@ -89,6 +89,7 @@ class RecentActivitiesSingleGene extends Component {
             <TableCell>Related entity</TableCell>
             <TableCell>Curated by</TableCell>
             <TableCell>Reason</TableCell>
+            <TableCell>Agent</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -108,6 +109,7 @@ class RecentActivitiesSingleGene extends Component {
                     </TableCell>
                     <TableCell>{historyItem.curatedBy.name}</TableCell>
                     <TableCell>{historyItem.reason}</TableCell>
+                    <TableCell>{historyItem.agent}</TableCell>
                   </TableRow>
                 )
               }
