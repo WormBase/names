@@ -68,6 +68,7 @@ export const PageMain = withStyles((theme) => ({
     width: '60%',
     [theme.breakpoints.down('sm')]: {
       margin: 0,
+      width: `100%`,
     },
   },
 }))(pageMain);

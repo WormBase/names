@@ -27,7 +27,9 @@ const Gene = (props) => {
       <div className={classes.main}>
         {/* tables and charts */}
         <Typography variant="title" gutterBottom>Recent activities</Typography>
-        <RecentActivities />
+        <div className={classes.recentActivitiesTable}>
+          <RecentActivities />
+        </div>
       </div>
       </div>
     </Page>
@@ -56,7 +58,15 @@ const styles = (theme) => ({
     '& > *': {
       width: '80%',
     },
-  }
+    [theme.breakpoints.down('sm')]: {
+      '& > *': {
+        width: '100%',
+      },
+    },
+  },
+  recentActivitiesTable: {
+    overflow: 'scroll',
+  },
 });
 
 export default withStyles(styles)(Gene);
