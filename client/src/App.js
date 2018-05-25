@@ -67,7 +67,6 @@ const styles = (theme) => ({
     flex: '1 0 auto',
     display: 'flex',
     flexDirection: 'column',
-    padding: theme.spacing.unit * 4,
   }
 });
 
