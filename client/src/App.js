@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Route , Link, Redirect, Switch } from 'react-router-dom';
 import 'typeface-roboto';
-import { withStyles } from './components/elements';
+import { withStyles, Page, } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
@@ -33,12 +33,12 @@ class App extends Component {
                       <Switch>
                         <Route path={`${match.url}/new`} component={() => <GeneCreate />} />
                         <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />
-                        <Route path={`${match.url}/merge`} component={() => 'form to merge two genes'} />
-                        <Route path={`${match.url}/split`} component={() => 'form to split a gene'} />
+                        <Route path={`${match.url}/merge`} component={() => <Page>form to merge two genes</Page>} />
+                        <Route path={`${match.url}/split`} component={() => <Page>form to split a gene</Page>} />
                       </Switch>
                     )} />
-                    <Route path="/variation" component={() => 'Variation page (coming soon ..ish)' } />
-                    <Route path="/feature" component={() => 'Feature page (coming soon ..ish)' } />
+                    <Route path="/variation" component={() => <Page>Variation page (coming soon ..ish)</Page> } />
+                    <Route path="/feature" component={() => <Page>Feature page (coming soon ..ish)</Page> } />
                     <Route path="/me" component={() => profile } />
                   </div>
                 ] :
