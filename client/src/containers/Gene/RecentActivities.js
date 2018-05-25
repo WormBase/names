@@ -10,6 +10,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Timestamp,
 } from '../../components/elements';
 
 class RecentActivities extends Component {
@@ -111,7 +112,9 @@ class RecentActivities extends Component {
               (historyItem) => {
                 return (
                   <TableRow>
-                    <TableCell>{historyItem.time}</TableCell>
+                    <TableCell className={classes.time}>
+                      <Timestamp time={historyItem.time} />
+                    </TableCell>
                     <TableCell>{historyItem.eventType}</TableCell>
                     <TableCell>
                       {
@@ -149,6 +152,9 @@ const styles = (theme) => ({
   root: {
     // width: 'initial',
   },
+  time: {
+    whiteSpace: 'nowrap',
+  }
 });
 
 export default withStyles(styles)(RecentActivities);
