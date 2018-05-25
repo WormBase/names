@@ -46,23 +46,26 @@ pageRight.propTypes = {
 export const Page = withStyles((theme) => ({
   root: {
     display: 'flex',
-    flexWrap: 'wrap',
+    margin: theme.spacing.unit * 4,
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+    },
   },
 }))(page)
 
 export const PageLeft = withStyles((theme) => ({
   left: {
-    minWidth: '20%',
+    width: '20%',
     [theme.breakpoints.down('sm')]: {
       width: `100%`,
+      marginBottom: theme.spacing.unit * 4,
     },
   },
 }))(pageLeft);
 
 export const PageMain = withStyles((theme) => ({
   main: {
-    flexGrow: 1,
-    margin: `0px ${theme.spacing.unit * 10}px`,
+    width: '60%',
     [theme.breakpoints.down('sm')]: {
       margin: 0,
     },
@@ -71,7 +74,7 @@ export const PageMain = withStyles((theme) => ({
 
 export const PageRight = withStyles((theme) => ({
   right: {
-    minWidth: '20%',
+    width: '20%',
     [theme.breakpoints.down('sm')]: {
       width: `100%`,
     },
