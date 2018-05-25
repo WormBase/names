@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { withStyles, Button, Icon } from '../../components/elements';
+import { withStyles, Button, Icon, Page, } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
 import GeneCreate from './GeneCreate';
@@ -10,7 +10,8 @@ import GeneSearchBox from './GeneSearchBox';
 const Gene = (props) => {
   const {classes} = props;
   return (
-    <div className={classes.root}>
+    <Page>
+      <div className={classes.root}>
       <div className={classes.header}>
         <Button
           variant="raised"
@@ -25,7 +26,8 @@ const Gene = (props) => {
       <div className={classes.main}>
         {/* tables and charts */}
       </div>
-    </div>
+      </div>
+    </Page>
   );
 }
 
@@ -35,6 +37,7 @@ Gene.propTypes = {
 
 const styles = (theme) => ({
   root: {
+    flexGrow: 1,
   },
   header: {
     display: 'flex',
