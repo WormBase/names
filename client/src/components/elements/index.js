@@ -33,6 +33,7 @@ export { default as TextField} from './TextField';
 export { default as SpeciesSelect } from './SpeciesSelect';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { Page, PageLeft, PageMain, PageRight } from './Page';
+export { default as Timestamp } from './Timestamp';
 
 export const Dialog = withMobileDialog()(withStyles((theme) => ({
   paper: {

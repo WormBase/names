@@ -10,6 +10,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Timestamp,
 } from '../../components/elements';
 
 class RecentActivitiesSingleGene extends Component {
@@ -98,7 +99,9 @@ class RecentActivitiesSingleGene extends Component {
               (historyItem) => {
                 return (
                   <TableRow>
-                    <TableCell>{historyItem.time}</TableCell>
+                    <TableCell className={classes.time}>
+                      <Timestamp time={historyItem.time}/>
+                    </TableCell>
                     <TableCell>{historyItem.eventType}</TableCell>
                     <TableCell>
                       {
@@ -128,6 +131,9 @@ RecentActivitiesSingleGene.propTypes = {
 const styles = (theme) => ({
   root: {
     // width: 'initial',
+  },
+  time: {
+    whiteSpace: 'nowrap',
   },
 });
 
