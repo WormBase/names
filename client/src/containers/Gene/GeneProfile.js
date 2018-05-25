@@ -7,6 +7,7 @@ import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
+import RecentActivitiesSingleGene from './RecentActivitiesSingleGene';
 
 class GeneProfile extends Component {
   constructor(props) {
@@ -107,6 +108,10 @@ class GeneProfile extends Component {
               /> :
               <Typography variant="caption">Dead</Typography>
           }
+          <div className={classes.historySection}>
+            <Typography variant="title" gutterBottom>Change history</Typography>
+            <RecentActivitiesSingleGene />
+          </div>
         </PageMain>
         <PageRight>
           {
@@ -203,6 +208,9 @@ const styles = (theme) => ({
     '&:hover': {
       backgroundColor: theme.palette.error.dark,
     },
+  },
+  historySection: {
+    margin: `${theme.spacing.unit * 8}px 0`,
   }
 });
 
