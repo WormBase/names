@@ -21,8 +21,10 @@ const Gene = (props) => {
         >
           Add New Gene
         </Button>
-        OR
-        <GeneSearchBox />
+        <div className={classes.or}>OR</div>
+        <div className={classes.search}>
+          <GeneSearchBox />
+        </div>
       </div>
       <div className={classes.main}>
         {/* tables and charts */}
@@ -46,10 +48,20 @@ const styles = (theme) => ({
   },
   header: {
     display: 'flex',
-    flexWrap: 'wrap',
     justifyContent: 'space-around',
     alignItems: 'center',
     marginBottom: theme.spacing.unit * 6,
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
+    },
+  },
+  or: {
+    [theme.breakpoints.down('xs')]: {
+      display: 'none',
+    },
+  },
+  search: {
+    marginTop: theme.spacing.unit * 2,
   },
   main: {
     display: 'flex',
