@@ -26,8 +26,9 @@ class Authenticate extends Component {
     }
   }
 
-  handleLoginSuccess = (user) => {
+  handleLoginSuccess = (user, logout) => {
     const {name, email, id_token} = user;
+    this.logout = logout;
     this.setState({
       user: {
         name,
@@ -53,6 +54,7 @@ class Authenticate extends Component {
       ...DEFAULT_AUTHENTICATION_STATE,
     });
     window.sessionStorage.removeItem(sessionStorageKey);
+    this.logout && this.logout();
     this.props.history.push('/');
   }
 
