@@ -108,9 +108,11 @@ class GeneProfile extends Component {
               /> :
               <Typography variant="caption">Dead</Typography>
           }
-          <div className={classes.historySection}>
+          <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
-            <RecentActivitiesSingleGene />
+            <div className={classes.historyTable}>
+              <RecentActivitiesSingleGene/>
+            </div>
           </div>
         </PageMain>
         <PageRight>
@@ -209,9 +211,14 @@ const styles = (theme) => ({
       backgroundColor: theme.palette.error.dark,
     },
   },
-  historySection: {
+  section: {
     margin: `${theme.spacing.unit * 8}px 0`,
-  }
+  },
+  historyTable: {
+    [theme.breakpoints.down('sm')]: {
+      overflow: 'scroll',
+    },
+  },
 });
 
 export default withStyles(styles)(GeneProfile);
