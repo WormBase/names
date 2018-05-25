@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AppBar, Toolbar, Typography, withStyles } from '../../components/elements';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
 
@@ -11,10 +12,17 @@ const Header = (props) => {
     <div>
       <AppBar position="static" className={classes.root}>
         <Toolbar className={classes.toolbar}>
-          <Logo />
-          <Typography variant="title" color="inherit" className={classes.title}>
-            WormBase Name Server
-          </Typography>
+          <Link to="/">
+            <Logo />
+          </Link>
+          <div className={classes.title}>
+            <Link to="/" >
+              <Typography variant="title" color="inherit" >
+                WormBase Name Server
+              </Typography>
+            </Link>
+          </div>
+
           {props.children}
         </Toolbar>
       </AppBar>
@@ -34,6 +42,10 @@ const styles = (theme) => ({
   },
   title: {
     flexGrow: 1,
+    '& a': {
+      textDecoration: 'initial',
+      color: 'initial',
+    },
   },
 });
 
