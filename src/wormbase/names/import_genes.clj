@@ -16,10 +16,12 @@
    [ring.util.http-response :as http-response]
    [semantic-csv.core :as sc]
    [wormbase.db :as wdb]
+   [wormbase.db.schema :as wdbs]
    [wormbase.specs.gene :as wsg]
    [wormbase.names.event-broadcast :as wneb]
    [wormbase.specs.person :as wsp]
    [wormbase.specs.species :as wss]
+   [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu])
   (:import
    (clojure.lang ExceptionInfo)
@@ -69,7 +71,6 @@
 ;; This contains data about the change in some cases (e.g split, merge, change name)
 (s/def :geneace/event-text (s/and string? not-empty))
 
-;; conforming this should produce the right ident
 (s/def ::status (s/and string?
                        (s/or :gene.status/live #(= % "Live")
                              :gene.status/dead #(= % "Dead")
@@ -185,15 +186,6 @@
                                :gene/sequence-name
                                :gene/biotype]}})
 
-(defn sort-events-by-when
-  "Sort a sequence of mappings representing events in temporal order."
-  [events & {:keys [most-recent-first]
-             :or {most-recent-first false}}]
-  (let [cmp (if most-recent-first
-              #(compare %2 %1)
-              #(compare %1 %2))]
-    (sort-by :provenance/when cmp events)))
-
 (defn choose-first-created-event
   "The export from GeneAce (and the ACeDB db itself) has lot of odd
   things in the hisory.
@@ -210,13 +202,25 @@
   \"imported\" more than once (data fudging)."
   [events]
   (->> (filter #(= (:provenance/what %) :event/new-gene) events)
-       sort-events-by-when
+       wnp/sort-events-by-when
        last))
 
 (defn parse-transform-cast [in-file conf cast-fns]
   (->> (parse-tsv in-file)
        (sc/mappify (select-keys conf [:header]))
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
+
+(defn process-gene-events [[gid events]]
+  (let [decoded-events (map decode-geneace-event events)
+        first-created (choose-first-created-event
+                       decoded-events)
+        no-created (remove
+                    #(= (:geneace/event-text %) "Created")
+                    decoded-events)
+        fixedup-events (if first-created
+                         (conj no-created first-created)
+                         no-created)]
+    [gid (wnp/sort-events-by-when fixedup-events)]))
 
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
@@ -227,54 +231,9 @@
         (with-open [in-file (io/reader tsv-path)]
           (doall
            (->> (parse-transform-cast in-file ev-ex-conf cast-fns)
-                (sort-by :provenance/when)
                 (group-by :gene/id)
-                (map
-                 (fn process-gene-events [[gid events]]
-                   (let [decoded-events (map decode-geneace-event events)
-                         first-created (choose-first-created-event
-                                        decoded-events)
-                         no-created (remove
-                                     #(= (:geneace/event-text %) "Created")
-                                     decoded-events)
-                         fixedup-events (if first-created
-                                          (conj no-created first-created)
-                                          no-created)]
-                     [gid (sort-by :provenance/when fixedup-events)])))
+                (map process-gene-events)
                 (into {}))))))
-
-(defn current-data [tsv-path]
-  (let [cd-ex-conf (:data export-conf)
-        cast-fns {:gene/id cast-gene-id-fn
-                  :gene/species (partial conformed-ref
-                                         :species/latin-name)
-                  :gene/status (partial conformed-label ::status)
-                  :gene/cgc-name (partial conformed :gene/cgc-name)
-                  :gene/sequence-name (partial conformed
-                                               :gene/sequence-name)
-                  :gene/biotype ->biotype}]
-    (with-open [in-file (io/reader tsv-path)]
-      (doall
-       (->> (parse-transform-cast in-file cd-ex-conf cast-fns)
-            (map (fn [data]
-                   [(:gene/id data) data]))
-            (into {}))))))
-
-(defn filter-by-event-type [et events]
-  (filter #(= (:provenance/what %) et) events))
-
-(defn transact [conn tx-data]
-  (d/transact-async conn tx-data))
-
-(defn transact-gene [conn gene]
-  (d/transact-async
-   conn
-   [(if (= (:gene/status gene) :gene.status/dead)
-      (dissoc gene :gene/sequence-name :gene/cgc-name)
-      gene)
-    {:db/id "datomic.tx"
-     :provenance/what :event/import-gene
-     :provenance/how :agent/importer}]))
 
 (defn transact-gene-event [conn historical-version event]
   (let [pv (wnu/select-keys-with-ns event "provenance")
@@ -283,22 +242,61 @@
                  (assoc pv :db/id "datomic.tx")]]
     (d/transact-async conn tx-data)))
 
-(defn process [conn current-data-tsv-path history-actions-tsv-path]
-  (let [all-events (map-history-actions history-actions-tsv-path)
-        curr-data (->> current-data-tsv-path
-                       current-data
-                       vals
-                       (map discard-empty-valued-entries))]
-    (doseq [data-tx (pmap (partial transact-gene conn) curr-data)]
-      (deref data-tx))
-    (doseq [gene curr-data]
-      (let [gene-events (->> (get all-events (:gene/id gene))
-                             (sort-events-by-when)
-                             (keep-indexed (fn [i e]
-                                             [(inc i) e])))
-            event-txes (pmap (partial apply transact-gene-event conn) gene-events)]
-        (doseq [event-tx event-txes]
-          (deref event-tx))))))
+(defn build-data-txes
+  [tsv-path conf & {:keys [batch-size]
+                    :or {batch-size 1000}}]
+  (let [cast-fns {:gene/id cast-gene-id-fn
+                  :gene/species (partial conformed-ref
+                                         :species/latin-name)
+                  :gene/status (partial conformed-label ::status)
+                  :gene/cgc-name (partial conformed :gene/cgc-name)
+                  :gene/sequence-name (partial conformed
+                                               :gene/sequence-name)
+                  :gene/biotype ->biotype}]
+    (with-open [in-file (io/reader tsv-path)]
+      (->> (parse-transform-cast in-file conf cast-fns)
+           (map discard-empty-valued-entries)
+           (map (fn mk-tx [gene]
+                  ;; TODO: Export data format work-around.  This conditional block
+                  ;;       can be changed to just "gene" when export data is "fixed"
+                  (if (= (:gene/status gene) :gene.status/dead)
+                    (dissoc gene :gene/sequence-name :gene/cgc-name)
+                    gene)))
+           (partition-all batch-size)
+           doall))))
+
+(defn transact-batch [conn tx-batch]
+  (let [tx-data (conj tx-batch {:db/id "datomic.tx"
+                                :provenance/what :event/import-gene
+                                :provenance/how :agent/importer})]
+    (d/transact-async conn tx-data)))
+
+(defn batch-transact-data [conn tsv-path]
+  (let [cd-ex-conf (:data export-conf)]
+    (doseq [txf (pmap (partial transact-batch conn)
+                      (build-data-txes tsv-path cd-ex-conf))]
+      @txf)))
+
+;; TODO2: this code all works, but the 2nd step of transacting events
+;;        takes a *very* long time.  This is due to having a
+;;        transact{,-async}() call for each event.  An alternative
+;;        might be:
+;;            * introduce a temporay :db.type/ref schema
+;;              attribute in the provenance, maybe:
+;;              `:importer/historical-gene`
+;;              Could make `number-of-genes` * `events` transaction batches.
+(defn process
+  [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
+                                          :or {n-in-flight 10}}]
+  (batch-transact-data conn data-tsv-path)
+  (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
+    (let [event-txes (->> gene-events
+                          (keep-indexed #(vector (inc %1) %2))
+                          (pmap (partial apply transact-gene-event conn)))]
+      ;; keep `n-in-fllght` transactions  running at a time for performance.
+      (doseq [event-txes-p (partition-all n-in-flight event-txes)]
+        (doseq [event-tx event-txes-p]
+          @event-tx)))))
 
 (def cli-options [])
 
@@ -312,22 +310,35 @@
   (System/exit status))
 
 (defn -main
-  "Entry point designed to be invoked via the command line.
+  "Command line entry point.
+
    Runs the application without the change queue mointor and executes
    the import process."
   [& args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)
-        tsv-path (first arguments)]
+        tsv-paths (take 2 (rest arguments))
+        db-uri (env :wb-db-uri)]
     (cond
       (:help options) (exit 0 (usage summary))
 
-      (not tsv-path)
-      (exit 1 "Pass .tsv file as first parameter")
+      (empty? tsv-paths)
+      (exit 1 "Pass the 2 .tsv files as first 2 parameters")
 
-      (not (.exists (io/file tsv-path)))
-      (exit 2 ".tsv file does not exist")
+      (not (every? #(.exists (io/file %)) tsv-paths))
+      (let [non-existant (filter #(not (.exists (io/file %))) tsv-paths)]
+        (exit 2 (str "A .tsv file did not exist, check paths supplied"
+                     (str/join ", " non-existant))))
 
-      :othwrwise
-      (println "RUN?")
-;;      (run (d/connect (env :wb-db-uri)) tsv-path)
-      )))
+      (nil? (env :wb-db-uri))
+      (exit 1 "set the WB_DB_URI environement variable w/datomic URI.")
+
+      tsv-paths
+      (do (when-not (d/create-database db-uri)
+            (let [conn (d/connect db-uri) ]
+              (wdbs/install conn 1)
+              (d/release conn)))
+          (let [conn (d/connect db-uri)
+                proc (partial process conn)]
+            (apply proc tsv-paths))))))
+
+

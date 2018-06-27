@@ -39,3 +39,35 @@
        {:provenance/why why})
      (when (inst? whence)
        {:provenance/when whence}))))
+
+(defn sort-events-by-when
+  "Sort a sequence of mappings representing events in temporal order."
+  [events & {:keys [most-recent-first]
+             :or {most-recent-first false}}]
+  (let [cmp (if most-recent-first
+              #(compare %2 %1)
+              #(compare %1 %2))]
+    (sort-by :provenance/when cmp events)))
+
+(defn pull-provenance [db tx-id]
+  (d/pull db
+          '[* {:provenance/what [:db/ident]
+               :provenance/who [:person/id]}]
+          tx-id))
+
+(defn query-provenance
+  "query for the entire history of an entity `entity-id`.
+  Note that lookup-ref can be used instead of a numeric identifier."
+  [db entity-id]
+  (let [pull (partial pull-provenance db)
+        sort-mrf #(sort-events-by-when % :most-recent-first true)]
+    (->> (d/q '[:find [?tx ...]
+                :in $ ?e
+                :where
+                [?e ?a ?v ?tx ?added]
+                [?tx :db/txInstant ?inst]]
+              (d/history db)
+              entity-id)
+         (map pull)
+         (sort-mrf)
+         seq)))
