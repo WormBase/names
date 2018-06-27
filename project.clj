@@ -23,7 +23,8 @@
    {:dependencies
     [[com.datomic/datomic-pro "0.9.5661"]]}
    :dev
-   {:aliases {"code-qa" ["do" ["eastwood"] "test"]
+   {:lein-tools-deps/config {:resolve-aliases [:dev]}
+    :aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}
     :plugins
     [[com.jakemccrary/lein-test-refresh "0.20.0"]
@@ -31,5 +32,5 @@
      [lein-ancient "0.6.10" :exclusions [org.clojure/clojure]]]
     :ring {:nrepl {:start? true}}}
    :test
-   {:env
-    {:wb-db-uri "datomic:mem://test-db"}}})
+   {:lein-tools-deps/config {:resolve-aliases [:test]}
+    :env {:wb-db-uri "datomic:mem://test-db"}}})
