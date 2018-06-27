@@ -1,0 +1,72 @@
+{:paths ["src" "resources"]
+
+ ;; TODO: figure out how to configure logging
+ ;; When this package is added, no logging statements appear in
+ ;; console by default (compojure-api integration)
+ ;; [org.clojure/tools.logging "0.4.0"]
+ :deps
+ {org.clojure/clojure {:mvn/version "1.9.0"}
+  org.clojure/core.cache {:mvn/version "0.6.5"}
+  org.clojure/data.csv {:mvn/version "0.1.4"}
+  org.clojure/tools.cli {:mvn/version "0.3.6"}
+  clojure.java-time {:mvn/version "0.3.1"}
+  aero {:mvn/version "1.1.2"}
+  amazonica {:mvn/version "0.3.121"}
+  bk/ring-gzip {:mvn/version "0.2.1"}
+  buddy/buddy-auth {:mvn/version "2.1.0"}
+  cheshire {:mvn/version "5.8.0"}
+  clj-http {:mvn/version "3.8.0"}
+  com.draines/postal {:mvn/version "2.0.2"}
+  danlentz/clj-uuid {:mvn/version "0.1.7"}
+  environ {:mvn/version "1.1.0"}
+  expound {:mvn/version "0.5.0"}
+  com.google.api-client/google-api-client {:mvn/version "1.23.0"}
+  io.rkn/conformity {:mvn/version "0.5.1"}
+  log4j/log4j {:mvn/version "1.2.17"
+               :exclusions [javax.mail/mail
+                            javax.jms/jms
+                            com.sun.jdmk/jmxtools
+                            com.sun.jmx/jmxri]}
+  me.raynes/fs {:mvn/version "1.4.6"}
+  metosin/compojure-api {:mvn/version "2.0.0-alpha19"
+                         :exclusions [potemkin
+                                      instaparse]}
+  metosin/spec-tools {:mvn/version "0.5.1"}
+  mount {:mvn/version "0.1.12"}
+  phrase {:mvn/version "0.3-alpha3"} ;; TODO: use for better API error messages.
+  ring/ring-codec {:mvn/version "1.1.0"}
+  ring/ring-core {:mvn/version "1.6.3"}
+  ring/ring-defaults {:mvn/version "0.3.1"}
+  ring/ring-jetty-adapter {:mvn/version "1.6.3"}
+  semantic-csv {:mvn/version "0.2.1-alpha1"}
+  com.datomic/datomic-pro {:mvn/version "0.9.5697"}
+ }
+
+ ;; Aliases
+ ;;   resolve-deps aliases (-R) affect dependency resolution, options:
+ ;;     :extra-deps - specifies extra deps to add to :deps
+ ;;     :override-deps - specifies a coordinate to use instead of that in :deps
+ ;;     :default-deps - specifies a coordinate to use for a lib if one isn't found
+ ;;   make-classpath aliases (-C) affect the classpath generation, options:
+ ;;     :extra-paths - vector of additional paths to add to the classpath
+ ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
+ :aliases {:dev
+           {:extra-deps
+            {org.clojure/test.check {:mvn/version  "0.9.0"}
+             org.clojure/tools.trace {:mvn/version  "0.7.9"}
+             com.velisco/strgen {:mvn/version "0.1.5"}
+             javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
+             ring/ring-devel {:mvn/version "1.6.3"}
+             peridot {:mvn/version "0.5.0"}
+             vvvvalvalval/datomock {:mvn/version "0.2.0"}
+             }
+            }
+           }
+
+ ;; Provider attributes
+
+  ;; :mvn/repos {
+  ;;   "central" {:url "https://repo1.maven.org/maven2/"}
+  ;;   "clojars" {:url "https://repo.clojars.org/"}
+  ;; }
+}
