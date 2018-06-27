@@ -61,6 +61,7 @@
              vvvvalvalval/datomock {:mvn/version "0.2.0"}
              }
             }
+           :extra-paths ["test"]
            }
 
  ;; Provider attributes
