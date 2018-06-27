@@ -65,7 +65,7 @@
 (defn parse-tsv [stream]
   (csv/read-csv stream :separator \tab))
 
-;; The string describe the Gene "HistoryAction" in Geneace.
+;; A string describing the Gene "HistoryAction".
 ;; This contains data about the change in some cases (e.g split, merge, change name)
 (s/def :geneace/event-text (s/and string? not-empty))
 
