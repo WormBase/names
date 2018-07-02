@@ -62,7 +62,7 @@
              }
             }
            :extra-paths ["test"]
-           :datomic-pro            
+           :datomic-pro
            {:extra-deps
             {com.datomic/datomic-pro {:mvn/version "0.9.5697"}}}}
 
