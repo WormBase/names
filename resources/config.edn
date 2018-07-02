@@ -12,8 +12,6 @@
  :google-apps
  {:web #include #join [#env HOME "/.wb-ns-google-secrets-web.edn"]
   :console #include #join [#env HOME "/.wb-ns-google-secrets-console.edn"]}
- :cookie-name "WBNS-COOKIE"
- :cookie-secret "166085a0c66ab900e41cb323275993d0"
  :oauth2
  {:google
   {:launch-uri "/oauth2/google"
