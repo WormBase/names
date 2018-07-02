@@ -39,10 +39,9 @@
   ring/ring-defaults {:mvn/version "0.3.1"}
   ring/ring-jetty-adapter {:mvn/version "1.6.3"}
   semantic-csv {:mvn/version "0.2.1-alpha1"}
-  com.datomic/datomic-pro {:mvn/version "0.9.5697"}
  }
 
- ;; Aliases
+ ;; aliases
  ;;   resolve-deps aliases (-R) affect dependency resolution, options:
  ;;     :extra-deps - specifies extra deps to add to :deps
  ;;     :override-deps - specifies a coordinate to use instead of that in :deps
@@ -54,7 +53,8 @@
            {:extra-deps
             {org.clojure/test.check {:mvn/version  "0.9.0"}
              org.clojure/tools.trace {:mvn/version  "0.7.9"}
-             com.velisco/strgen {:mvn/version "0.1.5"}
+             com.velisco/strgen {:mvn/version "0.1.5"
+                                 :exclusions [org.clojure/test.check]}
              javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
              ring/ring-devel {:mvn/version "1.6.3"}
              peridot {:mvn/version "0.5.0"}
@@ -62,7 +62,9 @@
              }
             }
            :extra-paths ["test"]
-           }
+           :datomic-pro            
+           {:extra-deps
+            {com.datomic/datomic-pro {:mvn/version "0.9.5697"}}}}
 
  ;; Provider attributes
 
