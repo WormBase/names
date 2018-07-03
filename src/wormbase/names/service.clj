@@ -36,10 +36,11 @@
   [request-handler]
   (fn [request]
     (let [response (request-handler request)]
+      (println "In wrap-not-found, response is " response)
       (or response
-          (-> {:reason "These are not the worms you're looking for"}
-              (http-response/not-found)
-              (http-response/content-type default-format))))))
+          (-> (http-response/resource-response
+               "client_build/index.html")
+              (http-response/content-type "text/html"))))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
@@ -51,11 +52,11 @@
     "//online.swagger.io/validator"))
 
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
-  {:ui "/"
+  {:ui "/api-docs"
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
-   {:basePath "/api"
+   {;; :basePath "/api"
     :info
     {:title "Wormbase name service"
      :description "Provides naming operations for WormBase entities."}
@@ -75,7 +76,7 @@
      {:name "variation"}
      {:name "person"}]}})
 
-(def api
+(def ^{:doc "The main application."} app
   (sweet/api
    {:coercion :spec
     :formats mformats
@@ -85,28 +86,13 @@
                  wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
-   (sweet/context "/" []
+   (sweet/context "" []
      ;; TODO: is it right to be
      ;; repating the authorization and auth-rules params below so that
      ;; the not-found handler doesn't raise validation error?
-     wn-person/routes
-     wn-gene/routes)))
-
-(defn- wrap-client-side-routes
-  "handle endpoints that need to be routed via client-side routing"
-  [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (if response
-        response
-        (http-response/resource-response "client_build/index.html")))))
-
-(def ^{:doc "The main application."} app
-  (-> (sweet/context "/api" [] api)
-      (ring-resource/wrap-resource "client_build")
-      (ring-content-type/wrap-content-type)
-      (wrap-client-side-routes)
-      ))
+     (sweet/context "/api" []
+       wn-person/routes
+       wn-gene/routes))))
 
 (defn init
   "Entry-point for ring server initialization."

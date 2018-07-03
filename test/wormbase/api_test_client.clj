@@ -18,7 +18,7 @@
           [status body]
           (tu/raw-put-or-post*
            service/app
-           (str "/" entity-kind "/")
+           (str "/api/" entity-kind "/")
            :post
            data
            "application/json"
@@ -29,7 +29,7 @@
   [entity-kind identifier data & {:keys [current-user]
                                   :or {current-user default-user}}]
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [uri (str "/" entity-kind "/" identifier)
+    (let [uri (str "/api/" entity-kind "/" identifier)
           put (partial tu/raw-put-or-post* service/app uri :put)
           token (get fake-auth/tokens current-user)
           headers {"authorization" (str "Token " token)}
@@ -45,7 +45,7 @@
                  "authorization" (str "Token " current-user-token)}
         [status body] (tu/get*
                        service/app
-                       (str "/" entity-kind "/" identifier)
+                       (str "/api/" entity-kind "/" identifier)
                        params
                        headers)]
     [status (tu/parse-body body)]))
@@ -55,7 +55,8 @@
                        :or {current-user default-user}}]
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)
-          uri (str "/" entity-kind "/" (str/replace-first path #"^/" ""))]
+          uri (str "/api/" entity-kind "/"
+                   (str/replace-first path #"^/" ""))]
       (tu/delete service/app
                  uri
                  "application/json"
