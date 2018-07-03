@@ -31,3 +31,4 @@ target/
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 /docker/app.jar
+/.dockerignore
