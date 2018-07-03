@@ -13,7 +13,6 @@
 Build
 Build.bat
 META.yml
-Makefile
 _build/
 blib/
 cover_db/
