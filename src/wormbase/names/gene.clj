@@ -385,6 +385,7 @@
        :get
        {:summary "Information about a given gene."
         :x-name ::about-gene
+        :path-params [identifier :- ::wsg/identifier]
         :responses (assoc default-responses 200 {:schema ::wsg/info})
         :handler (fn [request]
                    (about-gene request identifier))}
@@ -392,6 +393,7 @@
        {:summary "Add new names to an existing gene"
         :x-name ::update-gene
         :parameters {:body-params ::wsg/update}
+        :path-params [identifier :- ::wsg/identifier]
         :responses (dissoc default-responses 409)
         :handler (fn [request]
                    (update-gene request identifier))}})
