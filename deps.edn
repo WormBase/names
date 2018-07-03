@@ -3,12 +3,12 @@
  ;; TODO: figure out how to configure logging
  ;; When this package is added, no logging statements appear in
  ;; console by default (compojure-api integration)
- ;; [org.clojure/tools.logging "0.4.0"]
  :deps
  {org.clojure/clojure {:mvn/version "1.9.0"}
   org.clojure/core.cache {:mvn/version "0.6.5"}
   org.clojure/data.csv {:mvn/version "0.1.4"}
   org.clojure/tools.cli {:mvn/version "0.3.6"}
+  org.clojure/tools.logging {:mvn/version "0.4.0"}
   clojure.java-time {:mvn/version "0.3.1"}
   aero {:mvn/version "1.1.2"}
   amazonica {:mvn/version "0.3.121"}
@@ -22,11 +22,7 @@
   expound {:mvn/version "0.5.0"}
   com.google.api-client/google-api-client {:mvn/version "1.23.0"}
   io.rkn/conformity {:mvn/version "0.5.1"}
-  log4j/log4j {:mvn/version "1.2.17"
-               :exclusions [javax.mail/mail
-                            javax.jms/jms
-                            com.sun.jdmk/jmxtools
-                            com.sun.jmx/jmxri]}
+  ch.qos.logback/logback-classic {:mvn/version "1.0.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
   metosin/compojure-api {:mvn/version "2.0.0-alpha19"
                          :exclusions [potemkin
@@ -64,7 +60,47 @@
            :extra-paths ["test"]
            :datomic-pro
            {:extra-deps
-            {com.datomic/datomic-pro {:mvn/version "0.9.5697"}}}}
+            {com.datomic/datomic-pro
+             {:mvn/version "0.9.5697"
+              :exclusions [org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]}}}
+           :logging
+           {:extra-deps
+            ;; Use Logback as the main logging implementation:
+            {ch.qos.logback/logback-classic {:mvn/version "1.1.9"
+                                             :exclusions
+                                             [;; Exclude transitive dependencies on all other logging
+                                              ;; implementations, including other SLF4J bridges.
+                                              commons-logging
+                                              log4j
+                                              org.apache.logging.log4j/log4j
+                                              org.slf4j/simple
+                                              org.slf4j/slf4j-jcl
+                                              org.slf4j/slf4j-nop
+                                              org.slf4j/slf4j-log4j12
+                                              org.slf4j/slf4j-log4j13]}
+             ch.qos.logback/logback-core {:mvn/version "1.1.7"}}}
+
+           ;;   ;; Logback implements the SLF4J API:
+           ;;   org.slf4j/slf4j-api {:mvn/version "1.7.22"}
+
+           ;;   ;; Redirect Apache Commons Logging to Logback via the
+           ;;   ;; SLF4J API:
+           ;;   org.slf4j/jcl-over-slf4j {:mvn/version "1.7.22"}
+
+           ;;   ;; Redirect Log4j 1.x to Logback via the SLF4J API:
+           ;;   org.slf4j/log4j-over-slf4j {:mvn/version "1.7.22"}
+
+           ;;   ;; Redirect Log4j 2.x to Logback via the SLF4J API:
+           ;;   org.apache.logging.log4j/log4j-to-slf4j {:mvn/version "2.7"}
+
+           ;;   ;; Redirect OSGI LogService to Logback via the SLF4J API
+           ;;   org.slf4j/osgi-over-slf4j {:mvn/version "1.7.22"}
+
+
+           ;;  ;; Redirect java.util.logging to Logback via the SLF4J API.
+           ;;  ;; Requires installing the bridge handler, see README:
+           ;;  org.slf4j/jul-to-slf4j {:mvn/version "1.7.22"}}}
+           }
 
  ;; Provider attributes
 

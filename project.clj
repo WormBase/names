@@ -19,8 +19,10 @@
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :aliases {"import-genes" ["run" "-m" "org.wormbase.names.import-genes"]}
   :profiles
-  {:datomic-pro
+  {:provided
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro]}}
+   :datomic-pro
+   {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
    :dev
    {:lein-tools-deps/config {:resolve-aliases [:dev]}
     :aliases {"code-qa" ["do" ["eastwood"] "test"]
