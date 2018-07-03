@@ -24,10 +24,11 @@
   io.rkn/conformity {:mvn/version "0.5.1"}
   ch.qos.logback/logback-classic {:mvn/version "1.0.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
-  metosin/compojure-api {:mvn/version "2.0.0-alpha19"
+  metosin/compojure-api {:mvn/version "2.0.0-alpha21"
                          :exclusions [potemkin
                                       instaparse]}
-  metosin/spec-tools {:mvn/version "0.5.1"}
+  metosin/spec-tools {:mvn/version "0.7.1"}
+  metosin/muuntaja {:mvn/version "0.6.0-alpha1"}
   mount {:mvn/version "0.1.12"}
   phrase {:mvn/version "0.3-alpha3"} ;; TODO: use for better API error messages.
   ring/ring-codec {:mvn/version "1.1.0"}

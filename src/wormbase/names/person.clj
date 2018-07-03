@@ -17,8 +17,8 @@
   (let [conn (:conn request)
         spec ::wsp/person
         person (some-> request :body-params)]
-    (let [conformed (stc/conform spec person stc/json-conforming)]
-      (if (= conformed ::s/invalid)
+    (let [transformed (stc/conform spec person stc/json-transformer)]
+      (if (= transformed ::s/invalid)
         (let [problems (str (s/explain-data spec person))]
           (throw (ex-info "Invalid person data"
                           {:type :user/validation-error
