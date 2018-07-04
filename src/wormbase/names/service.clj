@@ -36,7 +36,6 @@
   [request-handler]
   (fn [request]
     (let [response (request-handler request)]
-      (println "In wrap-not-found, response is " response)
       (or response
           (-> (http-response/resource-response
                "client_build/index.html")
