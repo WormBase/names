@@ -1,5 +1,7 @@
 (ns wormbase.names.service
   (:require
+   [clojure.string :as str]
+   [buddy.auth :as auth]
    [compojure.api.middleware :as mw]
    [compojure.api.sweet :as sweet]
    [compojure.route :as route]
@@ -17,9 +19,7 @@
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.resource :as ring-resource]
-   [ring.util.http-response :as http-response]
-   [buddy.auth :as auth]
-   [clojure.string :as str]))
+   [ring.util.http-response :as http-response]))
 
 (def default-format "application/json")
 
