@@ -12,6 +12,7 @@ import {
   TableRow,
   Timestamp,
 } from '../../components/elements';
+import { authorizedFetch } from '../Authenticate';
 
 class RecentActivities extends Component {
   constructor(props) {
@@ -78,11 +79,11 @@ class RecentActivities extends Component {
         return mockFetch.get('*', mockData);
       },
       () => {
-        return fetch(`/api/recent/gene`, {
+        return authorizedFetch(`/api/recent/gene`, {
           method: 'GET'
         });
       },
-      true
+      false
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data || [],
