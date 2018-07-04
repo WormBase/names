@@ -6,7 +6,7 @@ WB_DB_URI ?= $(shell sed -rn 's|value:(.*)|\1|p' \
 PROJ_NAME="wormbase-names"
 RELEASE_NAME="${PROJ_NAME}-${VERSION}"
 DEPLOY_JAR := app.jar
-PORT := 3333
+PORT := 3000
 WB_ACC_NUM := 357210185381
 FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${NAME}:${VERSION}
 
