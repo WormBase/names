@@ -20,7 +20,7 @@
                    "authorization" (str "Token " current-user-token)}
           [status body] (tu/get*
                          service/app
-                         (str "/gene/")
+                         (str "/api/gene/")
                          params
                          headers)]
       [status (tu/parse-body body)])))

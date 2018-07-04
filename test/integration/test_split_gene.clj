@@ -39,7 +39,7 @@
           current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/raw-put-or-post*
                          service/app
-                         (str "/gene/" gene-id "/split/")
+                         (str "/api/gene/" gene-id "/split/")
                          :post
                          data
                          "application/json"
@@ -53,7 +53,7 @@
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
-                 (str "/gene/" from-id "/split/" into-id)
+                 (str "/api/gene/" from-id "/split/" into-id)
                  "application/json"
                  {"authorization" (str "Token " current-user-token)}))))
 

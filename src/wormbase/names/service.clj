@@ -18,7 +18,8 @@
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.resource :as ring-resource]
    [ring.util.http-response :as http-response]
-   [buddy.auth :as auth]))
+   [buddy.auth :as auth]
+   [clojure.string :as str]))
 
 (def default-format "application/json")
 
@@ -36,10 +37,18 @@
   [request-handler]
   (fn [request]
     (let [response (request-handler request)]
-      (or response
-          (-> (http-response/resource-response
-               "client_build/index.html")
-              (http-response/content-type "text/html"))))))
+      (cond
+        response
+        response
+        
+        (str/starts-with? (:uri request) "/api")
+        (-> {:reason "Resource not found"}
+            (http-response/not-found)
+            (http-response/content-type default-format))
+
+        :otherwise-redirect-to-client-app
+        (-> (http-response/resource-response "client_build/index.html")
+            (http-response/content-type "text/html"))))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
