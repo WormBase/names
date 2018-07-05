@@ -66,8 +66,14 @@ eb-local: docker-ecr-login $(call print-help,eb-local,\
 			      build and run locally.")
 	eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI}
 
+.PHONY: build-client-app
+build-client-app: $(call print-help,build-client-app,\
+		    "Build the React Javascript client Application")
+	@yarn --silent --cwd ./client build 
+
 .PHONY: build
-build: docker/${DEPLOY_JAR} \
+build: build-client-app \
+       docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
 	@docker build -t ${NAME}:${VERSION} \
