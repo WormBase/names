@@ -1,5 +1,5 @@
 {:event-broadcast
- {:gmail #include #join [#env HOME "/.wb-ns-gmail-secrets.edn"]
+ {:gmail #include "secrets/wb-ns-gmail.edn"
   :aws-sqs
   {:queue-name "org-wormbase-names-tx_messages"
    :attributes
@@ -10,8 +10,8 @@
   :aws-s3
   {:bucket-name "wormbase"}}
  :google-apps
- {:web #include #join [#env HOME "/.wb-ns-google-secrets-web.edn"]
-  :console #include #join [#env HOME "/.wb-ns-google-secrets-console.edn"]}
+ {:web #include "secrets/wb-ns-google-web.edn"
+  :console #include "secrets/wb-ns-google-console.edn"}
  :oauth2
  {:google
   {:launch-uri "/oauth2/google"

@@ -6,7 +6,7 @@
 .lein-*
 .nrepl-port
 /*-init.clj
-/*.bak		
+/*.bak
 /*.old
 /*.out
 /bundle-release.log
@@ -32,3 +32,6 @@ target/
 !.elasticbeanstalk/*.global.yml
 /docker/app.jar
 /.dockerignore
+
+# secrets
+/resources/secrets/
