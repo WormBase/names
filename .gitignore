@@ -32,3 +32,6 @@ target/
 !.elasticbeanstalk/*.global.yml
 /docker/app.jar
 /.dockerignore
+
+# Generated assets
+/resources/client_build
