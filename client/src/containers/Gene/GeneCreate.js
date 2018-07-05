@@ -4,6 +4,7 @@ import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Page, PageLeft, PageMain, PageRight, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
+import { authorizedFetch } from '../Authenticate';
 
 class GeneCreate extends Component {
   constructor(props) {
@@ -33,12 +34,23 @@ class GeneCreate extends Component {
         }
       },
       () => {
-        return fetch(`/api/gene`, {
-          method: 'PUT'
+        console.log(data);
+        return authorizedFetch(`/api/gene/`, {
+          method: 'POST',
+          body: JSON.stringify({
+            "gene/species": {
+              "species/id": "species/c-elegans",
+            },
+            "gene/cgc-name": "abi-1",
+          }),
         });
       },
-      true
-    ).then((response) => response.json()).then((response) => {
+      false
+    ).then((response) => {
+      console.log(response);
+      return response.json();
+    }).then((response) => {
+      console.log(response);
       if (response.error) {
         this.setState({
           error: response.error,

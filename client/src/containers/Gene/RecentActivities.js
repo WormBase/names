@@ -83,7 +83,7 @@ class RecentActivities extends Component {
           method: 'GET'
         });
       },
-      false
+      true,
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data || [],
