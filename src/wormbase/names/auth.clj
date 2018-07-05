@@ -1,6 +1,8 @@
 (ns wormbase.names.auth
   (:require
+   [clojure.string :as str]
    [clojure.walk :as w]
+   [clojure.tools.logging :as log]
    [buddy.auth :as auth]
    [buddy.auth.backends.token :as babt]
    [buddy.auth.middleware :as auth-mw]
@@ -9,7 +11,7 @@
    [ring.middleware.defaults :as rmd]
    [datomic.api :as d]
    [wormbase.names.util :as wnu]
-   [clojure.string :as str]);
+   )
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken
                                                  GoogleIdToken$Payload
@@ -49,20 +51,17 @@
                (true? (:email_verified token-info)))
           token-info)))
     (catch IllegalArgumentException ex
-      ;; TODO: logging
-      (println ex)
+      (log/error ex)
       nil)))
 
 (defn identify [request token]
   (when-let [tok (verify-token token)]
-    (let [lur [:person/email (:email tok)]
+    (let [email (:email tok)
+          lur [:person/email email]
           db (:db request)]
-      (when-let [person (d/entity db lur)]
-        (let [x (merge tok (wnu/entity->map person))]
-          (when (str/starts-with? (:email x) "tester2")
-            (println "ROLES for person in identify:"
-                     (:person/roles x)))
-          x)))))
+      (if-let [person (d/entity db lur)]
+        (merge tok (wnu/entity->map person))
+        (log/warn (str "No person exists in db matching email: " email))))))
 
 (def backend (babt/token-backend {:authfn identify}))
 
