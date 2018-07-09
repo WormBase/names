@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
+import { authorizedFetch } from '../Authenticate';
 import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
@@ -41,10 +42,12 @@ class GeneProfile extends Component {
           });
         },
         () => {
-          return fetch('/api/gene');
+          console.log('zzzzzz: ' + `/api/gene/${this.props.wbId}`);
+          return authorizedFetch(`/api/gene/${this.props.wbId}`, {});
         },
         true
       ).then((response) => response.json()).then((response) => {
+        console.log(response);
         this.setState({
           data: response,
           status: 'SUCCESS',
@@ -116,7 +119,7 @@ class GeneProfile extends Component {
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
             <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene/>
+              <RecentActivitiesSingleGene wbId={this.props.wbId} />
             </div>
           </div>
         </PageMain>
