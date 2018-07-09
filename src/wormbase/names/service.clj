@@ -1,7 +1,10 @@
 (ns wormbase.names.service
   (:require
+   [clojure.string :as str]
+   [buddy.auth :as auth]
    [compojure.api.middleware :as mw]
    [compojure.api.sweet :as sweet]
+   [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
    [muuntaja.core :as m]
@@ -12,9 +15,11 @@
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
+   [ring.middleware.content-type :as ring-content-type]
+   [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
-   [ring.util.http-response :as http-response]
-   [buddy.auth :as auth]))
+   [ring.middleware.resource :as ring-resource]
+   [ring.util.http-response :as http-response]))
 
 (def default-format "application/json")
 
@@ -32,10 +37,17 @@
   [request-handler]
   (fn [request]
     (let [response (request-handler request)]
-      (or response
-          (-> {:reason "These are not the worms you're looking for"}
-              (http-response/not-found)
-              (http-response/content-type default-format))))))
+      (cond
+        response
+        response
+        
+        (str/starts-with? (:uri request) "/api")
+        (-> {:reason "Resource not found"}
+            (http-response/not-found)
+            (http-response/content-type default-format))
+
+        :else
+        (http-response/found "/index.html")))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
@@ -47,11 +59,12 @@
     "//online.swagger.io/validator"))
 
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
-  {:ui "/"
+  {:ui "/api-docs"
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
-   {:info
+   {;; :basePath "/api"
+    :info
     {:title "Wormbase name service"
      :description "Provides naming operations for WormBase entities."}
 
@@ -70,6 +83,9 @@
      {:name "variation"}
      {:name "person"}]}})
 
+(defn wrap-static-resources [handler]
+  (ring-resource/wrap-resource handler "client_build"))
+
 (def ^{:doc "The main application."} app
   (sweet/api
    {:coercion :spec
@@ -77,12 +93,17 @@
     :middleware [ring-gzip/wrap-gzip
                  wdb/wrap-datomic
                  wn-auth/wrap-auth
+                 wrap-static-resources
                  wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
-     wn-person/routes
-     wn-gene/routes)))
+     ;; TODO: is it right to be
+     ;; repating the authorization and auth-rules params below so that
+     ;; the not-found handler doesn't raise validation error?
+     (sweet/context "/api" []
+       wn-person/routes
+       wn-gene/routes))))
 
 (defn init
   "Entry-point for ring server initialization."

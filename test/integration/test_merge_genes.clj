@@ -37,7 +37,7 @@
 
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [data (tu/->json payload)
-          uri (str "/gene/" into-id "/merge/" from-id)
+          uri (str "/api/gene/" into-id "/merge/" from-id)
           [status body]
           (tu/raw-put-or-post*
            service/app
@@ -54,7 +54,7 @@
   (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
-                 (str "/gene/" into-id "/merge/" from-id)
+                 (str "/api/gene/" into-id "/merge/" from-id)
                  "application/json"
                  {"authorization" (str "Token " current-user-token)}))))
 

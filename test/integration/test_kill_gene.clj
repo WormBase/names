@@ -30,7 +30,7 @@
     (let [current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/delete
                          service/app
-                         (str "/gene/" gene-id)
+                         (str "/api/gene/" gene-id)
                          "application/json"
                          {"authorization" (str "Token " current-user-token)})]
       [status (tu/parse-body body)])))

@@ -23,7 +23,7 @@ This library intends to provide:
    
  - User authentication (agianst the wormbase.org google organisation)
  
- # Datomic schema design/approach
+## Datomic schema design/approach
 Schema is defined as vanilla datomic schema entities in EDN, which is
 read in upon starting the web-service, idemopotently using
 [conformity][1].
@@ -45,6 +45,31 @@ facilitate pan-institution sharing of WormBase identifiers and names
 for `Gene`, `Feature` and `Variation` entities (ACeDB does not support
 concurrent write-access).
 
+## Development
+
+## Setup
+
+```bash
+cd /tmp
+lein upgrade
+```
+Ensure you've installed the following software on your system:
+
+[clojure 1.9][4]
+
+[leineningen 2.8.1+][5]
+
+[nodejs][6]
+
+[yarn][7]
+
+[docker][8]
+
+[awscli][9]
+
+[awsebcli][10]
+
+	
 ### Run the application locally
 Run with:
 
@@ -74,3 +99,10 @@ Copyright ©  WormBase 2017
 [1]: https://github.com/rkneufeld/conformity
 [2]: https://clojure.org/community/downloads
 [3]: https://clojure.org/about/spec
+[4]: https://clojure.org/guides/getting_started
+[5]: https://leiningen.org/
+[6]: https://nodejs.org/en/
+[7]: https://yarnpkg.com/en/docs/install
+[8]: https://docs.docker.com/install/
+[9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html 
+[10]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
