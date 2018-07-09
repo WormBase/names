@@ -1,6 +1,7 @@
 (ns wormbase.names.errhandlers
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.tools.logging :as log]
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
    [environ.core :as environ]
@@ -71,7 +72,6 @@
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
-   ;; TODO: logging - ensure exceptions appear in the log/stdout.
    (if-not (empty? ((juxt :test :dev) environ/env))
      (handle-unexpected-error exc)
      (http-response/internal-server-error data)))
@@ -90,19 +90,17 @@
       (if-let [err-handler (get err-type-dispatch err-handler-key)]
         (err-handler cause cause-data request)
         (do
-          ;; TODO: log instead of print
-          (println "Could not find error handler for:" exc
-                   "using lookup key:" err-handler-key)
+          (log/fatal (str "Could not find error handler for:" exc
+                          "using lookup key:" err-handler-key))
           (throw exc)))
       (do
-        ;; TODO: log instead of print
         (when (seq (remove nil? ((juxt :dev :test) environ/env)))
-          (println "TXFN-ERROR?:" txfn-err?
-                   "HANDLER KEY:" err-handler-key)
-          (println "EXC_DATA?: " (ex-data exc))
-          (println "Message?: " (.getMessage exc))
-          (println "Cause?" (.getCause exc))
-          (println "Cause data?:" (ex-data (.getCause exc))))
+          (log/debug "TXFN-ERROR?:" txfn-err?
+                     "HANDLER KEY:" err-handler-key)
+          (log/debug "EXC_DATA?: " (ex-data exc))
+          (log/debug "Message?: " (.getMessage exc))
+          (log/debiug "Cause?" (.getCause exc))
+          (log/debug "Cause data?:" (ex-data (.getCause exc))))
         (handle-unexpected-error exc data request)))))
 
 (defn handle-request-validation

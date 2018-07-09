@@ -73,8 +73,6 @@
       (rmd/wrap-defaults rmd/api-defaults)))
 
 (defn authenticated? [req]
-  (println "------------------------ CHECKING AUTH: ---------------------")
-  (println)
   (auth/authenticated? req))
 
 ;; Requires that (:identity req) is a map containing the role.
