@@ -35,16 +35,13 @@
 
 (defn- log-decode-err [^Exception exc body]
   (let [divider #(format "-----------------: % :-----------------" %)]
-    (log/debug (divider "DEBUGING"))
     (log/debug "Error type:" (type exc))
     (log/debug "Cause:" (.getCause exc))
     (log/debug "Invalid response data format? body was returned as:"
-             (type body))
+               (type body))
     (log/debug (if (or (nil? body) (str/blank? body))
                  "BODY WAS NIL or empty string!"
-                 body))
-    (log/debug (divider "END DEBUGGING"))
-    (log/debug)))
+                 body))))
 
 (defn parse-body [body]
   (let [body (read-body body)

@@ -99,7 +99,7 @@
                      "HANDLER KEY:" err-handler-key)
           (log/debug "EXC_DATA?: " (ex-data exc))
           (log/debug "Message?: " (.getMessage exc))
-          (log/debiug "Cause?" (.getCause exc))
+          (log/debug "Cause?" (.getCause exc))
           (log/debug "Cause data?:" (ex-data (.getCause exc))))
         (handle-unexpected-error exc data request)))))
 
