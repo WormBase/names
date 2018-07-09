@@ -1,7 +1,6 @@
 (ns wormbase.fake-auth
   (:require
-   ;; TODO: loggigng
-   ;; [clojure.tools.logging :as log]
+   [clojure.tools.logging :as log]
    [cheshire.core :as json]
    [environ.core :as environ]
    [wormbase.names.auth :as wn-auth]))
@@ -32,7 +31,6 @@
  (var wn-auth/verify-token-gapi)
  (fn fake-google-api-verify-token [token]
    (fn verify-token-pretend [token]
-     ;; TODO: use logging
-     (println "NOTICE: Faking verifying token with Google API")
+     (log/debug "NOTICE: Faking verifying token with Google API")
      (merge defaults *gapi-verify-token-response*))))
 
