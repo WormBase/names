@@ -35,3 +35,6 @@ target/
 
 # Generated assets
 /resources/client_build
+
+# Datomic Transactor properties (with secret keys)
+*transactor.properties
