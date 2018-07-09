@@ -28,11 +28,16 @@ class GeneProfile extends Component {
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', {
-            id: this.props.wbId,
-            cgcName: 'ab',
-            sequenceName: 'AB',
-            species: 'Caenorhabditis elegans',
-            biotype: 'cds',
+            "gene/species": {
+               "species/id":"species/c-elegans",
+               "species/latin-name":"Caenorhabditis elegans",
+               "species/cgc-name-pattern":"^[a-z21]{3,4}-[1-9]{1}\\d*",
+               "species/sequence-name-pattern":"^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"
+            },
+            "gene/cgc-name":"abi-1",
+            "gene/status":"gene.status/live",
+            "gene/biotype":"biotype/cds",
+            "gene/id": this.props.wbId,
           });
         },
         () => {
