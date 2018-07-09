@@ -46,9 +46,8 @@
             (http-response/not-found)
             (http-response/content-type default-format))
 
-        :otherwise-redirect-to-client-app
-        (-> (http-response/resource-response "client_build/index.html")
-            (http-response/content-type "text/html"))))))
+        :else
+        (http-response/found "/index.html")))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
@@ -84,6 +83,11 @@
      {:name "variation"}
      {:name "person"}]}})
 
+(defn wrap-static-resources [handler]
+  (let [f (ring-resource/wrap-resource handler "client_build")]
+    (println "RETURN " f)
+    f))
+
 (def ^{:doc "The main application."} app
   (sweet/api
    {:coercion :spec
@@ -91,6 +95,7 @@
     :middleware [ring-gzip/wrap-gzip
                  wdb/wrap-datomic
                  wn-auth/wrap-auth
+                 wrap-static-resources
                  wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
