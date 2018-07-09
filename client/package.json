@@ -18,9 +18,14 @@
     "typeface-roboto": "0.0.54"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "HOST=lvh.me react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
+  },
+  "proxy": {
+    "/api": {
+      "target": "http://lvh.me:4010"
+    }
   }
 }
