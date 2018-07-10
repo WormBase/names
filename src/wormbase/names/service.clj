@@ -10,8 +10,7 @@
    [muuntaja.core :as m]
    [muuntaja.core :as muuntaja]
    [wormbase.db :as wdb]
-   [wormbase.names.auth :as wn-auth]
-   [wormbase.names.auth.restructure] ;; Included for side effects
+   [wormbase.names.auth :as wna]
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
@@ -92,7 +91,7 @@
     :formats mformats
     :middleware [ring-gzip/wrap-gzip
                  wdb/wrap-datomic
-                 wn-auth/wrap-auth
+                 wna/wrap-auth
                  wrap-static-resources
                  wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}

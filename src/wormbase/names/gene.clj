@@ -7,6 +7,7 @@
    [java-time :as jt]
    [wormbase.db :as wdb]
    [wormbase.names.agent :as wn-agent]
+   [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
@@ -366,6 +367,7 @@
                    (find-gene request))}
        :post
        {:summary "Create new names for a gene (cloned or un-cloned)"
+        :middleware [wna/restrict-to-authenticated]
         :x-name ::new-gene
         :parameters {:body-params ::wsg/new}
         :responses {201 {:schema {:created ::wsg/created}}
@@ -376,6 +378,7 @@
      (sweet/resource
       {:delete
        {:summary "Kill a gene"
+        :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
         :parameters {:body-params ::wsg/kill}
         :responses (assoc default-responses 200 {:schema ::wsg/kill})
@@ -391,6 +394,7 @@
                    (about-gene request identifier))}
        :put
        {:summary "Add new names to an existing gene"
+        :middleware [wna/restrict-to-authenticated]
         :x-name ::update-gene
         :parameters {:body-params ::wsg/update}
         :path-params [identifier :- ::wsg/identifier]
@@ -401,6 +405,7 @@
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
+          :middleware [wna/restrict-to-authenticated]
           :x-name ::merge-gene
           :path-params [identifier ::wsg/identifier
                         from-identifier ::wsg/identifier]
@@ -411,6 +416,7 @@
             (merge-genes request identifier from-identifier))}
          :delete
          {:summary "Undo a merge operation."
+          :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-merge-gene
           :path-params [identifier ::wsg/identifier
                         from-identifier ::wsg/identifier]
@@ -421,6 +427,7 @@
        (sweet/resource
         {:post
          {:summary "Split a gene."
+          :middleware [wna/restrict-to-authenticated]
           :x-name ::split-genes
           :path-params [identifier :- ::wsg/identifier]
           :parameters {:body-params ::wsg/split}
@@ -433,6 +440,7 @@
        (sweet/resource
         {:delete
          {:summary "Undo a split gene operation."
+          :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-split-gene
           :path-params [identifier :- ::wsg/identifier
                         into-identifier :- ::wsg/identifier]
@@ -447,6 +455,7 @@
        (sweet/resource
         {:post
          {:summary "Ressurect a gene."
+          :middleware [wna/restrict-to-authenticated]
           :x-name ::ressurect-gene
           :responses default-responses
           :handler (fn [request]

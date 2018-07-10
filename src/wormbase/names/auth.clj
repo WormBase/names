@@ -1,17 +1,20 @@
 (ns wormbase.names.auth
   (:require
+   [clojure.set :as set]
    [clojure.string :as str]
    [clojure.walk :as w]
    [clojure.tools.logging :as log]
    [buddy.auth :as auth]
+   [buddy.auth.accessrules :as auth-access-rules]
    [buddy.auth.backends.token :as babt]
    [buddy.auth.middleware :as auth-mw]
+   [compojure.api.meta :as capi-meta]
+   [datomic.api :as d]
    [wormbase.names.agent :as wn-agent]
    [wormbase.names.util :as util]
-   [ring.middleware.defaults :as rmd]
-   [datomic.api :as d]
    [wormbase.names.util :as wnu]
-   )
+   [ring.middleware.defaults :as rmd]
+   [ring.util.http-response :as http-response])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken
                                                  GoogleIdToken$Payload
@@ -44,7 +47,7 @@
   (try
     (when-let [gtoken-info (verify-token-gapi token)]
       (let [token-info (w/keywordize-keys gtoken-info)]
-        (when (and 
+        (when (and
                token-info
                (wn-agent/identify token-info)
                (= (:hd token-info) "wormbase.org")
@@ -75,7 +78,59 @@
 (defn authenticated? [req]
   (auth/authenticated? req))
 
-;; Requires that (:identity req) is a map containing the role.
-(defn admin [req]
-  (and (authenticated? req)
-       (#{:admin} (:role (:identity req)))))
+(defn access-error [_ val]
+  (http-response/unauthorized! val))
+
+;; Middleware
+
+(defn wrap-restricted [handler rule]
+  (auth-access-rules/restrict handler {:handler rule
+                                       :on-error access-error}))
+
+(defn restrict-access [rule]
+  (fn rsetricted [handler]
+    (auth-access-rules/restrict handler {:handler rule
+                                         :on-error access-error})))
+
+(def restrict-to-authenticated (restrict-access auth/authenticated?))
+
+;; restructuring predicates
+(defn admin
+  "compojure restrucring predicate.
+
+  Requires that a map be present under `:identity` in the `request`,
+  having a matching `:role`."
+  [request]
+  (and (authenticated? request)
+       (#{:admin} (:role (:identity request)))))
+
+
+;; "meta" restructuring
+
+(defn require-role! [required roles]
+  (if-not (seq (set/intersection required roles))
+    (http-response/unauthorized!
+     {:text "Missing required role"
+      :required required
+      :roles roles})))
+
+(defmethod capi-meta/restructure-param :roles [_ roles acc]
+  (update-in acc
+             [:lets]
+             into
+             ['_ `(require-role!
+                   ~roles
+                   (get-in ~'+compojure-api-request+
+                           [:identity :person/roles]))]))
+
+
+(defn wrap-rule [handler rule]
+  (-> handler
+      (auth-access-rules/wrap-access-rules
+       {:rules [{:pattern #".*"
+                 :handler rule}]
+        :on-error access-error})))
+
+(defmethod capi-meta/restructure-param :auth-rules
+  [_ rule acc]
+  (update-in acc [:middleware] conj [wrap-rule rule]))

@@ -5,7 +5,6 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [wormbase.db :as wdb]
-   [wormbase.names.auth.restructure :as wnar] ;; TBD: side effects?
    [wormbase.specs.person :as wsp]
    [wormbase.names.auth :as wna]
    [wormbase.names.util :as wnu]
