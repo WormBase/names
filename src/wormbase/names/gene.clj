@@ -356,7 +356,7 @@
      :tags ["gene"]
      (sweet/resource
       {:get
-       {:summary "Testing auth session."
+       {:summary "Find genes by any name."
         :responses (assoc default-responses
                           200
                           {:schema ::wsg/find-result})
