@@ -100,9 +100,6 @@
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
-     ;; TODO: is it right to be
-     ;; repating the authorization and auth-rules params below so that
-     ;; the not-found handler doesn't raise validation error?
      (sweet/context "/api" []
        wn-person/routes
        wn-gene/routes))))

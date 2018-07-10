@@ -38,3 +38,6 @@ target/
 
 # Datomic Transactor properties (with secret keys)
 *transactor.properties
+
+# secrets
+/resources/secrets/

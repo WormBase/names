@@ -1,6 +1,7 @@
 (ns wormbase.names.event-broadcast
   "Relay messages for consumption by parties interested (primarily ACeDB clients)."
   (:require
+   [clojure.tools.logging :as log]
    [datomic.api :as d]
    [mount.core :as mount]
    [wormbase.db :as wdb]
@@ -41,13 +42,13 @@
     ;; debugging:
     ;; (ownu/datom-table db-after (:tx-data report))
     (when (include-agents (:provenance/how changes))
-      (comment "LOGGING")
+      (log/info "Sending event message to event brodcaster.")
       (wneb/send-message event-broadcaster
                           (assoc changes
                                  :tx-id
                                  (format "0x%016x" (:db/txInstant tx-k->db-id))))
       (while (not (wneb/message-persisted? event-broadcaster changes))
-        (comment "LOGGING")
+        (log/info "Message not persisted in storage yet, backing-off for 5 seconds")
         ;; Perhaps terminate this loop and abort if unable to get a result?
         (Thread/sleep 5000))
       (.remove tx-report-queue report))))
@@ -72,17 +73,16 @@
       (recur (peek-report)))))
 
 (defn start-queue-monitor [conn event-broadcaster]
-  (comment "TODO: LOGGING")
   (let [tx-report-queue (d/tx-report-queue conn)]
     (future (monitor-tx-changes tx-report-queue event-broadcaster))))
 
 (mount/defstate change-queue-monitor
   :start (fn []
-           (comment "LOGGING")
+           (log/info "Starting change queue monitor")
            (start-queue-monitor
             wdb/conn
             (-> {} wneb-s3/map->TxEventBroadcaster wneb/configure)))
   :stop (fn []
-          (comment "LOGGING")
+          (log/info "Stopping change queue monitor")
           (future-cancel change-queue-monitor)
-          (println "Stop Queue Service")))
+          (log/info "Change queue monitor stopped")))

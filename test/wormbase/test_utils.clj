@@ -7,8 +7,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
-   ;; TODO
-   ;; [clojure.tools.logging :as log]
+   [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [datomic.api :as d]
    [java-time :as jt]
@@ -27,10 +26,6 @@
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))
 
-;; TODO: Unify way of creating muuntaja formats "instance"?
-;;       (Duplication as per o.w.n/service.clj - which does it correctly!)
-;;       - usage here is ok, is just for testing.
-
 (def mformats (muuntaja/create))
 
 (defn read-body [body]
@@ -38,18 +33,15 @@
     (slurp body)
     body))
 
-(defn- print-decode-err [^Exception exc body]
+(defn- log-decode-err [^Exception exc body]
   (let [divider #(format "-----------------: % :-----------------" %)]
-    (println (divider "DEBUGING"))
-    (println "Error type:" (type exc))
-    (println "Cause:" (.getCause exc))
-    (println "Invalid response data format? body was returned as:"
-             (type body))
-    (println (if (or (nil? body) (str/blank? body))
-               (println "BODY WAS NIL or empty string!")
-               body))
-    (println (divider "END DEBUGGING"))
-    (println)))
+    (log/debug "Error type:" (type exc))
+    (log/debug "Cause:" (.getCause exc))
+    (log/debug "Invalid response data format? body was returned as:"
+               (type body))
+    (log/debug (if (or (nil? body) (str/blank? body))
+                 "BODY WAS NIL or empty string!"
+                 body))))
 
 (defn parse-body [body]
   (let [body (read-body body)
@@ -57,7 +49,7 @@
                (try
                  (muuntaja/decode mformats "application/json" body)
                  (catch ExceptionInfo exc
-                   (print-decode-err exc body)
+                   (log-decode-err exc body)
                    (throw exc)))
                body)]
     body))
