@@ -133,6 +133,7 @@
    ;; Datomic db exceptions
    :db.error/not-an-entity handle-missing
    :db/error handle-db-conflict
+   :db.error/nil-value handle-unexpected-error
 
    ;; TODO: this shouldn't really be here...spec not tight enough?
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
