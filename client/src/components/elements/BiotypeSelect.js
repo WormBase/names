@@ -10,19 +10,19 @@ const BiotypeSelect = (props) => {
       label: '',
     },
     {
-      id: 'cds',
+      id: 'biotype/cds',
       label: 'CDS',
     },
     {
-      id: 'psuedogene',
+      id: 'biotype/psuedogene',
       label: 'Psuedogene',
     },
     {
-      id: 'transcript',
+      id: 'biotype/transcript',
       label: 'Transcript',
     },
     {
-      id: 'transposon',
+      id: 'biotype/transposon',
       label: 'Transposon',
     },
   ];

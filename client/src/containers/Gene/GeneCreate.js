@@ -17,50 +17,50 @@ class GeneCreate extends Component {
   handleCreateGene = (data) => {
     mockFetchOrNot(
       (mockFetch) => {
-        const filled = ['cgcName', 'species', 'biotype'].reduce((result, fieldId) => {
+        const filled = ['gene/cgc-name', 'gene/species'].reduce((result, fieldId) => {
           return result && data[fieldId];
         }, true);
         if (filled) {
-          return mockFetch.put('*', {
-            data: {
+          return mockFetch.post('*', {
+            "created": {
               ...data,
-              id: 'WB10',
+              "gene/species":{
+                ...data['gene/species'],
+                "species/cgc-name-pattern":"^[a-z21]{3,4}-[1-9]{1}\\d*",
+                "species/sequence-name-pattern":"^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"
+              },
+              "gene/id":"WBGene00100001",
+              "gene/status":"gene.status/live"
             },
           });
         } else {
-          return mockFetch.put('*', {
+          return mockFetch.post('*', {
             error: 'Form is not completed.'
           });
         }
       },
       () => {
-        console.log(data);
         return authorizedFetch(`/api/gene/`, {
           method: 'POST',
           body: JSON.stringify({
-            "gene/species": {
-              "species/id": "species/c-elegans",
-            },
-            "gene/cgc-name": "abi-1",
+            ...data
           }),
         });
       },
-      false
+      true
     ).then((response) => {
-      console.log(response);
       return response.json();
     }).then((response) => {
-      console.log(response);
-      if (response.error) {
+      if (!response.created) {
         this.setState({
-          error: response.error,
+          error: response.message,
         });
       } else {
         this.setState({
-          data: response.data,
+          data: response.created,
           error: null,
         }, () => {
-          this.props.history.push(`/gene/id/${response.data.id}`);
+          this.props.history.push(`/gene/id/${response.created['gene/id']}`);
         });
       }
     }).catch((e) => console.log('error', e));

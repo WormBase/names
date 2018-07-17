@@ -82,8 +82,16 @@ class FormDataStore {
     const fields = otherFields || this.fields;
     return Object.keys(fields).reduce(
       (result, fieldId) => {
-        result[fieldId] = fields[fieldId] && fields[fieldId].value;
-        return result;
+        const value = fields[fieldId] && fields[fieldId].value;
+        const idSegments = fieldId.split(':');
+        return {
+          ...idSegments.reduceRight((result, idSegment, index) => {
+            return {
+              [idSegment]: result,
+            };
+          }, value),
+          ...result,
+        };
       },
       {}
     );
@@ -99,10 +107,25 @@ class BaseForm extends Component {
   }
 
   unpackFields = (props) => {
+
+    function flatten(result, tree, prefix) {
+      if (typeof tree === 'object' && tree !== null) {
+        Object.keys(tree).reduce((result, keySegment) => {
+          flatten(result, tree[keySegment], prefix ? `${prefix}:${keySegment}` : keySegment);
+          return result;
+        }, result);
+      } else {
+        result[prefix] = tree;
+      }
+    }
+
+    const fieldsFlat = {};
+    flatten(fieldsFlat, props.data || {}, '');
+
     return {
-      ...Object.keys(props.data || {}).reduce((result, fieldId) => {
+      ...Object.keys(fieldsFlat).reduce((result, fieldId) => {
         result[fieldId] = {
-          value: props.data[fieldId],
+          value: fieldsFlat[fieldId],
           error: null,
         };
         return result;

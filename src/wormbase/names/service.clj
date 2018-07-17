@@ -35,11 +35,9 @@
   "Fallback 404 handler."
   [request-handler]
   (fn [request]
-    (let [response (request-handler request)]
+    (if-let [response (request-handler request)]
+      response
       (cond
-        response
-        response
-        
         (str/starts-with? (:uri request) "/api")
         (-> {:reason "Resource not found"}
             (http-response/not-found)
@@ -97,9 +95,6 @@
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
-     ;; TODO: is it right to be
-     ;; repating the authorization and auth-rules params below so that
-     ;; the not-found handler doesn't raise validation error?
      (sweet/context "/api" []
        wn-person/routes
        wn-gene/routes))))

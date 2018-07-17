@@ -20,11 +20,11 @@ class GeneForm extends Component {
       <BaseForm data={data}>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const WBIdField = withFieldData(TextField, 'id');
-            const CgcNameField = withFieldData(TextField, 'cgcName');
-            const SequenceNameField = withFieldData(TextField, 'sequenceName');
-            const SpeciesSelectField = withFieldData(SpeciesSelect, 'species');
-            const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
+            const WBIdField = withFieldData(TextField, 'gene/id');
+            const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
+            const SequenceNameField = withFieldData(TextField, 'gene/seq-name');
+            const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
+            const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
               <div>
                 {

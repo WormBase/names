@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
+import { authorizedFetch } from '../Authenticate';
 import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
@@ -28,18 +29,25 @@ class GeneProfile extends Component {
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', {
-            id: this.props.wbId,
-            cgcName: 'ab',
-            sequenceName: 'AB',
-            species: 'Caenorhabditis elegans',
-            biotype: 'cds',
+            "gene/species": {
+               "species/id":"species/c-elegans",
+               "species/latin-name":"Caenorhabditis elegans",
+               "species/cgc-name-pattern":"^[a-z21]{3,4}-[1-9]{1}\\d*",
+               "species/sequence-name-pattern":"^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"
+            },
+            "gene/cgc-name":"abi-1",
+            "gene/status":"gene.status/live",
+            "gene/biotype":"biotype/cds",
+            "gene/id": this.props.wbId,
           });
         },
         () => {
-          return fetch('/api/gene');
+          console.log('zzzzzz: ' + `/api/gene/${this.props.wbId}`);
+          return authorizedFetch(`/api/gene/${this.props.wbId}`, {});
         },
         true
       ).then((response) => response.json()).then((response) => {
+        console.log(response);
         this.setState({
           data: response,
           status: 'SUCCESS',
@@ -111,7 +119,7 @@ class GeneProfile extends Component {
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
             <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene/>
+              <RecentActivitiesSingleGene wbId={this.props.wbId} />
             </div>
           </div>
         </PageMain>

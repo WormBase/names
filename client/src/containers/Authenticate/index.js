@@ -23,14 +23,15 @@ function getStoredState() {
   return saveStateJSON && JSON.parse(saveStateJSON);
 }
 
-function authorizedFetch(url, options) {
+function authorizedFetch(url, options = {}) {
   const {headers, ...otherOptions} = options;
   const newHeaders = new Headers(headers);
   console.log(getStoredState());
   const userState = getStoredState();
   const token = userState ? userState.user.id_token : '';
   newHeaders.append('Authorization', `Token ${token}`);
-  newHeaders.append('Content-Type', 'aaplication/json');
+  newHeaders.append('Content-Type', 'application/json');
+  newHeaders.append('Accept', 'application/json');
   return fetch(url, {
     ...otherOptions,
     headers: newHeaders,
