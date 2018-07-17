@@ -18,7 +18,7 @@ const Header = (props) => {
           <div className={classes.title}>
             <Link to="/" >
               <Typography variant="title" color="inherit" >
-                WormBase Name Server
+                WormBase Names Service
               </Typography>
             </Link>
           </div>
