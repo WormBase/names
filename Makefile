@@ -48,7 +48,7 @@ eb-create: $(call print-help,eb-create,\
 	@eb create wormbase-names \
 		--region=us-east-1 \
 		--tags="CreatedBy=${AWS_EB_PROFILE},Role=RestAPI" \
-		--cname="wormbase-names" 
+		--cname="wormbase-names"
 
 .PHONY: eb-env
 eb-setenv: $(call print-help,eb-env,\
@@ -69,7 +69,7 @@ eb-local: docker-ecr-login $(call print-help,eb-local,\
 .PHONY: build-client-app
 build-client-app: $(call print-help,build-client-app,\
 		    "Build the React Javascript client Application")
-	@yarn --silent --cwd ./client build 
+	@yarn --silent --cwd ./client build
 
 .PHONY: build
 build: build-client-app \
