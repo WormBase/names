@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 import { mockFetchOrNot } from '../../mock';
+import { extract as extractQueryString, parse as parseQueryString} from 'query-string';
 
 class GeneAutocompleteBase extends Component {
   constructor(props) {
@@ -43,14 +44,16 @@ class GeneAutocompleteBase extends Component {
       (mockFetch) => {
         const mockResult = {
           inputValue: inputValue,
-          suggestions: [
+          matches: [
             {
-              id: 'WB1',
-              label: 'ab',
+              'gene/id': 'WB1',
+              'gene/cgc-name': 'ab',
+              'gene/sequence-name': 'AAAA.1'
             },
             {
-              id: 'WB2',
-              label: 'ac',
+              'gene/id': 'WB2',
+              'gene/cgc-name': 'ac',
+              'gene/sequence-name': 'AAAC.1'
             },
           ],
         };
@@ -59,16 +62,22 @@ class GeneAutocompleteBase extends Component {
         }));
       },
       () => {
-        return fetch('/api/search/gene');
+        return fetch(`/api/gene/?pattern=${inputValue}`);
       },
-      true
-    ).then((response) => response.json()).then((content) => {
-      if (content.inputValue === this.state.inputValue) {
+      false
+    ).then((response) => {
+      const matchedPattern = parseQueryString(extractQueryString(response.url)).pattern;
+      return Promise.all([matchedPattern, response.json()]);
+    }).then(([matchedPattern, content]) => {
+      if (matchedPattern === this.state.inputValue) {
         // to avoid problem caused by response coming back in the wrong order
         // compare inputValue to produce suggestion with current inputValue,
-        const {suggestions} = content;
+        const {matches} = content;
         this.setState({
-          suggestions: suggestions,
+          suggestions: matches.map((item) => ({
+            id: item['gene/id'],
+            label: item['gene/cgc-name'] || item['gene/sequence-name'] || item['gene/id'],
+          })),
         });
       }
     }).catch((e) => console.log('error', e));
