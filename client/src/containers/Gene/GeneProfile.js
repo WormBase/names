@@ -42,17 +42,41 @@ class GeneProfile extends Component {
           });
         },
         () => {
-          console.log('zzzzzz: ' + `/api/gene/${this.props.wbId}`);
           return authorizedFetch(`/api/gene/${this.props.wbId}`, {});
         },
       ).then((response) => response.json()).then((response) => {
-        console.log(response);
         this.setState({
           data: response,
           status: 'SUCCESS',
         });
       }).catch((e) => console.log('error', e));
     });
+  }
+
+  handleGeneUpdate = (data) => {
+    mockFetchOrNot(
+      (mockFetch) => {
+        return mockFetch.put('*', {
+          updated: {
+            ...data,
+          },
+        });
+      },
+      () => {
+        return authorizedFetch(`/api/gene/${this.props.wbId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            ...data
+          }),
+        });
+      },
+      true
+    ).then((response) => response.json()).then((response) => {
+      this.setState({
+        data: response.updated,
+        status: 'SUCCESS',
+      });
+    }).catch((e) => console.log('error', e));
   }
 
   openKillGeneDialog = () => {
@@ -109,9 +133,7 @@ class GeneProfile extends Component {
             this.state.status === 'SUCCESS' && !this.state.data.dead ?
               <GeneForm
                 data={this.state.data}
-                onSubmit={(data) => this.setState({
-                  data: data,
-                })}
+                onSubmit={this.handleGeneUpdate}
               /> :
               <Typography variant="caption">Dead</Typography>
           }
