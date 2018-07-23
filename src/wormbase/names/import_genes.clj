@@ -228,12 +228,12 @@
                   :provenance/who (partial conformed-ref :person/id)
                   :provenance/when ->when
                   :geneace/event-text identity}]
-        (with-open [in-file (io/reader tsv-path)]
-          (doall
-           (->> (parse-transform-cast in-file ev-ex-conf cast-fns)
-                (group-by :gene/id)
-                (map process-gene-events)
-                (into {}))))))
+    (with-open [in-file (io/reader tsv-path)]
+      (->> (parse-transform-cast in-file ev-ex-conf cast-fns)
+           (group-by :gene/id)
+           (map process-gene-events)
+           (into {})
+           (doall)))))
 
 (defn transact-gene-event [conn historical-version event]
   (let [pv (wnu/select-keys-with-ns event "provenance")
