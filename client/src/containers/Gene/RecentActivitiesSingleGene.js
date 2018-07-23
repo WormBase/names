@@ -66,7 +66,7 @@ class RecentActivitiesSingleGene extends Component {
         return mockFetch.get('*', mockData);
       },
       () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
+        return fetch(`/api/gene/recent/${this.props.wbId}`, {
           method: 'GET'
         });
       },
