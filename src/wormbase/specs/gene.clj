@@ -47,8 +47,7 @@
 
 (s/def ::uncloned (stc/spec (s/and
                              (s/keys :req [:gene/species :gene/cgc-name]
-                                     :opt [:gene/cgc-name
-                                           :provenance/who
+                                     :opt [:provenance/who
                                            :provenance/how
                                            :provenance/why]))))
 
