@@ -42,14 +42,22 @@
 
 (def cgc-name (one-of-name-regexps :species/cgc-name-pattern))
 
-(s/def ::species
+(defn species-vals [species-kw]
+  (->> (util/load-seed-data)
+       (filter species-kw)
+       (map species-kw)
+       (map (partial array-map species-kw))
+       set))
+
+(s/def ::species-id
   (s/with-gen
     :gene/species
-    #(s/gen (->> (util/load-seed-data)
-                 (filter :species/id)
-                 (map :species/id)
-                 (map (partial array-map :species/id))
-                 set))))
+    #(s/gen (species-vals :species/id))))
+
+(s/def ::species-latin-name
+  (s/with-gen
+    :gene/species
+    #(s/gen (species-vals :species/latin-name))))
 
 (def identity (s/gen ::wsg/identifier
                      {:gene/id (constantly id)
@@ -58,7 +66,7 @@
 
 (def update-overrides
   {:gene/biotype (constantly biotype)
-   :gene/species (constantly (s/gen ::species))
+   :gene/species (constantly (s/gen ::species-id))
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
    :gene/sequence-name (constantly (s/gen :gene/sequence-name))
    [:provenance/who :person/id] (constantly wgsp/id)
