@@ -47,7 +47,6 @@ class GeneCreate extends Component {
           }),
         });
       },
-      true
     ).then((response) => {
       return response.json();
     }).then((response) => {

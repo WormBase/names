@@ -1,7 +1,11 @@
 var fetchMock = require('fetch-mock');
 
 var ready = true;
-export function mockFetchOrNot(mockCallback, nativeCallback, shouldMock) {
+export function mockFetchOrNot(
+  mockCallback,
+  nativeCallback,
+  shouldMock = process.env.REACT_APP_SHOULD_MOCK && JSON.parse(process.env.REACT_APP_SHOULD_MOCK)
+) {
   console.log('ready ' + ready);
   if (ready) {
     ready = false;

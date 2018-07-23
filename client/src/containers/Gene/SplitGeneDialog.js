@@ -63,7 +63,6 @@ class SplitGeneDialog extends Component {
           method: 'POST'
         });
       },
-      true
     ).then((response) => response.json()).then((response) => {
       if (!response.error) {
         this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});

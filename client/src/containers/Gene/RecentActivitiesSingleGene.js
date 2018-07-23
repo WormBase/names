@@ -70,7 +70,6 @@ class RecentActivitiesSingleGene extends Component {
           method: 'GET'
         });
       },
-      true
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data || [],

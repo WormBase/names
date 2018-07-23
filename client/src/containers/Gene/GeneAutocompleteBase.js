@@ -64,7 +64,6 @@ class GeneAutocompleteBase extends Component {
       () => {
         return fetch(`/api/gene/?pattern=${inputValue}`);
       },
-      false
     ).then((response) => {
       const matchedPattern = parseQueryString(extractQueryString(response.url)).pattern;
       return Promise.all([matchedPattern, response.json()]);
