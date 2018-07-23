@@ -13,6 +13,7 @@ export function mockFetchOrNot(
       fetchMock.restore();
       mockCallback(fetchMock);
       return Promise.resolve(nativeCallback()).then((result) => {
+        result.mockUrl = fetchMock.lastUrl('*');
         console.log(`While mock: ready = ${ready}`);
         fetchMock.restore();
         ready = true;
