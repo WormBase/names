@@ -7,8 +7,8 @@
    [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
-   [muuntaja.core :as m]
    [muuntaja.core :as muuntaja]
+   [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
    [wormbase.names.errhandlers :as wn-eh]
@@ -20,16 +20,9 @@
    [ring.middleware.resource :as ring-resource]
    [ring.util.http-response :as http-response]))
 
-(def default-format "application/json")
-
 (def ^{:private true
        :doc "Request/Response format configuration"} mformats
-  (muuntaja/create
-    (muuntaja/select-formats
-      muuntaja/default-options
-      ["application/json"
-       "application/transit+json"
-       "application/edn"])))
+  (muuntaja/create))
 
 (defn- wrap-not-found
   "Fallback 404 handler."
@@ -40,8 +33,7 @@
       (cond
         (str/starts-with? (:uri request) "/api")
         (-> {:reason "Resource not found"}
-            (http-response/not-found)
-            (http-response/content-type default-format))
+            (http-response/not-found))
 
         :else
         (http-response/found "/index.html")))))
@@ -86,12 +78,12 @@
 (def ^{:doc "The main application."} app
   (sweet/api
    {:coercion :spec
-    :formats mformats
     :middleware [ring-gzip/wrap-gzip
                  wdb/wrap-datomic
                  wna/wrap-auth
                  wrap-static-resources
-                 wrap-not-found]
+                 wrap-not-found
+                 mmw/wrap-format]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
