@@ -179,32 +179,32 @@ class GeneProfile extends Component {
               this.closeKillGeneDialog();
             });
           }}
-          />
-          <MergeGeneDialog
-            geneName={this.state.data.cgcName}
-            open={this.state.showMergeGeneDialog}
-            onClose={this.closeMergeGeneDialog}
-            onSubmitSuccess={(data) => {
-              this.setState({
-                data: data,
-              }, () => {
-                this.closeMergeGeneDialog();
-              });
-            }}
-          />
-          <SplitGeneDialog
-            geneName={this.state.data.cgcName}
-            biotypeOriginal={this.state.data.biotype}
-            open={this.state.showSplitGeneDialog}
-            onClose={this.closeSplitGeneDialog}
-            onSubmitSuccess={(data) => {
-              this.setState({
-                data: data,
-              }, () => {
-                this.closeSplitGeneDialog();
-              });
-            }}
-          />
+        />
+        <MergeGeneDialog
+          geneName={this.state.data.cgcName}
+          open={this.state.showMergeGeneDialog}
+          onClose={this.closeMergeGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState({
+              data: data,
+            }, () => {
+              this.closeMergeGeneDialog();
+            });
+          }}
+        />
+        <SplitGeneDialog
+          geneName={this.state.data.cgcName}
+          biotypeOriginal={this.state.data.biotype}
+          open={this.state.showSplitGeneDialog}
+          onClose={this.closeSplitGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState({
+              data: data,
+            }, () => {
+              this.closeSplitGeneDialog();
+            });
+          }}
+        />
       </Page>
     );
   }
