@@ -15,7 +15,7 @@ class GeneProfile extends Component {
     super(props);
     this.state = {
       status: null,
-      data: null,
+      data: {},
       showKillGeneDialog: false,
       showMergeGeneDialog: false,
       showSplitGeneDialog: false,
@@ -47,36 +47,39 @@ class GeneProfile extends Component {
       ).then((response) => response.json()).then((response) => {
         this.setState({
           data: response,
-          status: 'SUCCESS',
+          status: 'COMPLETE',
         });
       }).catch((e) => console.log('error', e));
     });
   }
 
   handleGeneUpdate = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        return mockFetch.put('*', {
-          updated: {
-            ...data,
-          },
-        });
-      },
-      () => {
-        return authorizedFetch(`/api/gene/${this.props.wbId}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            ...data
-          }),
-        });
-      },
-      true
-    ).then((response) => response.json()).then((response) => {
-      this.setState({
-        data: response.updated,
-        status: 'SUCCESS',
-      });
-    }).catch((e) => console.log('error', e));
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          return mockFetch.put('*', {
+            updated: {
+              ...data,
+            },
+          });
+        },
+        () => {
+          return authorizedFetch(`/api/gene/${this.props.wbId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              ...data
+            }),
+          });
+        },
+      ).then((response) => response.json()).then((response) => {
+        this.setState((prevState) => ({
+          data: response.ok ? response.updated : prevState.data,
+          status: 'COMPLETE',
+        }));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   openKillGeneDialog = () => {
@@ -130,7 +133,7 @@ class GeneProfile extends Component {
         <PageMain>
           <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           {
-            this.state.status === 'SUCCESS' && !this.state.data.dead ?
+            this.state.status !== 'COMPLETE' || this.state.data['gene/status'] === 'gene.status/live' ?
               <GeneForm
                 data={this.state.data}
                 onSubmit={this.handleGeneUpdate}
@@ -146,7 +149,7 @@ class GeneProfile extends Component {
         </PageMain>
         <PageRight>
           {
-            this.state.data && this.state.data.dead ?
+            this.state.data['gene/status'] !== 'gene.status/live' ?
               null :
               <div className={classes.operations}>
                 <Button
@@ -165,55 +168,43 @@ class GeneProfile extends Component {
               </div>
           }
         </PageRight>
-        {
-          this.state.data ?
-            <KillGeneDialog
-              geneName={this.state.data.cgcName}
-              open={this.state.showKillGeneDialog}
-              onClose={this.closeKillGeneDialog}
-              onSubmitSuccess={(data) => {
-                this.setState({
-                  data: data,
-                }, () => {
-                  this.closeKillGeneDialog();
-                });
-              }}
-            /> :
-            null
-        }
-        {
-          this.state.data ?
-            <MergeGeneDialog
-              geneName={this.state.data.cgcName}
-              open={this.state.showMergeGeneDialog}
-              onClose={this.closeMergeGeneDialog}
-              onSubmitSuccess={(data) => {
-                this.setState({
-                  data: data,
-                }, () => {
-                  this.closeMergeGeneDialog();
-                });
-              }}
-            /> :
-            null
-        }
-        {
-          this.state.data ?
-            <SplitGeneDialog
-              geneName={this.state.data.cgcName}
-              biotypeOriginal={this.state.data.biotype}
-              open={this.state.showSplitGeneDialog}
-              onClose={this.closeSplitGeneDialog}
-              onSubmitSuccess={(data) => {
-                this.setState({
-                  data: data,
-                }, () => {
-                  this.closeSplitGeneDialog();
-                });
-              }}
-            /> :
-            null
-        }
+        <KillGeneDialog
+          geneName={this.state.data.cgcName}
+          open={this.state.showKillGeneDialog}
+          onClose={this.closeKillGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState({
+              data: data,
+            }, () => {
+              this.closeKillGeneDialog();
+            });
+          }}
+          />
+          <MergeGeneDialog
+            geneName={this.state.data.cgcName}
+            open={this.state.showMergeGeneDialog}
+            onClose={this.closeMergeGeneDialog}
+            onSubmitSuccess={(data) => {
+              this.setState({
+                data: data,
+              }, () => {
+                this.closeMergeGeneDialog();
+              });
+            }}
+          />
+          <SplitGeneDialog
+            geneName={this.state.data.cgcName}
+            biotypeOriginal={this.state.data.biotype}
+            open={this.state.showSplitGeneDialog}
+            onClose={this.closeSplitGeneDialog}
+            onSubmitSuccess={(data) => {
+              this.setState({
+                data: data,
+              }, () => {
+                this.closeSplitGeneDialog();
+              });
+            }}
+          />
       </Page>
     );
   }
