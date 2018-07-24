@@ -43,7 +43,6 @@ class GeneAutocompleteBase extends Component {
     mockFetchOrNot(
       (mockFetch) => {
         const mockResult = {
-          inputValue: inputValue,
           matches: [
             {
               'gene/id': 'WB1',
@@ -64,9 +63,8 @@ class GeneAutocompleteBase extends Component {
       () => {
         return fetch(`/api/gene/?pattern=${inputValue}`);
       },
-      false
     ).then((response) => {
-      const matchedPattern = parseQueryString(extractQueryString(response.url)).pattern;
+      const matchedPattern = parseQueryString(extractQueryString(response.url || response.mockUrl)).pattern;
       return Promise.all([matchedPattern, response.json()]);
     }).then(([matchedPattern, content]) => {
       if (matchedPattern === this.state.inputValue) {

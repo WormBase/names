@@ -45,7 +45,6 @@ class GeneProfile extends Component {
           console.log('zzzzzz: ' + `/api/gene/${this.props.wbId}`);
           return authorizedFetch(`/api/gene/${this.props.wbId}`, {});
         },
-        true
       ).then((response) => response.json()).then((response) => {
         console.log(response);
         this.setState({

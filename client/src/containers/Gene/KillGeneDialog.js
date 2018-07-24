@@ -46,7 +46,6 @@ class KillGeneDialog extends Component {
           method: 'DELETE'
         });
       },
-      true
     ).then((response) => response.json()).then((response) => {
       if (!response.error) {
         this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});

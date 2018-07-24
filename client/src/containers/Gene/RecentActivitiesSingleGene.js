@@ -66,14 +66,13 @@ class RecentActivitiesSingleGene extends Component {
         return mockFetch.get('*', mockData);
       },
       () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
+        return fetch(`/api/gene/recent/${this.props.wbId}`, {
           method: 'GET'
         });
       },
-      true
     ).then((response) => response.json()).then((data) => {
       this.setState({
-        data: data || [],
+        data: data.reason ? [] : data,
         loading: false,
       });
     }).catch((e) => console.log('error', e));
