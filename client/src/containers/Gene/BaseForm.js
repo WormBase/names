@@ -84,14 +84,15 @@ class FormDataStore {
       (result, fieldId) => {
         const value = fields[fieldId] && fields[fieldId].value;
         const idSegments = fieldId.split(':');
-        return {
-          ...idSegments.reduceRight((result, idSegment, index) => {
-            return {
-              [idSegment]: result,
-            };
-          }, value),
-          ...result,
-        };
+        idSegments.reduce((resultSubtree, idSegment, index) => {
+          if (index < idSegments.length - 1) {
+            resultSubtree[idSegment] = resultSubtree[idSegment] || {};
+          } else {
+            resultSubtree[idSegment] = value;
+          }
+          return resultSubtree[idSegment]
+        }, result);
+        return result;
       },
       {}
     );

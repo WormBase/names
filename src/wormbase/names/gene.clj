@@ -96,7 +96,7 @@
           [lur ent] (identify request identifier)
           info-expr '[*
                       {:gene/biotype [[:db/ident]]
-                       :gene/species [[:species/id]]
+                       :gene/species [[:species/id][:species/latin-name]]
                        :gene/status [[:db/ident]]}]
           data (d/pull db info-expr lur)]
       (http-response/ok (transform-result data)))))
