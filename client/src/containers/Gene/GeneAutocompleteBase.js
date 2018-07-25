@@ -40,6 +40,10 @@ class GeneAutocompleteBase extends Component {
   }
 
   loadSuggestions = (inputValue) => {
+    if (inputValue.length < 2) {
+      return;
+    }
+
     mockFetchOrNot(
       (mockFetch) => {
         const mockResult = {
