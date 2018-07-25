@@ -118,6 +118,12 @@ class GeneProfile extends Component {
     });
   }
 
+  getDisplayName = (data) => (
+    data['gene/cgc-name'] ||
+    data['gene/sequence-name'] ||
+    data['gene/id']
+  )
+
   render() {
     const {classes, wbId} = this.props;
     return (
@@ -169,7 +175,7 @@ class GeneProfile extends Component {
           }
         </PageRight>
         <KillGeneDialog
-          geneName={this.state.data.cgcName}
+          geneName={this.getDisplayName(this.state.data)}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
@@ -181,7 +187,7 @@ class GeneProfile extends Component {
           }}
         />
         <MergeGeneDialog
-          geneName={this.state.data.cgcName}
+          geneName={this.getDisplayName(this.state.data)}
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {
@@ -193,8 +199,8 @@ class GeneProfile extends Component {
           }}
         />
         <SplitGeneDialog
-          geneName={this.state.data.cgcName}
-          biotypeOriginal={this.state.data.biotype}
+          geneName={this.getDisplayName(this.state.data)}
+          biotypeOriginal={this.state.data['gene/biotype']}
           open={this.state.showSplitGeneDialog}
           onClose={this.closeSplitGeneDialog}
           onSubmitSuccess={(data) => {
