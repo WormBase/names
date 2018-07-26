@@ -93,6 +93,7 @@ class GeneAutocompleteBase extends Component {
       if (selectedItem) {
         this.setState({
           selectedItem: selectedItem.id,
+          isOpen: false,
         });
       }
     }
@@ -113,6 +114,7 @@ class GeneAutocompleteBase extends Component {
   }
 
   stateChangeHandler = changes => {
+    console.log(changes);
     let {
       selectedItem = this.state.selectedItem,
       isOpen = this.state.isOpen,
