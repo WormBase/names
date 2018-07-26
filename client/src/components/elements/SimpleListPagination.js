@@ -17,13 +17,21 @@ class SimpleListPagination extends Component {
   handlePageIncrement = () => {
     this.setState((prevState) => ({
       page: Math.min(prevState.page + 1, this.maxPage()),
-    }));
+    }), this.pageChangeCallback);
   }
 
   handlePageDecrement = () => {
     this.setState((prevState) => ({
       page: Math.max(0, prevState.page - 1),
-    }));
+    }), this.pageChangeCallback);
+  }
+
+  pageChangeCallback = () => {
+    const {page} = this.state;
+    const {pageSize} = this.props;
+    if (this.props.onPageChange) {
+      this.props.onPageChange(page * pageSize, (page + 1) * pageSize);
+    }
   }
 
   maxPage = () => Math.ceil(this.props.items.length / this.props.pageSize) - 1;
@@ -32,7 +40,6 @@ class SimpleListPagination extends Component {
     const {page} = this.state;
     const {items, pageSize, classes} = this.props;
     const pageItems = this.props.items.slice(page * pageSize, (page + 1) * pageSize);
-    console.log(page);
     return (
       <div className={classes.root}>
         {
@@ -61,6 +68,7 @@ SimpleListPagination.propTypes = {
   classes: PropTypes.object.isRequired,
   items: PropTypes.arrayOf(PropTypes.object),
   pageSize: PropTypes.number,
+  onPageChange: PropTypes.func,
 };
 
 SimpleListPagination.defaultProps = {

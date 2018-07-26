@@ -149,7 +149,7 @@ class GeneAutocompleteBase extends Component {
         onChange={this.changeHandler}
         onStateChange={this.stateChangeHandler}
       >
-        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
+        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount }) => (
           this.props.children({
             getItemProps,
             getInputProps: (inputProps) => {
@@ -180,6 +180,7 @@ class GeneAutocompleteBase extends Component {
             inputValue,
             selectedItem,
             highlightedIndex,
+            setItemCount,
             //handleInputChange: this.handleInputChange,
             suggestions: this.state.suggestions,
             reset: () => {

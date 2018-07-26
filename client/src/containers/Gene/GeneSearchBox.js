@@ -70,7 +70,7 @@ class GeneSearchBox extends Component {
     const {classes, history, onChange, value, ...otherProps} = this.props;
     return (
       <GeneAutocompleteBase onChange={onChange} value={value}>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, setItemCount}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -108,7 +108,10 @@ class GeneSearchBox extends Component {
               }),
               ...otherProps,
             })}
-            <SimpleListPagination items={suggestions}>
+            <SimpleListPagination
+              items={suggestions}
+              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
+            >
               {({pageItems, navigation}) => (
                 isOpen ? (
                   <Paper className={classes.paper} square>
