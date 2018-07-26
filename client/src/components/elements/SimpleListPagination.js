@@ -46,7 +46,7 @@ class SimpleListPagination extends Component {
           this.props.children({
             pageItems: pageItems,
             navigation: (
-              items.length ?
+              items.length > pageSize ?
                 <div className={classes.navigation}>
                   <Button onClick={this.handlePageDecrement} disabled={page <= 0}>
                     <ArrowBackIcon />
