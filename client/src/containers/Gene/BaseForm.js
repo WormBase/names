@@ -98,6 +98,17 @@ class FormDataStore {
     );
   }
 
+  getDataFlat = (otherFields) => {
+    const fields = otherFields || this.fields;
+    return Object.keys(fields).reduce(
+      (result, fieldId) => {
+        result[fieldId] = fields[fieldId] && fields[fieldId].value;
+        return result;
+      },
+      {}
+    );
+  }
+
 }
 
 class BaseForm extends Component {
@@ -201,9 +212,9 @@ class BaseForm extends Component {
       }
 
       componentDidMount() {
-        const originalData = dataStore.getData(fields);
+        const originalData = dataStore.getDataFlat(fields);
         dataStore.setEventListener('ALL_FIELDS', () => {
-          const currentData = dataStore.getData();
+          const currentData = dataStore.getDataFlat();
           const isDirty = [
             ...Object.keys(originalData),
             ...Object.keys(currentData)
