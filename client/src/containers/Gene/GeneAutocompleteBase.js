@@ -93,7 +93,6 @@ class GeneAutocompleteBase extends Component {
       if (selectedItem) {
         this.setState({
           selectedItem: selectedItem.id,
-          isOpen: false,
         });
       }
     }
@@ -102,7 +101,6 @@ class GeneAutocompleteBase extends Component {
   changeHandler = selectedItem => {
     this.setState({
       selectedItem,
-      isOpen: false,
     }, () => {
       if (this.props.onChange) {
         this.props.onChange({
@@ -115,14 +113,16 @@ class GeneAutocompleteBase extends Component {
   }
 
   stateChangeHandler = changes => {
-    console.log(changes);
     let {
       selectedItem = this.state.selectedItem,
       isOpen = this.state.isOpen,
       inputValue = this.state.inputValue,
       type,
     } = changes;
-    isOpen = type === Downshift.stateChangeTypes.mouseUp ? this.state.isOpen : isOpen;
+
+    isOpen = type === Downshift.stateChangeTypes.blurInput ?
+      this.state.isOpen : isOpen;
+
     this.setState({
       selectedItem,
       isOpen,
@@ -165,9 +165,6 @@ class GeneAutocompleteBase extends Component {
                 },
                 onBlur: (event) => {
                   inputProps.onBlur && inputProps.onBlur();
-                  this.setState({
-                    isOpen: false,
-                  });
                 },
                 onFocus: (event) => {
                   inputProps.onFocus && inputProps.onFocus();
