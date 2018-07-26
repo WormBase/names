@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
-import SearchIcon from '@material-ui/icons/Search';
+//import SearchIcon from '@material-ui/icons/Search';
+import { Search as SearchIcon } from '@material-ui/icons';
 import {
   withStyles,
   Button,
@@ -10,6 +11,7 @@ import {
   Paper,
   MenuItem,
   TextField,
+  SimpleListPagination,
 } from '../../components/elements';
 import GeneAutocompleteBase from './GeneAutocompleteBase';
 
@@ -106,19 +108,26 @@ class GeneSearchBox extends Component {
               }),
               ...otherProps,
             })}
-            {isOpen ? (
-              <Paper className={classes.paper} square>
-                {suggestions.map((suggestion, index) =>
-                  renderSuggestion({
-                    suggestion,
-                    index,
-                    itemProps: getItemProps({item: suggestion.id}),
-                    highlightedIndex,
-                    selectedItem,
-                  }),
-                )}
-              </Paper>
-            ) : null}
+            <SimpleListPagination items={suggestions}>
+              {({pageItems, navigation}) => (
+                isOpen ? (
+                  <Paper className={classes.paper} square>
+                    {
+                      pageItems.map((suggestion, index) => (
+                        renderSuggestion({
+                          suggestion,
+                          index,
+                          itemProps: getItemProps({item: suggestion.id}),
+                          highlightedIndex,
+                          selectedItem,
+                        })
+                      ))
+                    }
+                    {navigation}
+                  </Paper>
+                ) : null
+              )}
+            </SimpleListPagination>
           </div>
         )}
       </GeneAutocompleteBase>
