@@ -27,7 +27,7 @@ class SplitGeneDialog extends Component {
     mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
-        const emptyFields = ['reason', 'biotypeOriginal', 'sequenceName', 'biotype'].filter(
+        const emptyFields = ['provenance/why', 'gene/biotype', 'product'].filter(
           (fieldId) => {
             return !data[fieldId];
           }
@@ -87,7 +87,7 @@ class SplitGeneDialog extends Component {
           ({withFieldData, getFormData, resetData}) => {
             const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'gene/biotype');
             const ReasonField = withFieldData(TextField, 'provenance/why');
-            const SequenceNameField = withFieldData(TextField, 'product:gene/sequenceName');
+            const SequenceNameField = withFieldData(TextField, 'product:gene/sequence-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'product:gene/biotype');
             return (
               <Dialog

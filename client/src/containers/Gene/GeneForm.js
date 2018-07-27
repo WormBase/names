@@ -22,7 +22,7 @@ class GeneForm extends Component {
           ({withFieldData, getFormData, resetData}) => {
             const WBIdField = withFieldData(TextField, 'gene/id');
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
-            const SequenceNameField = withFieldData(TextField, 'gene/seq-name');
+            const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
