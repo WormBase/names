@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { authorizedFetch } from '../Authenticate';
 import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
@@ -42,7 +41,7 @@ class GeneProfile extends Component {
           });
         },
         () => {
-          return authorizedFetch(`/api/gene/${this.props.wbId}`, {});
+          return fetch(`/api/gene/${this.props.wbId}`, {});
         },
       ).then((response) => response.json()).then((response) => {
         this.setState({
@@ -66,7 +65,7 @@ class GeneProfile extends Component {
           });
         },
         () => {
-          return authorizedFetch(`/api/gene/${this.props.wbId}`, {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
             method: 'PUT',
             body: JSON.stringify({
               ...data
@@ -219,6 +218,7 @@ class GeneProfile extends Component {
 GeneProfile.propTypes = {
   classes: PropTypes.object.isRequired,
   wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({

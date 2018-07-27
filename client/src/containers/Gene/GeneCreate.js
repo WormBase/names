@@ -4,7 +4,6 @@ import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import { withStyles, Button, Page, PageLeft, PageMain, PageRight, Icon, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
-import { authorizedFetch } from '../Authenticate';
 
 class GeneCreate extends Component {
   constructor(props) {
@@ -40,7 +39,7 @@ class GeneCreate extends Component {
         }
       },
       () => {
-        return authorizedFetch(`/api/gene/`, {
+        return this.props.authorizedFetch(`/api/gene/`, {
           method: 'POST',
           body: JSON.stringify({
             ...data
@@ -101,6 +100,7 @@ GeneCreate.propTypes = {
   history: PropTypes.shape({
     push: PropTypes.func.isRequired,
   }).isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
 };
 
 export default withRouter(GeneCreate);

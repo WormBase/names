@@ -18,7 +18,7 @@ class App extends Component {
     return (
       <Authenticate>
         {
-          ({isAuthenticated, user, login, profile}) => (
+          ({isAuthenticated, user, login, profile, authorizedFetch}) => (
             <div className={this.props.classes.root}>
               <Header>
                 <ProfileButton name={user.name}/>
@@ -37,16 +37,17 @@ class App extends Component {
                       <Switch>
                         <Route path={`${match.url}/new`} component={() => (
                           <DocumentTitle title={`Create a gene`}>
-                            <GeneCreate />
+                            <GeneCreate authorizedFetch={authorizedFetch} />
                           </DocumentTitle>
                         )} />
                         <Route path={`${match.url}/id/:id`} component={({match}) => (
                           <DocumentTitle title={`Gene ${match.params.id}`}>
-                            <GeneProfile wbId={match.params.id} />
+                            <GeneProfile
+                              wbId={match.params.id}
+                              authorizedFetch={authorizedFetch}
+                            />
                           </DocumentTitle>
                         )} />
-                        <Route path={`${match.url}/merge`} component={() => <Page>form to merge two genes</Page>} />
-                        <Route path={`${match.url}/split`} component={() => <Page>form to split a gene</Page>} />
                       </Switch>
                     )} />
                     <Route path="/variation" component={() => (
