@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { withStyles, Button, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
+import { withStyles, Button, CircularProgress, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
@@ -138,11 +138,12 @@ class GeneProfile extends Component {
         <PageMain>
           <Typography variant="headline" gutterBottom>Gene <em>{this.state.data['gene/id']|| wbId}</em></Typography>
           {
-            this.state.status !== 'COMPLETE' || this.state.data['gene/status'] === 'gene.status/live' ?
+            this.state.data['gene/status'] === 'gene.status/live' ?
               <GeneForm
                 data={this.state.data}
                 onSubmit={this.handleGeneUpdate}
-              /> :
+              /> : this.state.status !== 'COMPLETE' ?
+              <CircularProgress /> :
               <Typography variant="caption">Dead</Typography>
           }
           <div className={classes.section}>
