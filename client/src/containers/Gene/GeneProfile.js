@@ -2,7 +2,18 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { withStyles, Button, CircularProgress, Icon, Page, PageLeft, PageMain, PageRight, Typography } from '../../components/elements';
+import {
+  withStyles,
+  Button,
+  CircularProgress,
+  Icon,
+  Page,
+  PageLeft,
+  PageMain,
+  PageRight,
+  Snackbar,
+  Typography
+} from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
@@ -15,6 +26,7 @@ class GeneProfile extends Component {
     this.state = {
       status: null,
       errorMessage: null,
+      successMessage: null,
       data: {},
       showKillGeneDialog: false,
       showMergeGeneDialog: false,
@@ -88,6 +100,7 @@ class GeneProfile extends Component {
               ...stateChanges,
               errorMessage: null,
               data: response.updated,
+              successMessage: `Success! ${this.getDisplayName(response.updated)} is updated.`
             }
           }
         });
@@ -128,6 +141,12 @@ class GeneProfile extends Component {
   closeSplitGeneDialog = () => {
     this.setState({
       showSplitGeneDialog: false,
+    });
+  }
+
+  closeSnackbar = () => {
+    this.setState({
+      successMessage: null,
     });
   }
 
@@ -238,6 +257,12 @@ class GeneProfile extends Component {
               this.closeSplitGeneDialog();
             });
           }}
+        />
+        <Snackbar
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          open={this.state.successMessage}
+          onClose={this.closeSnackbar}
+          message={<span>{this.state.successMessage}</span>}
         />
       </Page>
     );

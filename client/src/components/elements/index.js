@@ -24,6 +24,7 @@ export {
   InputAdornment,
   MenuItem,
   Paper,
+  Snackbar,
   Toolbar,
   Typography,
   Tabs,
