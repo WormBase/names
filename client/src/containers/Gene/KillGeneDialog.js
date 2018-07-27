@@ -28,9 +28,6 @@ class KillGeneDialog extends Component {
         console.log(data.reason);
         if (data.reason) {
           return mockFetch.delete('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
           });
         } else {
           return mockFetch.delete('*', {
@@ -51,7 +48,7 @@ class KillGeneDialog extends Component {
       },
     ).then((response) => response.json()).then((response) => {
       if (!response.error) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});
+        this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
       } else {
         this.setState({
           errorMessage: response.error,
