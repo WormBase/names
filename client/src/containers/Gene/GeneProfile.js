@@ -202,7 +202,9 @@ class GeneProfile extends Component {
         />
         <SplitGeneDialog
           geneName={this.getDisplayName(this.state.data)}
+          wbId={this.state.data['gene/id']}
           biotypeOriginal={this.state.data['gene/biotype']}
+          authorizedFetch={this.props.authorizedFetch}
           open={this.state.showSplitGeneDialog}
           onClose={this.closeSplitGeneDialog}
           onSubmitSuccess={(data) => {

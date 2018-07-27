@@ -46,21 +46,26 @@ class SplitGeneDialog extends Component {
         if (errorMessage) {
           return mockFetch.post('*', {
             body: {
-              error: errorMessage,
+              errors: errorMessage,
             },
             status: 400,
           });
         } else {
           return mockFetch.post('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
+            "updated": {
+              "gene/id": this.props.wbId,
+            },
+            "created": {
+              "gene/id": "WB3",
+              "gene/status": 'gene.status/live',
+            },
           });
         }
       },
       () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'POST'
+        return fetch(`/api/gene/${this.props.wbId}/split`, {
+          method: 'POST',
+          body: JSON.stringify(data),
         });
       },
     ).then((response) => response.json()).then((response) => {
@@ -77,13 +82,13 @@ class SplitGeneDialog extends Component {
 
   render() {
     return (
-      <BaseForm data={{biotypeOriginal: this.props.biotypeOriginal}}>
+      <BaseForm data={{'gene/biotype': this.props.biotypeOriginal}}>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'biotypeOriginal');
-            const ReasonField = withFieldData(TextField, 'reason');
-            const SequenceNameField = withFieldData(TextField, 'sequenceName');
-            const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
+            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'gene/biotype');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
+            const SequenceNameField = withFieldData(TextField, 'product:gene/sequenceName');
+            const BiotypeSelectField = withFieldData(BiotypeSelect, 'product:gene/biotype');
             return (
               <Dialog
                 open={this.props.open}
@@ -143,6 +148,7 @@ class SplitGeneDialog extends Component {
 }
 
 SplitGeneDialog.propTypes = {
+  wbId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
   biotypeOriginal: PropTypes.string.isRequired,
   open: PropTypes.bool,
