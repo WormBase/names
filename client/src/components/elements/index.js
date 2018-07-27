@@ -1,10 +1,15 @@
-import { MuiThemeProvider, createMuiTheme, withStyles } from 'material-ui/styles';
+import blue from '@material-ui/core/colors/blue';
+import lightBlue from '@material-ui/core/colors/lightBlue';
+import yellow from '@material-ui/core/colors/yellow';
+import red from '@material-ui/core/colors/red';
 
-import blue from 'material-ui/colors/blue';
-import lightBlue from 'material-ui/colors/lightBlue';
-import yellow from 'material-ui/colors/yellow';
-import red from 'material-ui/colors/red';
-import { default as MuiDialog, withMobileDialog } from 'material-ui/Dialog';
+import {
+  MuiThemeProvider,
+  createMuiTheme,
+  withStyles,
+  Dialog as MuiDialog,
+  withMobileDialog,
+} from '@material-ui/core';
 
 export {
   AppBar,
@@ -27,7 +32,7 @@ export {
   TableCell,
   TableHead,
   TableRow,
-} from 'material-ui';
+} from '@material-ui/core';
 
 export { default as TextField} from './TextField';
 export { default as SpeciesSelect } from './SpeciesSelect';

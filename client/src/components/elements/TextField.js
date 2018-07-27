@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextField as MuiTextField, withStyles } from 'material-ui';
+import { TextField as MuiTextField, withStyles } from '@material-ui/core';
 
 const TextField = (props) => (
   <div>
