@@ -136,7 +136,7 @@ class GeneProfile extends Component {
           </Button>
         </PageLeft>
         <PageMain>
-          <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
+          <Typography variant="headline" gutterBottom>Gene <em>{this.state.data['gene/id']|| wbId}</em></Typography>
           {
             this.state.status !== 'COMPLETE' || this.state.data['gene/status'] === 'gene.status/live' ?
               <GeneForm
