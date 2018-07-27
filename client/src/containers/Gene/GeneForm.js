@@ -15,9 +15,9 @@ import BaseForm from './BaseForm';
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields, data} = this.props;
+    const {classes, fields, data, onCancel, onSubmit, disabled} = this.props;
     return (
-      <BaseForm data={data}>
+      <BaseForm data={data} disabled={disabled}>
         {
           ({withFieldData, getFormData, resetData}) => {
             const WBIdField = withFieldData(TextField, 'gene/id');
@@ -45,20 +45,24 @@ class GeneForm extends Component {
                 <SpeciesSelectField />
                 <BiotypeSelectField />
                 <br/>
-                <div className={classes.actions}>
-                  <Button
-                    variant="raised"
-                    color="secondary"
-                    onClick={() => this.props.onSubmit(getFormData())}
-                  >Submit</Button>
-                  <Button
-                    variant="raised"
-                    onClick={() => {
-                      resetData();
-                      this.props.onCancel && this.props.onCancel();
-                    }}
-                  >Cancel</Button>
-                </div>
+                {
+                  disabled ? null : (
+                    <div className={classes.actions}>
+                      <Button
+                        variant="raised"
+                        color="secondary"
+                        onClick={() => this.props.onSubmit(getFormData())}
+                      >Submit</Button>
+                      <Button
+                        variant="raised"
+                        onClick={() => {
+                          resetData();
+                          this.props.onCancel && this.props.onCancel();
+                        }}
+                      >Cancel</Button>
+                    </div>
+                  )
+                }
               </div>
             );
           }

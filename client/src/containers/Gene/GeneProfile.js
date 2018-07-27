@@ -159,7 +159,14 @@ class GeneProfile extends Component {
                 onSubmit={this.handleGeneUpdate}
               /> : this.state.status !== 'COMPLETE' ?
               <CircularProgress /> :
-              <Typography variant="caption">Dead</Typography>
+              <div>
+                <Typography variant="display1" gutterBottom>Dead</Typography>
+                <GeneForm
+                  data={this.state.data}
+                  disabled={true}
+                  onSubmit={this.handleGeneUpdate}
+                />
+              </div>
           }
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
