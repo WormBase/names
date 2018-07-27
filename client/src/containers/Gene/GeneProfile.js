@@ -190,6 +190,8 @@ class GeneProfile extends Component {
         />
         <MergeGeneDialog
           geneName={this.getDisplayName(this.state.data)}
+          wbId={this.state.data['gene/id']}
+          authorizedFetch={this.props.authorizedFetch}
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {

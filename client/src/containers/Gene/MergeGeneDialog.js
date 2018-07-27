@@ -3,6 +3,7 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BiotypeSelect,
   Button,
   Dialog,
   DialogActions,
@@ -23,28 +24,25 @@ class MergeGeneDialog extends Component {
     };
   }
 
-  handleSubmit = (data) => {
+  handleSubmit = ({geneIdMergeInto, ...data}) => {
     mockFetchOrNot(
       (mockFetch) => {
         console.log(data);
-        if (data.reason) {
-          return mockFetch.delete('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
+        if (data['provenance/why']) {
+          return mockFetch.post('*', {
           });
         } else {
-          return mockFetch.delete('*', {
+          return mockFetch.post('*', {
             body: {
-              error: 'Reason for merging a gene is required',
+              message: 'Reason for merging a gene is required',
             },
             status: 400,
           })
         }
       },
       () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE'
+        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/merge/${geneIdMergeInto}`, {
+          method: 'POST',
         });
       },
     ).then((response) => response.json()).then((response) => {
@@ -64,8 +62,9 @@ class MergeGeneDialog extends Component {
       <BaseForm>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const ReasonField = withFieldData(TextField, 'reason');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             const GeneIdMergeIntoField = withFieldData(GeneAutocomplete, 'geneIdMergeInto');
+            const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
               <Dialog
                 open={this.props.open}
@@ -84,6 +83,12 @@ class MergeGeneDialog extends Component {
                   label="Merge into gene"
                   helperText="Enter WBID or search by CGC name"
                   required
+                />
+                <BiotypeField
+                  helperText={`Set the biotype of the merged gene`}
+                  classes={{
+                    root: this.props.classes.biotypeSelectField,
+                  }}
                 />
                 <ReasonField
                   label="Reason"
@@ -116,7 +121,9 @@ class MergeGeneDialog extends Component {
 }
 
 MergeGeneDialog.propTypes = {
+  wbId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmitSuccess: PropTypes.func,
