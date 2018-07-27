@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import {
   withStyles,
   Button,
-  Icon,
-  MenuItem,
   TextField,
   SpeciesSelect,
   BiotypeSelect,
@@ -15,26 +13,17 @@ import BaseForm from './BaseForm';
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields, data, onCancel, onSubmit, disabled} = this.props;
+    const {classes, data, disabled} = this.props;
     return (
       <BaseForm data={data} disabled={disabled}>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const WBIdField = withFieldData(TextField, 'gene/id');
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
             const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
               <div>
-                {
-                  data && data.id ?
-                    <WBIdField
-                      label="WormBase gene ID"
-                      disabled={true}
-                    /> :
-                    null
-                }
                 <CgcNameField
                   label="CGC name"
                   helperText="Enter the CGC name of the gene"
@@ -74,18 +63,12 @@ class GeneForm extends Component {
 
 GeneForm.propTypes = {
   classes: PropTypes.object.isRequired,
-  fields: PropTypes.shape({
-    cgcName: PropTypes.shape({
-      value: PropTypes.string,
-      error: PropTypes.string,
-    }),
-  }),
+  data: PropTypes.any,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
 };
 
 GeneForm.defaultProps = {
-  fields: {},
 };
 
 const styles = (theme) => ({
