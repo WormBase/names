@@ -42,8 +42,11 @@ class KillGeneDialog extends Component {
         }
       },
       () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE'
+        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+          method: 'DELETE',
+          body: JSON.stringify({
+            ...data
+          })
         });
       },
     ).then((response) => response.json()).then((response) => {
@@ -63,7 +66,7 @@ class KillGeneDialog extends Component {
       <BaseForm>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const ReasonField = withFieldData(TextField, 'reason');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             return (
               <Dialog
                 open={this.props.open}
@@ -110,6 +113,8 @@ class KillGeneDialog extends Component {
 
 KillGeneDialog.propTypes = {
   geneName: PropTypes.string.isRequired,
+  wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmitSuccess: PropTypes.func,

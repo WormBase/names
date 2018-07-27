@@ -176,6 +176,8 @@ class GeneProfile extends Component {
         </PageRight>
         <KillGeneDialog
           geneName={this.getDisplayName(this.state.data)}
+          wbId={this.state.data['gene/id']}
+          authorizedFetch={this.props.authorizedFetch}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
