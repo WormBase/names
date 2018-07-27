@@ -47,13 +47,13 @@ class KillGeneDialog extends Component {
         });
       },
     ).then((response) => response.json()).then((response) => {
-      if (!response.error) {
+      if (!response.problems) {
         this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
       } else {
         this.setState({
-          errorMessage: response.error,
+          errorMessage: JSON.stringify(response),
         });
-        this.props.onSubmitError && this.props.onSubmitError(response.error);
+        this.props.onSubmitError && this.props.onSubmitError(response);
       }
     }).catch((e) => console.log('error', e));
   }
