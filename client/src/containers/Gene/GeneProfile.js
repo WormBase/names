@@ -14,6 +14,7 @@ class GeneProfile extends Component {
     super(props);
     this.state = {
       status: null,
+      errorMessage: null,
       data: {},
       showKillGeneDialog: false,
       showMergeGeneDialog: false,
@@ -73,10 +74,23 @@ class GeneProfile extends Component {
           });
         },
       ).then((response) => response.json()).then((response) => {
-        this.setState((prevState) => ({
-          data: response.ok ? response.updated : prevState.data,
-          status: 'COMPLETE',
-        }));
+        this.setState(() => {
+          const stateChanges = {
+            status: 'COMPLETE',
+          };
+          if (response.message) {
+            return {
+              ...stateChanges,
+              errorMessage: JSON.stringify(response),
+            }
+          } else {
+            return {
+              ...stateChanges,
+              errorMessage: null,
+              data: response.updated,
+            }
+          }
+        });
       }).catch((e) => console.log('error', e));
     });
   }
@@ -137,6 +151,7 @@ class GeneProfile extends Component {
         </PageLeft>
         <PageMain>
           <Typography variant="headline" gutterBottom>Gene <em>{this.state.data['gene/id']|| wbId}</em></Typography>
+          <Typography color="error">{this.state.errorMessage}</Typography>
           {
             this.state.data['gene/status'] === 'gene.status/live' ?
               <GeneForm
