@@ -11,6 +11,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
@@ -20,64 +23,74 @@ class SplitGeneDialog extends Component {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
   handleSubmit = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data.reason);
-        const emptyFields = ['provenance/why', 'gene/biotype', 'product'].filter(
-          (fieldId) => {
-            return !data[fieldId];
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data.reason);
+          const emptyFields = ['provenance/why', 'gene/biotype', 'product'].filter(
+            (fieldId) => {
+              return !data[fieldId];
+            }
+          );
+          let errorMessage;
+          switch (emptyFields.length) {
+            case 0:
+              break;
+            case 1:
+              errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
+              break;
+            default:
+              errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
           }
-        );
-        let errorMessage;
-        switch (emptyFields.length) {
-          case 0:
-            break;
-          case 1:
-            errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
-            break;
-          default:
-            errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
-        }
 
-        if (errorMessage) {
-          return mockFetch.post('*', {
-            body: {
-              errors: errorMessage,
-            },
-            status: 400,
+          if (errorMessage) {
+            return mockFetch.post('*', {
+              body: {
+                errors: errorMessage,
+              },
+              status: 400,
+            });
+          } else {
+            return mockFetch.post('*', {
+              "updated": {
+                "gene/id": this.props.wbId,
+              },
+              "created": {
+                "gene/id": "WB3",
+                "gene/status": 'gene.status/live',
+              },
+            });
+          }
+        },
+        () => {
+          return fetch(`/api/gene/${this.props.wbId}/split`, {
+            method: 'POST',
+            body: JSON.stringify(data),
           });
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
+          })
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response.updated});
         } else {
-          return mockFetch.post('*', {
-            "updated": {
-              "gene/id": this.props.wbId,
-            },
-            "created": {
-              "gene/id": "WB3",
-              "gene/status": 'gene.status/live',
-            },
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
           });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return fetch(`/api/gene/${this.props.wbId}/split`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.problems) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response.updated});
-      } else {
-        this.setState({
-          errorMessage: JSON.stringify(response),
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
@@ -131,12 +144,13 @@ class SplitGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     onClick={() => this.handleSubmit(getFormData())}
                     className={this.props.classes.splitButton}
                   >
                     split {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )

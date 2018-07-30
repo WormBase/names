@@ -10,6 +10,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
@@ -19,43 +22,53 @@ class KillGeneDialog extends Component {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
   handleSubmit = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data.reason);
-        if (data.reason) {
-          return mockFetch.delete('*', {
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data.reason);
+          if (data.reason) {
+            return mockFetch.delete('*', {
+            });
+          } else {
+            return mockFetch.delete('*', {
+              body: {
+                error: 'Reason for killing a gene is required',
+              },
+              status: 400,
+            })
+          }
+        },
+        () => {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({
+              ...data
+            })
           });
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
         } else {
-          return mockFetch.delete('*', {
-            body: {
-              error: 'Reason for killing a gene is required',
-            },
-            status: 400,
-          })
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE',
-          body: JSON.stringify({
-            ...data
-          })
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.problems) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
-      } else {
-        this.setState({
-          errorMessage: JSON.stringify(response),
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
@@ -92,12 +105,13 @@ class KillGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     onClick={() => this.handleSubmit(getFormData())}
                     className={this.props.classes.killButton}
                   >
                     KILL {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )

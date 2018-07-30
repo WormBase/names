@@ -11,6 +11,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
@@ -21,40 +24,50 @@ class MergeGeneDialog extends Component {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
   handleSubmit = ({geneIdMergeInto, ...data}) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data);
-        if (data['provenance/why']) {
-          return mockFetch.post('*', {
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data);
+          if (data['provenance/why']) {
+            return mockFetch.post('*', {
+            });
+          } else {
+            return mockFetch.post('*', {
+              body: {
+                message: 'Reason for merging a gene is required',
+              },
+              status: 400,
+            })
+          }
+        },
+        () => {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/merge/${geneIdMergeInto}`, {
+            method: 'POST',
           });
-        } else {
-          return mockFetch.post('*', {
-            body: {
-              message: 'Reason for merging a gene is required',
-            },
-            status: 400,
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
           })
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
+        } else {
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/merge/${geneIdMergeInto}`, {
-          method: 'POST',
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.problems) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
-      } else {
-        this.setState({
-          errorMessage: JSON.stringify(response),
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
@@ -104,12 +117,13 @@ class MergeGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
                     onClick={() => this.handleSubmit(getFormData())}
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     className={this.props.classes.mergeButton}
                   >
                     Merge and kill {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )

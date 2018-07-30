@@ -8,8 +8,8 @@ export const PROGRESS_BUTTON_PENDING = 'PENDING';
 const ProgressButton =  ({classes, status, children, ...buttonProps}) => (
   <div className={classes.wrapper}>
     <Button
-      {...buttonProps}
       disabled={status === PROGRESS_BUTTON_PENDING}
+      {...buttonProps}
     >{children}</Button>
     {
       status === PROGRESS_BUTTON_PENDING ?
