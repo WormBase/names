@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Route , Link, Redirect, Switch } from 'react-router-dom';
 import 'typeface-roboto';
-import { withStyles, Page, } from './components/elements';
+import { withStyles, Page, DocumentTitle, } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
@@ -28,18 +28,42 @@ class App extends Component {
                   <NavBar key="nav-bar" />,
                   <div key="content" className={this.props.classes.content}>
                     <Route exact path="/" component={() => <Redirect to="/gene" /> } />
-                    <Route exact path="/gene" component={() => <Gene />} />
+                    <Route exact path="/gene" component={() => (
+                      <DocumentTitle title="Gene index">
+                        <Gene />
+                      </DocumentTitle>
+                    )} />
                     <Route path="/gene" component={({match}) => (
                       <Switch>
-                        <Route path={`${match.url}/new`} component={() => <GeneCreate />} />
-                        <Route path={`${match.url}/id/:id`} component={({match}) => <GeneProfile wbId={match.params.id} />} />
+                        <Route path={`${match.url}/new`} component={() => (
+                          <DocumentTitle title={`Create a gene`}>
+                            <GeneCreate />
+                          </DocumentTitle>
+                        )} />
+                        <Route path={`${match.url}/id/:id`} component={({match}) => (
+                          <DocumentTitle title={`Gene ${match.params.id}`}>
+                            <GeneProfile wbId={match.params.id} />
+                          </DocumentTitle>
+                        )} />
                         <Route path={`${match.url}/merge`} component={() => <Page>form to merge two genes</Page>} />
                         <Route path={`${match.url}/split`} component={() => <Page>form to split a gene</Page>} />
                       </Switch>
                     )} />
-                    <Route path="/variation" component={() => <Page>Variation page (coming soon ..ish)</Page> } />
-                    <Route path="/feature" component={() => <Page>Feature page (coming soon ..ish)</Page> } />
-                    <Route path="/me" component={() => profile } />
+                    <Route path="/variation" component={() => (
+                      <DocumentTitle title="Variation index">
+                        <Page>Variation page (coming soon ..ish)</Page>
+                      </DocumentTitle>
+                    )} />
+                    <Route path="/feature" component={() => (
+                      <DocumentTitle title="Feature index">
+                        <Page>Feature page (coming soon ..ish)</Page>
+                      </DocumentTitle>
+                    )} />
+                    <Route path="/me" component={() => (
+                      <DocumentTitle title="My profile">
+                        {profile}
+                      </DocumentTitle>
+                    )} />
                   </div>
                 ] :
                 login
