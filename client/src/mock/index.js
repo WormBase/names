@@ -8,8 +8,8 @@ export function mockFetchOrNot(
 ) {
   console.log('ready ' + ready);
   if (ready) {
-    ready = false;
     if (shouldMock) {
+      ready = false;
       fetchMock.restore();
       mockCallback(fetchMock);
       return Promise.resolve(nativeCallback()).then((result) => {
@@ -22,13 +22,7 @@ export function mockFetchOrNot(
         return result;
       });
     } else {
-      return Promise.resolve(nativeCallback()).then((result) => {
-        console.log(`While native: ready = ${ready}`);
-        ready = true;
-        console.log(`After native: set ready to ${ready}`);
-        console.log(result);
-        return result;
-      });
+      return nativeCallback();
     }
   } else {
     console.log(`mock not ready`);
