@@ -4,6 +4,9 @@ import {
   BaseForm,
   BiotypeSelect,
   Button,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   SpeciesSelect,
   withStyles,
@@ -12,9 +15,9 @@ import {
 class GeneForm extends Component {
 
   render() {
-    const {classes, data, disabled} = this.props;
+    const {classes, data, disabled, submitted} = this.props;
     return (
-      <BaseForm data={data} disabled={disabled}>
+      <BaseForm data={data} disabled={disabled || submitted}>
         {
           ({withFieldData, getFormData, resetData}) => {
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
@@ -34,12 +37,13 @@ class GeneForm extends Component {
                 <BiotypeSelectField />
                 <br/>
                 <div className={classes.actions}>
-                  <Button
+                  <ProgressButton
+                    status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     variant="raised"
                     color="secondary"
                     onClick={() => this.props.onSubmit(getFormData())}
                     disabled={disabled}
-                  >Submit</Button>
+                  >Submit</ProgressButton>
                   <Button
                     variant="raised"
                     onClick={() => {
@@ -61,6 +65,8 @@ class GeneForm extends Component {
 GeneForm.propTypes = {
   classes: PropTypes.object.isRequired,
   data: PropTypes.any,
+  submitted: PropTypes.bool,
+  disabled: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
 };

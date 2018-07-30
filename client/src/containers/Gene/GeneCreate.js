@@ -98,7 +98,7 @@ class GeneCreate extends Component {
           <Typography variant="headline" gutterBottom>Add gene</Typography>
           <Typography color="error">{this.state.error}</Typography>
           <GeneForm
-            disabled={this.state.status === 'SUBMITTED'}
+            submitted={this.state.status === 'SUBMITTED'}
             onSubmit={this.handleCreateGene}
             onCancel={this.handleClear}
           />

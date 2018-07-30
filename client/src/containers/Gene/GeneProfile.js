@@ -175,6 +175,7 @@ class GeneProfile extends Component {
               <GeneForm
                 data={this.state.data}
                 onSubmit={this.handleGeneUpdate}
+                submitted={this.state.status === 'SUBMITTED'}
               /> : this.state.status !== 'COMPLETE' ?
               <CircularProgress /> :
               <div>
