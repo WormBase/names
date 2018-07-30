@@ -33,24 +33,22 @@ class GeneForm extends Component {
                 <SpeciesSelectField />
                 <BiotypeSelectField />
                 <br/>
-                {
-                  disabled ? null : (
-                    <div className={classes.actions}>
-                      <Button
-                        variant="raised"
-                        color="secondary"
-                        onClick={() => this.props.onSubmit(getFormData())}
-                      >Submit</Button>
-                      <Button
-                        variant="raised"
-                        onClick={() => {
-                          resetData();
-                          this.props.onCancel && this.props.onCancel();
-                        }}
-                      >Cancel</Button>
-                    </div>
-                  )
-                }
+                <div className={classes.actions}>
+                  <Button
+                    variant="raised"
+                    color="secondary"
+                    onClick={() => this.props.onSubmit(getFormData())}
+                    disabled={disabled}
+                  >Submit</Button>
+                  <Button
+                    variant="raised"
+                    onClick={() => {
+                      resetData();
+                      this.props.onCancel && this.props.onCancel();
+                    }}
+                    disabled={disabled}
+                  >Cancel</Button>
+                </div>
               </div>
             );
           }
