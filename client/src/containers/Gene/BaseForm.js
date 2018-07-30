@@ -53,7 +53,7 @@ class FormDataStore {
       };
       this.eventListeners.filter((eventListener) => {
         return eventListener.fieldId === fieldId || eventListener.fieldId === 'ALL_FIELDS';
-      }).map((eventListener) => {
+      }).forEach((eventListener) => {
         eventListener.eventHandler(value);
       });
     };
@@ -67,7 +67,7 @@ class FormDataStore {
 
   replaceFields = (fields) => {
     this.fields = {...fields};
-    this.eventListeners.map((eventListener) => {
+    this.eventListeners.forEach((eventListener) => {
       if (eventListener.fieldId === 'ALL_FIELDS') {
         eventListener.eventHandler();
       } else {
@@ -157,7 +157,6 @@ class BaseForm extends Component {
 
   withFieldData = (WrappedComponent, fieldId) => {
     const dataStore = this.dataStore;
-    const {value, onChange,} = dataStore.getField(fieldId);
     const {disabled} = this.props;
     class Field extends Component {
       constructor(props) {
