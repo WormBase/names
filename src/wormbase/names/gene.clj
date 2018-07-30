@@ -150,10 +150,10 @@
                 prov (wnp/assoc-provenence request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
-                tx-result @(d/transact-async conn txes)
-                ent (d/entity db lur)]
-            (if (:db-after tx-result)
-              (http-response/ok {:updated (wnu/entity->map ent)})
+                tx-result @(d/transact-async conn txes)]
+            (if-let [db-after (:db-after tx-result)]
+              (let [ent (d/entity db-after lur)]
+                (http-response/ok {:updated (wnu/entity->map ent)}))
               (http-response/not-found
                (format "Gene '%s' does not exist" (last lur)))))
           (throw (ex-info "Not valid according to spec."
