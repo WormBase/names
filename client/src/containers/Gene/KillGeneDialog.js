@@ -3,6 +3,7 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BaseForm,
   Button,
   Dialog,
   DialogActions,
@@ -12,7 +13,6 @@ import {
   TextField,
   Typography,
 } from '../../components/elements';
-import BaseForm from './BaseForm';
 
 class KillGeneDialog extends Component {
   constructor(props) {

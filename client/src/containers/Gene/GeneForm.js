@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  withStyles,
+  BaseForm,
+  BiotypeSelect,
   Button,
   TextField,
   SpeciesSelect,
-  BiotypeSelect,
+  withStyles,
 } from '../../components/elements';
-
-import BaseForm from './BaseForm';
 
 class GeneForm extends Component {
 

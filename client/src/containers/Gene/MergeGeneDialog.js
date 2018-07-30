@@ -3,6 +3,7 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BaseForm,
   BiotypeSelect,
   Button,
   Dialog,
@@ -13,7 +14,6 @@ import {
   TextField,
   Typography,
 } from '../../components/elements';
-import BaseForm from './BaseForm';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
