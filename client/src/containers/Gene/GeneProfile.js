@@ -6,7 +6,6 @@ import {
   withStyles,
   Button,
   CircularProgress,
-  Icon,
   Page,
   PageLeft,
   PageMain,

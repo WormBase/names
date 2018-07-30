@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Prompt } from 'react-router';
-import { withStyles, Button, Icon, TextField } from '../../components/elements';
 
 /*
   BaseForm intends to **centrally** track the state of the (controlled) form

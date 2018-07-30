@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import { Button, withStyles } from '../../components/elements';
+import { Button } from '../../components/elements';
 
 const Logout = (props) => {
   return (

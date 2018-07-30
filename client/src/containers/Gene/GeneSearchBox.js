@@ -5,8 +5,6 @@ import { Link, withRouter } from 'react-router-dom';
 import { Search as SearchIcon } from '@material-ui/icons';
 import {
   withStyles,
-  Button,
-  Icon,
   InputAdornment,
   Paper,
   MenuItem,

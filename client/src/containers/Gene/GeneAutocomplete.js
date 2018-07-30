@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import SearchIcon from '@material-ui/icons/Search';
 import {
   withStyles,
-  Button,
   Chip,
-  Icon,
   InputAdornment,
   Paper,
   MenuItem,

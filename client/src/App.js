@@ -1,14 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route , Link, Redirect, Switch } from 'react-router-dom';
+import { Route , Redirect, Switch } from 'react-router-dom';
 import 'typeface-roboto';
 import { withStyles, Page, DocumentTitle, } from './components/elements';
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
 import Gene, { GeneProfile, GeneCreate } from './containers/Gene';
-import logo from './logo.svg';
-import wormbaseLogo from './logo_wormbase_solid.svg';
 import './App.css';
 
 

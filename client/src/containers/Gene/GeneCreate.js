@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { withStyles, Button, Page, PageLeft, PageMain, PageRight, Icon, Typography } from '../../components/elements';
+import { Button, Page, PageLeft, PageMain, Typography } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {

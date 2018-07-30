@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   withStyles,
-  Button,
   Table,
   TableBody,
   TableCell,
