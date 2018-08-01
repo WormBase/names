@@ -55,10 +55,8 @@ export default class GeneAutocompleteBase extends Component {
             id: item['gene/id'],
             label: item['gene/cgc-name'] || item['gene/sequence-name'] || item['gene/id'],
           }));
-        } else {
-          suggestions = [];
+          callback(suggestions);
         }
-        callback(suggestions);
       }).catch((e) => console.log('error', e));
     });
   }
