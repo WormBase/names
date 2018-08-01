@@ -34,6 +34,10 @@ class SimpleListPagination extends Component {
     }
   }
 
+  componentDidMount() {
+    this.pageChangeCallback();
+  }
+
   maxPage = () => Math.ceil(this.props.items.length / this.props.pageSize) - 1;
 
   render() {
