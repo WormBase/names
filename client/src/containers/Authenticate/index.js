@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { withRouter } from 'react-router-dom';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -21,21 +20,6 @@ const sessionStorageKey = 'AUTHENTICATION_STATE';
 function getStoredState() {
   const saveStateJSON = window.sessionStorage.getItem(sessionStorageKey);
   return saveStateJSON && JSON.parse(saveStateJSON);
-}
-
-function authorizedFetch(url, options = {}) {
-  const {headers, ...otherOptions} = options;
-  const newHeaders = new Headers(headers);
-  console.log(getStoredState());
-  const userState = getStoredState();
-  const token = userState ? userState.user.id_token : '';
-  newHeaders.append('Authorization', `Token ${token}`);
-  newHeaders.append('Content-Type', 'application/json');
-  newHeaders.append('Accept', 'application/json');
-  return fetch(url, {
-    ...otherOptions,
-    headers: newHeaders,
-  });
 }
 
 class Authenticate extends Component {
@@ -78,7 +62,6 @@ class Authenticate extends Component {
     });
     window.sessionStorage.removeItem(sessionStorageKey);
     this.logout && this.logout();
-    this.props.history.push('/');
   }
 
   componentDidMount() {
@@ -89,6 +72,27 @@ class Authenticate extends Component {
       });
     }
   }
+
+  authorizedFetch = (url, options = {}) => {
+    const {headers, ...otherOptions} = options;
+    const newHeaders = new Headers(headers);
+    const token = this.state.user.id_token;
+    newHeaders.append('Authorization', `Token ${token}`);
+    newHeaders.append('Content-Type', 'application/json');
+    newHeaders.append('Accept', 'application/json');
+    return fetch(url, {
+      ...otherOptions,
+      headers: newHeaders,
+    }).then((response) => {
+      if (response.status === 401) {
+        this.setState({
+          ...DEFAULT_AUTHENTICATION_STATE,
+        });
+      }
+      return response;
+    });
+  }
+
 
   render() {
     console.log(this.state);
@@ -104,6 +108,7 @@ class Authenticate extends Component {
           errorMessage={this.state.errorMessage}
         />,
         logout: logout,
+        authorizedFetch: this.authorizedFetch,
         profile: <Profile {...user}>
           {logout}
         </Profile>,
@@ -113,14 +118,10 @@ class Authenticate extends Component {
 }
 
 Authenticate.propTypes = {
-  history: PropTypes.shape({
-    push: PropTypes.func.isRequired,
-  }),
-}
+};
 
-export default withRouter(Authenticate);
+export default Authenticate;
 
 export {
   ProfileButton,
-  authorizedFetch,
 }

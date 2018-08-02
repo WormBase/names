@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { withRouter } from 'react-router-dom';
 import { Button, withStyles } from '../../components/elements';
 
 const Logout = (props) => {
@@ -7,7 +8,10 @@ const Logout = (props) => {
     <Button
       variant="raised"
 
-      onClick={() => props.onLogout()}
+      onClick={() => {
+        props.onLogout();
+        props.history.push('/');
+      }}
     >
       Logout
     </Button>
@@ -16,6 +20,9 @@ const Logout = (props) => {
 
 Logout.propTypes = {
   onLogout: PropTypes.func.isRequired,
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }),
 };
 
-export default Logout;
+export default withRouter(Logout);
