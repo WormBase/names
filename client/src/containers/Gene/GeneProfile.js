@@ -6,6 +6,7 @@ import {
   withStyles,
   Button,
   CircularProgress,
+  NotFound,
   Page,
   PageLeft,
   PageMain,
@@ -55,10 +56,15 @@ class GeneProfile extends Component {
         () => {
           return fetch(`/api/gene/${this.props.wbId}`, {});
         },
-      ).then((response) => response.json()).then((response) => {
+      ).then((response) => {
+        const nextStatus = (response.status === 404 || response.status === 500) ?
+          'NOT_FOUND' :
+          'COMPLETE';
+        return Promise.all([nextStatus, response.json()]);
+      }).then(([nextStatus, response]) => {
         this.setState({
           data: response,
-          status: 'COMPLETE',
+          status: nextStatus,
         });
       }).catch((e) => console.log('error', e));
     });
@@ -157,15 +163,25 @@ class GeneProfile extends Component {
 
   render() {
     const {classes, wbId} = this.props;
-    return (
+    const backToDirectoryButton = (
+      <Button
+        variant="raised"
+        component={({...props}) => <Link to='/gene' {...props} />}
+      >
+        Back to directory
+      </Button>
+    );
+    return this.state.status === 'NOT_FOUND' ? (
+      <NotFound>
+        <Typography>
+          <strong>{wbId}</strong> does not exist
+        </Typography>
+        {backToDirectoryButton}
+      </NotFound>
+    ) : (
       <Page>
         <PageLeft>
-          <Button
-            variant="raised"
-            component={({...props}) => <Link to='/gene' {...props} />}
-          >
-            Back to directory
-          </Button>
+          {backToDirectoryButton}
         </PageLeft>
         <PageMain>
           <Typography variant="headline" gutterBottom>Gene <em>{this.state.data['gene/id']|| wbId}</em></Typography>

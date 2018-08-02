@@ -48,6 +48,7 @@ export { default as AutocompleteBase } from './AutocompleteBase';
 export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
 export { default as BaseForm } from './BaseForm';
+export { default as NotFound } from './NotFound';
 
 export const Dialog = withMobileDialog()(withStyles((theme) => ({
   paper: {
