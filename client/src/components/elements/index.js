@@ -34,6 +34,8 @@ export {
   TableRow,
 } from '@material-ui/core';
 
+export { default as DocumentTitle } from 'react-document-title';
+
 export { default as TextField} from './TextField';
 export { default as SpeciesSelect } from './SpeciesSelect';
 export { default as BiotypeSelect } from './BiotypeSelect';
