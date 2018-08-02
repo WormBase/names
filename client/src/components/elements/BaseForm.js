@@ -185,7 +185,7 @@ class BaseForm extends Component {
           <WrappedComponent
             {...this.props}
             id={fieldId}
-            disabled={disabled}
+            disabled={disabled || this.props.disabled}
             value={this.state.value || ''}
             error={Boolean(this.state.error)} //Boolean function not constructor
             helperText={this.state.error || this.props.helperText}
