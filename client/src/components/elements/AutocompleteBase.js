@@ -7,30 +7,17 @@ class AutocompleteBase extends Component {
     super(props);
     this.state = {
       suggestions: [],
-      inputValue: '',
-      selectedItem: null,
-      isOpen: false,
-    };
-  }
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    return {
-      selectedItem: nextProps.value,
-      inputValue: nextProps.value,
     };
   }
 
   componentDidMount() {
-    if (this.state.inputValue) {
-      this.loadSuggestions(this.state.inputValue);
+    if (this.props.value) {
+      this.loadSuggestions(this.props.value);
     }
   }
 
-  handleInputChange = (event) => {
-    const inputValue = event.target.value;
+  handleInputChange = (inputValue) => {
     this.setState({
-      inputValue: inputValue,
-      selectedItem: inputValue,
       suggestions: [],
     }, () => {
       this.loadSuggestions(inputValue);
@@ -45,114 +32,93 @@ class AutocompleteBase extends Component {
     });
   }
 
-  handleKeyDown = (event) => {
-    if (event.key === 'Enter') {
-      const [selectedItem] = this.state.suggestions.filter(
-        (item) => item.id === this.state.inputValue || item.label === this.state.inputValue
-      );
-      if (selectedItem) {
-        this.setState({
-          selectedItem: selectedItem.id,
-          isOpen: false,
-        });
-      }
+  handleKeyDown = (inputValue) => {
+    const [selectedItem] = this.state.suggestions.filter(
+      (item) => item.id === inputValue || item.label === inputValue
+    );
+    if (selectedItem) {
+      this.setState({
+        selectedItem: selectedItem.id,
+        isOpen: false,
+      });
     }
   }
 
-  changeHandler = selectedItem => {
-    this.setState({
-      selectedItem,
-    }, () => {
-      if (this.props.onChange) {
-        this.props.onChange({
-          target: {
-            value: selectedItem,
-          },
-        })
-      }
-    });
+  stateReducer = (state, changes) => {
+    console.log(state);
+    console.log(changes);
+    switch (changes.type) {
+      case Downshift.stateChangeTypes.blurInput:
+        return {
+          ...changes,
+          inputValue: state.inputValue,
+          isOpen: state.isOpen, // prevent menu from being closed when input blur
+        };
+      case Downshift.stateChangeTypes.mouseUp:
+        return {
+          ...changes,
+          inputValue: state.inputValue, // prevent inputValue being cleared
+        };
+      default:
+        return changes;
+    }
   }
 
-  stateChangeHandler = changes => {
-    console.log(changes);
-    let {
-      selectedItem = this.state.selectedItem,
-      isOpen = this.state.isOpen,
-      inputValue = this.state.inputValue,
-      type,
-    } = changes;
+  handleStateChange = changes => {
+    console.log(Object.keys(Downshift.stateChangeTypes));
+    const {inputValue} = changes;
+    switch (changes.type) {
+      case Downshift.stateChangeTypes.changeInput:
+        this.handleInputChange(inputValue);
+        break;
+      default:
+        // do nothing
+    }
 
-    isOpen = type === Downshift.stateChangeTypes.blurInput ?
-      this.state.isOpen : isOpen;
-
-    this.setState({
-      selectedItem,
-      isOpen,
-      inputValue,
-    }, () => {
-      if (changes.inputValue && this.props.onChange) {
-        this.props.onChange({
-          target: {
-            value: inputValue,
-          },
-        });
-      }
-    });
+    if (inputValue && this.props.onChange) {
+      this.props.onChange({
+        target: {
+          value: changes.inputValue,
+        },
+      });
+    }
   }
 
   render() {
-    const {onChange, value, ...otherProps} = this.props;
+    const {onChange, value} = this.props;
     return (
       <Downshift
-        selectedItem={this.state.selectedItem}
-  //      itemToString={(item) => item ? item.id : ''}
-        isOpen={this.state.isOpen}
-        inputValue={this.state.inputValue}
-        onChange={this.changeHandler}
-        onStateChange={this.stateChangeHandler}
+        defaultInputValue={value}
+        stateReducer={this.stateReducer}
+        onStateChange={this.handleStateChange}
       >
-        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount }) => (
+        {({ getInputProps, inputValue, ...otherProps }) => (
           this.props.children({
-            getItemProps,
+            ...otherProps,
+            inputValue,
             getInputProps: (inputProps) => {
               return getInputProps({
                 ...inputProps,
-                onChange: (event) => {
-                  inputProps.onChange && inputProps.onChange(event);
-                  this.handleInputChange(event);
-                },
                 onKeyDown: (event) => {
                   inputProps.onKeyDown && inputProps.onKeyDown(event);
-                  this.handleKeyDown(event);
-                },
-                onBlur: (event) => {
-                  inputProps.onBlur && inputProps.onBlur();
+                  if (event.key === 'Enter') {
+                    const [selectedItem] = this.state.suggestions.filter(
+                      (item) => item.id === inputValue || item.label === inputValue
+                    );
+                    if (selectedItem) {
+                      otherProps.selectItem(selectedItem.id);
+                    }
+                  }
                 },
                 onFocus: (event) => {
                   inputProps.onFocus && inputProps.onFocus();
-                  if (this.state.inputValue) {
-                    this.setState({
-                      isOpen: true,
-                    });
+                  if (inputValue) {
+                    otherProps.openMenu();
                   }
                 },
               });
             },
-            isOpen,
-            inputValue,
-            selectedItem,
-            highlightedIndex,
-            setItemCount,
-            //handleInputChange: this.handleInputChange,
             suggestions: this.state.suggestions,
-            reset: () => {
-              this.setState({
-                suggestions: [],
-                inputValue: '',
-                selectedItem: null,
-                isOpen: false,
-              });
-            }
           })
         )}
       </Downshift>
