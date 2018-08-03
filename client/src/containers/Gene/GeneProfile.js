@@ -238,9 +238,12 @@ class GeneProfile extends Component {
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
+            this.setState((prevState) => ({
+              data: {
+                ...prevState.data,
+                'gene/status': 'gene.status/dead',
+              },
+            }), () => {
               this.closeKillGeneDialog();
             });
           }}
@@ -252,9 +255,12 @@ class GeneProfile extends Component {
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
+            this.setState((prevState) => ({
+              data: {
+                ...prevState.data,
+                'gene/status': 'gene.status/dead',
+              },
+            }), () => {
               this.closeMergeGeneDialog();
             });
           }}
