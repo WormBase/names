@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { mockFetchOrNot } from '../../mock';
 import { extract as extractQueryString, parse as parseQueryString} from 'query-string';
 import { AutocompleteBase } from '../../components/elements';
@@ -8,16 +9,24 @@ export default class GeneAutocompleteBase extends Component {
     super(props);
     this.state = {
       inputValue:'',  // track the input value to compare with the ajax response
+      suggestions: [],
     };
   };
 
-  loadSuggestions = (inputValue, callback) => {
+  componentDidMount() {
+    if (this.props.defaultInputValue) {
+      this.loadSuggestions(this.props.defaultInputValue);
+    }
+  }
+
+  loadSuggestions = (inputValue) => {
     if (inputValue.length < 2) {
       return;
     }
 
     this.setState({
       inputValue: inputValue,
+      suggestions: [],
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
@@ -46,22 +55,33 @@ export default class GeneAutocompleteBase extends Component {
         const matchedPattern = parseQueryString(extractQueryString(response.url || response.mockUrl)).pattern;
         return Promise.all([matchedPattern, response.json()]);
       }).then(([matchedPattern, content]) => {
-        let suggestions;
         if (matchedPattern === this.state.inputValue) {
           // to avoid problem caused by response coming back in the wrong order
           // compare inputValue to produce suggestion with current inputValue,
           const {matches} = content;
-          suggestions = matches.map((item) => ({
+          const suggestions = matches.map((item) => ({
             id: item['gene/id'],
             label: item['gene/cgc-name'] || item['gene/sequence-name'] || item['gene/id'],
           }));
-          callback(suggestions);
+          this.setState({
+            suggestions,
+          });
         }
       }).catch((e) => console.log('error', e));
     });
   }
 
   render() {
-    return <AutocompleteBase loadSuggestions={this.loadSuggestions} {...this.props} />;
+    return (
+      <AutocompleteBase
+        onInputChange={this.loadSuggestions}
+        suggestions={this.state.suggestions}
+        {...this.props}
+      />
+    );
   }
+};
+
+GeneAutocompleteBase.propTypes = {
+  defaultInputValue: PropTypes.string,
 };

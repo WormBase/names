@@ -5,43 +5,6 @@ import Downshift from 'downshift';
 class AutocompleteBase extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      suggestions: [],
-    };
-  }
-
-  componentDidMount() {
-    if (this.props.value) {
-      this.loadSuggestions(this.props.value);
-    }
-  }
-
-  handleInputChange = (inputValue) => {
-    this.setState({
-      suggestions: [],
-    }, () => {
-      this.loadSuggestions(inputValue);
-    });
-  }
-
-  loadSuggestions = (inputValue) => {
-    this.props.loadSuggestions(inputValue, (suggestions) => {
-      this.setState({
-        suggestions: suggestions || [],
-      });
-    });
-  }
-
-  handleKeyDown = (inputValue) => {
-    const [selectedItem] = this.state.suggestions.filter(
-      (item) => item.id === inputValue || item.label === inputValue
-    );
-    if (selectedItem) {
-      this.setState({
-        selectedItem: selectedItem.id,
-        isOpen: false,
-      });
-    }
   }
 
   stateReducer = (state, changes) => {
@@ -65,35 +28,29 @@ class AutocompleteBase extends Component {
   }
 
   handleStateChange = changes => {
-    console.log(Object.keys(Downshift.stateChangeTypes));
+    // console.log(Object.keys(Downshift.stateChangeTypes));
     const {inputValue} = changes;
     switch (changes.type) {
       case Downshift.stateChangeTypes.changeInput:
-        this.handleInputChange(inputValue);
+        if (this.props.onInputChange) {
+          this.props.onInputChange(inputValue)
+        }
         break;
       default:
         // do nothing
     }
-
-    if (inputValue && this.props.onChange) {
-      this.props.onChange({
-        target: {
-          value: changes.inputValue,
-        },
-      });
-    }
   }
 
   render() {
-    const {onChange, value} = this.props;
+    const {onInputChange, children, ...downshiftProps} = this.props;
     return (
       <Downshift
-        defaultInputValue={value}
         stateReducer={this.stateReducer}
         onStateChange={this.handleStateChange}
+        {...downshiftProps}
       >
         {({ getInputProps, inputValue, ...otherProps }) => (
-          this.props.children({
+          children({
             ...otherProps,
             inputValue,
             getInputProps: (inputProps) => {
@@ -102,7 +59,7 @@ class AutocompleteBase extends Component {
                 onKeyDown: (event) => {
                   inputProps.onKeyDown && inputProps.onKeyDown(event);
                   if (event.key === 'Enter') {
-                    const [selectedItem] = this.state.suggestions.filter(
+                    const [selectedItem] = this.props.suggestions.filter(
                       (item) => item.id === inputValue || item.label === inputValue
                     );
                     if (selectedItem) {
@@ -118,7 +75,7 @@ class AutocompleteBase extends Component {
                 },
               });
             },
-            suggestions: this.state.suggestions,
+            suggestions: this.props.suggestions,
           })
         )}
       </Downshift>
@@ -128,9 +85,13 @@ class AutocompleteBase extends Component {
 
 AutocompleteBase.propTypes = {
   children: PropTypes.func.isRequired,
-  onChange: PropTypes.func,
-  value: PropTypes.string,
-  loadSuggestions: PropTypes.func.isRequired,
+  onInputChange: PropTypes.func,
+  suggestions: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      label: PropTypes.strig,
+    }),
+  ).isRequired,
 }
 
 
