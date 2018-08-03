@@ -3,9 +3,6 @@ import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 
 class AutocompleteBase extends Component {
-  constructor(props) {
-    super(props);
-  }
 
   stateReducer = (state, changes) => {
     console.log(state);
