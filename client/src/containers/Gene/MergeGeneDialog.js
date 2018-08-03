@@ -13,7 +13,7 @@ import {
   Typography,
 } from '../../components/elements';
 import BaseForm from './BaseForm';
-import GeneSearchBox from './GeneAutocomplete';
+import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
   constructor(props) {
@@ -65,7 +65,7 @@ class MergeGeneDialog extends Component {
         {
           ({withFieldData, getFormData, resetData}) => {
             const ReasonField = withFieldData(TextField, 'reason');
-            const GeneIdMergeIntoField = withFieldData(GeneSearchBox, 'geneIdMergeInto');
+            const GeneIdMergeIntoField = withFieldData(GeneAutocomplete, 'geneIdMergeInto');
             return (
               <Dialog
                 open={this.props.open}

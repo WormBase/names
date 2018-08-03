@@ -67,9 +67,9 @@ renderSuggestion.propTypes = {
 
 class GeneSearchBox extends Component {
   render() {
-    const {classes, history, onChange, value, ...otherProps} = this.props;
+    const {classes, history} = this.props;
     return (
-      <GeneAutocompleteBase onChange={onChange} value={value}>
+      <GeneAutocompleteBase>
         {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, setItemCount}) => (
           <div className={classes.root}>
             {renderInput({
@@ -106,7 +106,6 @@ class GeneSearchBox extends Component {
                   }
                 },
               }),
-              ...otherProps,
             })}
             <SimpleListPagination
               items={suggestions}

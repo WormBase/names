@@ -80,8 +80,15 @@ class GeneAutocomplete extends Component {
   render() {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
-      <GeneAutocompleteBase onChange={onChange} value={value}>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount, suggestions, reset}) => (
+      <GeneAutocompleteBase
+        onChange={(selectItem) => onChange({
+          target: {
+            value: selectItem,
+          },
+        })}
+        defaultInputValue={value}
+      >
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount, suggestions, clearSelection}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -89,10 +96,10 @@ class GeneAutocomplete extends Component {
               InputProps: getInputProps({
                 id: 'gene-id',
               }),
-              item: selectedItem ? suggestions.filter(
-                (item) => item.id === selectedItem,
+              item: (selectedItem || inputValue) ? suggestions.filter(
+                (item) => item.id === selectedItem || item.id === inputValue,
               )[0] : null,
-              reset,
+              reset: clearSelection,
               ...otherProps,
             })}
             <SimpleListPagination
