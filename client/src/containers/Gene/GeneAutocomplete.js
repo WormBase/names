@@ -96,8 +96,8 @@ class GeneAutocomplete extends Component {
               InputProps: getInputProps({
                 id: 'gene-id',
               }),
-              item: console.log(suggestions) || selectedItem ? suggestions.filter(
-                (item) => item.id === selectedItem,
+              item: (selectedItem || inputValue) ? suggestions.filter(
+                (item) => item.id === selectedItem || item.id === inputValue,
               )[0] : null,
               reset: clearSelection,
               ...otherProps,
