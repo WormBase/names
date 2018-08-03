@@ -10,12 +10,12 @@ import {
   Paper,
   MenuItem,
   TextField,
+  SimpleListPagination,
 } from '../../components/elements';
 import GeneAutocompleteBase from './GeneAutocompleteBase';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
-  console.log(inputProps);
   return (
       <TextField
         InputProps={{
@@ -81,7 +81,7 @@ class GeneAutocomplete extends Component {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
       <GeneAutocompleteBase onChange={onChange} value={value}>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, reset}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount, suggestions, reset}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -95,19 +95,29 @@ class GeneAutocomplete extends Component {
               reset,
               ...otherProps,
             })}
-            {isOpen ? (
-              <Paper className={classes.paper} square>
-                {suggestions.map((suggestion, index) =>
-                  renderSuggestion({
-                    suggestion,
-                    index,
-                    itemProps: getItemProps({item: suggestion.id}),
-                    highlightedIndex,
-                    selectedItem,
-                  }),
-                )}
-              </Paper>
-            ) : null}
+            <SimpleListPagination
+              items={suggestions}
+              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
+            >
+              {({pageItems, navigation}) => (
+                isOpen ? (
+                  <Paper className={classes.paper} square>
+                    {
+                      pageItems.map((suggestion, index) => (
+                        renderSuggestion({
+                          suggestion,
+                          index,
+                          itemProps: getItemProps({item: suggestion.id}),
+                          highlightedIndex,
+                          selectedItem,
+                        })
+                      ))
+                    }
+                    {navigation}
+                  </Paper>
+                ) : null
+              )}
+            </SimpleListPagination>
           </div>
         )}
       </GeneAutocompleteBase>

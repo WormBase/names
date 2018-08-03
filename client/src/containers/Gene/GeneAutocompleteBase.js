@@ -40,6 +40,10 @@ class GeneAutocompleteBase extends Component {
   }
 
   loadSuggestions = (inputValue) => {
+    if (inputValue.length < 2) {
+      return;
+    }
+
     mockFetchOrNot(
       (mockFetch) => {
         const mockResult = {
@@ -98,7 +102,6 @@ class GeneAutocompleteBase extends Component {
   changeHandler = selectedItem => {
     this.setState({
       selectedItem,
-      isOpen: false,
     }, () => {
       if (this.props.onChange) {
         this.props.onChange({
@@ -118,7 +121,10 @@ class GeneAutocompleteBase extends Component {
       inputValue = this.state.inputValue,
       type,
     } = changes;
-    isOpen = type === Downshift.stateChangeTypes.mouseUp ? this.state.isOpen : isOpen;
+
+    isOpen = type === Downshift.stateChangeTypes.blurInput ?
+      this.state.isOpen : isOpen;
+
     this.setState({
       selectedItem,
       isOpen,
@@ -145,7 +151,7 @@ class GeneAutocompleteBase extends Component {
         onChange={this.changeHandler}
         onStateChange={this.stateChangeHandler}
       >
-        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex }) => (
+        {({ getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount }) => (
           this.props.children({
             getItemProps,
             getInputProps: (inputProps) => {
@@ -161,9 +167,6 @@ class GeneAutocompleteBase extends Component {
                 },
                 onBlur: (event) => {
                   inputProps.onBlur && inputProps.onBlur();
-                  this.setState({
-                    isOpen: false,
-                  });
                 },
                 onFocus: (event) => {
                   inputProps.onFocus && inputProps.onFocus();
@@ -179,6 +182,7 @@ class GeneAutocompleteBase extends Component {
             inputValue,
             selectedItem,
             highlightedIndex,
+            setItemCount,
             //handleInputChange: this.handleInputChange,
             suggestions: this.state.suggestions,
             reset: () => {
