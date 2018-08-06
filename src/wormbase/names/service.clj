@@ -32,11 +32,12 @@
       response
       (cond
         (str/starts-with? (:uri request) "/api")
-        (-> {:reason "Resource not found"}
-            (http-response/not-found))
+        (http-response/not-found {:reason "Resource not found"})
 
         :else
-        (http-response/found "/index.html")))))
+        (http-response/content-type
+         (http-response/found "/index.html")
+         "text/html")))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
@@ -79,10 +80,10 @@
   (sweet/api
    {:coercion :spec
     :middleware [ring-gzip/wrap-gzip
-                 wdb/wrap-datomic
-                 wna/wrap-auth
                  wrap-static-resources
                  wrap-not-found
+                 wdb/wrap-datomic
+                 wna/wrap-auth
                  mmw/wrap-format]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}

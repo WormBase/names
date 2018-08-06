@@ -54,8 +54,7 @@
                (true? (:email_verified token-info)))
           token-info)))
     (catch IllegalArgumentException ex
-      (log/error ex)
-      nil)))
+      (log/error ex))))
 
 (defn identify [request token]
   (when-let [tok (verify-token token)]

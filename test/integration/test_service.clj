@@ -13,9 +13,8 @@
   (t/testing "When request uri starts with /api but matches no route"
     (let [response (service/app
                     {:uri "/api/aliens"
-                     :headers {"content-type" "application/json"
-                               "accept" "application/json"
-                               "authorization" "Token TOKEN_HERE"}
+                     :headers {"accept" "application/json"
+                               "Authorization" "Token TOKEN_HERE"}
                      :query-params {}
                      :request-method :get})]
       (t/is (= 404 (:status response)))
@@ -31,10 +30,7 @@
   (t/testing "When no routes are matched in request processing, client api is served."
     (let [response (service/app
                     {:uri "/client/route/like/this"
-                     :headers {"content-type" "application/html"
-                               "accept" "text/html"}
+                     :headers {"accept" "text/html"}
                      :query-params {}
                      :request-method :get})]
-      (t/is (= 200 (:status response)))
-      (let [ct (peek (http-response/find-header response "Content-Type"))]
-        (t/is (str/starts-with? ct "text/html") ct)))))
+      (t/is (= 302 (:status response))))))
