@@ -1,16 +1,6 @@
 import React, { Component } from 'react';
 import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import {
-  withStyles,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Timestamp,
-} from '../../components/elements';
 import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivities extends Component {
@@ -108,13 +98,4 @@ RecentActivities.propTypes = {
   authorizedFetch: PropTypes.func,
 };
 
-const styles = (theme) => ({
-  root: {
-    // width: 'initial',
-  },
-  time: {
-    whiteSpace: 'nowrap',
-  }
-});
-
-export default withStyles(styles)(RecentActivities);
+export default RecentActivities;

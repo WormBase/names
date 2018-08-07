@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {

@@ -1,16 +1,7 @@
 import React, { Component } from 'react';
 import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import {
-  withStyles,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Timestamp,
-} from '../../components/elements';
+import { withStyles } from '../../components/elements';
 import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivitiesSingleGene extends Component {
@@ -117,12 +108,6 @@ RecentActivitiesSingleGene.propTypes = {
 };
 
 const styles = (theme) => ({
-  root: {
-    // width: 'initial',
-  },
-  time: {
-    whiteSpace: 'nowrap',
-  },
   entityColumnHeader: {
     display: 'none',
   },
