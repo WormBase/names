@@ -11,6 +11,7 @@ import {
   TableRow,
   Timestamp,
 } from '../../components/elements';
+import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivities extends Component {
   constructor(props) {
@@ -81,6 +82,7 @@ class RecentActivities extends Component {
           method: 'GET'
         });
       },
+      true
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data.reason ? [] : data,
@@ -92,52 +94,7 @@ class RecentActivities extends Component {
   render() {
     const {classes} = this.props;
     return (
-      <Table classes={{root: classes.root}}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Time</TableCell>
-            <TableCell>Event type</TableCell>
-            <TableCell>Entity</TableCell>
-            <TableCell>Related entity</TableCell>
-            <TableCell>Curated by</TableCell>
-            <TableCell>Reason</TableCell>
-            <TableCell>Agent</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            this.state.data.map(
-              (historyItem) => {
-                return (
-                  <TableRow>
-                    <TableCell className={classes.time}>
-                      <Timestamp time={historyItem.time} />
-                    </TableCell>
-                    <TableCell>{historyItem.eventType}</TableCell>
-                    <TableCell>
-                      {
-                        historyItem.entity ?
-                          <Link to={`/gene/id/${historyItem.entity.id}`}>{historyItem.entity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {
-                        historyItem.relatedEntity ?
-                          <Link to={`/gene/id/${historyItem.relatedEntity.id}`}>{historyItem.relatedEntity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>{historyItem.curatedBy.name}</TableCell>
-                    <TableCell>{historyItem.reason}</TableCell>
-                    <TableCell>{historyItem.agent}</TableCell>
-                  </TableRow>
-                )
-              }
-            )
-          }
-        </TableBody>
-      </Table>
+      <GeneActivitiesTable activities={this.state.data} />
     );
   }
 }
