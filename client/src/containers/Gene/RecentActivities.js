@@ -92,15 +92,20 @@ class RecentActivities extends Component {
   }
 
   render() {
-    const {classes} = this.props;
+    const {classes, authorizedFetch} = this.props;
     return (
-      <GeneActivitiesTable activities={this.state.data} />
+      <GeneActivitiesTable
+        activities={this.state.data}
+        authorizedFetch={authorizedFetch}
+        onUpdate={this.fetchData}
+      />
     );
   }
 }
 
 RecentActivities.propTypes = {
   wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func,
 };
 
 const styles = (theme) => ({

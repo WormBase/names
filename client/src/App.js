@@ -29,7 +29,7 @@ class App extends Component {
                       <Route exact path="/" component={() => <Redirect to="/gene" /> } />
                       <Route exact path="/gene" component={() => (
                         <DocumentTitle title="Gene index">
-                          <Gene />
+                          <Gene authorizedFetch={authorizedFetch} />
                         </DocumentTitle>
                       )} />
                       <Route path="/gene" component={({match}) => (

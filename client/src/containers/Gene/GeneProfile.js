@@ -224,7 +224,10 @@ class GeneProfile extends Component {
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
             <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene wbId={this.props.wbId} />
+              <RecentActivitiesSingleGene
+                wbId={this.props.wbId}
+                authorizedFetch={this.props.authorizedFetch}
+              />
             </div>
           </div>
         </PageMain>

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   withStyles,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -11,57 +12,122 @@ import {
   TableRow,
   Timestamp,
 } from '../../components/elements';
+import ResurrectGeneDialog from './ResurrectGeneDialog';
+
+const RESURRECT = 'RESURRECT';
+const UNDO_MERGE = 'UNDO_MERGE';
+const UNDO_SPLIT = 'UNDO_SPLIT';
 
 class GeneActivitiesTable extends Component {
-  render() {
-    const {classes} = this.props;
+  constructor(props) {
+    super(props);
+    this.state = {
+      showDialog: null,
+      selectedActivityIndex: null,
+    };
+  }
+
+  openResurrectGeneDialog = (activityIndex) => {
+    this.setState({
+      showDialog: RESURRECT,
+      selectedActivityIndex: activityIndex,
+    });
+  }
+
+  closeDialog = () => {
+    this.setState({
+      showDialog: null,
+      selectedActivityIndex: null,
+    });
+  }
+
+  renderActions = ({eventType, entity, relatedEntity, activityIndex}) => {
     return (
-      <Table classes={{root: classes.root}}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Time</TableCell>
-            <TableCell>Event type</TableCell>
-            <TableCell className={classes.entityColumnHeader}>Entity</TableCell>
-            <TableCell>Related entity</TableCell>
-            <TableCell>Curated by</TableCell>
-            <TableCell>Reason</TableCell>
-            <TableCell>Agent</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            this.props.activities.map(
-              (historyItem) => {
-                return (
-                  <TableRow>
-                    <TableCell className={classes.time}>
-                      <Timestamp time={historyItem.time}/>
-                    </TableCell>
-                    <TableCell>{historyItem.eventType}</TableCell>
-                    <TableCell className={classes.entityCell}>
-                      {
-                        historyItem.entity ?
-                          <Link to={`/gene/id/${historyItem.entity.id}`}>{historyItem.entity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {
-                        historyItem.relatedEntity ?
-                          <Link to={`/gene/id/${historyItem.relatedEntity.id}`}>{historyItem.relatedEntity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>{historyItem.curatedBy.name}</TableCell>
-                    <TableCell>{historyItem.reason}</TableCell>
-                    <TableCell>{historyItem.agent}</TableCell>
-                  </TableRow>
-                )
-              }
-            )
-          }
-        </TableBody>
-      </Table>
+      <div>
+        {
+          eventType === 'kill' ?
+            <Button
+              onClick={() => this.openResurrectGeneDialog(activityIndex)}
+              color="primary"
+            >Resurrect</Button> :
+            null
+        }
+      </div>
+    )
+  }
+
+  render() {
+    const {classes, activities, onUpdate} = this.props;
+    const {selectedActivityIndex} = this.state;
+    const selectedActivity = selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
+
+    return (
+      <div>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Time</TableCell>
+              <TableCell>Event type</TableCell>
+              <TableCell className={classes.entityColumnHeader}>Entity</TableCell>
+              <TableCell>Related entity</TableCell>
+              <TableCell>Curated by</TableCell>
+              <TableCell>Reason</TableCell>
+              <TableCell>Agent</TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {
+              this.props.activities.map(
+                (activityItem, activityIndex) => {
+                  return (
+                    <TableRow>
+                      <TableCell className={classes.time}>
+                        <Timestamp time={activityItem.time}/>
+                      </TableCell>
+                      <TableCell>{activityItem.eventType}</TableCell>
+                      <TableCell className={classes.entityCell}>
+                        {
+                          activityItem.entity ?
+                            <Link to={`/gene/id/${activityItem.entity.id}`}>{activityItem.entity.label}</Link> :
+                            null
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {
+                          activityItem.relatedEntity ?
+                            <Link to={`/gene/id/${activityItem.relatedEntity.id}`}>{activityItem.relatedEntity.label}</Link> :
+                            null
+                        }
+                      </TableCell>
+                      <TableCell>{activityItem.curatedBy.name}</TableCell>
+                      <TableCell>{activityItem.reason}</TableCell>
+                      <TableCell>{activityItem.agent}</TableCell>
+                      <TableCell>{this.renderActions({
+                        ...activityItem,
+                        activityIndex,
+                      })}</TableCell>
+                    </TableRow>
+                  )
+                }
+              )
+            }
+          </TableBody>
+        </Table>
+        <div>
+          <ResurrectGeneDialog
+            geneName={selectedActivity && selectedActivity.entity.label}
+            wbId={selectedActivity && selectedActivity.entity.id}
+            authorizedFetch={this.props.authorizedFetch}
+            open={this.state.showDialog === RESURRECT}
+            onClose={this.closeDialog}
+            onSubmitSuccess={(data) => {
+              this.closeResurrectGeneDialog();
+              onUpdate && onUpdate();
+            }}
+          />
+        </div>
+      </div>
     );
   }
 }
@@ -69,6 +135,8 @@ class GeneActivitiesTable extends Component {
 GeneActivitiesTable.propTypes = {
   classes: PropTypes.object.isRequired,
   activities: PropTypes.array,
+  onUpdate: PropTypes.func,
+  authorizedFetch: PropTypes.func.isRequired,
 };
 
 GeneActivitiesTable.defaultProps = {
@@ -76,9 +144,6 @@ GeneActivitiesTable.defaultProps = {
 };
 
 const styles = (theme) => ({
-  root: {
-    // width: 'initial',
-  },
   time: {
     whiteSpace: 'nowrap',
   },

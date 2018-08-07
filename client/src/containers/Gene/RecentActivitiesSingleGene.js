@@ -30,6 +30,16 @@ class RecentActivitiesSingleGene extends Component {
       (mockFetch) => {
         const mockData = [
           {
+            relatedEntity: null,
+            eventType: 'kill',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2015-08-19T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
             relatedEntity: {
               id: 'WB345',
               label: 'abc-1'
@@ -62,7 +72,13 @@ class RecentActivitiesSingleGene extends Component {
             agent: 'script',
             reason: 'New',
           },
-        ];
+        ].map((activityItem) => ({
+          ...activityItem,
+          entity: {
+            id: this.props.wbId,
+            label: this.props.wbId,
+          },
+        }))
         return mockFetch.get('*', mockData);
       },
       () => {
@@ -80,10 +96,12 @@ class RecentActivitiesSingleGene extends Component {
   }
 
   render() {
-    const {classes} = this.props;
+    const {classes, authorizedFetch} = this.props;
     return (
       <GeneActivitiesTable
         activities={this.state.data}
+        authorizedFetch={authorizedFetch}
+        onUpdate={this.fetchData}
         classes={{
           entityCell: classes.entityCell,
           entityColumnHeader: classes.entityColumnHeader,
@@ -95,6 +113,7 @@ class RecentActivitiesSingleGene extends Component {
 
 RecentActivitiesSingleGene.propTypes = {
   wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func,
 };
 
 const styles = (theme) => ({
