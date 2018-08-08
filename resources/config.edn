@@ -1,4 +1,5 @@
-{:event-broadcast
+{:auth-token #include "secrets/wb-auth-token.edn"
+ :event-broadcast
  {:gmail #include "secrets/wb-ns-gmail.edn"
   :aws-sqs
   {:queue-name "org-wormbase-names-tx_messages"

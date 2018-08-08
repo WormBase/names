@@ -5,9 +5,10 @@
    [clojure.walk :as w]
    [clojure.tools.logging :as log]
    [buddy.auth :as auth]
-   [buddy.auth.accessrules :as auth-access-rules]
+   [buddy.auth.accessrules :as baa]
    [buddy.auth.backends.token :as babt]
    [buddy.auth.middleware :as auth-mw]
+   [buddy.sign.compact :as bsc]
    [compojure.api.meta :as capi-meta]
    [datomic.api :as d]
    [wormbase.names.agent :as wn-agent]
@@ -16,9 +17,9 @@
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response])
   (:import
-   (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken
-                                                 GoogleIdToken$Payload
-                                                 GoogleIdTokenVerifier$Builder)
+   (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder
+                                                 GoogleIdToken)
+   (com.google.api.client.json.webtoken JsonWebSignature)
    (com.google.api.client.http.javanet NetHttpTransport)
    (com.google.api.client.json.jackson2 JacksonFactory)))
 
@@ -26,7 +27,9 @@
 
 (def ^:private json-factory (JacksonFactory.))
 
-(def ^:private gapps-conf (:google-apps (util/read-app-config)))
+(def ^:private app-conf (util/read-app-config))
+
+(def ^:private gapps-conf (:google-apps app-conf))
 
 (def ^:private token-verifier (.. (GoogleIdTokenVerifier$Builder. net-transport
                                                                   json-factory)
@@ -35,35 +38,72 @@
                                                     (apply list)))
                                   (build)))
 
+(defn parse-token [token]
+  (GoogleIdToken/parse json-factory token))
+
 (defn client-id [client-type]
   (-> gapps-conf client-type :client-id))
 
 (defn verify-token-gapi [token]
   (some->> (.verify token-verifier token)
-           (.getPayload)
-           (into {})))
+           (.getPayload)))
 
-(defn verify-token [token]
+(defn verify-token [^String token]
   (try
-    (when-let [gtoken-info (verify-token-gapi token)]
-      (let [token-info (w/keywordize-keys gtoken-info)]
-        (when (and
-               token-info
-               (wn-agent/identify token-info)
-               (= (:hd token-info) "wormbase.org")
-               (true? (:email_verified token-info)))
-          token-info)))
+    (when-let [gtoken (verify-token-gapi token)]
+      (when (and
+             gtoken
+             (wn-agent/identify gtoken)
+             (= (.getHostedDomain gtoken) "wormbase.org")
+             (true? (.getEmailVerified gtoken)))
+        gtoken))
     (catch IllegalArgumentException ex
       (log/error ex))))
 
-(defn identify [request token]
-  (when-let [tok (verify-token token)]
-    (let [email (:email tok)
-          lur [:person/email email]
-          db (:db request)]
-      (if-let [person (d/entity db lur)]
-        (merge tok (wnu/entity->map person))
-        (log/warn (str "No person exists in db matching email: " email))))))
+(defn query-person
+  [db ^String ident auth-token]
+  (d/pull db '[*] [ident auth-token]))
+
+(defn sign-token [auth-token-conf token]
+  (-> auth-token-conf :key (bsc/sign (str token))))
+
+
+(defrecord Identification [token person])
+
+(defn verified-stored-token [db auth-token-conf auth-token]
+  (if-let [{stored-token :person/auth-token} (d/pull db
+                                                     '[:person/auth-token]
+                                                     [:person/auth-token auth-token])]
+
+    (when-let [unsigned-token (try
+                                (bsc/unsign stored-token
+                                            (:key auth-token-conf)
+                                            (select-keys auth-token-conf [:max-age]))
+                                (catch Exception ex
+                                  (log/debug "Failed to unsigned stored token"
+                                             {:stored-token stored-token
+                                              :key (:key auth-token-conf)})))]
+      (Identification. (parse-token unsigned-token)
+                       (query-person db :person/auth-token stored-token)))))
+
+(defn identify [request ^String token]
+  (let [auth-token-conf (:auth-token app-conf)
+        auth-token (sign-token auth-token-conf token)
+        db (:db request)]
+    (if-let [identification (verified-stored-token db auth-token-conf auth-token)]
+      identification
+      (when-let [tok (verify-token token)]
+        (if-let [person (query-person db :person/email (.getEmail tok))]
+          (let [auth-token (sign-token auth-token-conf tok)
+                tx-result @(d/transact-async (:conn request)
+                                             [[:db/add
+                                               (:db/id person)
+                                               :person/auth-token
+                                               auth-token]])]
+            (if-let [person (query-person (:db-after tx-result)
+                                          :person/auth-token auth-token)]
+              (Identification. tok person)))
+              (log/warn (str "No matching token in db")))))))
 
 (def backend (babt/token-backend {:authfn identify}))
 
@@ -83,13 +123,13 @@
 ;; Middleware
 
 (defn wrap-restricted [handler rule]
-  (auth-access-rules/restrict handler {:handler rule
-                                       :on-error access-error}))
+  (baa/restrict handler {:handler rule
+                         :on-error access-error}))
 
 (defn restrict-access [rule]
   (fn rsetricted [handler]
-    (auth-access-rules/restrict handler {:handler rule
-                                         :on-error access-error})))
+    (baa/restrict handler {:handler rule
+                           :on-error access-error})))
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
 
@@ -104,32 +144,10 @@
        (#{:admin} (:role (:identity request)))))
 
 
-;; "meta" restructuring
-
-(defn require-role! [required roles]
-  (if-not (seq (set/intersection required roles))
-    (http-response/unauthorized!
-     {:text "Missing required role"
-      :required required
-      :roles roles})))
-
-(defmethod capi-meta/restructure-param :roles [_ roles acc]
-  (update-in acc
-             [:lets]
-             into
-             ['_ `(require-role!
-                   ~roles
-                   (get-in ~'+compojure-api-request+
-                           [:identity :person/roles]))]))
-
-
-(defn wrap-rule [handler rule]
-  (-> handler
-      (auth-access-rules/wrap-access-rules
-       {:rules [{:pattern #".*"
-                 :handler rule}]
-        :on-error access-error})))
-
-(defmethod capi-meta/restructure-param :auth-rules
-  [_ rule acc]
-  (update-in acc [:middleware] conj [wrap-rule rule]))
+(defn require-role! [required request]
+  (let [roles (-> request :identity :person :person/roles)]
+    (if-not (seq (set/intersection (set required) (set roles)))
+      (http-response/unauthorized!
+       {:text "Missing required role"
+        :required required
+        :roles roles}))))

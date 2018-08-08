@@ -81,7 +81,7 @@
                                                                  pattern))}))))
 
 (defn- transform-result
-  "Removes datomic internals from a pull-result map."
+  "Removes datomic internal keys from a pull-result map."
   [pull-result]
   (reduce-kv (fn unravel-enums [m k v]
                (assoc m k (if (and (map? v) (:db/ident v))
@@ -215,9 +215,9 @@
                  (assoc :provenance/merged-from from-lur)
                  (assoc :provenance/merged-into into-lur))
         tx-result @(d/transact-async
-                      conn
-                      [[:wormbase.tx-fns/merge-genes from-id into-id into-biotype]
-                       prov])]
+                    conn
+                    [[:wormbase.tx-fns/merge-genes from-id into-id into-biotype]
+                     prov])]
       (if-let [db (:db-after tx-result (:tx-data tx-result))]
         (let [[from into] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]

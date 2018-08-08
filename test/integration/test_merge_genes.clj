@@ -35,7 +35,8 @@
    & {:keys [current-user]
       :or {current-user "tester@wormbase.org"}}]
 
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
+  (binding [fake-auth/*gapi-verify-token-response*
+            (fake-auth/payload {"email" current-user})]
     (let [data (tu/->json payload)
           uri (str "/api/gene/" into-id "/merge/" from-id)
           [status body]
@@ -51,7 +52,8 @@
 (defn undo-merge-genes
   [from-id into-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
+  (binding [fake-auth/*gapi-verify-token-response*
+            (fake-auth/payload {"email" current-user})]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/api/gene/" into-id "/merge/" from-id)

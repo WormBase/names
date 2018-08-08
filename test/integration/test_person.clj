@@ -10,8 +10,6 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-;; NEW (POST)
-
 (def new-person (partial api-tc/new "person"))
 
 (t/deftest must-meet-spec
@@ -35,8 +33,6 @@
           [status body] (new-person sample)]
       (tu/status-is? 201 status body))))
 
-
-;; UPDATE (PUT)
 (def person-update (partial api-tc/update "person"))
 
 (t/deftest update-person
@@ -45,7 +41,7 @@
           sample (-> (tu/person-samples 1)
                      first
                      (assoc-in [:provenance/who :person/email]
-                               "tester@wormbase.org"))
+                               "tester2@wormbase.org"))
           identifier (:person/id sample)
           update-data {:person/roles #{:person.role/sequence-curator}}]
       (tu/with-person-fixtures
@@ -74,7 +70,6 @@
                               [:person/id identifier]))
                      "Joe Bloggs"))))))))
 
-;; ABOUT (GET)
 (def person-info (partial api-tc/info "person"))
 
 (defn deactivated-person-sample []
@@ -94,12 +89,11 @@
           (tu/status-is? 200 status body)
           (t/is (= (:person/email body) "tester@wormbase.org"))
           (t/is (= (:person/id body) "WBPerson007"))))))
-  (t/testing "We get 404 fora decactivated person"
+  (t/testing "We get 404 for a decactivated person"
     (let [sample (deactivated-person-sample)
           identifier (:person/id sample)
           [status body] (person-info identifier)]
       (tu/status-is? 404 status body))))
-
 
 (def deactivate-person (partial api-tc/delete "person"))
 

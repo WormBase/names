@@ -7,6 +7,8 @@
    [mount.core :as mount]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as schema]
+   [wormbase.names.auth :as wna]
+   [wormbase.names.util :as wnu]
    [wormbase.names.event-broadcast :as wneb]
    [wormbase.names.event-broadcast.proto :as wnebp]))
 
@@ -18,12 +20,18 @@
   (let [conn (dm/mock-conn)]
     (schema/install conn 1)
     ;; A set of fake users with different roles to test against.
-    @(d/transact conn [{:person/email "tester@wormbase.org"
-                        :person/id "WBPerson007"
-                        :person/roles #{:person.role/admin}}
-                       {:person/email "tester2@wormbase.org"}
-                       {:person/email "tester3@wormbase.org"}
-                       {:db/ident :event/test-fixture-assertion}])
+    @(d/transact-async conn [{:person/email "tester@wormbase.org"
+                              :person/id "WBPerson007"
+                              ;; TODO: must sign auth-token
+                              :person/auth-token (wna/sign-token
+                                                  (-> (wnu/read-app-config)
+                                                      :auth-token)
+                                                  {"email" "tester@wormbase.org"
+                                                   "hd" "wormbase.org"})
+                              :person/roles #{:person.role/admin}}
+                             {:person/email "tester2@wormbase.org"}
+                             {:person/email "tester3@wormbase.org"}
+                             {:db/ident :event/test-fixture-assertion}])
     conn))
 
 (defonce conn-cache

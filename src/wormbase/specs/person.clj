@@ -44,5 +44,11 @@
                                   :opt [:person/roles
                                         :person/active?
                                         :person/name])))
+
+(s/def ::update (stc/spec (s/keys :opt [:person/active?
+                                        :person/email
+                                        :person/id
+                                        :person/name
+                                        :person/roles])))
 (s/def ::created ::person)
 
