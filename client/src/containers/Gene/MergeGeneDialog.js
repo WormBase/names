@@ -48,8 +48,9 @@ class MergeGeneDialog extends Component {
           }
         },
         () => {
-          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/merge/${geneIdMergeInto}`, {
+          return this.props.authorizedFetch(`/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`, {
             method: 'POST',
+            body: JSON.stringify(data),
           });
         },
       ).then((response) => response.json()).then((response) => {
@@ -99,6 +100,7 @@ class MergeGeneDialog extends Component {
                 />
                 <BiotypeField
                   helperText={`Set the biotype of the merged gene`}
+                  required
                   classes={{
                     root: this.props.classes.biotypeSelectField,
                   }}
