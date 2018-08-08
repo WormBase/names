@@ -63,7 +63,8 @@
       []
       (fn new-uncloned [conn]
         (let [[status body] (new-gene
-                             {:gene/cgc-name (tu/cgc-name-for-species :species/c-elegans)
+                             {:gene/cgc-name (tu/cgc-name-for-species
+                                              :species/c-elegans)
                               :gene/species {:species/id :species/c-elegans}})
               expected-id "WBGene00000001"]
           (tu/status-is? status 201 body)
@@ -82,4 +83,3 @@
           [status body] (new-gene data)]
       (tu/status-is? status 201 body)
       (t/is (some-> body :created :gene/id) (pr-str body)))))
-

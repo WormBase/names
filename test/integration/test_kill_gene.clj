@@ -26,7 +26,8 @@
 (defn kill-gene
   [gene-id & {:keys [current-user]
               :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
+  (binding [fake-auth/*gapi-verify-token-response*
+            (fake-auth/payload {"email" current-user})]
     (let [current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/delete
                          service/app

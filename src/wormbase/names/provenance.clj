@@ -27,11 +27,11 @@
 
   Returns a map."
   [request payload what]
-  (let [id-token (:identity request)
+  (let [id-token (-> request :identity :token)
         prov (or (wnu/select-keys-with-ns payload "provenance") {})
         ;; TODO: accept :person/email OR :person/id (s/conform...)
         person-lur (or (person-lur-from-provenance prov)
-                       [:person/email (:email id-token)])
+                       [:person/email (.getEmail id-token)])
         who (:db/id (d/entity (:db request) person-lur))
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (wna/identify id-token)

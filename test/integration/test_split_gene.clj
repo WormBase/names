@@ -13,6 +13,11 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
+(defn make-auth-payload
+  [& {:keys [current-user]
+      :or {current-user "tester@wormbase.org"}}]
+  (fake-auth/payload {"email" current-user}))
+
 (defn query-provenance [conn from-gene-id into-seq-name]
   (when-let [mtx (d/q '[:find ?tx .
                         :in $ ?from ?into
@@ -32,30 +37,30 @@
             mtx)))
 
 (defn split-gene
-  [payload gene-id & {:keys [current-user]
-                      :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
+  [payload gene-id
+   & {:keys [current-user]}]
+  (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
+                                                    :current-user
+                                                    current-user)]
     (let [data (tu/->json payload)
-          current-user-token (get fake-auth/tokens current-user)
           [status body] (tu/raw-put-or-post*
                          service/app
                          (str "/api/gene/" gene-id "/split/")
                          :post
                          data
                          "application/json"
-                         {"authorization" (str "Token "
-                                               current-user-token)})]
+                         {"authorization" (str "Token " "FAKED")})]
       [status (tu/parse-body body)])))
 
 (defn undo-split-gene
-  [from-id into-id & {:keys [current-user]
-                      :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [current-user-token (get fake-auth/tokens current-user)]
-      (tu/delete service/app
-                 (str "/api/gene/" from-id "/split/" into-id)
-                 "application/json"
-                 {"authorization" (str "Token " current-user-token)}))))
+  [from-id into-id & {:keys [current-user]}]
+  (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
+                                                    :current-user
+                                                    current-user)]
+    (tu/delete service/app
+               (str "/api/gene/" from-id "/split/" into-id)
+               "application/json"
+               {"authorization" (str "Token " "FAKED")})))
 
 (t/deftest must-meet-spec
   (t/testing "Target biotype and product must be specified."
@@ -77,7 +82,7 @@
 (t/deftest response-codes
   (t/testing (str "Get 400 response if biotypes "
                   "of both gene and split product not supplied.")
-    (let [[status body] (split-gene 
+    (let [[status body] (split-gene
                          {:product
                           {:gene/sequence-name "ABC.1"
                            :gene/biotype "transcript"}}
@@ -92,7 +97,7 @@
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body)))))
   (t/testing "Get 400 if product biotype not supplied"
-    (let [[status body] (split-gene 
+    (let [[status body] (split-gene
                          {:product
                           {:gene/sequence-name "ABC.1"
                            :gene/biotype "transcript"}}

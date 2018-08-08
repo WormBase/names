@@ -3,7 +3,9 @@
    [clojure.tools.logging :as log]
    [cheshire.core :as json]
    [environ.core :as environ]
-   [wormbase.names.auth :as wn-auth]))
+   [wormbase.names.auth :as wn-auth])
+  (:import
+   (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload)))
 
 (def console-client-id (wn-auth/client-id :console))
 
@@ -27,10 +29,21 @@
 
 (def ^:dynamic *gapi-verify-token-response* nil)
 
+(defn payload [mapping]
+  (let [pl (GoogleIdToken$Payload.)]
+    (doseq [[k v] mapping]
+      (.set pl k v))
+    pl))
+
 (alter-var-root
  (var wn-auth/verify-token-gapi)
  (fn fake-google-api-verify-token [token]
    (fn verify-token-pretend [token]
      (log/debug "NOTICE: Faking verifying token with Google API")
-     (merge defaults *gapi-verify-token-response*))))
+     (when-not (nil? *gapi-verify-token-response*)
+       (doseq [[k v] defaults]
+         (if-not (get *gapi-verify-token-response* k)
+           (.set *gapi-verify-token-response* k v)))
+       *gapi-verify-token-response*))))
+
 
