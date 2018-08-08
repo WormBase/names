@@ -104,32 +104,10 @@
        (#{:admin} (:role (:identity request)))))
 
 
-;; "meta" restructuring
-
-(defn require-role! [required roles]
-  (if-not (seq (set/intersection required roles))
-    (http-response/unauthorized!
-     {:text "Missing required role"
-      :required required
-      :roles roles})))
-
-(defmethod capi-meta/restructure-param :roles [_ roles acc]
-  (update-in acc
-             [:lets]
-             into
-             ['_ `(require-role!
-                   ~roles
-                   (get-in ~'+compojure-api-request+
-                           [:identity :person/roles]))]))
-
-
-(defn wrap-rule [handler rule]
-  (-> handler
-      (auth-access-rules/wrap-access-rules
-       {:rules [{:pattern #".*"
-                 :handler rule}]
-        :on-error access-error})))
-
-(defmethod capi-meta/restructure-param :auth-rules
-  [_ rule acc]
-  (update-in acc [:middleware] conj [wrap-rule rule]))
+(defn require-role! [required request]
+  (let [roles (-> request :identity :person :person/roles)]
+    (if-not (seq (set/intersection (set required) (set roles)))
+      (http-response/unauthorized!
+       {:text "Missing required role"
+        :required required
+        :roles roles}))))

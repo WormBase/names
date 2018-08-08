@@ -12,7 +12,10 @@
    [ring.util.http-response :as http-response]
    [spec-tools.core :as stc]))
 
+(def admin-required (partial wna/require-role! #{:person.role/admin}))
+
 (defn create-person [request]
+  (admin-required request)
   (let [conn (:conn request)
         spec ::wsp/person
         person (some-> request :body-params)]
@@ -46,6 +49,7 @@
 (defn update-person
   "Handler for apply an update a person."
   [identifier request]
+  (admin-required request)
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)
         person (info db lur)]
@@ -70,6 +74,7 @@
             :problems (s/explain-data spec data*)}))))))
 
 (defn deactivate-person [identifier request]
+  (admin-required request)
   (let [conn (:conn request)
         lur (s/conform ::wsp/identifier identifier)
         tx-result @(d/transact-async conn
@@ -88,7 +93,6 @@
   (sweet/routes
    (sweet/context "/person/" []
      :tags ["person"]
-     :roles #{:person.role/admin}
      (sweet/resource
       {:coercion :spec
        :post
@@ -96,11 +100,9 @@
         :x-name ::new-person
         :parameters {:body-params ::wsp/person}
         :responses {201 {:schema ::wsp/person}}
-        :roles #{:admin}
         :handler create-person}}))
    (sweet/context "/person/:identifier" [identifier]
      :tags ["person"]
-     :roles #{:person.role/admin}
      (sweet/resource
       {:coercion :spec
        :get
@@ -112,7 +114,7 @@
        {:summary "Update information about a person."
         :x-name ::update-person
         :path-params [identifier :- ::wsp/identifier]
-        :parameters {:body-params ::wsp/person}
+        :parameters {:body-params ::wsp/update}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
