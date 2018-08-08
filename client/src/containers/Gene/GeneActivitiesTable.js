@@ -26,9 +26,9 @@ class GeneActivitiesTable extends Component {
     };
   }
 
-  openResurrectGeneDialog = (activityIndex) => {
+  openDialog = (dialogKey, activityIndex) => {
     this.setState({
-      showDialog: RESURRECT,
+      showDialog: dialogKey,
       selectedActivityIndex: activityIndex,
     });
   }
@@ -46,7 +46,7 @@ class GeneActivitiesTable extends Component {
         {
           eventType === 'kill' ?
             <Button
-              onClick={() => this.openResurrectGeneDialog(activityIndex)}
+              onClick={() => this.openDialog(RESURRECT, activityIndex)}
               color="primary"
             >Resurrect</Button> :
             null
