@@ -35,6 +35,10 @@ class GeneProfile extends Component {
   }
 
   componentDidMount() {
+    this.fetchData();
+  }
+
+  fetchData = () => {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
@@ -238,14 +242,8 @@ class GeneProfile extends Component {
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
-            this.setState((prevState) => ({
-              data: {
-                ...prevState.data,
-                'gene/status': 'gene.status/dead',
-              },
-            }), () => {
-              this.closeKillGeneDialog();
-            });
+            this.fetchData();
+            this.closeKillGeneDialog();
           }}
         />
         <MergeGeneDialog
@@ -255,14 +253,8 @@ class GeneProfile extends Component {
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {
-            this.setState((prevState) => ({
-              data: {
-                ...prevState.data,
-                'gene/status': 'gene.status/dead',
-              },
-            }), () => {
-              this.closeMergeGeneDialog();
-            });
+            this.fetchData();
+            this.closeMergeGeneDialog();
           }}
         />
         <SplitGeneDialog
@@ -273,11 +265,8 @@ class GeneProfile extends Component {
           open={this.state.showSplitGeneDialog}
           onClose={this.closeSplitGeneDialog}
           onSubmitSuccess={(data) => {
-            this.setState({
-              data: data,
-            }, () => {
-              this.closeSplitGeneDialog();
-            });
+            this.fetchData();
+            this.closeSplitGeneDialog();
           }}
         />
         <Snackbar
