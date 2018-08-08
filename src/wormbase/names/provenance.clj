@@ -17,7 +17,7 @@
     (if (string? who)
       (when (s/valid? ::wsp/identifier who)
         (s/conform ::wsp/identifier who))
-      (first (into [] who)))))
+      (first (vec who)))))
 
 (defn assoc-provenence
   "Associate provenance data with the request.
