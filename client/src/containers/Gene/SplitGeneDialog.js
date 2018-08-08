@@ -70,7 +70,7 @@ class SplitGeneDialog extends Component {
           }
         },
         () => {
-          return fetch(`/api/gene/${this.props.wbId}/split`, {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/split`, {
             method: 'POST',
             body: JSON.stringify(data),
           });
