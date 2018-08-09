@@ -133,7 +133,6 @@
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
 
-;; restructuring predicates
 (defn admin
   "compojure restrucring predicate.
 
@@ -142,7 +141,6 @@
   [request]
   (and (authenticated? request)
        (#{:admin} (:role (:identity request)))))
-
 
 (defn require-role! [required request]
   (let [roles (-> request :identity :person :person/roles)]
