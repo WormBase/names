@@ -23,9 +23,6 @@
 
 (def about-gene (partial api-tc/info "gene"))
 
-(defn- check-gene-data []
-  (assert false "TBD"))
-
 (t/deftest test-about-live
   (t/testing "Info about a live gene can be retrieved by WBGene ID."
     (let [[id data-sample] (gen-sample)]
