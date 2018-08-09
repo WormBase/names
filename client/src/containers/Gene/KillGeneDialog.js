@@ -3,121 +3,74 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
-  BaseForm,
-  Button,
-  Dialog,
-  DialogActions,
+  AjaxDialog,
   DialogContent,
   DialogContentText,
-  DialogTitle,
   ProgressButton,
-  PROGRESS_BUTTON_PENDING,
-  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
 
 class KillGeneDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      errorMessage: null,
-      status: null,
-    };
-  }
-
-  handleSubmit = (data) => {
-    this.setState({
-      status: 'SUBMITTED',
-    }, () => {
-      mockFetchOrNot(
-        (mockFetch) => {
-          console.log(data.reason);
-          if (data.reason) {
-            return mockFetch.delete('*', {
-            });
-          } else {
-            return mockFetch.delete('*', {
-              body: {
-                error: 'Reason for killing a gene is required',
-              },
-              status: 400,
-            })
-          }
-        },
-        () => {
-          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
-            method: 'DELETE',
-            body: JSON.stringify({
-              ...data
-            })
+  submitData = (data) => {
+    return mockFetchOrNot(
+      (mockFetch) => {
+        console.log(data.reason);
+        if (data.reason) {
+          return mockFetch.delete('*', {
           });
-        },
-      ).then((response) => response.json()).then((response) => {
-        if (!response.problems) {
-          this.setState({
-            errorMessage: null,
-            status: 'COMPLETE',
-          });
-          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
         } else {
-          this.setState({
-            errorMessage: JSON.stringify(response),
-            status: 'COMPLETE',
-          });
-          this.props.onSubmitError && this.props.onSubmitError(response);
+          return mockFetch.delete('*', {
+            body: {
+              error: 'Reason for killing a gene is required',
+            },
+            status: 400,
+          })
         }
-      }).catch((e) => console.log('error', e));
-    });
+      },
+      () => {
+        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+          method: 'DELETE',
+          body: JSON.stringify({
+            ...data
+          })
+        });
+      },
+    );
   }
 
   render() {
+    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
     return (
-      <BaseForm>
+      <AjaxDialog
+        title="Kill gene"
+        submitter={this.submitData}
+        renderSubmitButton={(props) => (
+          <ProgressButton {...props}>Kill {geneName}</ProgressButton>
+        )}
+        {...otherProps}>
         {
-          ({withFieldData, getFormData, resetData}) => {
+          ({withFieldData, errorMessage}) => {
             const ReasonField = withFieldData(TextField, 'provenance/why');
             return (
-              <Dialog
-                open={this.props.open}
-                onClose={this.props.onClose}
-                aria-labelledby="form-dialog-title"
-              >
-                <DialogTitle id="form-dialog-title">Kill gene</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Gene <strong>{this.props.geneName}</strong> will be killed. Are you sure?
-                  </DialogContentText>
-                  <DialogContentText>
-                    <Typography color="error">{this.state.errorMessage}</Typography>
-                  </DialogContentText>
+              <DialogContent>
+                <DialogContentText>
+                  Gene <strong>{geneName}</strong> will be killed. Are you sure?
+                </DialogContentText>
+                <DialogContentText>
+                  <Typography color="error">{errorMessage}</Typography>
+                </DialogContentText>
                 <ReasonField
                   label="Reason"
                   helperText="Enter the reason for killing the gene"
                   required
                   fullWidth
                 />
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    onClick={this.props.onClose}
-                    color="primary"
-                  >
-                    Cancel
-                  </Button>
-                  <ProgressButton
-                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
-                    onClick={() => this.handleSubmit(getFormData())}
-                    className={this.props.classes.killButton}
-                  >
-                    KILL {this.props.geneName}
-                  </ProgressButton>
-                </DialogActions>
-              </Dialog>
+              </DialogContent>
             )
           }
         }
-      </BaseForm>
+      </AjaxDialog>
     );
   }
 }
@@ -126,10 +79,6 @@ KillGeneDialog.propTypes = {
   geneName: PropTypes.string.isRequired,
   wbId: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
-  open: PropTypes.bool,
-  onClose: PropTypes.func,
-  onSubmitSuccess: PropTypes.func,
-  onSubmitError: PropTypes.func,
 };
 
 const styles = (theme) => ({
