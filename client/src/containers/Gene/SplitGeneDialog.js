@@ -59,7 +59,6 @@ class SplitGeneDialog extends Component {
           body: JSON.stringify(data),
         });
       },
-      true,
     );
   }
 
