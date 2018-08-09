@@ -23,7 +23,7 @@
 
 (def about-gene (partial api-tc/info "gene"))
 
-(t/deftest test-about-live
+(t/deftest test-about
   (t/testing "Info about a live gene can be retrieved by WBGene ID."
     (let [[id data-sample] (gen-sample)]
       (tu/with-gene-fixtures
