@@ -3,6 +3,7 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BaseForm,
   BiotypeSelect,
   Button,
   Dialog,
@@ -10,80 +11,97 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
-import BaseForm from './BaseForm';
 
 class SplitGeneDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
   handleSubmit = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data.reason);
-        const emptyFields = ['reason', 'biotypeOriginal', 'sequenceName', 'biotype'].filter(
-          (fieldId) => {
-            return !data[fieldId];
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data.reason);
+          const emptyFields = ['provenance/why', 'gene/biotype', 'product'].filter(
+            (fieldId) => {
+              return !data[fieldId];
+            }
+          );
+          let errorMessage;
+          switch (emptyFields.length) {
+            case 0:
+              break;
+            case 1:
+              errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
+              break;
+            default:
+              errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
           }
-        );
-        let errorMessage;
-        switch (emptyFields.length) {
-          case 0:
-            break;
-          case 1:
-            errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
-            break;
-          default:
-            errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
-        }
 
-        if (errorMessage) {
-          return mockFetch.post('*', {
-            body: {
-              error: errorMessage,
-            },
-            status: 400,
+          if (errorMessage) {
+            return mockFetch.post('*', {
+              body: {
+                errors: errorMessage,
+              },
+              status: 400,
+            });
+          } else {
+            return mockFetch.post('*', {
+              "updated": {
+                "gene/id": this.props.wbId,
+              },
+              "created": {
+                "gene/id": "WB3",
+                "gene/status": 'gene.status/live',
+              },
+            });
+          }
+        },
+        () => {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/split`, {
+            method: 'POST',
+            body: JSON.stringify(data),
           });
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
+          })
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response.updated});
         } else {
-          return mockFetch.post('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
           });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'POST'
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.error) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});
-      } else {
-        this.setState({
-          errorMessage: response.error,
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response.error);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
     return (
-      <BaseForm data={{biotypeOriginal: this.props.biotypeOriginal}}>
+      <BaseForm data={{'gene/biotype': this.props.biotypeOriginal}}>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'biotypeOriginal');
-            const ReasonField = withFieldData(TextField, 'reason');
-            const SequenceNameField = withFieldData(TextField, 'sequenceName');
-            const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
+            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'gene/biotype');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
+            const SequenceNameField = withFieldData(TextField, 'product:gene/sequence-name');
+            const BiotypeSelectField = withFieldData(BiotypeSelect, 'product:gene/biotype');
             return (
               <Dialog
                 open={this.props.open}
@@ -126,12 +144,13 @@ class SplitGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     onClick={() => this.handleSubmit(getFormData())}
                     className={this.props.classes.splitButton}
                   >
                     split {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )
@@ -143,6 +162,7 @@ class SplitGeneDialog extends Component {
 }
 
 SplitGeneDialog.propTypes = {
+  wbId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
   biotypeOriginal: PropTypes.string.isRequired,
   open: PropTypes.bool,

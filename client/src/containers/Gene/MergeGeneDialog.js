@@ -3,16 +3,20 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BaseForm,
+  BiotypeSelect,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
-import BaseForm from './BaseForm';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
@@ -20,43 +24,51 @@ class MergeGeneDialog extends Component {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
-  handleSubmit = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data);
-        if (data.reason) {
-          return mockFetch.delete('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
+  handleSubmit = ({geneIdMergeInto, ...data}) => {
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data);
+          if (data['provenance/why']) {
+            return mockFetch.post('*', {
+            });
+          } else {
+            return mockFetch.post('*', {
+              body: {
+                message: 'Reason for merging a gene is required',
+              },
+              status: 400,
+            })
+          }
+        },
+        () => {
+          return this.props.authorizedFetch(`/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`, {
+            method: 'POST',
+            body: JSON.stringify(data),
           });
-        } else {
-          return mockFetch.delete('*', {
-            body: {
-              error: 'Reason for merging a gene is required',
-            },
-            status: 400,
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
           })
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
+        } else {
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE'
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.error) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});
-      } else {
-        this.setState({
-          errorMessage: response.error,
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response.error);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
@@ -64,8 +76,9 @@ class MergeGeneDialog extends Component {
       <BaseForm>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const ReasonField = withFieldData(TextField, 'reason');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             const GeneIdMergeIntoField = withFieldData(GeneAutocomplete, 'geneIdMergeInto');
+            const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
               <Dialog
                 open={this.props.open}
@@ -85,6 +98,13 @@ class MergeGeneDialog extends Component {
                   helperText="Enter WBID or search by CGC name"
                   required
                 />
+                <BiotypeField
+                  helperText={`Set the biotype of the merged gene`}
+                  required
+                  classes={{
+                    root: this.props.classes.biotypeSelectField,
+                  }}
+                />
                 <ReasonField
                   label="Reason"
                   helperText="Enter the reason for merging the gene"
@@ -99,12 +119,13 @@ class MergeGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
                     onClick={() => this.handleSubmit(getFormData())}
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     className={this.props.classes.mergeButton}
                   >
                     Merge and kill {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )
@@ -116,7 +137,9 @@ class MergeGeneDialog extends Component {
 }
 
 MergeGeneDialog.propTypes = {
+  wbId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmitSuccess: PropTypes.func,

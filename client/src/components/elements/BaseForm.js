@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Prompt } from 'react-router';
-import { withStyles, Button, Icon, TextField } from '../../components/elements';
 
 /*
   BaseForm intends to **centrally** track the state of the (controlled) form
@@ -54,7 +53,7 @@ class FormDataStore {
       };
       this.eventListeners.filter((eventListener) => {
         return eventListener.fieldId === fieldId || eventListener.fieldId === 'ALL_FIELDS';
-      }).map((eventListener) => {
+      }).forEach((eventListener) => {
         eventListener.eventHandler(value);
       });
     };
@@ -68,7 +67,7 @@ class FormDataStore {
 
   replaceFields = (fields) => {
     this.fields = {...fields};
-    this.eventListeners.map((eventListener) => {
+    this.eventListeners.forEach((eventListener) => {
       if (eventListener.fieldId === 'ALL_FIELDS') {
         eventListener.eventHandler();
       } else {
@@ -158,7 +157,7 @@ class BaseForm extends Component {
 
   withFieldData = (WrappedComponent, fieldId) => {
     const dataStore = this.dataStore;
-    const {value, onChange,} = dataStore.getField(fieldId);
+    const {disabled} = this.props;
     class Field extends Component {
       constructor(props) {
         super(props);
@@ -186,6 +185,7 @@ class BaseForm extends Component {
           <WrappedComponent
             {...this.props}
             id={fieldId}
+            disabled={disabled || this.props.disabled}
             value={this.state.value || ''}
             error={Boolean(this.state.error)} //Boolean function not constructor
             helperText={this.state.error || this.props.helperText}
@@ -274,6 +274,7 @@ BaseForm.propTypes = {
     error: PropTypes.string,
   }),
   data: PropTypes.objectOf(PropTypes.any), // alternative to fields, but the value is simply the value, instead of a map of value and error
+  disabled: PropTypes.bool,
   children: PropTypes.func.isRequired,
 };
 

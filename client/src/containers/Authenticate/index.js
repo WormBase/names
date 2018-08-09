@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';

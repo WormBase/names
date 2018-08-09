@@ -1,40 +1,31 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  withStyles,
+  BaseForm,
+  BiotypeSelect,
   Button,
-  Icon,
-  MenuItem,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   SpeciesSelect,
-  BiotypeSelect,
+  withStyles,
 } from '../../components/elements';
-
-import BaseForm from './BaseForm';
 
 class GeneForm extends Component {
 
   render() {
-    const {classes, fields, data} = this.props;
+    const {classes, data, disabled, submitted} = this.props;
     return (
-      <BaseForm data={data}>
+      <BaseForm data={data} disabled={disabled || submitted}>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const WBIdField = withFieldData(TextField, 'gene/id');
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
-            const SequenceNameField = withFieldData(TextField, 'gene/seq-name');
+            const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
               <div>
-                {
-                  data && data.id ?
-                    <WBIdField
-                      label="WormBase gene ID"
-                      disabled={true}
-                    /> :
-                    null
-                }
                 <CgcNameField
                   label="CGC name"
                   helperText="Enter the CGC name of the gene"
@@ -46,17 +37,20 @@ class GeneForm extends Component {
                 <BiotypeSelectField />
                 <br/>
                 <div className={classes.actions}>
-                  <Button
+                  <ProgressButton
+                    status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     variant="raised"
                     color="secondary"
                     onClick={() => this.props.onSubmit(getFormData())}
-                  >Submit</Button>
+                    disabled={disabled}
+                  >Submit</ProgressButton>
                   <Button
                     variant="raised"
                     onClick={() => {
                       resetData();
                       this.props.onCancel && this.props.onCancel();
                     }}
+                    disabled={disabled}
                   >Cancel</Button>
                 </div>
               </div>
@@ -70,18 +64,14 @@ class GeneForm extends Component {
 
 GeneForm.propTypes = {
   classes: PropTypes.object.isRequired,
-  fields: PropTypes.shape({
-    cgcName: PropTypes.shape({
-      value: PropTypes.string,
-      error: PropTypes.string,
-    }),
-  }),
+  data: PropTypes.any,
+  submitted: PropTypes.bool,
+  disabled: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
 };
 
 GeneForm.defaultProps = {
-  fields: {},
 };
 
 const styles = (theme) => ({

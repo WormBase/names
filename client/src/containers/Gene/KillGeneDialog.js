@@ -3,59 +3,72 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
+  BaseForm,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
-import BaseForm from './BaseForm';
 
 class KillGeneDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
       errorMessage: null,
+      status: null,
     };
   }
 
   handleSubmit = (data) => {
-    mockFetchOrNot(
-      (mockFetch) => {
-        console.log(data.reason);
-        if (data.reason) {
-          return mockFetch.delete('*', {
-            id: this.props.wbId,
-            reason: data.reason,
-            dead: true,
+    this.setState({
+      status: 'SUBMITTED',
+    }, () => {
+      mockFetchOrNot(
+        (mockFetch) => {
+          console.log(data.reason);
+          if (data.reason) {
+            return mockFetch.delete('*', {
+            });
+          } else {
+            return mockFetch.delete('*', {
+              body: {
+                error: 'Reason for killing a gene is required',
+              },
+              status: 400,
+            })
+          }
+        },
+        () => {
+          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({
+              ...data
+            })
           });
+        },
+      ).then((response) => response.json()).then((response) => {
+        if (!response.problems) {
+          this.setState({
+            errorMessage: null,
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
         } else {
-          return mockFetch.delete('*', {
-            body: {
-              error: 'Reason for killing a gene is required',
-            },
-            status: 400,
-          })
+          this.setState({
+            errorMessage: JSON.stringify(response),
+            status: 'COMPLETE',
+          });
+          this.props.onSubmitError && this.props.onSubmitError(response);
         }
-      },
-      () => {
-        return fetch(`/api/gene/${this.props.wbId}`, {
-          method: 'DELETE'
-        });
-      },
-    ).then((response) => response.json()).then((response) => {
-      if (!response.error) {
-        this.props.onSubmitSuccess && this.props.onSubmitSuccess({...response});
-      } else {
-        this.setState({
-          errorMessage: response.error,
-        });
-        this.props.onSubmitError && this.props.onSubmitError(response.error);
-      }
-    }).catch((e) => console.log('error', e));
+      }).catch((e) => console.log('error', e));
+    });
   }
 
   render() {
@@ -63,7 +76,7 @@ class KillGeneDialog extends Component {
       <BaseForm>
         {
           ({withFieldData, getFormData, resetData}) => {
-            const ReasonField = withFieldData(TextField, 'reason');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             return (
               <Dialog
                 open={this.props.open}
@@ -92,12 +105,13 @@ class KillGeneDialog extends Component {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  <ProgressButton
+                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                     onClick={() => this.handleSubmit(getFormData())}
                     className={this.props.classes.killButton}
                   >
                     KILL {this.props.geneName}
-                  </Button>
+                  </ProgressButton>
                 </DialogActions>
               </Dialog>
             )
@@ -110,6 +124,8 @@ class KillGeneDialog extends Component {
 
 KillGeneDialog.propTypes = {
   geneName: PropTypes.string.isRequired,
+  wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func.isRequired,
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmitSuccess: PropTypes.func,

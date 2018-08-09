@@ -6,7 +6,7 @@ const Logo = (props) => {
   const {classes} = props;
   return (
     <div className={classes.root}>
-      <img src={icon}></img>
+      <img src={icon} alt="WormBase"></img>
     </div>
   );
 };

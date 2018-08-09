@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import { matchPath } from 'react-router';
 
-import { Toolbar, Tabs, Tab, withStyles } from '../../components/elements';
+import { Tabs, Tab, withStyles } from '../../components/elements';
 
 const NavBar = (props) => {
   const tabs = [

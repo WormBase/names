@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { withStyles, Button, Icon, Page, Typography, } from '../../components/elements';
+import { withStyles, Button, Page, Typography, } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
 import GeneCreate from './GeneCreate';

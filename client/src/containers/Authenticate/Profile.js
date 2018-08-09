@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, withStyles } from '../../components/elements';
+import { withStyles } from '../../components/elements';
 
 const Profile = (props) => {
   return (
