@@ -38,6 +38,7 @@ export {
 
 export { default as DocumentTitle } from 'react-document-title';
 
+export { default as AjaxDialog } from './AjaxDialog';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
