@@ -36,7 +36,7 @@
 
         :else
         (http-response/content-type
-         (http-response/found "/index.html")
+         (http-response/resource-response "client_build/index.html")
          "text/html")))))
 
 (defn decode-content [mime-type content]
