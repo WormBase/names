@@ -67,13 +67,9 @@ class ResurrectGeneDialog extends Component {
 }
 
 ResurrectGeneDialog.propTypes = {
-  geneName: PropTypes.string,
-  wbId: PropTypes.string,
+  geneName: PropTypes.string.isRequired,
+  wbId: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
-  open: PropTypes.bool,
-  onClose: PropTypes.func,
-  onSubmitSuccess: PropTypes.func,
-  onSubmitError: PropTypes.func,
 };
 
 const styles = (theme) => ({
