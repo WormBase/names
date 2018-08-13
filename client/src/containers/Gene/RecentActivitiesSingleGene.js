@@ -26,7 +26,7 @@ class RecentActivitiesSingleGene extends Component {
             curatedBy: {
               name: 'Gary'
             },
-            time: '2015-08-19T23:15:30.000Z',
+            time: '2018-08-09T23:15:30.000Z',
             agent: 'script',
             reason: 'Don\'t like it',
           },
@@ -39,7 +39,7 @@ class RecentActivitiesSingleGene extends Component {
             curatedBy: {
               name: 'Gary'
             },
-            time: '2015-08-19T23:15:30.000Z',
+            time: '2018-08-09T23:15:30.000Z',
             agent: 'script',
             reason: 'Don\'t like it',
           },
