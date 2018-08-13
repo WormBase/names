@@ -36,7 +36,7 @@ class UndoMergeGeneDialog extends Component {
         title="Undo gene merge"
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Split {geneFromName}</ProgressButton>
+          <ProgressButton {...props}>Split {geneName}</ProgressButton>
         )}
         {...otherProps}>
         {
@@ -45,7 +45,7 @@ class UndoMergeGeneDialog extends Component {
             return (
               <DialogContent>
                 <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be split from <strong>{geneFromName}</strong>.
+                  Gene <strong>{geneFromName}</strong> will be split from <strong>{geneName}</strong>.
                   Are you sure?
                 </DialogContentText>
                 <DialogContentText>

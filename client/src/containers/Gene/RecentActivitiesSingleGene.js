@@ -35,7 +35,7 @@ class RecentActivitiesSingleGene extends Component {
               id: 'WB345',
               label: 'abc-1'
             },
-            eventType: 'split',
+            eventType: 'split_from',
             curatedBy: {
               name: 'Gary'
             },

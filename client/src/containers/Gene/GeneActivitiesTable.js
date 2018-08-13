@@ -54,7 +54,7 @@ class GeneActivitiesTable extends Component {
             null
         }
         {
-          eventType === 'split' ?
+          eventType === 'split_into' || eventType === 'split_from' ?
             <Button
               onClick={() => this.openDialog(UNDO_SPLIT, activityIndex)}
               color="primary"
@@ -62,7 +62,7 @@ class GeneActivitiesTable extends Component {
             null
         }
         {
-          eventType === 'merge' ?
+          eventType === 'merge_into' || eventType === 'acquire_merge' ?
             <Button
               onClick={() => this.openDialog(UNDO_MERGE, activityIndex)}
               color="primary"
@@ -77,6 +77,22 @@ class GeneActivitiesTable extends Component {
     const {classes, activities, onUpdate} = this.props;
     const {selectedActivityIndex} = this.state;
     const selectedActivity = selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
+    let selectedActivityEntityKept, selectedActivityEntityOther;
+    if (selectedActivity) {
+      if (
+        selectedActivity.eventType === 'split_into' ||
+        selectedActivity.eventType === 'acquire_merge'
+      ) {
+        selectedActivityEntityKept = selectedActivity.entity;
+        selectedActivityEntityOther = selectedActivity.relatedEntity;
+      } else if (
+        selectedActivity.eventType === 'split_from' ||
+        selectedActivity.eventType === 'merge_into'
+      ) {
+        selectedActivityEntityKept = selectedActivity.relatedEntity;
+        selectedActivityEntityOther = selectedActivity.entity;
+      }
+    }
 
     return (
       <div>
@@ -144,10 +160,10 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoMergeGeneDialog
-            geneName={selectedActivity && selectedActivity.entity.label}
-            geneFromName={selectedActivity && selectedActivity.relatedEntity.label}
-            wbId={selectedActivity && selectedActivity.entity.id}
-            wbFromId={selectedActivity && selectedActivity.relatedEntity.id}
+            geneName={selectedActivityEntityKept && selectedActivityEntityKept.label}
+            geneFromName={selectedActivityEntityOther && selectedActivityEntityOther.label}
+            wbId={selectedActivityEntityKept && selectedActivityEntityKept.id}
+            wbFromId={selectedActivityEntityOther && selectedActivityEntityOther.id}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_MERGE}
             onClose={this.closeDialog}
@@ -157,10 +173,10 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoSplitGeneDialog
-            geneName={selectedActivity && selectedActivity.entity.label}
-            geneIntoName={selectedActivity && selectedActivity.relatedEntity.label}
-            wbId={selectedActivity && selectedActivity.entity.id}
-            wbIntoId={selectedActivity && selectedActivity.relatedEntity.id}
+            geneName={selectedActivityEntityKept && selectedActivityEntityKept.label}
+            geneIntoName={selectedActivityEntityOther && selectedActivityEntityOther.label}
+            wbId={selectedActivityEntityKept && selectedActivityEntityKept.id}
+            wbIntoId={selectedActivityEntityOther && selectedActivityEntityOther.id}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_SPLIT}
             onClose={this.closeDialog}
