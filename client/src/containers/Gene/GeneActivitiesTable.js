@@ -100,8 +100,8 @@ class GeneActivitiesTable extends Component {
           <TableHead>
             <TableRow>
               <TableCell>Time</TableCell>
-              <TableCell>Event type</TableCell>
               <TableCell className={classes.entityColumnHeader}>Entity</TableCell>
+              <TableCell>Event type</TableCell>
               <TableCell>Related entity</TableCell>
               <TableCell>Curated by</TableCell>
               <TableCell>Reason</TableCell>
@@ -118,7 +118,6 @@ class GeneActivitiesTable extends Component {
                       <TableCell className={classes.time}>
                         <Timestamp time={activityItem.time}/>
                       </TableCell>
-                      <TableCell>{activityItem.eventType}</TableCell>
                       <TableCell className={classes.entityCell}>
                         {
                           activityItem.entity ?
@@ -126,6 +125,7 @@ class GeneActivitiesTable extends Component {
                             null
                         }
                       </TableCell>
+                      <TableCell>{activityItem.eventType}</TableCell>
                       <TableCell>
                         {
                           activityItem.relatedEntity ?
