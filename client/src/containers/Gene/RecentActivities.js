@@ -21,6 +21,37 @@ class RecentActivities extends Component {
         const mockData = [
           {
             entity: {
+              id: 'WB333',
+              label: 'aaa-22',
+            },
+            relatedEntity: {
+              id: 'WB345',
+              label: 'aaa-222'
+            },
+            eventType: 'merge',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2015-08-19T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
+              id: 'WB4',
+              label: 'aaa-3',
+            },
+            relatedEntity: null,
+            eventType: 'kill',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2015-08-19T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
               id: 'WB1',
               label: 'ab',
             },

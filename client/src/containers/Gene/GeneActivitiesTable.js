@@ -12,6 +12,7 @@ import {
   Timestamp,
 } from '../../components/elements';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
+import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 
 const RESURRECT = 'RESURRECT';
 const UNDO_MERGE = 'UNDO_MERGE';
@@ -49,6 +50,22 @@ class GeneActivitiesTable extends Component {
               onClick={() => this.openDialog(RESURRECT, activityIndex)}
               color="primary"
             >Resurrect</Button> :
+            null
+        }
+        {
+          eventType === 'split' ?
+            <Button
+              onClick={() => this.openDialog(UNDO_SPLIT, activityIndex)}
+              color="primary"
+            >Undo</Button> :
+            null
+        }
+        {
+          eventType === 'merge' ?
+            <Button
+              onClick={() => this.openDialog(UNDO_MERGE, activityIndex)}
+              color="primary"
+            >Undo</Button> :
             null
         }
       </div>
@@ -121,7 +138,20 @@ class GeneActivitiesTable extends Component {
             open={this.state.showDialog === RESURRECT}
             onClose={this.closeDialog}
             onSubmitSuccess={(data) => {
-              this.closeResurrectGeneDialog();
+              this.closeDialog();
+              onUpdate && onUpdate();
+            }}
+          />
+          <UndoMergeGeneDialog
+            geneName={selectedActivity && selectedActivity.entity.label}
+            geneNameMergeInto={selectedActivity && selectedActivity.relatedEntity.label}
+            wbId={selectedActivity && selectedActivity.entity.id}
+            wbIdMergeInto={selectedActivity && selectedActivity.relatedEntity.id}
+            authorizedFetch={this.props.authorizedFetch}
+            open={this.state.showDialog === UNDO_MERGE}
+            onClose={this.closeDialog}
+            onSubmitSuccess={(data) => {
+              this.closeDialog();
               onUpdate && onUpdate();
             }}
           />
