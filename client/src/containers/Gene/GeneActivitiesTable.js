@@ -13,6 +13,7 @@ import {
 } from '../../components/elements';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
+import UndoSplitGeneDialog from './UndoSplitGeneDialog';
 
 const RESURRECT = 'RESURRECT';
 const UNDO_MERGE = 'UNDO_MERGE';
@@ -49,7 +50,7 @@ class GeneActivitiesTable extends Component {
             <Button
               onClick={() => this.openDialog(RESURRECT, activityIndex)}
               color="primary"
-            >Resurrect</Button> :
+            >Undo</Button> :
             null
         }
         {
@@ -144,11 +145,24 @@ class GeneActivitiesTable extends Component {
           />
           <UndoMergeGeneDialog
             geneName={selectedActivity && selectedActivity.entity.label}
-            geneNameMergeInto={selectedActivity && selectedActivity.relatedEntity.label}
+            geneFromName={selectedActivity && selectedActivity.relatedEntity.label}
             wbId={selectedActivity && selectedActivity.entity.id}
-            wbIdMergeInto={selectedActivity && selectedActivity.relatedEntity.id}
+            wbFromId={selectedActivity && selectedActivity.relatedEntity.id}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_MERGE}
+            onClose={this.closeDialog}
+            onSubmitSuccess={(data) => {
+              this.closeDialog();
+              onUpdate && onUpdate();
+            }}
+          />
+          <UndoSplitGeneDialog
+            geneName={selectedActivity && selectedActivity.entity.label}
+            geneIntoName={selectedActivity && selectedActivity.relatedEntity.label}
+            wbId={selectedActivity && selectedActivity.entity.id}
+            wbIntoId={selectedActivity && selectedActivity.relatedEntity.id}
+            authorizedFetch={this.props.authorizedFetch}
+            open={this.state.showDialog === UNDO_SPLIT}
             onClose={this.closeDialog}
             onSubmitSuccess={(data) => {
               this.closeDialog();

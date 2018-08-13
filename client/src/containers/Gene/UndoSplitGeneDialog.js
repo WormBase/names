@@ -11,7 +11,7 @@ import {
   Typography,
 } from '../../components/elements';
 
-class UndoMergeGeneDialog extends Component {
+class UndoSplitGeneDialog extends Component {
 
   submitData = (data) => {
     return mockFetchOrNot(
@@ -22,7 +22,7 @@ class UndoMergeGeneDialog extends Component {
         });
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/merge/${this.props.wbFromId}`, {
+        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/split/${this.props.wbIntoId}`, {
           method: 'DELETE',
         });
       },
@@ -30,13 +30,13 @@ class UndoMergeGeneDialog extends Component {
   }
 
   render() {
-    const {wbId, wbFromId, geneName, geneFromName, authorizedFetch, ...otherProps} = this.props;
+    const {wbId, wbIntoId, geneName, geneIntoName, authorizedFetch, ...otherProps} = this.props;
     return (
       <AjaxDialog
-        title="Undo gene merge"
+        title="Undo gene split"
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Split {geneFromName}</ProgressButton>
+          <ProgressButton {...props}>Merge into {geneIntoName}</ProgressButton>
         )}
         {...otherProps}>
         {
@@ -45,7 +45,7 @@ class UndoMergeGeneDialog extends Component {
             return (
               <DialogContent>
                 <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be split from <strong>{geneFromName}</strong>.
+                  Gene <strong>{geneName}</strong> will be merged into <strong>{geneIntoName}</strong>.
                   Are you sure?
                 </DialogContentText>
                 <DialogContentText>
@@ -53,7 +53,7 @@ class UndoMergeGeneDialog extends Component {
                 </DialogContentText>
                 <ReasonField
                   label="Reason"
-                  helperText="Enter the reason for undoing the merge"
+                  helperText="Enter the reason for undoing the split"
                   required
                   fullWidth
                 />
@@ -66,19 +66,19 @@ class UndoMergeGeneDialog extends Component {
   }
 }
 
-UndoMergeGeneDialog.propTypes = {
+UndoSplitGeneDialog.propTypes = {
   wbId: PropTypes.string.isRequired,
-  wbFromId: PropTypes.string.isRequired,
+  wbIntoId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
-  geneFromName: PropTypes.string.isRequired,
+  geneIntoName: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({
-  UndoMergeButton: {
+  UndoSplitButton: {
     color: theme.palette.error.main,
     textTransform: 'inherit',
   },
 });
 
-export default withStyles(styles)(UndoMergeGeneDialog);
+export default withStyles(styles)(UndoSplitGeneDialog);
