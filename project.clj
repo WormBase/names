@@ -19,7 +19,7 @@
   :aliases {"import-genes" ["run" "-m" "org.wormbase.names.import-genes"]}
   :profiles
   {:provided
-   {:lein-tools-deps/config {:resolve-aliases [:datomic-pro]}}
+   {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
    :datomic-pro
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
    :dev
