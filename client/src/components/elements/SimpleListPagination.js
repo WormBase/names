@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, Button } from '@material-ui/core';
-import {
-  KeyboardArrowLeft as ArrowBackIcon,
-  KeyboardArrowRight as ArrowForwardIcon,
-} from '@material-ui/icons';
+import ArrowBackIcon from '@material-ui/icons/KeyboardArrowLeft';
+import ArrowForwardIcon from '@material-ui/icons/KeyboardArrowRight';
 
 class SimpleListPagination extends Component {
   constructor(props) {

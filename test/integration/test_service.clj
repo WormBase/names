@@ -33,4 +33,6 @@
                      :headers {"accept" "text/html"}
                      :query-params {}
                      :request-method :get})]
-      (t/is (= 302 (:status response))))))
+      (t/is (= 200 (:status response)))
+      (t/is (http-response/get-header response "content-type") "text/html"))))
+

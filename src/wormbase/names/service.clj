@@ -35,9 +35,9 @@
         (http-response/not-found {:reason "Resource not found"})
 
         :else
-        (http-response/content-type
-         (http-response/found "/index.html")
-         "text/html")))))
+        (-> (http-response/resource-response "client_build/index.html")
+            (http-response/content-type "text/html")
+            (http-response/status 200))))))
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
