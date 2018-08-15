@@ -38,7 +38,7 @@
           (when-not (re-matches regexp gname)
             (throw (ex-info "Invalid name"
                             {:type :user/validation-error
-                             :invalid {:name  gname :ident name-ident}})))))))
+                             :invalid {:name gname :ident name-ident}})))))))
   data)
 
 (def name-matching-rules
