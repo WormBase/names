@@ -13,11 +13,10 @@
 (defn find-gene
   [pattern & {:keys [current-user]
               :or {current-user "tester@wormbase.org"}}]
-  (binding [fake-auth/*gapi-verify-token-response* {"email" current-user}]
-    (let [current-user-token (get fake-auth/tokens current-user)
-          params {:pattern pattern}
+  (binding [fake-auth/*gapi-verify-token-response* (fake-auth/payload {"email" current-user})]
+    (let [params {:pattern pattern}
           headers {"content-type" "application/json"
-                   "authorization" (str "Token " current-user-token)}
+                   "authorization" "Token IsTotallyMadeUp"}
           [status body] (tu/get*
                          service/app
                          (str "/api/gene/")
