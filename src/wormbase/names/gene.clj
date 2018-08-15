@@ -92,12 +92,13 @@
 (defn about-gene [request identifier]
   (when (s/valid? ::wsg/identifier identifier)
     (let [db (:db request)
-          [lur ent] (identify request identifier)
+          [lur _] (identify request identifier)
           info-expr '[*
                       {:gene/biotype [[:db/ident]]
                        :gene/species [[:species/id][:species/latin-name]]
                        :gene/status [[:db/ident]]}]
-          data (d/pull db info-expr lur)]
+          data (-> (d/pull db info-expr lur)
+                   (assoc :history (wnp/query-provenance db lur)))]
       (http-response/ok (transform-result data)))))
 
 (defn new-unnamed-gene [request payload]

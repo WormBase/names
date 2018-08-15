@@ -96,9 +96,23 @@
 
 (s/def ::kill-response (stc/spec (s/keys :req-un [::killed])))
 
+(s/def ::provenance (s/keys :req [:provenance/when
+                                  :provenance/who
+                                  :provenance/how]
+                            :opt [:provenance/why
+                                  :provenance/split-from
+                                  :provenance/split-into
+                                  :provenance/merged-from
+                                  :provenance/merged-into]))
+
+(s/def ::history (s/coll-of ::provenance :type vector? :min-count 1))
+
 (s/def ::info (stc/spec (s/keys :req [:gene/id
                                       :gene/species
-                                      :gene/status]
+                                      :gene/status
+                                      (or (or :gene/cgc-name :gene/sequence-name)
+                                          (and :gene/cgc-name :gene/sequence-name))]
+                                :req-un [::history]
                                 :opt [:gene/biotype
                                       :gene/sequence-name
                                       :gene/cgc-name])))
