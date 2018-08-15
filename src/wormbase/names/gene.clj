@@ -6,7 +6,6 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
-   [wormbase.names.agent :as wn-agent]
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
