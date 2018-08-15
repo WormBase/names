@@ -26,7 +26,7 @@
       (throw (ex-info "No names to validate (empty data)"
                       {:type :user/validation-error})))
     (if-not species-ent
-      (throw (ex-info "Invalid species specied"
+      (throw (ex-info "Invalid species specified"
                       {:invalid-species species-lur
                        :type :user/validation-error})))
     (let [patterns ((juxt :species/cgc-name-pattern
