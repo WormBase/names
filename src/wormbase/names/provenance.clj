@@ -98,5 +98,6 @@
          (map pull)
          (map undatomicize)
          (remove #(= (:provenance/what %) :event/import-gene))
+         (map #(update % :provenance/how (fnil identity :agent/importer)))
          (sort-mrf)
          seq)))
