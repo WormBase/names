@@ -19,7 +19,7 @@
         (s/conform ::wsp/identifier who))
       (first (vec who)))))
 
-(defn assoc-provenence
+(defn assoc-provenance
   "Associate provenance data with the request.
 
   Fill in defaults where not specified by the request.
