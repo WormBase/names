@@ -19,7 +19,7 @@
         (s/conform ::wsp/identifier who))
       (first (vec who)))))
 
-(defn assoc-provenence
+(defn assoc-provenance
   "Associate provenance data with the request.
 
   Fill in defaults where not specified by the request.
@@ -98,5 +98,6 @@
          (map pull)
          (map undatomicize)
          (remove #(= (:provenance/what %) :event/import-gene))
+         (map #(update % :provenance/how (fnil identity :agent/importer)))
          (sort-mrf)
          seq)))

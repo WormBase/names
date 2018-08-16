@@ -6,7 +6,6 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
-   [wormbase.names.agent :as wn-agent]
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
@@ -26,7 +25,7 @@
       (throw (ex-info "No names to validate (empty data)"
                       {:type :user/validation-error})))
     (if-not species-ent
-      (throw (ex-info "Invalid species specied"
+      (throw (ex-info "Invalid species specified"
                       {:invalid-species species-lur
                        :type :user/validation-error})))
     (let [patterns ((juxt :species/cgc-name-pattern
@@ -38,7 +37,7 @@
           (when-not (re-matches regexp gname)
             (throw (ex-info "Invalid name"
                             {:type :user/validation-error
-                             :invalid {:name  gname :ident name-ident}})))))))
+                             :invalid {:name gname :ident name-ident}})))))))
   data)
 
 (def name-matching-rules
@@ -93,16 +92,17 @@
 (defn about-gene [request identifier]
   (when (s/valid? ::wsg/identifier identifier)
     (let [db (:db request)
-          [lur ent] (identify request identifier)
+          [lur _] (identify request identifier)
           info-expr '[*
                       {:gene/biotype [[:db/ident]]
                        :gene/species [[:species/id][:species/latin-name]]
                        :gene/status [[:db/ident]]}]
-          data (d/pull db info-expr lur)]
+          data (-> (d/pull db info-expr lur)
+                   (assoc :history (wnp/query-provenance db lur)))]
       (http-response/ok (transform-result data)))))
 
 (defn new-unnamed-gene [request payload]
-  (let [prov (wnp/assoc-provenence request payload :event/new-gene)
+  (let [prov (wnp/assoc-provenance request payload :event/new-gene)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new-unnamed
         cdata (if (s/valid? spec data)
@@ -128,7 +128,7 @@
                                          :type ::validation-error
                                          :data data})))
                       conformed))
-        prov (wnp/assoc-provenence request payload :event/new-gene)
+        prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
@@ -147,7 +147,7 @@
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
           (let [cdata (stc/conform spec (validate-names request data))
-                prov (wnp/assoc-provenence request payload :event/update-gene)
+                prov (wnp/assoc-provenance request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
                 tx-result @(d/transact-async conn txes)]
@@ -211,7 +211,7 @@
                                            from-id
                                            into-biotype)
         prov (-> request
-                 (wnp/assoc-provenence data :event/merge-genes)
+                 (wnp/assoc-provenance data :event/merge-genes)
                  (assoc :provenance/merged-from from-lur)
                  (assoc :provenance/merged-into into-lur))
         tx-result @(d/transact-async
@@ -258,7 +258,7 @@
              p-biotype :gene/biotype} product
             p-seq-name (get-in cdata [:product :gene/sequence-name])
             prov-from (-> request
-                          (wnp/assoc-provenence cdata :event/split-gene)
+                          (wnp/assoc-provenance cdata :event/split-gene)
                           (assoc :provenance/split-into p-seq-name)
                           (assoc :provenance/split-from [:gene/id id]))
             species (-> existing-gene :gene/species :species/id)
@@ -339,7 +339,7 @@
                        :lookup-ref lur})))
     (when ent
       (let [payload (some->> request :body-params)
-            prov (wnp/assoc-provenence request payload :event/kill-gene)
+            prov (wnp/assoc-provenance request payload :event/kill-gene)
             tx-result @(d/transact-async
                         (:conn request)
                         [[:wormbase.tx-fns/kill-gene lur] prov])]

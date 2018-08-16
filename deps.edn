@@ -31,13 +31,12 @@
   metosin/spec-tools {:mvn/version "0.7.1"}
   metosin/muuntaja {:mvn/version "0.6.0-alpha1"}
   mount {:mvn/version "0.1.12"}
-  phrase {:mvn/version "0.3-alpha3"} ;; TODO: use for better API error messages.
   ring/ring-codec {:mvn/version "1.1.0"}
   ring/ring-core {:mvn/version "1.6.3"}
   ring/ring-defaults {:mvn/version "0.3.1"}
   ring/ring-jetty-adapter {:mvn/version "1.6.3"}
   semantic-csv {:mvn/version "0.2.1-alpha1"}
- }
+  com.taoensso/encore {:mvn/version "2.97.0"}}
 
  ;; aliases
  ;;   resolve-deps aliases (-R) affect dependency resolution, options:
