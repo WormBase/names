@@ -1,9 +1,12 @@
 (ns wormbase.db
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
+   [clojure.walk :as w]
    [datomic.api :as d]
    [environ.core :as environ]
    [mount.core :as mount]
+   [wormbase.util :as wu]
    [wormbase.db.schema :as db-schema]))
 
 (def ^:dynamic *wb-db-uri* nil)
@@ -110,3 +113,16 @@
 
 (defn ident-exists? [db ident]
   (pos-int? (d/entid db ident)))
+
+(defn edn-definition [edn-name ident]
+  (let [ident-match? #(= (:db/ident %) ident)]
+    (->> (str "schema/" edn-name ".edn")
+         (io/resource)
+         (wu/read-edn)
+         (filter ident-match?)
+         (first))))
+
+(def attr-schema (partial edn-definition "definitions"))
+
+(def txfn-schema (partial edn-definition "tx-fns"))
+
