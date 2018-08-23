@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [clojure.tools.logging :as log]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
@@ -136,7 +137,23 @@
         ent (d/entity db [:gene/id new-id])
         emap (wnu/entity->map ent)
         result {:created emap}]
-      (http-response/created "/gene/" result)))
+    (http-response/created "/gene/" result)))
+
+(defn resolve-refs-to-dbids
+  "Resolve references in a data payload to database ids for compare on swap operations."
+  [db data]
+  (let [species-lur (-> data :gene/species vec first)
+        species-entid (d/entid db species-lur)
+        biotype-ident (get data :gene/biotype)
+        biotype-entid (d/entid db biotype-ident)
+        res (-> (merge data
+                       (when biotype-entid
+                         {:gene/biotype biotype-entid})
+                       (when species-entid
+                         {:gene/species species-entid}))
+                (vec)
+                (sort))]
+    res))
 
 (defn update-gene [request identifier]
   (let [{db :db conn :conn} request
@@ -146,10 +163,15 @@
             spec ::wsg/update
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
-          (let [cdata (stc/conform spec (validate-names request data))
+          (let [cdata (->> (validate-names request data)
+                           (stc/conform spec)
+                           (resolve-refs-to-dbids db))
+                _ (println "PAYLOAD:")
+                _ (prn payload)
                 prov (wnp/assoc-provenance request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
+                _ (log/error (str "TXES FOR UODATE" (pr-str txes)))
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
               (let [ent (d/entity db-after lur)]
