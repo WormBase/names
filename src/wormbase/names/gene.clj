@@ -166,12 +166,9 @@
           (let [cdata (->> (validate-names request data)
                            (stc/conform spec)
                            (resolve-refs-to-dbids db))
-                _ (println "PAYLOAD:")
-                _ (prn payload)
                 prov (wnp/assoc-provenance request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
                       prov]
-                _ (log/error (str "TXES FOR UODATE" (pr-str txes)))
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
               (let [ent (d/entity db-after lur)]
