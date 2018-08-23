@@ -26,7 +26,7 @@
                           {:type :user/validation-error
                            :problems problems})))
         (let [tempid "datomic.tx"
-              prov (wnp/assoc-provenence request person :event/new-person)
+              prov (wnp/assoc-provenance request person :event/new-person)
               tx-data [(assoc person :person/active? true) prov]
               tx-res @(d/transact conn tx-data)
               pid (wdb/extract-id tx-res :person/id)]
