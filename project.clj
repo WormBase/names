@@ -27,7 +27,9 @@
     :aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}
     :plugins
-    [[com.jakemccrary/lein-test-refresh "0.20.0"]
+    [[refactor-nrepl "2.4.0-SNAPSHOT"]
+     [cider/cider-nrepl "0.18.0"]
+     [com.jakemccrary/lein-test-refresh "0.20.0"]
      [jonase/eastwood "0.2.4" :exclusions [org.clojure/clojure]]
      [lein-ancient "0.6.10" :exclusions [org.clojure/clojure]]]
     :ring {:nrepl {:start? true}}}
