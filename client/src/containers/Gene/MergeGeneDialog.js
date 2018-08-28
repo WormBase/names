@@ -3,96 +3,67 @@ import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import {
   withStyles,
-  BaseForm,
+  AjaxDialog,
   BiotypeSelect,
-  Button,
-  Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
   ProgressButton,
-  PROGRESS_BUTTON_PENDING,
-  PROGRESS_BUTTON_READY,
   TextField,
   Typography,
 } from '../../components/elements';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      errorMessage: null,
-      status: null,
-    };
-  }
 
-  handleSubmit = ({geneIdMergeInto, ...data}) => {
-    this.setState({
-      status: 'SUBMITTED',
-    }, () => {
-      mockFetchOrNot(
-        (mockFetch) => {
-          console.log(data);
-          if (data['provenance/why']) {
-            return mockFetch.post('*', {
-            });
-          } else {
-            return mockFetch.post('*', {
-              body: {
-                message: 'Reason for merging a gene is required',
-              },
-              status: 400,
-            })
-          }
-        },
-        () => {
-          return this.props.authorizedFetch(`/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`, {
-            method: 'POST',
-            body: JSON.stringify(data),
+  submitData = ({geneIdMergeInto, ...data}) => {
+    return mockFetchOrNot(
+      (mockFetch) => {
+        console.log(data);
+        if (data['provenance/why']) {
+          return mockFetch.post('*', {
           });
-        },
-      ).then((response) => response.json()).then((response) => {
-        if (!response.problems) {
-          this.setState({
-            errorMessage: null,
-            status: 'COMPLETE',
-          })
-          this.props.onSubmitSuccess && this.props.onSubmitSuccess({});
         } else {
-          this.setState({
-            errorMessage: JSON.stringify(response),
-            status: 'COMPLETE',
-          });
-          this.props.onSubmitError && this.props.onSubmitError(response);
+          return mockFetch.post('*', {
+            body: {
+              message: 'Reason for merging a gene is required',
+            },
+            status: 400,
+          })
         }
-      }).catch((e) => console.log('error', e));
-    });
+      },
+      () => {
+        return this.props.authorizedFetch(`/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+      },
+    );
   }
 
   render() {
+    const {classes, wbId, geneName, authorizedFetch, ...otherProps} = this.props;
     return (
-      <BaseForm>
+      <AjaxDialog
+        title="Merge gene"
+        submitter={this.submitData}
+        renderSubmitButton={(props) => (
+          <ProgressButton {...props}>Merge and kill {geneName}</ProgressButton>
+        )}
+        {...otherProps}
+      >
         {
-          ({withFieldData, getFormData, resetData}) => {
+          ({withFieldData, errorMessage}) => {
             const ReasonField = withFieldData(TextField, 'provenance/why');
             const GeneIdMergeIntoField = withFieldData(GeneAutocomplete, 'geneIdMergeInto');
             const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
             return (
-              <Dialog
-                open={this.props.open}
-                onClose={this.props.onClose}
-                aria-labelledby="form-dialog-title"
-              >
-                <DialogTitle id="form-dialog-title">Merge gene</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Gene <strong>{this.props.geneName}</strong> will be merged. Are you sure?
-                  </DialogContentText>
-                  <DialogContentText>
-                    <Typography color="error">{this.state.errorMessage}</Typography>
-                  </DialogContentText>
+              <DialogContent>
+                <DialogContentText>
+                  Gene <strong>{geneName}</strong> will be merged. Are you sure?
+                </DialogContentText>
+                <DialogContentText>
+                  <Typography color="error">{errorMessage}</Typography>
+                </DialogContentText>
                 <GeneIdMergeIntoField
                   label="Merge into gene"
                   helperText="Enter WBID or search by CGC name"
@@ -102,7 +73,7 @@ class MergeGeneDialog extends Component {
                   helperText={`Set the biotype of the merged gene`}
                   required
                   classes={{
-                    root: this.props.classes.biotypeSelectField,
+                    root: classes.biotypeSelectField,
                   }}
                 />
                 <ReasonField
@@ -111,27 +82,11 @@ class MergeGeneDialog extends Component {
                   required
                   fullWidth
                 />
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    onClick={this.props.onClose}
-                    color="primary"
-                  >
-                    Cancel
-                  </Button>
-                  <ProgressButton
-                    onClick={() => this.handleSubmit(getFormData())}
-                    status={this.state.status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
-                    className={this.props.classes.mergeButton}
-                  >
-                    Merge and kill {this.props.geneName}
-                  </ProgressButton>
-                </DialogActions>
-              </Dialog>
+              </DialogContent>
             )
           }
         }
-      </BaseForm>
+      </AjaxDialog>
     );
   }
 }

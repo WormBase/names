@@ -64,7 +64,7 @@
   [db tx-id]
   (d/pull db
           '[* {:provenance/what [:db/ident]
-               :provenance/who [:person/id :person/name]
+               :provenance/who [:person/email :person/name :person/id]
                :provenance/how [:db/ident]
                :provenance/split-from [:gene/id]
                :provenance/split-into [:gene/id]
@@ -77,15 +77,14 @@
   [data]
   (w/postwalk (fn presenter [m]
                 (cond
-                  (and (map? m) (:db/ident m))
-                  (:db/ident m)
+                  (and (map? m) (:db/ident m)) (:db/ident m)
                   (map? m) (dissoc m :db/id :db/txInstant)
                   :default m))
               data))
 
 (defn query-provenance
-  "query for the entire history of an entity `entity-id`.
-  Note that lookup-ref can be used instead of a numeric identifier."
+  "Query for the entire history of an entity `entity-id`.
+  `entity-id` can be a datomic id number or a lookup-ref."
   [db entity-id]
   (let [pull (partial pull-provenance db)
         sort-mrf #(sort-events-by-when % :most-recent-first true)]

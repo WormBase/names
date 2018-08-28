@@ -9,12 +9,12 @@
 
 (s/def :biotype/transcript sts/keyword?)
 
-(s/def :biotype/transposon sts/keyword?)
+(s/def :biotype/transposable-element-gene sts/keyword?)
 
 (def all-biotypes #{:biotype/cds
                     :biotype/psuedogene
                     :biotype/transcript
-                    :biotype/transposon})
+                    :biotype/transposable-element-gene})
 
 (s/def ::biotypes all-biotypes)
 

@@ -106,24 +106,25 @@
                   (assoc :db/id new-gene-ref))]
       [new])"}}
 
- {:db/ident :wormbase.tx-fns/resolve-gene-refs
-  :db/doc "Resolve ref  erences in a gene entity suitable for CAS."
+ {:db/ident :wormbase.tx-fns/resolve-refs
+  :db/doc "Resolve references in a datomic entity mapping to numeric db ids in `em`."
   :db/fn #db/fn
   {:lang "clojure"
-   :params [db data]
+   :requires [[clojure.walk :as w]]
+   :params [db em]
    :code
-   "(let [species-lur (-> data :gene/species vec first)
-          species-entid (d/entid db species-lur)
-          biotype-ident (get data :gene/biotype)
-          biotype-entid (d/entid db biotype-ident)
-          res (-> (merge data
-                         (when biotype-entid
-                           {:gene/biotype biotype-entid})
-                         (when species-entid
-                           {:gene/species species-entid}))
-                  (vec)
-                  (sort))]
-        res)"}}
+   "(w/prewalk
+      (fn [x]
+        (if (map? x)
+          (reduce-kv (fn [m k v]
+                       (cond
+                         (and (map? v) (:db/id v))  (assoc m k (:db/id v))
+                         (keyword? v) (d/entid db v)
+                         :else (assoc m k v)))
+                       {}
+                       x)
+          x))
+       em)"}}
 
  {:db/ident :wormbase.tx-fns/collate-cas-batch
   :db/doc "Collate a collection of compare-and-swap operations."
@@ -134,23 +135,19 @@
    :code
    "(let [resolve-refs (partial d/invoke
                                 db
-                                :wormbase.tx-fns/resolve-gene-refs
+                                :wormbase.tx-fns/resolve-refs
                                 db)
           eid (:db/id entity)
           e-keys (keys data)
-          entity->map (fn datomic-entity-to-array-map [ent]
-                        (w/prewalk #(if (instance? datomic.query.EntityMap %)
-                                      (into {} %)
-                                      %)
-                                   ent))
-          existing (resolve-refs (select-keys (entity->map entity) (keys data)))
+          entity-map (d/pull db '[*] eid)
           new (resolve-refs data)
-          res (some->> (mapv (fn [[old-k old-v] [new-k new-v]]
-                               (when-not (nil? new-v)
-                                 [:db.fn/cas eid new-k old-v new-v]))
-                             existing
+          res (some->> (map (fn [[k v]]
+                              (let [old-v (k (resolve-refs entity-map))]
+                               (when-not (or (nil? v)
+                                             (= old-v v))
+                                 [:db.fn/cas eid k old-v v])))
                              new)
-                       (filter identity))]
+                       (remove nil?))]
       res)"}}
 
  {:db/ident :wormbase.tx-fns/update-gene

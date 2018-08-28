@@ -38,9 +38,11 @@ export {
 
 export { default as DocumentTitle } from 'react-document-title';
 
+export { default as AjaxDialog } from './AjaxDialog';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
+export { default as SimpleAjax } from './SimpleAjax';
 export { default as NotFound } from './NotFound';
 export { Page, PageLeft, PageMain, PageRight } from './Page';
 export * from './ProgressButton';

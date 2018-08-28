@@ -10,6 +10,11 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
+(defn make-auth-payload
+  [& {:keys [current-user]
+      :or {current-user "tester@wormbase.org"}}]
+  (fake-auth/payload {"email" current-user}))
+
 (defn find-gene
   [pattern & {:keys [current-user]
               :or {current-user "tester@wormbase.org"}}]
