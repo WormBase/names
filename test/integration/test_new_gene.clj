@@ -3,7 +3,6 @@
    [clojure.test :as t]
    [datomic.api :as d]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.fake-auth :as fake-auth]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]

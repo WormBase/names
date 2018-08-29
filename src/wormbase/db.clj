@@ -122,6 +122,10 @@
          (filter ident-match?)
          (first))))
 
+;; convenience aliases to read schema items from resources by keyword.
+
+(def seed-data-schema (partial edn-definition "seed-data"))
+
 (def attr-schema (partial edn-definition "definitions"))
 
 (def txfn-schema (partial edn-definition "tx-fns"))

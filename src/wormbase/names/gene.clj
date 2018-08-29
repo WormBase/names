@@ -257,9 +257,12 @@
                    [:gene/id from-id]
                    [:gene/id into-id])]
     (let [conn (:conn request)
-          prov {:db/id "datomic.tx"
-                :provenance/compensates tx
-                :provenance/why "Undoing merge"}
+          payload (get request :body-params {})
+          prov (-> request
+                   (wnp/assoc-provenance payload :event/undo-merge-genes)
+                   (merge {:db/id "datomic.tx"
+                           :provenance/compensates tx
+                           :provenance/why "Undoing merge"}))
           compensating-txes (wdb/invert-tx (d/log conn) tx prov)
           tx-result @(d/transact-async conn compensating-txes)]
       (http-response/ok {:live into-id :dead from-id}))
@@ -268,7 +271,7 @@
 (defn split-gene [request id]
   (let [conn (:conn request)
         db (d/db conn)
-        data (some-> request :body-params)
+        data (get request :body-params {})
         spec ::wsg/split]
     (if-let [[lur existing-gene] (identify request id)]
       (let [cdata (stc/conform spec data)
@@ -304,12 +307,14 @@
 (defn ressurect-gene [request identifier]
   (if (s/valid? ::wsg/identifier identifier)
     (let [[ident val] (s/conform ::wsg/identifier identifier)
+          prov (wnp/assoc-provenance request {} :evet/resurrect-gene)
           tx-res @(d/transact-async (:conn request)
                                     [[:db.fn/cas
                                       [ident val]
                                       :gene/status
                                       :gene.status/dead
-                                      :gene.status/live]])]
+                                      :gene.status/live]
+                                     prov])]
       (http-response/ok {:gene/id identifier}))))
 
 (defn- invert-split-tx [db e a v tx added?]
@@ -334,9 +339,12 @@
                    [:gene/id from-id]
                    [:gene/id into-id])]
     (let [conn (:conn request)
-          prov {:db/id "datomic.tx"
-                :provenance/compensates tx
-                :provenance/why "Undoing split"}
+          payload (get request :body-params {})
+          prov (-> request
+                   (wnp/assoc-provenance payload :event/undo-split-gene)
+                   (merge {:db/id "datomic.tx"
+                           :provenance/compensates tx
+                           :provenance/why "Undoing split"}))
           fact-mapper (partial invert-split-tx (d/db conn))
           compensating-txes (wdb/invert-tx (d/log conn)
                                             tx
@@ -357,7 +365,7 @@
                       {:type ::wdb/conflict
                        :lookup-ref lur})))
     (when ent
-      (let [payload (some->> request :body-params)
+      (let [payload (get request :body-params {})
             prov (wnp/assoc-provenance request payload :event/kill-gene)
             tx-result @(d/transact-async
                         (:conn request)

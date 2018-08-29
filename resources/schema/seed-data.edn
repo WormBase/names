@@ -73,7 +73,9 @@
  #:db{:ident :event/new-unnamed-gene}
  #:db{:ident :event/update-gene}
  #:db{:ident :event/merge-genes}
+ #:db{:ident :event/undo-merge-genes}
  #:db{:ident :event/split-gene}
+ #:db{:ident :event/undo-split-gene}
  #:db{:ident :event/kill-gene}
  #:db{:ident :event/resurrect-gene}
  #:db{:ident :event/suppress-gene}
