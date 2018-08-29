@@ -51,6 +51,7 @@
             {org.clojure/test.check {:mvn/version  "0.9.0"}
              org.clojure/tools.trace {:mvn/version  "0.7.9"}
              org.clojure/tools.nrepl {:mvn/version "0.2.13"}
+             com.cognitect/transcriptor {:mvn/version "0.1.5"}
              acyclic/squiggly-clojure {:mvn/version "0.1.9-SNAPSHOT"
                                        :exclusions [org.clojure/tools.reader]}
              com.velisco/strgen {:mvn/version "0.1.5"
