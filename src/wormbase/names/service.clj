@@ -55,7 +55,7 @@
    :data
    {;; :basePath "/api"
     :info
-    {:title "Wormbase name service"
+    {:title "WormBase name service"
      :description "Provides naming operations for WormBase entities."}
 
     ;; TODO: look up how to define securityDefinitions properly!
