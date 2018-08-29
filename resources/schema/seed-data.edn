@@ -82,9 +82,5 @@
  #:db{:ident :importer/historical-gene-version
       :valueType :db.type/long
       :cardinality :db.cardinality/one
-      :doc "An temporary attribute used only for import."}
+      :doc "A temporary attribute used only for import."}]
 
- ;; person (user)
- #:person{:roles #{:person.role/admin},
-          :google-id 111925262522292127085N,
-          :email "matthew.russell@wormbase.org"}]
