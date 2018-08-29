@@ -65,13 +65,15 @@
           :name "Yuling Li"}
  #:person{:id "WBPerson33035",
           :email "matthew.russel@wormbase.org",
-          :name "Matthew Russell"}
+          :name "Matthew Russell"
+          :roles #{:person.role/admin}}
  #:person{:id "WBPerson4055",
           :email "michael.paulini@wormbase.org",
           :name "Michael Paulini"}
  #:person{:id "WBPerson36074",
           :email "myriam.shafie@wormbase.org",
-          :name "Myriam Shafie"}
+          :name "Myriam Shafie"
+          :active? false}
  #:person{:id "WBPerson1983",
           :email "paul.davis@wormbase.org",
           :name "Paul Anthony Davis"
@@ -84,7 +86,8 @@
           :name "Snehalata Kadam"}
  #:person{:id "WBPerson12021",
           :email "thomas.down@wormbase.org",
-         :name "Thomas A Down"}
+          :name "Thomas A Down"
+          :active? false}
  #:person{:id "WBPerson241",
           :email "todd@wormbase.org",
           :name "Todd William Harris"}
