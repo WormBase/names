@@ -1,16 +1,7 @@
 import React, { Component } from 'react';
 import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import {
-  withStyles,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Timestamp,
-} from '../../components/elements';
+import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivities extends Component {
   constructor(props) {
@@ -30,6 +21,54 @@ class RecentActivities extends Component {
         const mockData = [
           {
             entity: {
+              id: 'WB333',
+              label: 'aaa-22',
+            },
+            relatedEntity: {
+              id: 'WB345',
+              label: 'aaa-222'
+            },
+            eventType: 'acquire_merge',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2018-08-09T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
+              id: 'WB345',
+              label: 'aaa-222'
+            },
+            relatedEntity: {
+              id: 'WB333',
+              label: 'aaa-22',
+            },
+            eventType: 'merge_into',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2018-08-09T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
+              id: 'WB4',
+              label: 'aaa-3',
+            },
+            relatedEntity: null,
+            eventType: 'kill',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2018-08-09T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
               id: 'WB1',
               label: 'ab',
             },
@@ -37,11 +76,28 @@ class RecentActivities extends Component {
               id: 'WB345',
               label: 'abc-1'
             },
-            eventType: 'split',
+            eventType: 'split_from',
             curatedBy: {
               name: 'Gary'
             },
-            time: '2015-08-19T23:15:30.000Z',
+            time: '2018-08-09T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
+            entity: {
+              id: 'WB345',
+              label: 'abc-1'
+            },
+            relatedEntity: {
+              id: 'WB1',
+              label: 'ab',
+            },
+            eventType: 'split_into',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2018-08-09T23:15:30.000Z',
             agent: 'script',
             reason: 'Don\'t like it',
           },
@@ -55,7 +111,7 @@ class RecentActivities extends Component {
             curatedBy: {
               name: 'Michael'
             },
-            time: '2015-07-20T23:15:30.000Z',
+            time: '2018-07-20T23:15:30.000Z',
             agent: 'web form',
             reason: 'Looked funny',
           },
@@ -81,6 +137,7 @@ class RecentActivities extends Component {
           method: 'GET'
         });
       },
+      true
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data.reason ? [] : data,
@@ -90,69 +147,20 @@ class RecentActivities extends Component {
   }
 
   render() {
-    const {classes} = this.props;
+    const {authorizedFetch} = this.props;
     return (
-      <Table classes={{root: classes.root}}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Time</TableCell>
-            <TableCell>Event type</TableCell>
-            <TableCell>Entity</TableCell>
-            <TableCell>Related entity</TableCell>
-            <TableCell>Curated by</TableCell>
-            <TableCell>Reason</TableCell>
-            <TableCell>Agent</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            this.state.data.map(
-              (historyItem) => {
-                return (
-                  <TableRow>
-                    <TableCell className={classes.time}>
-                      <Timestamp time={historyItem.time} />
-                    </TableCell>
-                    <TableCell>{historyItem.eventType}</TableCell>
-                    <TableCell>
-                      {
-                        historyItem.entity ?
-                          <Link to={`/gene/id/${historyItem.entity.id}`}>{historyItem.entity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {
-                        historyItem.relatedEntity ?
-                          <Link to={`/gene/id/${historyItem.relatedEntity.id}`}>{historyItem.relatedEntity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>{historyItem.curatedBy.name}</TableCell>
-                    <TableCell>{historyItem.reason}</TableCell>
-                    <TableCell>{historyItem.agent}</TableCell>
-                  </TableRow>
-                )
-              }
-            )
-          }
-        </TableBody>
-      </Table>
+      <GeneActivitiesTable
+        activities={this.state.data}
+        authorizedFetch={authorizedFetch}
+        onUpdate={this.fetchData}
+      />
     );
   }
 }
 
 RecentActivities.propTypes = {
   wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func,
 };
 
-const styles = (theme) => ({
-  root: {
-    // width: 'initial',
-  },
-  time: {
-    whiteSpace: 'nowrap',
-  }
-});
-
-export default withStyles(styles)(RecentActivities);
+export default RecentActivities;

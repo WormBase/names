@@ -9,7 +9,7 @@ import GeneSearchBox from './GeneSearchBox';
 import RecentActivities from './RecentActivities';
 
 const Gene = (props) => {
-  const {classes} = props;
+  const {classes, authorizedFetch} = props;
   return (
     <Page>
       <div className={classes.root}>
@@ -30,7 +30,7 @@ const Gene = (props) => {
         {/* tables and charts */}
         <Typography variant="title" gutterBottom>Recent activities</Typography>
         <div className={classes.recentActivitiesTable}>
-          <RecentActivities />
+          <RecentActivities authorizedFetch={authorizedFetch} />
         </div>
       </div>
       </div>
@@ -40,6 +40,7 @@ const Gene = (props) => {
 
 Gene.propTypes = {
   classes: PropTypes.object.isRequired,
+  authorizedFetch: PropTypes.func,
 };
 
 const styles = (theme) => ({

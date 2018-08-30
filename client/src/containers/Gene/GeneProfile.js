@@ -16,6 +16,7 @@ import {
 } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
+import ResurrectGeneDialog from './ResurrectGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
 import RecentActivitiesSingleGene from './RecentActivitiesSingleGene';
@@ -29,6 +30,7 @@ class GeneProfile extends Component {
       successMessage: null,
       data: {},
       showKillGeneDialog: false,
+      showResurrectGeneDialog: false,
       showMergeGeneDialog: false,
       showSplitGeneDialog: false,
     };
@@ -129,6 +131,18 @@ class GeneProfile extends Component {
     });
   }
 
+  openResurrectGeneDialog = () => {
+    this.setState({
+      showResurrectGeneDialog: true,
+    });
+  }
+
+  closeResurrectGeneDialog = () => {
+    this.setState({
+      showResurrectGeneDialog: false,
+    });
+  }
+
   openMergeGeneDialog = () => {
     this.setState({
       showMergeGeneDialog: true,
@@ -210,14 +224,16 @@ class GeneProfile extends Component {
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
             <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene wbId={this.props.wbId} />
+              <RecentActivitiesSingleGene
+                wbId={this.props.wbId}
+                authorizedFetch={this.props.authorizedFetch}
+              />
             </div>
           </div>
         </PageMain>
         <PageRight>
           {
-            this.state.data['gene/status'] !== 'gene.status/live' ?
-              null :
+            this.state.data['gene/status'] === 'gene.status/live' ?
               <div className={classes.operations}>
                 <Button
                   variant="raised"
@@ -232,6 +248,13 @@ class GeneProfile extends Component {
                   variant="raised"
                   onClick={this.openKillGeneDialog}
                 >Kill Gene</Button>
+              </div> :
+              <div className={classes.operations}>
+                <Button
+                  className={classes.killButton}
+                  variant="raised"
+                  onClick={this.openResurrectGeneDialog}
+                >Resurrect Gene</Button>
               </div>
           }
         </PageRight>
@@ -244,6 +267,23 @@ class GeneProfile extends Component {
           onSubmitSuccess={(data) => {
             this.fetchData();
             this.closeKillGeneDialog();
+          }}
+        />
+        <ResurrectGeneDialog
+          geneName={this.getDisplayName(this.state.data)}
+          wbId={this.state.data['gene/id']}
+          authorizedFetch={this.props.authorizedFetch}
+          open={this.state.showResurrectGeneDialog}
+          onClose={this.closeResurrectGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.setState((prevState) => ({
+              data: {
+                ...prevState.data,
+                'gene/status': 'gene.status/live',
+              },
+            }), () => {
+              this.closeResurrectGeneDialog();
+            });
           }}
         />
         <MergeGeneDialog

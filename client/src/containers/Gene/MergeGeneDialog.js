@@ -95,10 +95,6 @@ MergeGeneDialog.propTypes = {
   wbId: PropTypes.string.isRequired,
   geneName: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
-  open: PropTypes.bool,
-  onClose: PropTypes.func,
-  onSubmitSuccess: PropTypes.func,
-  onSubmitError: PropTypes.func,
 };
 
 const styles = (theme) => ({

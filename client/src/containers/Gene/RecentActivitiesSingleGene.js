@@ -1,16 +1,8 @@
 import React, { Component } from 'react';
 import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import {
-  withStyles,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Timestamp,
-} from '../../components/elements';
+import { withStyles } from '../../components/elements';
+import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivitiesSingleGene extends Component {
   constructor(props) {
@@ -29,15 +21,25 @@ class RecentActivitiesSingleGene extends Component {
       (mockFetch) => {
         const mockData = [
           {
+            relatedEntity: null,
+            eventType: 'kill',
+            curatedBy: {
+              name: 'Gary'
+            },
+            time: '2018-08-09T23:15:30.000Z',
+            agent: 'script',
+            reason: 'Don\'t like it',
+          },
+          {
             relatedEntity: {
               id: 'WB345',
               label: 'abc-1'
             },
-            eventType: 'split',
+            eventType: 'split_from',
             curatedBy: {
               name: 'Gary'
             },
-            time: '2015-08-19T23:15:30.000Z',
+            time: '2018-08-09T23:15:30.000Z',
             agent: 'script',
             reason: 'Don\'t like it',
           },
@@ -61,7 +63,13 @@ class RecentActivitiesSingleGene extends Component {
             agent: 'script',
             reason: 'New',
           },
-        ];
+        ].map((activityItem) => ({
+          ...activityItem,
+          entity: {
+            id: this.props.wbId,
+            label: this.props.wbId,
+          },
+        }))
         return mockFetch.get('*', mockData);
       },
       () => {
@@ -69,6 +77,7 @@ class RecentActivitiesSingleGene extends Component {
           method: 'GET'
         });
       },
+      true,
     ).then((response) => response.json()).then((data) => {
       this.setState({
         data: data.reason ? [] : data,
@@ -78,60 +87,32 @@ class RecentActivitiesSingleGene extends Component {
   }
 
   render() {
-    const {classes} = this.props;
+    const {classes, authorizedFetch} = this.props;
     return (
-      <Table classes={{root: classes.root}}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Time</TableCell>
-            <TableCell>Event type</TableCell>
-            <TableCell>Related entity</TableCell>
-            <TableCell>Curated by</TableCell>
-            <TableCell>Reason</TableCell>
-            <TableCell>Agent</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            this.state.data.map(
-              (historyItem) => {
-                return (
-                  <TableRow>
-                    <TableCell className={classes.time}>
-                      <Timestamp time={historyItem.time}/>
-                    </TableCell>
-                    <TableCell>{historyItem.eventType}</TableCell>
-                    <TableCell>
-                      {
-                        historyItem.relatedEntity ?
-                          <Link to={`/gene/id/${historyItem.relatedEntity.id}`}>{historyItem.relatedEntity.label}</Link> :
-                          null
-                      }
-                    </TableCell>
-                    <TableCell>{historyItem.curatedBy.name}</TableCell>
-                    <TableCell>{historyItem.reason}</TableCell>
-                    <TableCell>{historyItem.agent}</TableCell>
-                  </TableRow>
-                )
-              }
-            )
-          }
-        </TableBody>
-      </Table>
+      <GeneActivitiesTable
+        activities={this.state.data}
+        authorizedFetch={authorizedFetch}
+        onUpdate={this.fetchData}
+        classes={{
+          entityCell: classes.entityCell,
+          entityColumnHeader: classes.entityColumnHeader,
+        }}
+      />
     );
   }
 }
 
 RecentActivitiesSingleGene.propTypes = {
   wbId: PropTypes.string.isRequired,
+  authorizedFetch: PropTypes.func,
 };
 
 const styles = (theme) => ({
-  root: {
-    // width: 'initial',
+  entityColumnHeader: {
+    display: 'none',
   },
-  time: {
-    whiteSpace: 'nowrap',
+  entityCell: {
+    display: 'none',
   },
 });
 
