@@ -307,15 +307,24 @@
 (defn ressurect-gene [request identifier]
   (if (s/valid? ::wsg/identifier identifier)
     (let [[ident val] (s/conform ::wsg/identifier identifier)
-          prov (wnp/assoc-provenance request {} :evet/resurrect-gene)
-          tx-res @(d/transact-async (:conn request)
-                                    [[:db.fn/cas
-                                      [ident val]
-                                      :gene/status
-                                      :gene.status/dead
-                                      :gene.status/live]
-                                     prov])]
-      (http-response/ok {:gene/id identifier}))))
+          prov (wnp/assoc-provenance request {} :event/resurrect-gene)
+          db (:db request)
+          {gene-status :gene/status} (d/pull db
+                                             '[{:gene/status [:db/ident]}]
+                                             [ident val])]
+      (if (= (:db/ident gene-status) :gene.status/live)
+        (http-response/precondition-failed {:message "Cannot ressurect live gene"
+                                            :info gene-status})
+        (let [tx-res @(d/transact-async (:conn request)
+                                        [[:db.fn/cas
+                                          [ident val]
+                                          :gene/status
+                                          (d/entid db :gene.status/dead)
+                                          (d/entid db :gene.status/live)]
+                                         prov])]
+          (http-response/ok {:gene/id identifier}))))
+    (http-response/bad-request {:message "Invalid gene identifier"
+                                :info identifier})))
 
 (defn- invert-split-tx [db e a v tx added?]
   (cond
