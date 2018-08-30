@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import {
   withStyles,
@@ -40,6 +40,10 @@ class GeneProfile extends Component {
     this.fetchData();
   }
 
+  getId = () => {
+    return this.state.data['gene/id'] || this.props.wbId;
+  }
+
   fetchData = () => {
     this.setState({
       status: 'SUBMITTED',
@@ -56,11 +60,11 @@ class GeneProfile extends Component {
             "gene/cgc-name":"abi-1",
             "gene/status":"gene.status/live",
             "gene/biotype":"biotype/cds",
-            "gene/id": this.props.wbId,
+            "gene/id": this.getId(),
           });
         },
         () => {
-          return fetch(`/api/gene/${this.props.wbId}`, {});
+          return fetch(`/api/gene/${this.getId()}`, {});
         },
       ).then((response) => {
         const nextStatus = (response.status === 404 || response.status === 500) ?
@@ -71,6 +75,11 @@ class GeneProfile extends Component {
         this.setState({
           data: response,
           status: nextStatus,
+        }, () => {
+          const permanentUrl = `/gene/id/${this.getId()}`;
+          if (nextStatus === 'COMPLETE' && this.props.history.location.pathname !== permanentUrl) {
+            this.props.history.replace(`/gene/id/${this.getId()}`);
+          }
         });
       }).catch((e) => console.log('error', e));
     });
@@ -89,7 +98,7 @@ class GeneProfile extends Component {
           });
         },
         () => {
-          return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+          return this.props.authorizedFetch(`/api/gene/${this.getId()}`, {
             method: 'PUT',
             body: JSON.stringify({
               ...data
@@ -180,7 +189,8 @@ class GeneProfile extends Component {
   )
 
   render() {
-    const {classes, wbId} = this.props;
+    const {classes} = this.props;
+    const wbId = this.getId();
     const backToDirectoryButton = (
       <Button
         variant="raised"
@@ -202,7 +212,7 @@ class GeneProfile extends Component {
           {backToDirectoryButton}
         </PageLeft>
         <PageMain>
-          <Typography variant="headline" gutterBottom>Gene <em>{this.state.data['gene/id']|| wbId}</em></Typography>
+          <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           <Typography color="error">{this.state.errorMessage}</Typography>
           {
             this.state.data['gene/status'] === 'gene.status/live' ?
@@ -225,7 +235,7 @@ class GeneProfile extends Component {
             <Typography variant="title" gutterBottom>Change history</Typography>
             <div className={classes.historyTable}>
               <RecentActivitiesSingleGene
-                wbId={this.props.wbId}
+                wbId={wbId}
                 authorizedFetch={this.props.authorizedFetch}
               />
             </div>
@@ -260,7 +270,7 @@ class GeneProfile extends Component {
         </PageRight>
         <KillGeneDialog
           geneName={this.getDisplayName(this.state.data)}
-          wbId={this.state.data['gene/id']}
+          wbId={wbId}
           authorizedFetch={this.props.authorizedFetch}
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
@@ -271,7 +281,7 @@ class GeneProfile extends Component {
         />
         <ResurrectGeneDialog
           geneName={this.getDisplayName(this.state.data)}
-          wbId={this.state.data['gene/id']}
+          wbId={wbId}
           authorizedFetch={this.props.authorizedFetch}
           open={this.state.showResurrectGeneDialog}
           onClose={this.closeResurrectGeneDialog}
@@ -288,7 +298,7 @@ class GeneProfile extends Component {
         />
         <MergeGeneDialog
           geneName={this.getDisplayName(this.state.data)}
-          wbId={this.state.data['gene/id']}
+          wbId={wbId}
           authorizedFetch={this.props.authorizedFetch}
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
@@ -299,7 +309,7 @@ class GeneProfile extends Component {
         />
         <SplitGeneDialog
           geneName={this.getDisplayName(this.state.data)}
-          wbId={this.state.data['gene/id']}
+          wbId={wbId}
           biotypeOriginal={this.state.data['gene/biotype']}
           authorizedFetch={this.props.authorizedFetch}
           open={this.state.showSplitGeneDialog}
@@ -324,6 +334,9 @@ GeneProfile.propTypes = {
   classes: PropTypes.object.isRequired,
   wbId: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
+  history: PropTypes.shape({
+    replace: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 const styles = (theme) => ({
@@ -352,4 +365,4 @@ const styles = (theme) => ({
   },
 });
 
-export default withStyles(styles)(GeneProfile);
+export default withStyles(styles)(withRouter(GeneProfile));
