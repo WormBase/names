@@ -9,11 +9,15 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
+(s/def ::new-name (stc/spec (s/and string? not-empty)))
+
+(s/def ::existing-name (stc/spec string?))
+
 (s/def :gene/id (stc/spec (s/and string? (partial re-matches gene-id-regexp))))
 
-(s/def :gene/cgc-name (stc/spec (s/and string? not-empty)))
+(s/def :gene/cgc-name (stc/spec string?))
 
-(s/def :gene/sequence-name (stc/spec (s/and string? not-empty)))
+(s/def :gene/sequence-name (stc/spec string?))
 
 (s/def :gene/biotype (stc/spec (s/and keyword?
                                       #(= (namespace %) "biotype"))))
