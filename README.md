@@ -70,7 +70,7 @@ Ensure you've installed the following software on your system:
 [awsebcli][10]
 
 ### Setup client app
-Setup client app either by [making a production build of the client app](#building-the-client-app) or running a client development server:
+Setup client app **either by [making a production build of the client app](#building-the-client-app) or running a client development server**, as show here:
 
 - First, ensure `client/package.json` has proxy configured to point at the backend API.
 
@@ -81,6 +81,26 @@ yarn install
 yarn run start
 ```
 
+- Finally, ensure the authentication callback URL at Google Cloud Console is configured to match the client development server configuration.
+
+Notes:
+- `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
+- **Port:**
+    - To run the server on a different port:
+```bash
+PORT=[PORT] yarn run start
+```
+- **Dependencies:**
+    - Most errors about missing dependencies can be resolved with `yarn install`.
+    - It's safe to run `yarn install` when in doubt.
+    - Refer to [yarn][7] documentation when modifying dependencies. And be sure to checking in changes in `yarn.lock` (auto-generated).
+- **Mock:**
+    - Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
+    - Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
+    - `shouldMock` defaults to the `REACT_APP_SHOULD_MOCK` environment variable, when it's not passed in as an argument.
+- **Directory structure**
+    - [create-react-app][11] is responsible for the directory structure of `client/` except `client/src`, and relies it staying this way.
+    - `client/src` primarily consists of `containers` (React components involving business logic) `components/elements` (React components involving only appearance and/or UI logic).
 
 ### Run the application locally
 Run with:
@@ -128,3 +148,4 @@ Copyright ©  WormBase 2017
 [8]: https://docs.docker.com/install/
 [9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [10]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
+[11]: https://github.com/facebook/create-react-app
