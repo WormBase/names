@@ -15,14 +15,14 @@ This library intends to provide:
    The schema and related database functions are intended to evolve to
    eventually become the "central" database within the WormBase
    architecture.
-   
+
  - A basic user interface to interact with the name-service.
- 
+
  - Serialisation of events to a queueing system, such that those
    events can be "replayed" into various ACeDB databases.
-   
+
  - User authentication (agianst the wormbase.org google organisation)
- 
+
 ## Datomic schema design/approach
 Schema is defined as vanilla datomic schema entities in EDN, which is
 read in upon starting the web-service, idemopotently using
@@ -69,7 +69,19 @@ Ensure you've installed the following software on your system:
 
 [awsebcli][10]
 
-	
+### Setup client app
+Setup client app either by [making a production build of the client app](#building-the-client-app) or running a client development server:
+
+- First, ensure `client/package.json` has proxy configured to point at the backend API.
+
+- Then, run:
+```bash
+cd client/
+yarn install
+yarn run start
+```
+
+
 ### Run the application locally
 Run with:
 
@@ -92,6 +104,16 @@ lein test
 lein do clean, test-refresh
 ```
 
+## Production deployment
+
+### Building the client app
+```bash
+cd client/
+yarn install --frozen-lockfile
+yarn run build
+```
+
+
 ## License
 EPL (Eclipse Public License)
 Copyright ©  WormBase 2017
@@ -104,5 +126,5 @@ Copyright ©  WormBase 2017
 [6]: https://nodejs.org/en/
 [7]: https://yarnpkg.com/en/docs/install
 [8]: https://docs.docker.com/install/
-[9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html 
+[9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [10]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
