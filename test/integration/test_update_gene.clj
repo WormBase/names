@@ -76,6 +76,29 @@
               (t/is (= (:gene/cgc-name updated) (:gene/cgc-name sample-data)))
               (tu/query-provenance conn identifier :event/update-gene))))))))
 
+(t/deftest update-names
+  (t/testing (str "Allow names to blanked")
+    (let [identifier (first (gen/sample gsg/id 1))
+          sample (-> (gen/sample gsg/update 1)
+                     first
+                     (select-keys [:gene/cgc-name :gene/species]))
+          sample-data (assoc sample
+                             :gene/id identifier
+                             :gene/cgc-name (tu/cgc-name-for-sample sample))]
+      (tu/with-gene-fixtures
+        [sample-data]
+        (fn do-update [conn]
+          (let [[status body] (update-gene identifier
+                                           (-> sample-data
+                                               (assoc :gene/biotype :biotype/cds)
+                                               (assoc :gene/cgc-name "")))]
+            (tu/status-is? status 200 body)
+            (let [db (d/db conn)
+                  identifier (some-> body :updated :gene/id)
+                  updated (:updated body)]
+              (t/is (empty? (:gene/cgc-name body)))
+              (tu/query-provenance conn identifier :event/update-gene))))))))
+
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
     (let [identifier (first (gen/sample gsg/id 1))

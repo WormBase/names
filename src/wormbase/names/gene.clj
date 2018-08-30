@@ -18,10 +18,12 @@
 
 (def identify (partial wne/identify ::wsg/identifier))
 
-(defn validate-names [request data]
-  (let [db (:db request)
-        species-lur (some-> data :gene/species vec first)
-        species-ent (d/entity db species-lur)]
+(defn validate-names
+  ([request data & {:keys [allow-blank-names?]
+                    :or {allow-blank-names? true}}]
+   (let [db (:db request)
+         species-lur (some-> data :gene/species vec first)
+         species-ent (d/entity db species-lur)]
     (if (empty? data)
       (throw (ex-info "No names to validate (empty data)"
                       {:type :user/validation-error})))
@@ -30,16 +32,19 @@
                       {:invalid-species species-lur
                        :type :user/validation-error})))
     (let [patterns ((juxt :species/cgc-name-pattern
-                          :species/sequence-name-pattern) species-ent)
+                             :species/sequence-name-pattern) species-ent)
           regexps (map re-pattern patterns)
           name-idents [:gene/cgc-name :gene/sequence-name]]
       (doseq [[regexp name-ident] (partition 2 (interleave regexps name-idents))]
         (when-let [gname (name-ident data)]
           (when-not (re-matches regexp gname)
-            (throw (ex-info "Invalid name"
-                            {:type :user/validation-error
-                             :invalid {:name gname :ident name-ident}})))))))
-  data)
+            (when-not (and allow-blank-names? (empty? gname))
+              (throw (ex-info "Invalid name"
+                              {:type :user/validation-error
+                               :invalid {:name gname :ident name-ident}}))))))
+      data)))
+  ([request data]
+   (validate-names request data :allow-blank-names? false)))
 
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
@@ -163,7 +168,7 @@
             spec ::wsg/update
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
-          (let [cdata (->> (validate-names request data)
+          (let [cdata (->> (validate-names request data :allow-blank-names? true)
                            (stc/conform spec)
                            (resolve-refs-to-dbids db))
                 prov (wnp/assoc-provenance request payload :event/update-gene)
