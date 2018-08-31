@@ -6,7 +6,7 @@ const Humanize = ({children}) => {
 };
 
 Humanize.propTypes = {
-  children: PropTypes.children,
+  children: PropTypes.string,
 };
 
 export default Humanize;
