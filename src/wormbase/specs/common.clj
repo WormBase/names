@@ -5,8 +5,6 @@
 
 (s/def ::info sts/map?)
 
-(s/def ::spec (stc/spec (s/keys :req-un [::info])))
+(s/def ::message sts/string?)
 
-(s/def ::error-response (stc/spec (s/keys :req-un [::spec])))
-
-(s/def ::conflict-response (stc/spec (s/keys :req-un [::info])))
+(s/def ::error-response (stc/spec (s/keys :req-un [::info ::message])))

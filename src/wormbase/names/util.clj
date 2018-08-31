@@ -2,7 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [clojure.walk :as walk]
+   [clojure.walk :as w]
    [aero.core :as aero]
    [datomic.api :as d]))
 
@@ -35,10 +35,10 @@
        data))
 
 (defn entity->map [ent]
-  (walk/prewalk #(if (instance? datomic.query.EntityMap %)
-                   (into {} %)
-                   %)
-                ent))
+  (w/prewalk #(if (instance? datomic.query.EntityMap %)
+                (into {} %)
+                %)
+             ent))
 
 ;; trunc and datom-table taken from day-of-datomic repo (congnitect).
 
@@ -81,8 +81,18 @@
     (assoc m k v)))
 
 (defn resolve-refs [db entity-like-mapping]
-  (walk/prewalk (fn [xs]
-                  (if (map? xs)
-                    (reduce-kv (partial resolve-ref db) (empty xs) xs)
-                    xs))
-                entity-like-mapping))
+  (w/prewalk (fn [xs]
+               (if (map? xs)
+                 (reduce-kv (partial resolve-ref db) (empty xs) xs)
+                 xs))
+             entity-like-mapping))
+
+(defn undatomicize
+  "Remove datomic internal attribute/value pairs from a seq of maps."
+  [data]
+  (w/postwalk (fn presenter [m]
+                (cond
+                  (and (map? m) (:db/ident m)) (:db/ident m)
+                  (map? m) (dissoc m :db/id :db/txInstant)
+                  :default m))
+              data))

@@ -72,16 +72,6 @@
                :provenance/merged-into [:gene/id]}]
           tx-id))
 
-(defn- undatomicize
-  "Remove datomic internal attribute/value pairs from a seq of maps."
-  [data]
-  (w/postwalk (fn presenter [m]
-                (cond
-                  (and (map? m) (:db/ident m)) (:db/ident m)
-                  (map? m) (dissoc m :db/id :db/txInstant)
-                  :default m))
-              data))
-
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
   `entity-id` can be a datomic id number or a lookup-ref."
@@ -95,7 +85,7 @@
               (d/history db)
               entity-id)
          (map pull)
-         (map undatomicize)
+         (map wnu/undatomicize)
          (remove #(= (:provenance/what %) :event/import-gene))
          (map #(update % :provenance/how (fnil identity :agent/importer)))
          (sort-mrf)

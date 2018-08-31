@@ -18,4 +18,12 @@
 
 (s/def :provenance/why (stc/spec (s/and sts/string? (complement str/blank?))))
 
-(s/def :provenance/merged-from (stc/spec (s/keys :req [:gene/id])))
+(s/def ::gene-ref (stc/spec (s/keys :req [:gene/id])))
+
+(s/def :provenance/merged-from ::gene-ref)
+
+(s/def :provenance/merged-into ::gene-ref)
+
+(s/def :provenance/split-from ::gene-ref)
+
+(s/def :provenance/split-into ::gene-ref)
