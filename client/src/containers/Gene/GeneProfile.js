@@ -50,6 +50,58 @@ class GeneProfile extends Component {
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
+          const historyMock = [
+            {
+              relatedEntity: null,
+              eventType: 'kill',
+              curatedBy: {
+                name: 'Gary'
+              },
+              time: '2018-08-09T23:15:30.000Z',
+              agent: 'script',
+              reason: 'Don\'t like it',
+            },
+            {
+              relatedEntity: {
+                id: 'WB345',
+                label: 'abc-1'
+              },
+              eventType: 'split_from',
+              curatedBy: {
+                name: 'Gary'
+              },
+              time: '2018-08-09T23:15:30.000Z',
+              agent: 'script',
+              reason: 'Don\'t like it',
+            },
+            {
+              relatedEntity: null,
+              eventType: 'update',
+              curatedBy: {
+                name: 'Michael'
+              },
+              time: '2015-07-20T23:15:30.000Z',
+              agent: 'web form',
+              reason: 'Looked funny',
+            },
+            {
+              relatedEntity: null,
+              eventType: 'create',
+              curatedBy: {
+                name: 'Michael'
+              },
+              time: '2014-01-10T23:15:30.000Z',
+              agent: 'script',
+              reason: 'New',
+            },
+          ].map((activityItem) => ({
+            ...activityItem,
+            entity: {
+              id: this.getId(),
+              label: this.getId(),
+            },
+          }));
+
           return mockFetch.get('*', {
             "gene/species": {
                "species/id":"species/c-elegans",
@@ -61,11 +113,13 @@ class GeneProfile extends Component {
             "gene/status":"gene.status/live",
             "gene/biotype":"biotype/cds",
             "gene/id": this.getId(),
+            "history": historyMock,
           });
         },
         () => {
           return fetch(`/api/gene/${this.getId()}`, {});
         },
+        true,
       ).then((response) => {
         const nextStatus = (response.status === 404 || response.status === 500) ?
           'NOT_FOUND' :
@@ -237,6 +291,7 @@ class GeneProfile extends Component {
               <RecentActivitiesSingleGene
                 wbId={wbId}
                 authorizedFetch={this.props.authorizedFetch}
+                activities={this.state.data.history}
               />
             </div>
           </div>

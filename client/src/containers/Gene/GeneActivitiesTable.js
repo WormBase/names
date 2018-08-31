@@ -199,7 +199,7 @@ GeneActivitiesTable.propTypes = {
 };
 
 GeneActivitiesTable.defaultProps = {
-  GeneActivitiesTable: [],
+  activities: [],
 };
 
 const styles = (theme) => ({
