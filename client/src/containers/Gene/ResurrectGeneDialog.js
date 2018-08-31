@@ -53,7 +53,7 @@ class ResurrectGeneDialog extends Component {
                 </DialogContentText>
                 <ReasonField
                   label="Reason"
-                  helperText="Enter the reason for killing the gene"
+                  helperText="Enter the reason for resurrecting the gene"
                   required
                   fullWidth
                 />
