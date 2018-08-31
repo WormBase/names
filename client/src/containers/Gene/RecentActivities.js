@@ -39,11 +39,20 @@ class RecentActivities extends Component {
   render() {
     const {authorizedFetch} = this.props;
     return (
-      <GeneActivitiesTable
-        activities={this.state.data}
-        authorizedFetch={authorizedFetch}
-        onUpdate={this.fetchData}
-      />
+      <div>
+        <GeneActivitiesTable
+          activities={this.state.data}
+          authorizedFetch={authorizedFetch}
+          onUpdate={this.fetchData}
+        />
+        <p>
+          <em style={{
+            color: '#999',
+          }}>
+            Coming soon!
+          </em>
+        </p>
+      </div>
     );
   }
 }
