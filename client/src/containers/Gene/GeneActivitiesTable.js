@@ -162,7 +162,7 @@ class GeneActivitiesTable extends Component {
                             null
                         }
                       </TableCell>
-                      <TableCell>{activityItem['provenance/who']['person/id']}</TableCell>
+                      <TableCell>{activityItem['provenance/who']['person/name']}</TableCell>
                       <TableCell>{activityItem['provenance/why']}</TableCell>
                       <TableCell>
                         <Humanize>
