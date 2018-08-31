@@ -186,6 +186,7 @@ class GeneProfile extends Component {
               errorMessage: JSON.stringify(response),
             }
           } else {
+            this.fetchData();
             return {
               ...stateChanges,
               errorMessage: null,
@@ -308,6 +309,9 @@ class GeneProfile extends Component {
                 wbId={wbId}
                 authorizedFetch={this.props.authorizedFetch}
                 activities={this.state.data.history}
+                onUpdate={() => {
+                  this.fetchData();
+                }}
               />
             </div>
           </div>
@@ -363,6 +367,7 @@ class GeneProfile extends Component {
                 'gene/status': 'gene.status/live',
               },
             }), () => {
+              this.fetchData();
               this.closeResurrectGeneDialog();
             });
           }}

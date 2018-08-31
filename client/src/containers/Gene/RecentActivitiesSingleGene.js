@@ -5,17 +5,15 @@ import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivitiesSingleGene extends Component {
   render() {
-    const {classes, activities, authorizedFetch, wbId} = this.props;
+    const {classes, wbId, ...otherProps} = this.props;
     return (
       <GeneActivitiesTable
-        activities={activities}
-        authorizedFetch={authorizedFetch}
-        onUpdate={this.fetchData}
         classes={{
           entityCell: classes.entityCell,
           entityColumnHeader: classes.entityColumnHeader,
         }}
         selfGeneId={wbId}
+        {...otherProps}
       />
     );
   }
@@ -23,8 +21,6 @@ class RecentActivitiesSingleGene extends Component {
 
 RecentActivitiesSingleGene.propTypes = {
   wbId: PropTypes.string.isRequired,
-  authorizedFetch: PropTypes.func,
-  activities: PropTypes.any,
 };
 
 const styles = (theme) => ({
