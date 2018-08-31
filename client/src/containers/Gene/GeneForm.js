@@ -15,9 +15,15 @@ import {
 class GeneForm extends Component {
 
   render() {
-    const {classes, data, disabled, submitted} = this.props;
+    const {classes, data = {}, disabled, submitted} = this.props;
+    const dataNew = {
+      ...data,
+      'gene/species': {
+        'species/latin-name': data['gene/species'] && data['gene/species']['species/latin-name'],
+      }
+    };
     return (
-      <BaseForm data={data} disabled={disabled || submitted}>
+      <BaseForm data={dataNew} disabled={disabled || submitted}>
         {
           ({withFieldData, getFormData, resetData}) => {
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
@@ -64,7 +70,7 @@ class GeneForm extends Component {
 
 GeneForm.propTypes = {
   classes: PropTypes.object.isRequired,
-  data: PropTypes.any,
+  data: PropTypes.object,
   submitted: PropTypes.bool,
   disabled: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
