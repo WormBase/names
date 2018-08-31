@@ -15,7 +15,7 @@ import {
 class GeneForm extends Component {
 
   render() {
-    const {classes, data = {}, disabled, submitted} = this.props;
+    const {classes, data = {}, disabled, submitted, createMode} = this.props;
     const dataNew = {
       ...data,
       'gene/species': {
@@ -30,6 +30,7 @@ class GeneForm extends Component {
             const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             return (
               <div>
                 <CgcNameField
@@ -41,6 +42,10 @@ class GeneForm extends Component {
                 />
                 <SpeciesSelectField />
                 <BiotypeSelectField />
+                <ReasonField
+                  label="Reason"
+                  helperText={createMode ? 'Why do you create this gene' : 'Why do you edit this gene?'}
+                />
                 <br/>
                 <div className={classes.actions}>
                   <ProgressButton
@@ -75,6 +80,7 @@ GeneForm.propTypes = {
   disabled: PropTypes.bool,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
+  createMode: PropTypes.bool,
 };
 
 GeneForm.defaultProps = {
