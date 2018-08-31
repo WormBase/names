@@ -52,55 +52,72 @@ class GeneProfile extends Component {
         (mockFetch) => {
           const historyMock = [
             {
-              relatedEntity: null,
-              eventType: 'kill',
-              curatedBy: {
-                name: 'Gary'
+              "provenance/how":"agent/web",
+              "provenance/what":"event/merge-genes",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
               },
-              time: '2018-08-09T23:15:30.000Z',
-              agent: 'script',
-              reason: 'Don\'t like it',
+              "provenance/when":"2018-08-09T22:09:16Z",
+              "provenance/merged-from":{
+                "gene/id":"WBGene00303223"
+              },
+              "provenance/merged-into":{
+                "gene/id": this.getId()
+              }
             },
             {
-              relatedEntity: {
-                id: 'WB345',
-                label: 'abc-1'
+              "provenance/how":"agent/web",
+              "provenance/what":"event/update-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
               },
-              eventType: 'split_from',
-              curatedBy: {
-                name: 'Gary'
-              },
-              time: '2018-08-09T23:15:30.000Z',
-              agent: 'script',
-              reason: 'Don\'t like it',
+              "provenance/when":"2018-08-08T17:27:31Z"
             },
             {
-              relatedEntity: null,
-              eventType: 'update',
-              curatedBy: {
-                name: 'Michael'
+              "provenance/how":"agent/web",
+              "provenance/what":"event/update-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
               },
-              time: '2015-07-20T23:15:30.000Z',
-              agent: 'web form',
-              reason: 'Looked funny',
+              "provenance/when":"2018-08-08T17:27:22Z"
             },
             {
-              relatedEntity: null,
-              eventType: 'create',
-              curatedBy: {
-                name: 'Michael'
+              "provenance/how":"agent/web",
+              "provenance/what":"event/split-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
               },
-              time: '2014-01-10T23:15:30.000Z',
-              agent: 'script',
-              reason: 'New',
+              "provenance/when":"2018-08-08T16:50:46Z",
+              "provenance/split-from":{
+                "gene/id": this.getId()
+              },
+              "provenance/split-into":{
+                "gene/id":"WBGene00303222"
+              }
             },
-          ].map((activityItem) => ({
-            ...activityItem,
-            entity: {
-              id: this.getId(),
-              label: this.getId(),
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/split-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-08T15:21:07Z",
+              "provenance/split-from":{
+                "gene/id": this.getId()
+              },
+              "provenance/split-into":{
+                "gene/id":"WBGene00303219"
+              }
             },
-          }));
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/new-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-07-23T15:25:17Z"
+            }
+          ];
 
           return mockFetch.get('*', {
             "gene/species": {
@@ -119,7 +136,6 @@ class GeneProfile extends Component {
         () => {
           return fetch(`/api/gene/${this.getId()}`, {});
         },
-        true,
       ).then((response) => {
         const nextStatus = (response.status === 404 || response.status === 500) ?
           'NOT_FOUND' :

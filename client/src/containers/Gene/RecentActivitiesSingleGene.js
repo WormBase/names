@@ -6,7 +6,7 @@ import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivitiesSingleGene extends Component {
   render() {
-    const {classes, activities, authorizedFetch} = this.props;
+    const {classes, activities, authorizedFetch, wbId} = this.props;
     return (
       <GeneActivitiesTable
         activities={activities}
@@ -16,6 +16,7 @@ class RecentActivitiesSingleGene extends Component {
           entityCell: classes.entityCell,
           entityColumnHeader: classes.entityColumnHeader,
         }}
+        selfGeneId={wbId}
       />
     );
   }
