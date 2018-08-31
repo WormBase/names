@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { mockFetchOrNot } from '../../mock';
 import PropTypes from 'prop-types';
 import { withStyles } from '../../components/elements';
 import GeneActivitiesTable from './GeneActivitiesTable';

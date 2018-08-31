@@ -14,6 +14,7 @@ import {
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 import UndoSplitGeneDialog from './UndoSplitGeneDialog';
+import { Humanize } from '../../components/elements';
 
 const RESURRECT = 'RESURRECT';
 const UNDO_MERGE = 'UNDO_MERGE';
@@ -151,7 +152,9 @@ class GeneActivitiesTable extends Component {
                             null
                         }
                       </TableCell>
-                      <TableCell>{eventLabel}</TableCell>
+                      <TableCell>
+                        <Humanize>{eventLabel}</Humanize>
+                      </TableCell>
                       <TableCell>
                         {
                           relatedEntity ?
@@ -161,7 +164,11 @@ class GeneActivitiesTable extends Component {
                       </TableCell>
                       <TableCell>{activityItem['provenance/who']['person/id']}</TableCell>
                       <TableCell>{activityItem['provenance/why']}</TableCell>
-                      <TableCell>{activityItem['provenance/how']}</TableCell>
+                      <TableCell>
+                        <Humanize>
+                          {activityItem['provenance/how']}
+                        </Humanize>
+                      </TableCell>
                       <TableCell>{this.renderActions({
                         ...activityItem,
                         activityIndex,
