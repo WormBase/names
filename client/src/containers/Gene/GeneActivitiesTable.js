@@ -49,12 +49,12 @@ class GeneActivitiesTable extends Component {
     return (
       <div>
         {
-          eventType === 'event/kill-gene' ?
-            <Button
-              onClick={() => this.openDialog(RESURRECT, activityIndex)}
-              color="primary"
-            >Undo</Button> :
-            null
+          // eventType === 'event/kill-gene' ?
+          //   <Button
+          //     onClick={() => this.openDialog(RESURRECT, activityIndex)}
+          //     color="primary"
+          //   >Undo</Button> :
+          //   null
         }
         {
           eventType === 'event/split-gene' ?
