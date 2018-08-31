@@ -48,7 +48,6 @@
                             (:problems (str info*)))
                  info* (when problems
                          (assoc info* :problems problems))]
-                                ;; (pr-str problems)))]
              info*)
            info)))))
 
