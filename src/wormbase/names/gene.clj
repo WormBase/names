@@ -309,25 +309,27 @@
                                {:updated updated :created created}))
       (http-response/not-found {:gene/id id :message "Gene not found"}))))
 
-(defn ressurect-gene [request identifier]
+(defn resurrect-gene [request identifier]
   (if (s/valid? ::wsg/identifier identifier)
-    (let [[ident val] (s/conform ::wsg/identifier identifier)
-          prov (wnp/assoc-provenance request {} :event/resurrect-gene)
-          db (:db request)
-          {gene-status :gene/status} (d/pull db
-                                             '[{:gene/status [:db/ident]}]
-                                             [ident val])]
+    (let [{db :db} request
+          [ident val] (s/conform ::wsg/identifier identifier)
+          {gene-status :gene/status} (d/pull db '[{:gene/status [:db/ident]}] [ident val])]
       (if (= (:db/ident gene-status) :gene.status/live)
-        (http-response/precondition-failed {:message "Cannot ressurect live gene"
+        (http-response/precondition-failed {:message "Cannot resurrect live gene"
                                             :info gene-status})
-        (let [tx-res @(d/transact-async (:conn request)
+        (let [prov (wnp/assoc-provenance request {} :event/resurrect-gene)
+              tx-res @(d/transact-async (:conn request)
                                         [[:db.fn/cas
                                           [ident val]
                                           :gene/status
                                           (d/entid db :gene.status/dead)
                                           (d/entid db :gene.status/live)]
                                          prov])]
-          (http-response/ok {:gene/id identifier}))))
+          (http-response/ok {:updated (-> tx-res
+                                          :db-after
+                                          (d/pull '[:gene/id {:gene/status [:db/ident]}]
+                                                  [ident val])
+                                          (wnu/undatomicize))}))))
     (http-response/bad-request {:message "Invalid gene identifier"
                                 :info identifier})))
 
@@ -377,7 +379,8 @@
     (when (= (:gene/status ent) :gene.status/dead)
       (throw (ex-info "Cannot kill dead gene"
                       {:type ::wdb/conflict
-                       :lookup-ref lur})))
+                       :lookup-ref lur
+                       :data data})))
     (when ent
       (let [payload (get request :body-params {})
             prov (wnp/assoc-provenance request payload :event/kill-gene)
@@ -388,9 +391,13 @@
           (http-response/ok {:killed id}))))))
 
 (def default-responses
-  {200 {:schema {:updated ::wsg/updated}}
-   400 {:schema {:errors ::wsc/error-response}}
-   409 {:schema {:conflict ::wsc/conflict-response}}})
+  {http-response/ok {:schema {:updated ::wsg/updated}}
+        http-response/bad-request {:schema {:errors ::wsc/error-response}}
+        http-response/conflict {:schema {:conflict ::wsc/error-response}}
+        http-response/precondition-failed {:schema ::wsc/error-response}})
+
+(defn response-map [m]
+  (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
 
 (def routes
   (sweet/routes
@@ -399,9 +406,9 @@
      (sweet/resource
       {:get
        {:summary "Find genes by any name."
-        :responses (assoc default-responses
-                          200
-                          {:schema ::wsg/find-result})
+        :responses (-> default-responses
+                       (assoc http-response/ok {:schema ::wsg/find-result})
+                       (response-map))
         :parameters {:query-params ::wsg/find-request}
         :x-name ::find-gene
         :handler (fn find-by-any-name [request]
@@ -422,7 +429,9 @@
         :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
         :parameters {:body-params ::wsg/kill}
-        :responses (assoc default-responses 200 {:schema ::wsg/kill})
+        :responses (-> default-responses
+                       response-map
+                       (assoc (:status (http-response/ok)) {:schema ::wsg/kill}))
         :path-params [identifier :- ::wsg/identifier]
         :handler (fn [request]
                    (kill-gene request identifier))}
@@ -430,7 +439,9 @@
        {:summary "Information about a given gene."
         :x-name ::about-gene
         :path-params [identifier :- ::wsg/identifier]
-        :responses (assoc default-responses 200 {:schema ::wsg/info})
+        :responses (-> default-responses
+                       (assoc http-response/ok {:schema ::wsg/info})
+                       (response-map))
         :handler (fn [request]
                    (about-gene request identifier))}
        :put
@@ -439,7 +450,9 @@
         :x-name ::update-gene
         :parameters {:body-params ::wsg/update}
         :path-params [identifier :- ::wsg/identifier]
-        :responses (dissoc default-responses 409)
+        :responses (-> default-responses
+                       (dissoc http-response/conflict)
+                       (response-map))
         :handler (fn [request]
                    (update-gene request identifier))}})
      (sweet/context "/merge/:from-identifier" [from-identifier]
@@ -451,7 +464,7 @@
           :path-params [identifier ::wsg/identifier
                         from-identifier ::wsg/identifier]
           :parameters {:body-params {:gene/biotype :gene/biotype}}
-          :responses default-responses
+          :responses (response-map default-responses)
           :handler
           (fn [request]
             (merge-genes request identifier from-identifier))}
@@ -461,7 +474,9 @@
           :x-name ::undo-merge-gene
           :path-params [identifier ::wsg/identifier
                         from-identifier ::wsg/identifier]
-          :responses (assoc default-responses 200 {:schema ::wsg/undone})
+          :responses (-> default-responses
+                         (assoc http-response/ok {:schema ::wsg/undone})
+                         (response-map))
           :handler (fn [request]
                      (undo-merge-gene request from-identifier identifier))}}))
      (sweet/context "/split" []
@@ -472,8 +487,9 @@
           :x-name ::split-genes
           :path-params [identifier :- ::wsg/identifier]
           :parameters {:body-params ::wsg/split}
-          :responses (-> (dissoc default-responses 200)
-                         (assoc 201 {:schema ::wsg/split-response}))
+          :responses (-> (dissoc default-responses http-response/ok)
+                         (assoc http-response/created {:schema ::wsg/split-response})
+                         (response-map))
           :handler
           (fn [request]
             (split-gene request identifier))}}))
@@ -485,9 +501,9 @@
           :x-name ::undo-split-gene
           :path-params [identifier :- ::wsg/identifier
                         into-identifier :- ::wsg/identifier]
-          :responses (assoc default-responses
-                            200
-                            {:schema ::wsg/undone})
+          :responses (-> default-responses
+                         (assoc http-response/ok {:schema ::wsg/undone})
+                         (response-map))
           :handler (fn [request]
                      (undo-split-gene request
                                       identifier
@@ -495,9 +511,9 @@
      (sweet/context "/resurrect" []
        (sweet/resource
         {:post
-         {:summary "Ressurect a gene."
+         {:summary "Resurrect a gene."
           :middleware [wna/restrict-to-authenticated]
-          :x-name ::ressurect-gene
-          :responses default-responses
+          :x-name ::resurrect-gene
+          :responses (response-map default-responses)
           :handler (fn [request]
-                     (ressurect-gene request identifier))}})))))
+                     (resurrect-gene request identifier))}})))))

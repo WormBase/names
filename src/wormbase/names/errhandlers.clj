@@ -54,8 +54,8 @@
 
 (defn assoc-error-message [data exc]
   (if-let [msg (.getMessage exc)]
-    (assoc data :message msg)
-    data))
+    (assoc data :message msg :info data)
+    {:message "No reason given." :info data}))
 
 (defn handle-validation-error [^Exception exc data request]
   (let [problems (get-in data [:data :problems])
