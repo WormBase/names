@@ -173,10 +173,14 @@ class GeneActivitiesTable extends Component {
                           {activityItem['provenance/how']}
                         </Humanize>
                       </TableCell>
-                      <TableCell>{this.renderActions({
-                        ...activityItem,
-                        activityIndex,
-                      })}</TableCell>
+                      <TableCell>
+                        {
+                          // this.renderActions({
+                          //   ...activityItem,
+                          //   activityIndex,
+                          // })
+                        }
+                      </TableCell>
                     </TableRow>
                   )
                 }
