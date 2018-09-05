@@ -235,7 +235,9 @@
            (into {})
            (doall)))))
 
-(defn transact-gene-event [conn historical-version event]
+(defn transact-gene-event
+  "Record historical events for the current gene set."
+  [conn historical-version event]
   (let [pv (wnu/select-keys-with-ns event "provenance")
         tx-data [{:gene/id (:gene/id event)
                   :importer/historical-gene-version historical-version}
@@ -243,6 +245,7 @@
     (d/transact-async conn tx-data)))
 
 (defn build-data-txes
+  "Build the current entity representation of each gene."
   [tsv-path conf & {:keys [batch-size]
                     :or {batch-size 1000}}]
   (let [cast-fns {:gene/id cast-gene-id-fn
@@ -256,12 +259,6 @@
     (with-open [in-file (io/reader tsv-path)]
       (->> (parse-transform-cast in-file conf cast-fns)
            (map discard-empty-valued-entries)
-           (map (fn mk-tx [gene]
-                  ;; TODO: Export data format work-around.  This conditional block
-                  ;;       can be changed to just "gene" when export data is "fixed"
-                  (if (= (:gene/status gene) :gene.status/dead)
-                    (dissoc gene :gene/sequence-name :gene/cgc-name)
-                    gene)))
            (partition-all batch-size)
            doall))))
 
@@ -277,14 +274,6 @@
                       (build-data-txes tsv-path cd-ex-conf))]
       @txf)))
 
-;; TODO2: this code all works, but the 2nd step of transacting events
-;;        takes a *very* long time.  This is due to having a
-;;        transact{,-async}() call for each event.  An alternative
-;;        might be:
-;;            * introduce a temporay :db.type/ref schema
-;;              attribute in the provenance, maybe:
-;;              `:importer/historical-gene`
-;;              Could make `number-of-genes` * `events` transaction batches.
 (defn process
   [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
                                           :or {n-in-flight 10}}]
