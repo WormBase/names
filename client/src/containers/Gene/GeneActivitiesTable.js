@@ -115,6 +115,10 @@ class GeneActivitiesTable extends Component {
     ];
   }
 
+  getGeneIdForEvent = (selectedActivity, eventType) => {
+    return selectedActivity &&  selectedActivity[eventType] && selectedActivity[eventType]["gene/id"];
+  }
+
   render() {
     const {classes, activities, onUpdate, selfGeneId} = this.props;
     const {selectedActivityIndex} = this.state;
@@ -193,10 +197,10 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoMergeGeneDialog
-            geneName={selectedActivity && selectedActivity['provenance/merged-into'] && selectedActivity['provenance/merged-into']['gene/id']}
-            geneFromName={selectedActivity && selectedActivity['provenance/merged-from'] && selectedActivity['provenance/merged-from']['gene/id']}
-            wbId={selectedActivity && selectedActivity['provenance/merged-into'] && selectedActivity['provenance/merged-into']['gene/id']}
-            wbFromId={selectedActivity && selectedActivity['provenance/merged-from'] && selectedActivity['provenance/merged-from']['gene/id']}
+            geneName={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-into')}
+            geneFromName={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-from')}
+            wbId={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-into')}
+            wbFromId={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-from')}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_MERGE}
             onClose={this.closeDialog}
@@ -206,10 +210,10 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoSplitGeneDialog
-            geneName={selectedActivity && selectedActivity['provenance/split-from'] && selectedActivity['provenance/split-from']['gene/id']}
-            geneIntoName={selectedActivity && selectedActivity['provenance/split-into'] && selectedActivity['provenance/split-into']['gene/id']}
-            wbId={selectedActivity && selectedActivity['provenance/split-from'] && selectedActivity['provenance/split-from']['gene/id']}
-            wbIntoId={selectedActivity && selectedActivity['provenance/split-into'] && selectedActivity['provenance/split-into']['gene/id']}
+            geneName={this.getGeneIdForEvent(selectedActivity, 'provenance/split-from')}
+            geneIntoName={this.getGeneIdForEvent(selectedActivity, 'provenance/split-into')}
+            wbId={this.getGeneIdForEvent(selectedActivity, 'provenance/split-from')}
+            wbIntoId={this.getGeneIdForEvent(selectedActivity, 'provenance/split-into')}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_SPLIT}
             onClose={this.closeDialog}
