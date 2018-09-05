@@ -48,6 +48,7 @@ export { Page, PageLeft, PageMain, PageRight } from './Page';
 export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
 export { default as SimpleListPagination } from './SimpleListPagination';
+export { default as SnackbarContent } from './SnackbarContent';
 export { default as SpeciesSelect } from './SpeciesSelect';
 export { default as TextField } from './TextField';
 export { default as Timestamp } from './Timestamp';
