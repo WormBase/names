@@ -96,7 +96,7 @@ class GeneActivitiesTable extends Component {
     let eventType;
     if (entityKey) {
       if (activityItem['provenance/merged-into'] === activityItem[entityKey]) {
-        eventType = 'acquire_merge';
+        eventType = 'merge_from';
       } else if (activityItem['provenance/merged-from'] === activityItem[entityKey]) {
         eventType = 'merge_into';
       } else if (activityItem['provenance/split-into'] === activityItem[entityKey]) {
