@@ -19,116 +19,6 @@ class RecentActivities extends Component {
     mockFetchOrNot(
       (mockFetch) => {
         const mockData = [
-          {
-            entity: {
-              id: 'WB333',
-              label: 'aaa-22',
-            },
-            relatedEntity: {
-              id: 'WB345',
-              label: 'aaa-222'
-            },
-            eventType: 'acquire_merge',
-            curatedBy: {
-              name: 'Gary'
-            },
-            time: '2018-08-09T23:15:30.000Z',
-            agent: 'script',
-            reason: 'Don\'t like it',
-          },
-          {
-            entity: {
-              id: 'WB345',
-              label: 'aaa-222'
-            },
-            relatedEntity: {
-              id: 'WB333',
-              label: 'aaa-22',
-            },
-            eventType: 'merge_into',
-            curatedBy: {
-              name: 'Gary'
-            },
-            time: '2018-08-09T23:15:30.000Z',
-            agent: 'script',
-            reason: 'Don\'t like it',
-          },
-          {
-            entity: {
-              id: 'WB4',
-              label: 'aaa-3',
-            },
-            relatedEntity: null,
-            eventType: 'kill',
-            curatedBy: {
-              name: 'Gary'
-            },
-            time: '2018-08-09T23:15:30.000Z',
-            agent: 'script',
-            reason: 'Don\'t like it',
-          },
-          {
-            entity: {
-              id: 'WB1',
-              label: 'ab',
-            },
-            relatedEntity: {
-              id: 'WB345',
-              label: 'abc-1'
-            },
-            eventType: 'split_from',
-            curatedBy: {
-              name: 'Gary'
-            },
-            time: '2018-08-09T23:15:30.000Z',
-            agent: 'script',
-            reason: 'Don\'t like it',
-          },
-          {
-            entity: {
-              id: 'WB345',
-              label: 'abc-1'
-            },
-            relatedEntity: {
-              id: 'WB1',
-              label: 'ab',
-            },
-            eventType: 'split_into',
-            curatedBy: {
-              name: 'Gary'
-            },
-            time: '2018-08-09T23:15:30.000Z',
-            agent: 'script',
-            reason: 'Don\'t like it',
-          },
-          {
-            entity: {
-              id: 'WB1',
-              label: 'ab',
-            },
-            relatedEntity: null,
-            eventType: 'update',
-            curatedBy: {
-              name: 'Michael'
-            },
-            time: '2018-07-20T23:15:30.000Z',
-            agent: 'web form',
-            reason: 'Looked funny',
-          },
-          {
-            entity: {
-              id: 'WB1',
-              label: 'ab',
-            },
-            relatedEntity: null,
-            eventType: 'create',
-            curatedBy: {
-              name: 'Michael'
-            },
-            time: '2014-01-10T23:15:30.000Z',
-            agent: 'script',
-            reason: 'New',
-          },
         ];
         return mockFetch.get('*', mockData);
       },
@@ -149,11 +39,20 @@ class RecentActivities extends Component {
   render() {
     const {authorizedFetch} = this.props;
     return (
-      <GeneActivitiesTable
-        activities={this.state.data}
-        authorizedFetch={authorizedFetch}
-        onUpdate={this.fetchData}
-      />
+      <div>
+        <GeneActivitiesTable
+          activities={this.state.data}
+          authorizedFetch={authorizedFetch}
+          onUpdate={this.fetchData}
+        />
+        <p>
+          <em style={{
+            color: '#999',
+          }}>
+            Coming soon!
+          </em>
+        </p>
+      </div>
     );
   }
 }

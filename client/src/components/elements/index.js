@@ -49,8 +49,9 @@ export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
 export { default as SimpleListPagination } from './SimpleListPagination';
 export { default as SpeciesSelect } from './SpeciesSelect';
-export { default as TextField} from './TextField';
+export { default as TextField } from './TextField';
 export { default as Timestamp } from './Timestamp';
+export { default as Humanize } from './Humanize';
 
 export const Dialog = withMobileDialog()(withStyles((theme) => ({
   paper: {

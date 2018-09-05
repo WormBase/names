@@ -101,6 +101,7 @@ class GeneCreate extends Component {
             submitted={this.state.status === 'SUBMITTED'}
             onSubmit={this.handleCreateGene}
             onCancel={this.handleClear}
+            createMode={true}
           />
         </PageMain>
       </Page>

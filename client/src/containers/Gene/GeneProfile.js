@@ -50,6 +50,75 @@ class GeneProfile extends Component {
     }, () => {
       mockFetchOrNot(
         (mockFetch) => {
+          const historyMock = [
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/merge-genes",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-09T22:09:16Z",
+              "provenance/merged-from":{
+                "gene/id":"WBGene00303223"
+              },
+              "provenance/merged-into":{
+                "gene/id": this.getId()
+              }
+            },
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/update-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-08T17:27:31Z"
+            },
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/update-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-08T17:27:22Z"
+            },
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/split-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-08T16:50:46Z",
+              "provenance/split-from":{
+                "gene/id": this.getId()
+              },
+              "provenance/split-into":{
+                "gene/id":"WBGene00303222"
+              }
+            },
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/split-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-08-08T15:21:07Z",
+              "provenance/split-from":{
+                "gene/id": this.getId()
+              },
+              "provenance/split-into":{
+                "gene/id":"WBGene00303219"
+              }
+            },
+            {
+              "provenance/how":"agent/web",
+              "provenance/what":"event/new-gene",
+              "provenance/who":{
+                "person/id":"WBPerson12346"
+              },
+              "provenance/when":"2018-07-23T15:25:17Z"
+            }
+          ];
+
           return mockFetch.get('*', {
             "gene/species": {
                "species/id":"species/c-elegans",
@@ -61,6 +130,7 @@ class GeneProfile extends Component {
             "gene/status":"gene.status/live",
             "gene/biotype":"biotype/cds",
             "gene/id": this.getId(),
+            "history": historyMock,
           });
         },
         () => {
@@ -116,6 +186,7 @@ class GeneProfile extends Component {
               errorMessage: JSON.stringify(response),
             }
           } else {
+            this.fetchData();
             return {
               ...stateChanges,
               errorMessage: null,
@@ -237,6 +308,10 @@ class GeneProfile extends Component {
               <RecentActivitiesSingleGene
                 wbId={wbId}
                 authorizedFetch={this.props.authorizedFetch}
+                activities={this.state.data.history}
+                onUpdate={() => {
+                  this.fetchData();
+                }}
               />
             </div>
           </div>
@@ -292,6 +367,7 @@ class GeneProfile extends Component {
                 'gene/status': 'gene.status/live',
               },
             }), () => {
+              this.fetchData();
               this.closeResurrectGeneDialog();
             });
           }}
