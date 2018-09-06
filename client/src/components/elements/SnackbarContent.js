@@ -18,6 +18,13 @@ const variantIcon = {
 };
 
 const styles = theme => ({
+  snackbarContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    minWidth: 'unset',
+    maxWidth: 'unset',
+    borderRadius: 'unset',
+  },
   success: {
     backgroundColor: green[600],
   },
@@ -49,7 +56,7 @@ function SnackbarContent(props) {
 
   return (
     <MuiSnackbarContent
-      className={classNames(classes[variant], className)}
+      className={classNames(classes.snackbarContent, classes[variant], className)}
       aria-describedby="client-snackbar"
       message={
         <span id="client-snackbar" className={classes.message}>

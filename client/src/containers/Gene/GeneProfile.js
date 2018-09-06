@@ -413,13 +413,11 @@ class GeneProfile extends Component {
           }}
         />
         <Snackbar
-          className={classes.snackbar}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={this.state.successMessage}
           onClose={this.closeSnackbar}
         >
           <SnackbarContent
-            className={classes.snackbarContent}
             variant="success"
             message={<span>{this.state.successMessage}</span>}
           />
@@ -446,18 +444,6 @@ const styles = (theme) => ({
     '& > *': {
       marginBottom: theme.spacing.unit,
     },
-  },
-  snackbar: {
-    left: 0,
-    right: 0,
-    transform: 'unset',
-  },
-  snackbarContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    minWidth: 'unset',
-    maxWidth: 'unset',
-    borderRadius: 'unset',
   },
   killButton: {
     backgroundColor: theme.palette.error.main,
