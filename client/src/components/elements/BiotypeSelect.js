@@ -8,22 +8,27 @@ const BiotypeSelect = (props) => {
     {
       id: null,
       label: '',
+      sequenceOntology: '',
     },
     {
       id: 'biotype/cds',
       label: 'CDS',
+      sequenceOntology: 'SO:0000316',
     },
     {
       id: 'biotype/psuedogene',
       label: 'Psuedogene',
+      sequenceOntology: 'SO:0000336',
     },
     {
       id: 'biotype/transcript',
       label: 'Transcript',
+      sequenceOntology: 'SO:0000673',
     },
     {
-      id: 'biotype/transposon',
-      label: 'Transposon',
+      id: 'biotype/transposable-element-gene',
+      label: 'Transposable element gene',
+      sequenceOntology: 'SO:0000111',
     },
   ];
   console.log(BIOTYPES);
@@ -36,7 +41,7 @@ const BiotypeSelect = (props) => {
     >
       {BIOTYPES.map(biotype => (
         <MenuItem key={biotype.id} value={biotype.id}>
-          {biotype.label}
+          { biotype.label ? `${biotype.label} [${biotype.sequenceOntology}]` : null }
         </MenuItem>
       ))}
     </TextField>
