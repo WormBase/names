@@ -6,11 +6,6 @@ import TextField from './TextField';
 const BiotypeSelect = (props) => {
   const BIOTYPES = [
     {
-      id: null,
-      label: '',
-      sequenceOntology: '',
-    },
-    {
       id: 'biotype/cds',
       label: 'CDS',
       sequenceOntology: 'SO:0000316',
@@ -31,7 +26,15 @@ const BiotypeSelect = (props) => {
       sequenceOntology: 'SO:0000111',
     },
   ];
-  console.log(BIOTYPES);
+
+  const biotypeOptions = props.required ? [...BIOTYPES] : [
+    {
+      id: null,
+      label: '',
+      sequenceOntology: '',
+    },
+    ...BIOTYPES,
+  ];
   return (
     <TextField
       select
@@ -39,7 +42,7 @@ const BiotypeSelect = (props) => {
       className={props.classes.root}
       {...props}
     >
-      {BIOTYPES.map(biotype => (
+      {biotypeOptions.map(biotype => (
         <MenuItem key={biotype.id} value={biotype.id}>
           { biotype.label ? `${biotype.label} [${biotype.sequenceOntology}]` : null }
         </MenuItem>
@@ -50,6 +53,7 @@ const BiotypeSelect = (props) => {
 
 BiotypeSelect.propTypes = {
   classes: PropTypes.object.isRequired,
+  required: PropTypes.bool,
 };
 
 const styles = (theme) => ({
