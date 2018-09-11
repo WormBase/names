@@ -31,6 +31,7 @@ class GeneProfile extends Component {
       data: {},
       showKillGeneDialog: false,
       showResurrectGeneDialog: false,
+      showSuppressGeneDialog: false,
       showMergeGeneDialog: false,
       showSplitGeneDialog: false,
     };
@@ -223,6 +224,18 @@ class GeneProfile extends Component {
     });
   }
 
+  openSuppressGeneDialog = () => {
+    this.setState({
+      showSuppressGeneDialog: true,
+    });
+  }
+
+  closeSuppressGeneDialog = () => {
+    this.setState({
+      showSuppressGeneDialog: false,
+    });
+  }
+
   openMergeGeneDialog = () => {
     this.setState({
       showMergeGeneDialog: true,
@@ -341,10 +354,31 @@ class GeneProfile extends Component {
                   onClick={this.openSplitGeneDialog}
                 >Split Gene</Button>
                 <Button
+                  variant="raised"
+                  onClick={this.openSuppressGeneDialog}
+                >Suppress Gene</Button>
+                <Button
                   className={classes.killButton}
                   variant="raised"
                   onClick={this.openKillGeneDialog}
                 >Kill Gene</Button>
+              </div> : this.state.data['gene/status'] === 'gene.status/suppressed' ?
+              <div className={classes.operations}>
+                <Button
+                  variant="raised"
+                  onClick={this.openMergeGeneDialog}
+                >Merge Gene</Button>
+                <Button
+                  variant="raised"
+                  onClick={this.openSplitGeneDialog}
+                >Split Gene</Button>
+                <Button
+                  className={classes.killButton}
+                  variant="raised"
+                  onClick={this.openKillGeneDialog}
+                >Kill Gene</Button>
+                <h5>Tips:</h5>
+                <p>To un-suppress the gene, kill then resurrect it.</p>
               </div> :
               <div className={classes.operations}>
                 <Button
