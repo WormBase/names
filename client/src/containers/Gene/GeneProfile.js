@@ -17,6 +17,7 @@ import {
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
+import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
 import RecentActivitiesSingleGene from './RecentActivitiesSingleGene';
@@ -416,6 +417,17 @@ class GeneProfile extends Component {
               this.fetchData();
               this.closeResurrectGeneDialog();
             });
+          }}
+        />
+        <SuppressGeneDialog
+          geneName={this.getDisplayName(this.state.data)}
+          wbId={wbId}
+          authorizedFetch={this.props.authorizedFetch}
+          open={this.state.showSuppressGeneDialog}
+          onClose={this.closeSuppressGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.fetchData();
+            this.closeSuppressGeneDialog();
           }}
         />
         <MergeGeneDialog
