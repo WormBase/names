@@ -1,5 +1,6 @@
 (ns wormbase.names.coercion
   (:require
+   [compojure.api.coercion.core :as cc]
    [compojure.api.coercion.spec :as spec-coercion]
    [spec-tools.core :as stc]
    [spec-tools.transform :as stt]))
@@ -31,11 +32,15 @@
         options (-> spec-coercion/default-options
                     (assoc-in
                      [:body :formats]
-                     (zipmap mimetypes (repeat json-transformer)))
+                     {"application/json" json-transformer
+                     "application/msgpack" json-transformer
+                     "application/x-yaml" json-transformer})
                     (assoc-in [:body :string :default] string-transformer))]
     (spec-coercion/create-coercion options)))
 
 (def ^{:doc "Custom coercion that doesn't strip keys from specs during response processing."}
-  spec (non-stripping-spec-keys-coercion))
+  pure-spec (non-stripping-spec-keys-coercion))
+
+(defmethod cc/named-coercion :pure-spec [_] pure-spec)
 
 
