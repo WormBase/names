@@ -5,6 +5,7 @@
    [clojure.tools.logging :as log]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
+   [expound.alpha :refer [expound-str]]
    [java-time :as jt]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
@@ -65,27 +66,22 @@
   Match any unique gene identifier (cgc, sequence names or id)."
   [request]
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
-    (if (s/valid? ::wsg/find-term pattern)
-      (let [db (:db request)
-            term (stc/conform ::wsg/find-term pattern)
-            q-result (d/q '[:find ?gid ?attr ?name
-                            :in $ % ?term
-                            :where
-                            (gene-name ?term ?name ?eid ?attr)
-                            [?eid :gene/id ?gid]]
-                          db
-                          name-matching-rules
-                          (re-pattern (str "^" term)))
-            res {:matches (or (some->> q-result
-                                       (map (fn matched [[gid attr name*]]
-                                              (array-map :gene/id gid attr name*)))
-                                       (vec))
-                              [])}]
-        (http-response/ok res))
-      (http-response/bad-request {:message "Invalid find term"
-                                  :value pattern
-                                  :problems (str (s/explain-data ::wsg/find-term
-                                                                 pattern))}))))
+    (let [db (:db request)
+          term (stc/conform ::wsg/find-term pattern)
+          q-result (d/q '[:find ?gid ?attr ?name
+                          :in $ % ?term
+                          :where
+                          (gene-name ?term ?name ?eid ?attr)
+                          [?eid :gene/id ?gid]]
+                        db
+                        name-matching-rules
+                        (re-pattern (str "^" term)))
+          res {:matches (or (some->> q-result
+                                     (map (fn matched [[gid attr name*]]
+                                            (array-map :gene/id gid attr name*)))
+                                     (vec))
+                            [])}]
+      (http-response/ok res))))
 
 (defn- transform-result
   "Removes datomic internal keys from a pull-result map."
@@ -156,13 +152,11 @@
         species-entid (d/entid db species-lur)
         biotype-ident (get data :gene/biotype)
         biotype-entid (d/entid db biotype-ident)
-        res (-> (merge data
+        res (vec (merge data
                        (when biotype-entid
                          {:gene/biotype biotype-entid})
                        (when species-entid
-                         {:gene/species species-entid}))
-                (vec)
-                (sort))]
+                         {:gene/species species-entid})))]
     res))
 
 (defn update-gene [request identifier]
@@ -178,8 +172,7 @@
                            (second)
                            (resolve-refs-to-dbids db))
                 prov (wnp/assoc-provenance request payload :event/update-gene)
-                txes [[:wormbase.tx-fns/update-gene lur cdata]
-                      prov]
+                txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
               (let [ent (d/entity db-after lur)]
