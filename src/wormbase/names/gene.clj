@@ -19,8 +19,8 @@
 (def identify (partial wne/identify ::wsg/identifier))
 
 (defn validate-names
-  ([request data & {:keys [allow-blank-names?]
-                    :or {allow-blank-names? true}}]
+  ([request data & {:keys [allow-blank-cgc-name?]
+                    :or {allow-blank-cgc-name? true}}]
    (let [db (:db request)
          species-lur (some-> data :gene/species vec first)
          species-ent (d/entity db species-lur)]
@@ -32,19 +32,21 @@
                       {:invalid-species species-lur
                        :type :user/validation-error})))
     (let [patterns ((juxt :species/cgc-name-pattern
-                             :species/sequence-name-pattern) species-ent)
+                          :species/sequence-name-pattern) species-ent)
           regexps (map re-pattern patterns)
           name-idents [:gene/cgc-name :gene/sequence-name]]
       (doseq [[regexp name-ident] (partition 2 (interleave regexps name-idents))]
         (when-let [gname (name-ident data)]
           (when-not (re-matches regexp gname)
-            (when-not (and allow-blank-names? (empty? gname))
+            (when-not (and allow-blank-cgc-name?
+                           (empty? (get data gname))
+                           (= gname :gene/cgc-name))
               (throw (ex-info "Invalid name"
                               {:type :user/validation-error
-                               :invalid {:name gname :ident name-ident}}))))))
+                               :data {:problems {:invalid {:name gname :ident name-ident}}}}))))))
       data)))
   ([request data]
-   (validate-names request data :allow-blank-names? false)))
+   (validate-names request data :allow-blank-cgc-name? false)))
 
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
@@ -121,19 +123,22 @@
         tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
     @(d/transact-async (:conn request) tx-data)))
 
+(defn conform-gene-data [request spec data]
+  (let [conformed (stc/conform spec (validate-names request data))]
+    (if (= ::s/invalid conformed)
+      (let [problems (s/explain-data spec data)]
+        (throw (ex-info "Not valid according to spec."
+                        {:problems (str problems)
+                         :type ::validation-error
+                         :data data})))
+      conformed)))
+
 (defn new-gene [request & {:keys [mint-new-id?]
                            :or {mint-new-id? true}}]
   (let [payload (:body-params request)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new
-        [_ cdata] (let [conformed (stc/conform spec (validate-names request data))]
-                    (if (= ::s/invalid conformed)
-                      (let [problems (s/explain-data spec data)]
-                        (throw (ex-info "Not valid according to spec."
-                                        {:problems (str problems)
-                                         :type ::validation-error
-                                         :data data})))
-                      conformed))
+        [_ cdata] (conform-gene-data request spec data)
         prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
@@ -168,8 +173,9 @@
             spec ::wsg/update
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
-          (let [cdata (->> (validate-names request data :allow-blank-names? true)
-                           (stc/conform spec)
+          (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
+                           (conform-gene-data request spec)
+                           (second)
                            (resolve-refs-to-dbids db))
                 prov (wnp/assoc-provenance request payload :event/update-gene)
                 txes [[:wormbase.tx-fns/update-gene lur cdata]
