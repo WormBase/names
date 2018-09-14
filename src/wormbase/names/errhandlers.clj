@@ -51,17 +51,22 @@
              info*)
            info)))))
 
-(defn assoc-error-message [data exc]
-  (if-let [msg (.getMessage exc)]
-    (assoc data :message msg :info data)
+(defn assoc-error-message [data exc & {:keys [message]}]
+  (if-let [msg (or message (.getMessage exc))]
+    (assoc data :message msg)
     {:message "No reason given." :info data}))
 
-(defn handle-validation-error [^Exception exc data request]
+(defn handle-validation-error
+  [^Exception exc data request
+   & {:keys [message stringify-problems?]
+      :or {stringify-problems? true}}]
   (let [problems (get-in data [:data :problems])
         info (if problems
-               (assoc data :problems (str problems))
-               data)]
-    (respond-bad-request request (assoc-error-message info exc))))
+               (assoc data :problems (if stringify-problems? (str problems)
+                                         problems))
+               data)
+        body (assoc-error-message info exc :message message)]
+    (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
   (respond-missing request (assoc-error-message data exc)))
@@ -104,8 +109,12 @@
 
 (defn handle-request-validation
   ([^Exception exc data request]
-   (respond-bad-request request {:message (.getMessage exc)
-                                 :problems (str (:problems data))}))
+   ;; strip out keys that won't encode succesfully
+   (handle-validation-error
+    exc
+    (dissoc data :request :spec :coercion :in)
+    request
+    :message "Request validation failed: invalid request parameters/payload"))
   ([err]
    err))
 
