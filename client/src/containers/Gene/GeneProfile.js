@@ -18,6 +18,7 @@ import {
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
+import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
 import RecentActivitiesSingleGene from './RecentActivitiesSingleGene';
@@ -32,6 +33,7 @@ class GeneProfile extends Component {
       data: {},
       showKillGeneDialog: false,
       showResurrectGeneDialog: false,
+      showSuppressGeneDialog: false,
       showMergeGeneDialog: false,
       showSplitGeneDialog: false,
     };
@@ -224,6 +226,18 @@ class GeneProfile extends Component {
     });
   }
 
+  openSuppressGeneDialog = () => {
+    this.setState({
+      showSuppressGeneDialog: true,
+    });
+  }
+
+  closeSuppressGeneDialog = () => {
+    this.setState({
+      showSuppressGeneDialog: false,
+    });
+  }
+
   openMergeGeneDialog = () => {
     this.setState({
       showMergeGeneDialog: true,
@@ -260,6 +274,18 @@ class GeneProfile extends Component {
     data['gene/id']
   )
 
+  renderGeneForm = (otherProps) => {
+    return (
+      <GeneForm
+        data={this.state.data}
+        onSubmit={this.handleGeneUpdate}
+        submitted={this.state.status === 'SUBMITTED'}
+        {...otherProps}
+      />
+    )
+
+  }
+
   render() {
     const {classes} = this.props;
     const wbId = this.getId();
@@ -271,6 +297,7 @@ class GeneProfile extends Component {
         Back to directory
       </Button>
     );
+
     return this.state.status === 'NOT_FOUND' ? (
       <NotFound>
         <Typography>
@@ -287,21 +314,20 @@ class GeneProfile extends Component {
           <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           <Typography color="error">{this.state.errorMessage}</Typography>
           {
-            this.state.data['gene/status'] === 'gene.status/live' ?
-              <GeneForm
-                data={this.state.data}
-                onSubmit={this.handleGeneUpdate}
-                submitted={this.state.status === 'SUBMITTED'}
-              /> : this.state.status !== 'COMPLETE' ?
-              <CircularProgress /> :
+            this.state.status !== 'COMPLETE' ?
+              <CircularProgress /> : this.state.data['gene/status'] === 'gene.status/live' ?
+              <div>
+                {this.renderGeneForm()}
+              </div> : this.state.data['gene/status'] === 'gene.status/suppressed' ?
+              <div>
+                <Typography variant="display1" gutterBottom>Suppressed</Typography>
+                {this.renderGeneForm()}
+              </div> : this.state.data['gene/status'] === 'gene.status/dead' ?
               <div>
                 <Typography variant="display1" gutterBottom>Dead</Typography>
-                <GeneForm
-                  data={this.state.data}
-                  disabled={true}
-                  onSubmit={this.handleGeneUpdate}
-                />
-              </div>
+                {this.renderGeneForm({disabled: true})}
+              </div> :
+              null
           }
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>
@@ -330,10 +356,31 @@ class GeneProfile extends Component {
                   onClick={this.openSplitGeneDialog}
                 >Split Gene</Button>
                 <Button
+                  variant="raised"
+                  onClick={this.openSuppressGeneDialog}
+                >Suppress Gene</Button>
+                <Button
                   className={classes.killButton}
                   variant="raised"
                   onClick={this.openKillGeneDialog}
                 >Kill Gene</Button>
+              </div> : this.state.data['gene/status'] === 'gene.status/suppressed' ?
+              <div className={classes.operations}>
+                <Button
+                  variant="raised"
+                  onClick={this.openMergeGeneDialog}
+                >Merge Gene</Button>
+                <Button
+                  variant="raised"
+                  onClick={this.openSplitGeneDialog}
+                >Split Gene</Button>
+                <Button
+                  className={classes.killButton}
+                  variant="raised"
+                  onClick={this.openKillGeneDialog}
+                >Kill Gene</Button>
+                <h5>Tips:</h5>
+                <p>To un-suppress the gene, kill then resurrect it.</p>
               </div> :
               <div className={classes.operations}>
                 <Button
@@ -379,6 +426,17 @@ class GeneProfile extends Component {
                 this.closeResurrectGeneDialog();
               });
             });
+          }}
+        />
+        <SuppressGeneDialog
+          geneName={this.getDisplayName(this.state.data)}
+          wbId={wbId}
+          authorizedFetch={this.props.authorizedFetch}
+          open={this.state.showSuppressGeneDialog}
+          onClose={this.closeSuppressGeneDialog}
+          onSubmitSuccess={(data) => {
+            this.fetchData();
+            this.closeSuppressGeneDialog();
           }}
         />
         <MergeGeneDialog
