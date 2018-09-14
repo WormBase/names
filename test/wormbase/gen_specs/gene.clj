@@ -4,6 +4,7 @@
    [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
    [wormbase.db.schema :as wdbs]
+   [wormbase.specs.agent :as wna]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.species]
    [wormbase.gen-specs.util :as util]
@@ -29,6 +30,14 @@
                             set))
 
 (def species (s/gen :gene/species species-overrides))
+
+(def all-statuses #{:gene.status/dead
+                    :gene.status/live
+                    :gene.status/suppressed})
+
+(def status-overrides {:gene/status (constantly (s/gen all-statuses))})
+
+(def status (s/gen :gene/status status-overrides))
 
 (defn one-of-name-regexps [species-regexp-kw]
   (gen/one-of (->> (util/load-seed-data)
@@ -64,13 +73,24 @@
                       :gene/cgc-name (constantly cgc-name)
                       :gene/sequence-name (constantly sequence-name)}))
 
-(def update-overrides
+(def overrides
   {:gene/biotype (constantly biotype)
    :gene/species (constantly (s/gen ::species-id))
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
+   :gene/id (constantly id)
+   :gene/status (constantly status)
    :gene/sequence-name (constantly (s/gen :gene/sequence-name))
+   :provenance/how (constantly (s/gen ::wna/id))
+   :provenance/when (constantly (s/gen :provenance/when))
+   :provenance/why (constantly (s/gen :provenance/why))
    [:provenance/who :person/id] (constantly wgsp/id)
    [:provenance/who :person/email] (constantly wgsp/email)
    [:provenance/who :person/roles] (constantly wgsp/roles)})
 
-(def update (s/gen ::wsg/update update-overrides))
+(def info (s/gen ::wsg/info overrides))
+
+(def cloned (s/gen ::wsg/cloned overrides))
+
+(def uncloned (s/gen ::wsg/uncloned overrides))
+
+(def payload (gen/one-of [cloned uncloned]))
