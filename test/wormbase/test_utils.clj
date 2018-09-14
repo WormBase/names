@@ -102,8 +102,7 @@
     [status (read-body body) headers]))
 
 (defn get* [app uri & [params headers]]
-  (let [[status body headers]
-        (raw-get* app uri params headers)]
+  (let [[status body headers] (raw-get* app uri params headers)]
     [status (parse-body body) headers]))
 
 (defn form-post* [app uri params]
@@ -240,7 +239,7 @@
       (test-fn conn))))
 
 (defn gene-provenance
-  [data & {:keys [how whence why person status]
+  [data & {:keys [how what whence why person status]
            :or {how :agent/console
                 whence (jt/to-java-date (jt/instant))
                 what :event/test-fixture-assertion
@@ -305,12 +304,16 @@
 (def cgc-name-for-species (partial gen-valid-name-for-species
                                    gss/cgc-name))
 
+(defn uniq-names? [names]
+  (let [nc (count names)]
+    (or (= nc 1)
+        (= nc (-> names set count)))))
+
 (defn dup-names? [data-samples]
   (let [cgc-names (map :gene/cgc-name data-samples)
-        seq-names (map :gene/sequence-name data-samples)
-        uniq? #(= (count (set %)) (count %))]
-    (not (and (uniq? cgc-names)
-              (uniq? seq-names)))))
+        seq-names (map :gene/sequence-name data-samples)]
+    (not (and (uniq-names? cgc-names)
+              (uniq-names? seq-names)))))
 
 (defn gene-samples [n]
   (assert (int? n))
@@ -322,7 +325,7 @@
                          (assoc m
                                 :gene/cgc-name (cgc-name-for-sample m)
                                 :gene/sequence-name (seq-name-for-sample m)))
-                       (gen/sample gsg/update n))
+                       (gen/sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)

@@ -11,7 +11,7 @@
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
-   [wormbase.names.coercion :as wnc]
+   [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
@@ -82,7 +82,8 @@
 
 (def ^{:doc "The main application."} app
   (sweet/api
-   {:coercion wnc/spec
+   {:formats mformats
+    :coercion :pure-spec
     :middleware [ring-gzip/wrap-gzip
                  wrap-static-resources
                  wrap-not-found

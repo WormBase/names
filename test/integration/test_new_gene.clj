@@ -29,32 +29,32 @@
   (t/testing "Incorrectly naming gene reports problems."
     (let [response (new-gene {})
           [status body] response]
-      (tu/status-is? status 400 body)
+      (tu/status-is? 400 status body)
       (t/is (contains? (tu/parse-body body) :message))))
   (t/testing "Species should always be required when creating gene name."
     (let [[status
            body] (new-gene {:gene/cgc-name (tu/cgc-name-for-species
                                             :species/c-elegans)})]
-      (tu/status-is? status 400 (format "Body: " body)))))
+      (tu/status-is? 400 status (format "Body: " body)))))
 
 (t/deftest wrong-data-shape
   (t/testing "Non-conformant data should result in HTTP Bad Request 400"
     (let [[status body] (new-gene {})]
-      (tu/status-is? status 400 (format "Body: " body)))))
+      (tu/status-is? 400 status (format "Body: " body)))))
 
 (t/deftest invalid-species-specified
   (t/testing "What happens when you specify an invalid species"
     (let [[status body] (new-gene
                          {:gene/cgc-name "abc-1"
                           :gene/species {:species/id :species/c-elegant}})]
-      (tu/status-is? status 400 body))))
+      (tu/status-is? 400 status body))))
 
 (t/deftest invalid-names
   (t/testing "Invalid CGC name for species causes validation error."
     (let [[status body] (new-gene
                          {:gene/cgc-name "_INVALID!_"
                           :gene/species {:species/id :species/c-elegans}})]
-      (tu/status-is? status 400 body))))
+      (tu/status-is? 400 status body))))
 
 (t/deftest naming-uncloned
   (t/testing "Naming one uncloned gene succesfully returns ids"
@@ -66,7 +66,7 @@
                                               :species/c-elegans)
                               :gene/species {:species/id :species/c-elegans}})
               expected-id "WBGene00000001"]
-          (tu/status-is? status 201 body)
+          (tu/status-is? 201 status body)
           (let [db (d/db conn)
                 identifier (some-> body :created :gene/id)]
             (t/is (= identifier expected-id))
@@ -80,5 +80,5 @@
                 :provenance/who {:person/email
                                  "tester@wormbase.org"}}
           [status body] (new-gene data)]
-      (tu/status-is? status 201 body)
+      (tu/status-is? 201 status body)
       (t/is (some-> body :created :gene/id) (pr-str body)))))
