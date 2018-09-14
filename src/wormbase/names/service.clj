@@ -43,6 +43,9 @@
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
 
+(defn encode-content [mime-type content]
+  (slurp (muuntaja/encode mformats mime-type content)))
+
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
   (if-let [validator-url (environ/env :swagger-validator-url)]
