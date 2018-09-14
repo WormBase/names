@@ -33,8 +33,8 @@
                     (assoc-in
                      [:body :formats]
                      {"application/json" json-transformer
-                     "application/msgpack" json-transformer
-                     "application/x-yaml" json-transformer})
+                      "application/msgpack" json-transformer
+                      "application/x-yaml" json-transformer})
                     (assoc-in [:body :string :default] string-transformer))]
     (spec-coercion/create-coercion options)))
 
