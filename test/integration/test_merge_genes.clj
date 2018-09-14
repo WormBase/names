@@ -70,12 +70,18 @@
       (tu/status-is? status 400 body))))
 
 (t/deftest response-codes
-  (t/testing "404 for gene missing"
+  (t/testing "400 for invalid gene "
     (let [[status body] (merge-genes
                          {:gene/biotype :biotype/transposable-element-gene}
                          "WB2"
                          "WB1")]
-      (tu/status-is? status 404 body)))
+      (tu/status-is? 400 status body)))
+  (t/testing "404 for missing gene(s)"
+    (let [[status body] (merge-genes
+                         {:gene/biotype :biotype/transposable-element-gene}
+                         "WBGene20000000"
+                         "WBGene10000000")]
+      (tu/status-is? 404 status body)))
   (t/testing "409 for conflicting state"
     (let [data-samples (tu/gene-samples 2)
           [from-id into-id] (map :gene/id data-samples)
