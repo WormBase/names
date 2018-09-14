@@ -33,7 +33,7 @@
       response
       (cond
         (str/starts-with? (:uri request) "/api")
-        (http-response/not-found {:reason "Resource not found"})
+        (http-response/not-found {:message "Resource not found"})
 
         :else
         (-> (http-response/resource-response "client_build/index.html")
