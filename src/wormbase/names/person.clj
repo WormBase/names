@@ -4,6 +4,7 @@
    [compojure.api.routes :as route]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
+   [expound.alpha :refer [expound-str]]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
    [wormbase.names.auth :as wna]
@@ -21,7 +22,7 @@
         person (some-> request :body-params)]
     (let [transformed (stc/conform spec person stc/json-transformer)]
       (if (= transformed ::s/invalid)
-        (let [problems (str (s/explain-data spec person))]
+        (let [problems (expound-str  spec person)]
           (throw (ex-info "Invalid person data"
                           {:type :user/validation-error
                            :problems problems})))
@@ -71,7 +72,7 @@
             (http-response/ok (info (:db-after tx-res) lur)))
           (http-response/bad-request
            {:type :user/validation-error
-            :problems (s/explain-data spec data*)}))))))
+            :problems (expound-str spec data*)}))))))
 
 (defn deactivate-person [identifier request]
   (admin-required request)
@@ -87,7 +88,7 @@
       (handler identifier request)
       (throw (ex-info "Invalid person identifier"
                       {:type :user/validation-error
-                       :problems (s/explain-data ::wsp/identifier identifier)})))))
+                       :problems (expound-str ::wsp/identifier identifier)})))))
 
 (def routes
   (sweet/routes

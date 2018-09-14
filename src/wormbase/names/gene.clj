@@ -111,7 +111,7 @@
         spec ::wsg/new-unnamed
         cdata (if (s/valid? spec data)
                 (s/conform spec data)
-                (let [problems (s/explain-data spec data)]
+                (let [problems (expound-str spec data)]
                   (throw (ex-info "Invalid data"
                                   {:problems problems
                                    :type ::validation-error
@@ -121,10 +121,10 @@
 
 (defn conform-gene-data [request spec data]
   (let [conformed (stc/conform spec (validate-names request data))]
-    (if (= ::s/invalid conformed)
-      (let [problems (s/explain-data spec data)]
+    (if (s/invalid? conformed)
+      (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
-                        {:problems (str problems)
+                        {:problems problems
                          :type ::validation-error
                          :data data})))
       conformed)))
@@ -180,7 +180,7 @@
               (http-response/not-found
                (format "Gene '%s' does not exist" (last lur)))))
           (throw (ex-info "Not valid according to spec."
-                          {:problems (str (s/explain-data spec data))
+                          {:problems (expound-str spec data)
                            :type ::validation-error
                            :data data})))))))
 
@@ -204,9 +204,7 @@
     (when-not (and (s/valid? :gene/biotype into-biotype)
                    (wdb/ident-exists? db into-biotype))
       (throw (ex-info "Invalid biotype"
-                      {:problems (str (s/explain-data
-                                       :gene/biotype
-                                       into-biotype))
+                      {:problems (expound-str :gene/biotype into-biotype)
                        :type ::validation-error})))
     (when (reduce not=
                   (map :gene/species [from-gene into-gene]))
