@@ -95,7 +95,9 @@ class SplitGeneDialog extends Component {
                   fullWidth
                 />
                 <BiotypeSelectOriginalField
-                  label={`Modify the biotype of ${geneName}`}
+                  label={`${geneName || wbId} biotype`}
+                  helperText={`Modify the biotype of ${geneName}`}
+                  required
                   classes={{
                     root: classes.biotypeSelectField,
                   }}
@@ -107,7 +109,7 @@ class SplitGeneDialog extends Component {
                 <SequenceNameField
                   label="Sequence name"
                 />
-                <BiotypeSelectField />
+                <BiotypeSelectField required />
               </DialogContent>
             )
           }

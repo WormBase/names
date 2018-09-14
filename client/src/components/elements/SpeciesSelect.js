@@ -15,6 +15,8 @@ const SpeciesSelect = (props) => {
     "Onchocerca volvulus",
     "Strongyloides ratti",
   ];
+  const speciesOptions = props.required ? [...SPECIES] : [null, ...SPECIES];
+
   return (
     <TextField
       select
@@ -22,7 +24,7 @@ const SpeciesSelect = (props) => {
       className={props.classes.root}
       {...props}
     >
-      {[null, ...SPECIES,].map(species => (
+      {speciesOptions.map(species => (
         <MenuItem key={species} value={species}>
           {species}
         </MenuItem>
@@ -33,6 +35,7 @@ const SpeciesSelect = (props) => {
 
 SpeciesSelect.propTypes = {
   classes: PropTypes.object.isRequired,
+  required: PropTypes.bool,
 };
 
 const styles = (theme) => ({

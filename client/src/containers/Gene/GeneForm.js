@@ -40,8 +40,11 @@ class GeneForm extends Component {
                 <SequenceNameField
                   label="Sequence name"
                 />
-                <SpeciesSelectField />
-                <BiotypeSelectField />
+                <SpeciesSelectField required />
+                <BiotypeSelectField
+                  required={dataNew['gene/sequence-name'] || dataNew['gene/biotype']} // once a cloned gene, always a cloned gene
+                  helperText={'For cloned genes, biotype is required. Otherwise, it\'s optional'}
+                />
                 <ReasonField
                   label="Reason"
                   helperText={createMode ? 'Why do you create this gene' : 'Why do you edit this gene?'}
