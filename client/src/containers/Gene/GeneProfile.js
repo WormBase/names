@@ -12,6 +12,7 @@ import {
   PageMain,
   PageRight,
   Snackbar,
+  SnackbarContent,
   Typography
 } from '../../components/elements';
 import GeneForm from './GeneForm';
@@ -191,7 +192,7 @@ class GeneProfile extends Component {
               ...stateChanges,
               errorMessage: null,
               data: response.updated,
-              successMessage: `Success! ${this.getDisplayName(response.updated)} is updated.`
+              successMessage: 'Update successful!',
             }
           }
         });
@@ -350,8 +351,12 @@ class GeneProfile extends Component {
           open={this.state.showKillGeneDialog}
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
-            this.fetchData();
-            this.closeKillGeneDialog();
+            this.setState({
+              successMessage: 'Kill successful!',
+            }, () => {
+              this.fetchData();
+              this.closeKillGeneDialog();
+            });
           }}
         />
         <ResurrectGeneDialog
@@ -367,8 +372,12 @@ class GeneProfile extends Component {
                 'gene/status': 'gene.status/live',
               },
             }), () => {
-              this.fetchData();
-              this.closeResurrectGeneDialog();
+              this.setState({
+                successMessage: 'Resurrect successful!',
+              }, () => {
+                this.fetchData();
+                this.closeResurrectGeneDialog();
+              });
             });
           }}
         />
@@ -379,8 +388,12 @@ class GeneProfile extends Component {
           open={this.state.showMergeGeneDialog}
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {
-            this.fetchData();
-            this.closeMergeGeneDialog();
+            this.setState({
+              successMessage: 'Merge successful!',
+            }, () => {
+              this.fetchData();
+              this.closeMergeGeneDialog();
+            });
           }}
         />
         <SplitGeneDialog
@@ -391,16 +404,24 @@ class GeneProfile extends Component {
           open={this.state.showSplitGeneDialog}
           onClose={this.closeSplitGeneDialog}
           onSubmitSuccess={(data) => {
-            this.fetchData();
-            this.closeSplitGeneDialog();
+            this.setState({
+              successMessage: 'Split successful!',
+            }, () => {
+              this.fetchData();
+              this.closeSplitGeneDialog();
+            });
           }}
         />
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           open={this.state.successMessage}
           onClose={this.closeSnackbar}
-          message={<span>{this.state.successMessage}</span>}
-        />
+        >
+          <SnackbarContent
+            variant="success"
+            message={<span>{this.state.successMessage}</span>}
+          />
+        </Snackbar>
       </Page>
     );
   }
