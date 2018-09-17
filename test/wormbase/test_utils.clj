@@ -321,10 +321,11 @@
                         (keep-indexed (fn [idx sample-id]
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
-        gene-recs (map (fn assoc-valid-names [m]
-                         (assoc m
-                                :gene/cgc-name (cgc-name-for-sample m)
-                                :gene/sequence-name (seq-name-for-sample m)))
+        gene-recs (map (fn make-valid [m]
+                         (-> m
+                             (dissoc :history)
+                             (assoc :gene/cgc-name (cgc-name-for-sample m)
+                                    :gene/sequence-name (seq-name-for-sample m))))
                        (gen/sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]

@@ -122,8 +122,11 @@
     (let [data-samples (tu/gene-samples 2)
           [gene-from gene-into] data-samples
           [from-id into-id] (map :gene/id data-samples)
-          samples [(dissoc gene-from :gene/cgc-name)
+          samples [(-> gene-from
+                       (dissoc :gene/cgc-name)
+                       (assoc :gene/status :gene.status/live))
                    (-> gene-into
+                       (assoc :gene/status :gene.status/live)
                        (assoc :gene/species (:gene/species gene-from))
                        (dissoc :gene/sequence-name))]]
       (tu/with-gene-fixtures

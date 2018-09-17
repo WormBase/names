@@ -22,6 +22,7 @@
   (let [identifier (first (gen/sample gsg/id 1))
         sample (-> (gen/sample gsg/payload 1)
                    (first)
+                   (dissoc :history)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
     (tu/with-gene-fixtures
