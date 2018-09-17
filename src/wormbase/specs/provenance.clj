@@ -16,7 +16,7 @@
 
 (s/def :provenance/who (stc/spec (s/keys :req [(or :person/id :person/email)])))
 
-(s/def :provenance/how (stc/spec ::wsa/id))
+(s/def :provenance/how ::wsa/id)
 
 (s/def :provenance/why (stc/spec (s/and sts/string? (complement str/blank?))))
 
