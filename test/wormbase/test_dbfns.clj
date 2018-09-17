@@ -201,7 +201,7 @@
                 @(d/transact conn [[:db.fn/cas
                                     [:gene/id latest-id]
                                     :gene/status
-                                    (-> latest-ent :gene/status (d/entid db))
+                                    (d/entid db (:gene/status latest-ent))
                                     (d/entid db :gene.status/dead)]])
                 (let [db (d/db conn)
                       invoke (partial d/invoke db)
