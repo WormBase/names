@@ -11,6 +11,7 @@
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
+   [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
@@ -32,7 +33,7 @@
       response
       (cond
         (str/starts-with? (:uri request) "/api")
-        (http-response/not-found {:reason "Resource not found"})
+        (http-response/not-found {:message "Resource not found"})
 
         :else
         (-> (http-response/resource-response "client_build/index.html")
@@ -41,6 +42,9 @@
 
 (defn decode-content [mime-type content]
   (muuntaja/decode mformats mime-type content))
+
+(defn encode-content [mime-type content]
+  (slurp (muuntaja/encode mformats mime-type content)))
 
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
@@ -78,7 +82,8 @@
 
 (def ^{:doc "The main application."} app
   (sweet/api
-   {:coercion :spec
+   {:formats mformats
+    :coercion :pure-spec
     :middleware [ring-gzip/wrap-gzip
                  wrap-static-resources
                  wrap-not-found

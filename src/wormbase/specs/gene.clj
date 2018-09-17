@@ -1,11 +1,13 @@
 (ns wormbase.specs.gene
-  (:require [clojure.spec.alpha :as s]
-            ;; for specs
-            [wormbase.specs.provenance]
-            [wormbase.specs.species]
-            [clojure.string :as str]
-            [spec-tools.core :as stc]
-            [spec-tools.spec :as sts]))
+  (:require
+   [clojure.string :as str]
+   [clojure.spec.alpha :as s]
+   [spec-tools.core :as stc]
+   [spec-tools.spec :as sts]
+   ;; for specs
+   [wormbase.specs.provenance]
+   [wormbase.specs.species]))            ;; for specs
+
 
 (def gene-id-regexp #"WBGene\d{8}")
 
@@ -15,12 +17,11 @@
 
 (s/def :gene/id (stc/spec (s/and string? (partial re-matches gene-id-regexp))))
 
-(s/def :gene/cgc-name (stc/spec string?))
+(s/def :gene/cgc-name (s/nilable ::new-name))
 
-(s/def :gene/sequence-name (stc/spec string?))
+(s/def :gene/sequence-name ::new-name)
 
-(s/def :gene/biotype (stc/spec (s/and keyword?
-                                      #(= (namespace %) "biotype"))))
+(s/def :gene/biotype sts/keyword?)
 
 (s/def :gene/species (stc/spec (s/keys :req [(or :species/id :species/latin-name)])))
 
@@ -30,52 +31,64 @@
 
 (s/def :gene.status/suppressed sts/boolean?)
 
-(def all-statuses #{:gene.status/dead
-                    :gene.status/live
-                    :gene.status/suppressed})
+(s/def :gene/status sts/keyword?)
 
-(s/def :gene/status all-statuses)
+(s/def ::cloned (stc/spec
+                 (stc/merge
+                  (s/keys :req [:gene/biotype
+                                :gene/sequence-name
+                                :gene/species]
+                          :opt [:gene/cgc-name
+                                :gene/status
+                                :provenance/when
+                                :provenance/who
+                                :provenance/how
+                                :provenance/why])
+                  (s/map-of #{:gene/biotype
+                              :gene/sequence-name
+                              :gene/species
+                              :gene/cgc-name
+                              :gene/id
+                              :gene/status
+                              :history
+                              :provenance/when
+                              :provenance/who
+                              :provenance/how
+                              :provenance/why}
+                            any?))))
 
-(s/def ::status (s/or :db :gene/status
-                      :short (set (map (comp keyword name) all-statuses))
-                      :qualified all-statuses))
-
-(s/def ::cloned (stc/spec (s/and
-                           (s/keys :req [:gene/biotype
-                                         :gene/sequence-name
-                                         :gene/species]
-                                   :opt [:gene/cgc-name
-                                         :provenance/who
-                                         :provenance/how
-                                         :provenance/why]))))
-
-(s/def ::uncloned (stc/spec (s/and
-                             (s/keys :req [:gene/species :gene/cgc-name]
-                                     :opt [:provenance/who
-                                           :provenance/how
-                                           :provenance/why]))))
+(s/def ::uncloned (stc/spec
+                   (stc/merge
+                    (s/keys :req [:gene/species :gene/cgc-name]
+                            :opt [:gene/status
+                                  :provenance/when
+                                  :provenance/who
+                                  :provenance/how
+                                  :provenance/why])
+                    (s/map-of #{:gene/species
+                                :gene/cgc-name
+                                :gene/status
+                                :gene/id
+                                :history
+                                :provenance/when
+                                :provenance/who
+                                :provenance/how
+                                :provenance/why}
+                              any?))))
 
 (s/def ::new (stc/spec (s/or :cloned ::cloned
                              :uncloned ::uncloned)))
 
 (s/def ::new-unnamed (s/keys :req [:gene/id
                                    :gene/species]
-                             :opt [:provenance/who
+                             :opt [:provenance/when
+                                   :provenance/who
                                    :provenance/how
                                    :provenance/why]))
 
 (s/def ::created (stc/spec (s/keys :req [:gene/id :gene/status])))
 
-(s/def ::update (stc/spec (s/keys :opt [:gene/biotype
-                                        :provenance/who
-                                        :provenance/when
-                                        :provenance/why]
-                                  :req [:gene/species
-                                        (or (or :gene/cgc-name
-                                                :gene/sequence-name)
-                                            (and :gene/cgc-name
-                                                 :gene/sequence-name))])))
-
+(s/def ::update (stc/spec ::new)) ;; same as new
 
 (s/def ::updated (stc/spec (s/keys :req [:gene/id])))
 
@@ -115,7 +128,8 @@
                                       :gene/species
                                       :gene/status
                                       (or (or :gene/cgc-name :gene/sequence-name)
-                                          (and :gene/cgc-name :gene/sequence-name))]
+                                          (and :gene/cgc-name :gene/sequence-name))
+                                      ]
                                 :req-un [::history]
                                 :opt [:gene/biotype
                                       :gene/sequence-name
@@ -127,8 +141,7 @@
 
 (s/def ::killed ::identifier)
 
-(s/def ::find-term (stc/spec (s/and string?
-                                    (complement str/blank?))))
+(s/def ::find-term (stc/spec (s/and string? (complement str/blank?))))
 
 (s/def ::pattern ::find-term)
 
@@ -141,5 +154,3 @@
 (s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
 
 (s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
-
-

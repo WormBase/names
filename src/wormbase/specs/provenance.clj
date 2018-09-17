@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [wormbase.specs.person] ;; for specs
+   [wormbase.specs.person] ;; side effecting: to bring in specs
    [wormbase.specs.agent :as wsa]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]))
@@ -11,6 +11,8 @@
 ;;       - db wants instants (java.utl.Date values)
 
 (s/def :provenance/when sts/inst?)
+
+(s/def :provenance/what sts/keyword?)
 
 (s/def :provenance/who (stc/spec (s/keys :req [(or :person/id :person/email)])))
 

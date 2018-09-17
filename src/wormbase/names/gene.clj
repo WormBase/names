@@ -5,6 +5,7 @@
    [clojure.tools.logging :as log]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
+   [expound.alpha :refer [expound-str]]
    [java-time :as jt]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
@@ -19,8 +20,8 @@
 (def identify (partial wne/identify ::wsg/identifier))
 
 (defn validate-names
-  ([request data & {:keys [allow-blank-names?]
-                    :or {allow-blank-names? true}}]
+  ([request data & {:keys [allow-blank-cgc-name?]
+                    :or {allow-blank-cgc-name? true}}]
    (let [db (:db request)
          species-lur (some-> data :gene/species vec first)
          species-ent (d/entity db species-lur)]
@@ -32,19 +33,21 @@
                       {:invalid-species species-lur
                        :type :user/validation-error})))
     (let [patterns ((juxt :species/cgc-name-pattern
-                             :species/sequence-name-pattern) species-ent)
+                          :species/sequence-name-pattern) species-ent)
           regexps (map re-pattern patterns)
           name-idents [:gene/cgc-name :gene/sequence-name]]
       (doseq [[regexp name-ident] (partition 2 (interleave regexps name-idents))]
         (when-let [gname (name-ident data)]
           (when-not (re-matches regexp gname)
-            (when-not (and allow-blank-names? (empty? gname))
+            (when-not (and allow-blank-cgc-name?
+                           (empty? (get data gname))
+                           (= gname :gene/cgc-name))
               (throw (ex-info "Invalid name"
                               {:type :user/validation-error
-                               :invalid {:name gname :ident name-ident}}))))))
+                               :data {:problems {:invalid {:name gname :ident name-ident}}}}))))))
       data)))
   ([request data]
-   (validate-names request data :allow-blank-names? false)))
+   (validate-names request data :allow-blank-cgc-name? false)))
 
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
@@ -63,27 +66,22 @@
   Match any unique gene identifier (cgc, sequence names or id)."
   [request]
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
-    (if (s/valid? ::wsg/find-term pattern)
-      (let [db (:db request)
-            term (stc/conform ::wsg/find-term pattern)
-            q-result (d/q '[:find ?gid ?attr ?name
-                            :in $ % ?term
-                            :where
-                            (gene-name ?term ?name ?eid ?attr)
-                            [?eid :gene/id ?gid]]
-                          db
-                          name-matching-rules
-                          (re-pattern (str "^" term)))
-            res {:matches (or (some->> q-result
-                                       (map (fn matched [[gid attr name*]]
-                                              (array-map :gene/id gid attr name*)))
-                                       (vec))
-                              [])}]
-        (http-response/ok res))
-      (http-response/bad-request {:message "Invalid find term"
-                                  :value pattern
-                                  :problems (str (s/explain-data ::wsg/find-term
-                                                                 pattern))}))))
+    (let [db (:db request)
+          term (stc/conform ::wsg/find-term pattern)
+          q-result (d/q '[:find ?gid ?attr ?name
+                          :in $ % ?term
+                          :where
+                          (gene-name ?term ?name ?eid ?attr)
+                          [?eid :gene/id ?gid]]
+                        db
+                        name-matching-rules
+                        (re-pattern (str "^" term)))
+          res {:matches (or (some->> q-result
+                                     (map (fn matched [[gid attr name*]]
+                                            (array-map :gene/id gid attr name*)))
+                                     (vec))
+                            [])}]
+      (http-response/ok res))))
 
 (defn- transform-result
   "Removes datomic internal keys from a pull-result map."
@@ -113,7 +111,7 @@
         spec ::wsg/new-unnamed
         cdata (if (s/valid? spec data)
                 (s/conform spec data)
-                (let [problems (s/explain-data spec data)]
+                (let [problems (expound-str spec data)]
                   (throw (ex-info "Invalid data"
                                   {:problems problems
                                    :type ::validation-error
@@ -121,19 +119,22 @@
         tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
     @(d/transact-async (:conn request) tx-data)))
 
+(defn conform-gene-data [request spec data]
+  (let [conformed (stc/conform spec (validate-names request data))]
+    (if (s/invalid? conformed)
+      (let [problems (expound-str spec data)]
+        (throw (ex-info "Not valid according to spec."
+                        {:problems problems
+                         :type ::validation-error
+                         :data data})))
+      conformed)))
+
 (defn new-gene [request & {:keys [mint-new-id?]
                            :or {mint-new-id? true}}]
   (let [payload (:body-params request)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new
-        [_ cdata] (let [conformed (stc/conform spec (validate-names request data))]
-                    (if (= ::s/invalid conformed)
-                      (let [problems (s/explain-data spec data)]
-                        (throw (ex-info "Not valid according to spec."
-                                        {:problems (str problems)
-                                         :type ::validation-error
-                                         :data data})))
-                      conformed))
+        [_ cdata] (conform-gene-data request spec data)
         prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
@@ -151,13 +152,11 @@
         species-entid (d/entid db species-lur)
         biotype-ident (get data :gene/biotype)
         biotype-entid (d/entid db biotype-ident)
-        res (-> (merge data
+        res (vec (merge data
                        (when biotype-entid
                          {:gene/biotype biotype-entid})
                        (when species-entid
-                         {:gene/species species-entid}))
-                (vec)
-                (sort))]
+                         {:gene/species species-entid})))]
     res))
 
 (defn update-gene [request identifier]
@@ -168,12 +167,12 @@
             spec ::wsg/update
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
-          (let [cdata (->> (validate-names request data :allow-blank-names? true)
-                           (stc/conform spec)
+          (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
+                           (conform-gene-data request spec)
+                           (second)
                            (resolve-refs-to-dbids db))
                 prov (wnp/assoc-provenance request payload :event/update-gene)
-                txes [[:wormbase.tx-fns/update-gene lur cdata]
-                      prov]
+                txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
               (let [ent (d/entity db-after lur)]
@@ -181,7 +180,7 @@
               (http-response/not-found
                (format "Gene '%s' does not exist" (last lur)))))
           (throw (ex-info "Not valid according to spec."
-                          {:problems (str (s/explain-data spec data))
+                          {:problems (expound-str spec data)
                            :type ::validation-error
                            :data data})))))))
 
@@ -205,9 +204,7 @@
     (when-not (and (s/valid? :gene/biotype into-biotype)
                    (wdb/ident-exists? db into-biotype))
       (throw (ex-info "Invalid biotype"
-                      {:problems (str (s/explain-data
-                                       :gene/biotype
-                                       into-biotype))
+                      {:problems (expound-str :gene/biotype into-biotype)
                        :type ::validation-error})))
     (when (reduce not=
                   (map :gene/species [from-gene into-gene]))

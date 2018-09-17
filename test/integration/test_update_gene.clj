@@ -20,7 +20,7 @@
 
 (t/deftest must-meet-spec
   (let [identifier (first (gen/sample gsg/id 1))
-        sample (-> (gen/sample gsg/update 1)
+        sample (-> (gen/sample gsg/payload 1)
                    (first)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
@@ -32,7 +32,7 @@
           (let [data {}]
             (let [response (update-gene identifier data)
                   [status body] response]
-              (tu/status-is? status 400 (pr-str response)))))))))
+              (tu/status-is? 400 status (pr-str response)))))))))
 
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -54,45 +54,49 @@
 
 (t/deftest update-uncloned
   (t/testing "Naming one uncloned gene succesfully."
-    (let [identifier (first (gen/sample gsg/id 1))
-          sample (-> (gen/sample gsg/update 1)
+    (let [gid (first (gen/sample gsg/id 1))
+          sample (-> (gen/sample gsg/uncloned 1)
                      first
                      (select-keys [:gene/cgc-name :gene/species]))
           sample-data (assoc sample
-                             :gene/id identifier
+                             :gene/id gid
                              :gene/cgc-name (tu/cgc-name-for-sample sample))]
       (tu/with-gene-fixtures
         [sample-data]
         (fn do-update [conn]
-          (let [[status body] (update-gene identifier
-                                           (assoc sample-data :gene/biotype :biotype/cds))]
-            (tu/status-is? status 200 body)
+          (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
+                [status body] (update-gene
+                               gid
+                               (-> sample-data
+                                   (dissoc :gene/id) (assoc :gene/cgc-name new-cgc-name)))]
+            (tu/status-is? 200 status body)
             (let [db (d/db conn)
-                  identifier (some-> body :updated :gene/id)
+                  gid-2 (some-> body :updated :gene/id)
                   updated (:updated body)]
-              (t/is (= (-> updated :gene/biotype keyword) :biotype/cds))
               (t/is (= (-> updated :gene/species :species/id keyword)
                        (get-in sample-data [:gene/species :species/id])))
-              (t/is (= (:gene/cgc-name updated) (:gene/cgc-name sample-data)))
-              (tu/query-provenance conn identifier :event/update-gene))))))))
+              (t/is (= (:gene/cgc-name updated) new-cgc-name))
+              (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
-(t/deftest update-names
-  (t/testing (str "Allow names to blanked")
-    (let [identifier (first (gen/sample gsg/id 1))
-          sample (-> (gen/sample gsg/update 1)
+(t/deftest removing-cgc-name-from-cloned-gene
+  (t/testing (str "Allow CGC name to be removed from a cloned gene.")
+    (let [gid (first (gen/sample gsg/id 1))
+          sample (-> (gen/sample gsg/cloned 1)
                      first
                      (select-keys [:gene/cgc-name :gene/species]))
           sample-data (assoc sample
-                             :gene/id identifier
+                             :gene/id gid
+                             :gene/biotype :biotype/cds
+                             :gene/sequence-name (tu/seq-name-for-sample sample)
                              :gene/cgc-name (tu/cgc-name-for-sample sample))]
       (tu/with-gene-fixtures
         [sample-data]
         (fn do-update [conn]
-          (let [[status body] (update-gene identifier
+          (let [[status body] (update-gene gid
                                            (-> sample-data
-                                               (assoc :gene/biotype :biotype/cds)
-                                               (assoc :gene/cgc-name "")))]
-            (tu/status-is? status 200 body)
+                                               (dissoc :gene/id)
+                                               (assoc :gene/cgc-name nil)))]
+            (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   identifier (some-> body :updated :gene/id)
                   updated (:updated body)]
@@ -101,46 +105,43 @@
 
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
-    (let [identifier (first (gen/sample gsg/id 1))
-          sample (first (gen/sample gsg/update 1))
-          orig-cgc-name (tu/cgc-name-for-sample sample)
-          sample-data (merge
-                       sample
-                       {:gene/id identifier
-                        :gene/cgc-name orig-cgc-name
-                        :gene/status :gene.status/live}
-                       (when (contains? sample :gene/sequence-name)
-                         {:gene/sequence-name (tu/seq-name-for-sample sample)}))
-          species-id (:species/id sample-data)]
-      (tu/with-gene-fixtures
-        sample-data
-        (fn [conn]
-          (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
-                why "udpate prov test"
-                payload (-> sample-data
-                            (dissoc :gene/status)
-                            (assoc :gene/cgc-name new-cgc-name)
-                            (assoc :provenance/who
-                                   {:person/email "tester@wormbase.org"})
-                            (assoc :provenance/why
-                                   why))]
-            (let [response (update-gene identifier payload)
-                  [status body] response
-                  db (d/db conn)
-                  ent (d/entity db [:gene/id identifier])]
-              (tu/status-is? status 200 body)
-              (let [provs (query-provenance conn :gene/cgc-name)
-                    act-prov (first provs)]
-                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
-                      (pr-str act-prov))
-                (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
-                      (pr-str act-prov))
-                (t/is (= (:provenance/why act-prov) why))
-                (t/is (= (-> act-prov :provenance/who :person/email)
-                         "tester@wormbase.org"))
-                (t/is (not= nil (:provenance/when act-prov))))
-              (let [gs (:gene/status ent)]
-                (t/is (= :gene.status/live gs)
-                      (pr-str (:gene/status ent))))
-              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
-              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))
+   (let [gid (first (gen/sample gsg/id 1))
+         sample (first (gen/sample gsg/cloned 1))
+         orig-cgc-name (tu/cgc-name-for-sample sample)
+         sample-data (merge
+                      sample
+                      {:gene/id gid
+                       :gene/cgc-name orig-cgc-name
+                       :gene/status :gene.status/live
+                       :gene/sequence-name (tu/seq-name-for-sample sample)})]
+     (tu/with-gene-fixtures
+       sample-data
+       (fn [conn]
+         (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
+               why "udpate prov test"
+               payload (-> sample-data
+                           (dissoc :gene/id :gene/status)
+                           (assoc :gene/cgc-name new-cgc-name)
+                           (assoc :provenance/who
+                                  {:person/email "tester@wormbase.org"})
+                           (assoc :provenance/why why))]
+           (let [response (update-gene gid payload)
+                 [status body] response
+                 db (d/db conn)
+                 ent (d/entity db [:gene/id gid])]
+             (tu/status-is? 200 status body)
+             (let [provs (query-provenance conn :gene/cgc-name)
+                   act-prov (first provs)]
+               (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
+                     (pr-str act-prov))
+               (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
+                     (pr-str act-prov))
+               (t/is (= (:provenance/why act-prov) why))
+               (t/is (= (-> act-prov :provenance/who :person/email)
+                        "tester@wormbase.org"))
+               (t/is (not= nil (:provenance/when act-prov))))
+             (let [gs (:gene/status ent)]
+               (t/is (= :gene.status/live gs)
+                     (pr-str (:gene/status ent))))
+             (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
+             (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))

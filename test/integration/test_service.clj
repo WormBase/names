@@ -25,7 +25,7 @@
       (t/is (contains? response :body))
       (let [decode #(service/decode-content "application/json" %)
             response-text (some-> response :body slurp)]
-        (t/is (not= nil (:reason (decode response-text)))
+        (t/is (not= nil (:message (decode response-text)))
               (str response-text)))))
   (t/testing "When no routes are matched in request processing, client api is served."
     (let [response (service/app
