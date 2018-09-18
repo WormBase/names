@@ -315,6 +315,12 @@
     (not (and (uniq-names? cgc-names)
               (uniq-names? seq-names)))))
 
+(defn gen-sample [data-gen n]
+  (->> (gen/sample data-gen n)
+       (map #(remove (comp nil? val) %))
+       (map #(into {} %))
+       (map #(dissoc % :history))))
+
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (into {}
@@ -322,11 +328,10 @@
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
         gene-recs (map (fn make-valid [m]
-                         (-> m
-                             (dissoc :history)
-                             (assoc :gene/cgc-name (cgc-name-for-sample m)
-                                    :gene/sequence-name (seq-name-for-sample m))))
-                       (gen/sample gsg/payload n))
+                         (assoc m
+                                :gene/cgc-name (cgc-name-for-sample m)
+                                :gene/sequence-name (seq-name-for-sample m)))
+                       (gen-sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)
