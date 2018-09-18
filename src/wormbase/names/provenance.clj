@@ -65,16 +65,13 @@
   (->> (d/q '[:find ?aname ?v ?added
               :in $ ?e ?tx
               :where
-              ;; hide dummy changes for `:importer/historical-gene-version` introduced for import.
-              (not [?e ?a _ _ ]
-                   [?a :db/ident ?aname]
-                   [(namespace ?aname) (ground "importer")])
-              ;; keep everything else.
-              [?e ?a ?v ?tx ?added]
-              [?a :db/ident ?aname]]
-            (d/history db)
+               [?e ?a ?v ?tx ?added]
+               [?a :db/ident ?aname]]
+              (d/history db)
             entity-id
             tx)
+       (remove (fn remove-importer-artifact [[k _ _]]
+                 (= k :importer/historical-gene-version)))
        (map (fn convert-entids [result-map]
               (reduce-kv (fn [m k v]
                            (update m k (fnil (partial d/ident db) v)))
