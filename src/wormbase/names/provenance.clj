@@ -70,7 +70,7 @@
               (d/history db)
             entity-id
             tx)
-       (remove (fn remove-importer-artifact [[k v a?]]
+       (remove (fn remove-importer-artifact [[k _ _]]
                  (= k :importer/historical-gene-version)))
        (map (fn convert-entids [result-map]
               (reduce-kv (fn [m k v]
