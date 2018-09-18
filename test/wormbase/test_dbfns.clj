@@ -2,15 +2,14 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
+   [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [miner.strgen :as sg]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gs]
    [wormbase.db :as wdb]
    [wormbase.test-utils :as tu]
-   [wormbase.specs.gene :as wsg]
-   [clojure.string :as str])
+   [wormbase.specs.gene :as wsg])
   (:import
    (clojure.lang ExceptionInfo)))
 
