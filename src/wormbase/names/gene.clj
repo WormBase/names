@@ -93,16 +93,26 @@
              (empty pull-result)
              (dissoc pull-result :db/id)))
 
+(def provenance-pull-expr '[*
+                            {:provenance/what [:db/ident]
+                             :provenance/who [:person/email :person/name :person/id]
+                             :provenance/how [:db/ident]
+                             :provenance/split-from [:gene/id]
+                             :provenance/split-into [:gene/id]
+                             :provenance/merged-from [:gene/id]
+                             :provenance/merged-into [:gene/id]}])
+
+(def info-pull-expr '[* {:gene/biotype [[:db/ident]]
+                         :gene/species [[:species/id][:species/latin-name]]
+                         :gene/status [[:db/ident]]}])
+
 (defn about-gene [request identifier]
   (when (s/valid? ::wsg/identifier identifier)
     (let [db (:db request)
           [lur _] (identify request identifier)
-          info-expr '[*
-                      {:gene/biotype [[:db/ident]]
-                       :gene/species [[:species/id][:species/latin-name]]
-                       :gene/status [[:db/ident]]}]
-          data (-> (d/pull db info-expr lur)
-                   (assoc :history (wnp/query-provenance db lur)))]
+          info (d/pull db info-pull-expr lur)
+          prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)
+          data (assoc info :history prov)]
       (http-response/ok (transform-result data)))))
 
 (defn new-unnamed-gene [request payload]

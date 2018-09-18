@@ -113,23 +113,29 @@
 
 (s/def ::kill-response (stc/spec (s/keys :req-un [::killed])))
 
+
+(s/def ::attr sts/keyword?)
+(s/def ::value any?)
+(s/def ::added sts/boolean?)
+(s/def ::change (s/keys :req-un [::attr ::value ::added]))
+(s/def ::changes (s/coll-of ::change))
 (s/def ::provenance (s/keys :req [:provenance/when
                                   :provenance/who
                                   :provenance/how]
+                            :req-un [::changes]
                             :opt [:provenance/why
                                   :provenance/split-from
                                   :provenance/split-into
                                   :provenance/merged-from
                                   :provenance/merged-into]))
+(s/def ::history (stc/spec (s/coll-of ::provenance :type vector? :min-count 1)))
 
-(s/def ::history (s/coll-of ::provenance :type vector? :min-count 1))
 
 (s/def ::info (stc/spec (s/keys :req [:gene/id
                                       :gene/species
                                       :gene/status
                                       (or (or :gene/cgc-name :gene/sequence-name)
-                                          (and :gene/cgc-name :gene/sequence-name))
-                                      ]
+                                          (and :gene/cgc-name :gene/sequence-name))]
                                 :req-un [::history]
                                 :opt [:gene/biotype
                                       :gene/sequence-name
