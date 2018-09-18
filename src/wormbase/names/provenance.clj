@@ -59,34 +59,52 @@
               #(compare %1 %2))]
     (sort-by :provenance/when cmp events)))
 
-(defn pull-provenance
-  "Retrive data from `db` via pull exporession."
-  [db tx-id]
-  (d/pull db
-          '[* {:provenance/what [:db/ident]
-               :provenance/who [:person/email :person/name :person/id]
-               :provenance/how [:db/ident]
-               :provenance/split-from [:gene/id]
-               :provenance/split-into [:gene/id]
-               :provenance/merged-from [:gene/id]
-               :provenance/merged-into [:gene/id]}]
-          tx-id))
+(defn query-tx-changes-for-event
+  "Return the set of attribute and values changed for a given gene transaction."
+  [db entity-id tx]
+  (->> (d/q '[:find ?aname ?v ?added
+              :in $ ?e ?tx
+              :where
+              ;; hide dummy changes for `:importer/historical-gene-version` introduced for import.
+              (not [?e ?a _ _ ]
+                   [?a :db/ident ?aname]
+                   [(namespace ?aname) (ground "importer")])
+              ;; keep everything else.
+              [?e ?a ?v ?tx ?added]
+              [?a :db/ident ?aname]]
+            (d/history db)
+            entity-id
+            tx)
+       (map (fn convert-entids [result-map]
+              (reduce-kv (fn [m k v]
+                           (update m k (fnil (partial d/ident db) v)))
+                         (empty result-map)
+                         result-map)))
+       (map #(zipmap [:attr :value :added] %))
+       (sort-by :attr)))
+
+(defn pull-provenance [db entity-id prov-pull-expr pull-changes-fn tx]
+  (-> db
+      (d/pull prov-pull-expr tx)
+      (update :changes (fnil identity (pull-changes-fn tx)))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
   `entity-id` can be a datomic id number or a lookup-ref."
-  [db entity-id]
-  (let [pull (partial pull-provenance db)
-        sort-mrf #(sort-events-by-when % :most-recent-first true)]
-    (->> (d/q '[:find [?tx ...]
-                :in $ ?e
-                :where
-                [?e _ _ ?tx _]]
-              (d/history db)
-              entity-id)
-         (map pull)
-         (map wnu/undatomicize)
-         (remove #(= (:provenance/what %) :event/import-gene))
-         (map #(update % :provenance/how (fnil identity :agent/importer)))
-         (sort-mrf)
-         seq)))
+  [db entity-id prov-pull-expr default-event]
+  (let [pull-changes (partial query-tx-changes-for-event db entity-id)
+        pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
+        sort-mrf #(sort-events-by-when % :most-recent-first true)
+        tx-ids (d/q '[:find [?tx ...]
+                      :in $ ?e
+                      :where
+                      [?e _ _ ?tx _]]
+                    (d/history db)
+                    entity-id)]
+    (some->> tx-ids
+             (map pull-prov)
+             (map wnu/undatomicize)
+             (remove #(= (:provenance/what %) :event/import-gene))
+             (map #(update % :provenance/how (fnil identity :agent/importer)))
+             (sort-mrf)
+             seq)))

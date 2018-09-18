@@ -20,9 +20,8 @@
 
 (t/deftest must-meet-spec
   (let [identifier (first (gen/sample gsg/id 1))
-        sample (-> (gen/sample gsg/payload 1)
+        sample (-> (tu/gen-sample gsg/cloned 1)
                    (first)
-                   (dissoc :history)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
     (tu/with-gene-fixtures
@@ -56,7 +55,7 @@
 (t/deftest update-uncloned
   (t/testing "Naming one uncloned gene succesfully."
     (let [gid (first (gen/sample gsg/id 1))
-          sample (-> (gen/sample gsg/uncloned 1)
+          sample (-> (tu/gen-sample gsg/uncloned 1)
                      first
                      (select-keys [:gene/cgc-name :gene/species]))
           sample-data (assoc sample
@@ -82,7 +81,7 @@
 (t/deftest removing-cgc-name-from-cloned-gene
   (t/testing (str "Allow CGC name to be removed from a cloned gene.")
     (let [gid (first (gen/sample gsg/id 1))
-          sample (-> (gen/sample gsg/cloned 1)
+          sample (-> (tu/gen-sample gsg/cloned 1)
                      first
                      (select-keys [:gene/cgc-name :gene/species]))
           sample-data (assoc sample
@@ -107,7 +106,7 @@
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
    (let [gid (first (gen/sample gsg/id 1))
-         sample (first (gen/sample gsg/cloned 1))
+         sample (first (tu/gen-sample gsg/cloned 1))
          orig-cgc-name (tu/cgc-name-for-sample sample)
          sample-data (merge
                       sample

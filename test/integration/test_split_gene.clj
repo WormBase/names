@@ -150,13 +150,15 @@
       (t/is (re-seq #".*validation failed" (:message body))
             (pr-str body)))))
 
-(defn- gen-sample-for-split []
+(defn- gen-sample-for-split [& {:keys [status]
+                                :or {status :gene.status/live}}]
   (let [[sample] (tu/gene-samples 1)
         gene-id (:gene/id sample)
         species (-> sample :gene/species :species/id)
         prod-seq-name (tu/seq-name-for-species species)]
     [gene-id
      (-> sample
+         (assoc :gene/status status)
          (assoc :gene/id gene-id)
          (dissoc :gene/cgc-name))
      prod-seq-name]))
