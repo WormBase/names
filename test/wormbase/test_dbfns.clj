@@ -15,12 +15,15 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
+(defn gene-samples [n status]
+  (->> n (tu/gene-samples) (map #(assoc % :gene/status status))))
+
 (t/deftest test-merge-genes
   (let [db (d/db wdb/conn)
         merge-genes (partial d/invoke db :wormbase.tx-fns/merge-genes)]
     (t/testing "Both merge participants must exist in DB"
-      (let [data-samples (tu/gene-samples 2)
-            [from-id into-id] (map :gene/id data-samples)]/
+      (let [data-samples (gene-samples 2 :gene.status/live)
+            [from-id into-id] (map :gene/id data-samples)]
         (t/is
          (thrown-with-msg? ExceptionInfo
                            #"Merge participant does not exist"
@@ -55,14 +58,16 @@
     (t/testing (str "When merging cloned to uncloned, "
                     "sequence name is transfered: "
                     "eaten gene's sequence name should be retracted.")
-      (let [[cloned uncloned] (tu/gene-samples 2)
+      (let [[cloned uncloned] (gene-samples 2 :gene.status/live)
             [from-id into-id] (map :gene/id [cloned uncloned])
-            data-samples [(dissoc cloned :gene/cgc-name)
+            data-samples [(-> cloned
+                              (dissoc :gene/cgc-name)
+                              (assoc :gene/status :gene.status/live))
                           (-> uncloned
                               (dissoc :gene/sequence-name)
                               (dissoc :gene/biotype)
-                              (assoc :gene/species
-                                     (:gene/species cloned)))]]
+                              (assoc :gene/species (:gene/species cloned))
+                              (assoc :gene/status :gene.status/live))]]
        (tu/with-gene-fixtures
          data-samples
          (fn seq-name-txferred-to-uncloned [conn]
@@ -80,7 +85,7 @@
     (t/testing (str "When merging one cloned to another cloned gene, "
                     "sequence name is *not* transfered"
                     "Eaten gene's sequence name is left intact.")
-            (let [[cloned-1 cloned-2] (tu/gene-samples 2)
+            (let [[cloned-1 cloned-2] (gene-samples 2 :gene.status/live)
                   [from-id into-id] (map :gene/id [cloned-1 cloned-2])
                   tgt-seq-name (:gene/sequence-name cloned-2)
                   data-samples [(dissoc cloned-1 :gene/cgc-name)
@@ -103,7 +108,7 @@
                    (str "Target sequence name should be preserved"
                         (pr-str (d/touch tgt)))))))))
     (t/testing "Valid merge request results in correct TX form"
-      (let [data-samples (tu/gene-samples 2)
+      (let [data-samples (gene-samples 2 :gene.status/live)
             [from-id into-id] (map :gene/id data-samples)
             [sample-1 sample-2] [(-> data-samples
                                      first
@@ -139,7 +144,7 @@
   (let [db (d/db wdb/conn)
         split-gene (partial d/invoke db :wormbase.tx-fns/split-gene)]
     (t/testing "a valid split operation"
-      (let [[sample] (tu/gene-samples 1)
+      (let [[sample] (gene-samples 1 :gene.status/live)
             gene-id (:gene/id sample)
             p-seq-name (gen-prod-seq-name sample)
             bt (first (gen/sample gs/biotype 1))
@@ -174,7 +179,7 @@
         (fn no-gnmes [conn]
           (t/is (zero? (latest-id-number (d/db conn) :gene/id))))))
     (t/testing "Getting an id number when db populated"
-      (let [samples (tu/gene-samples 2)
+      (let [samples (gene-samples 2 :gene.status/live)
             data-samples (keep-indexed
                           (fn [idx sample]
                             (assoc sample
