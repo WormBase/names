@@ -359,12 +359,12 @@
 
   `request` - the ring request.
   `identifier` must uniquely identify a gene.
-  `status` - a keyword/ident identifiying a gene status. (e.g: :gene.status/live)
+  `to-status` - a keyword/ident identifiying a gene status. (e.g: :gene.status/live)
   `fail-precondition?` - A function that takes a single argument of the current gene status *entity*,
                          and should return a truth-y value to indicate if a precondition-failed
                          (HTTP 412) should be returned.
   `predcondition-failure-msg` - An optional message to send back in the case fail-precondition?"
-  [request id status event-type
+  [request id to-status
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
   (let [{db :db} request
@@ -372,31 +372,34 @@
         lur [:gene/id cid]
         {gene-status :gene/status} (d/pull db '[{:gene/status [:db/ident]}] lur)]
     (when (and fail-precondition? (fail-precondition? gene-status))
-        (http-response/precondition-failed! {:message precondition-failure-msg :info gene-status}))
+      (http-response/precondition-failed! {:message precondition-failure-msg
+                                           :info (wnu/undatomicize gene-status)}))
     (let [prov (wnp/assoc-provenance request {} :event/resurrect-gene)
           tx-res @(d/transact-async (:conn request)
                                     [[:db.fn/cas
                                       lur
                                       :gene/status
-                                      (d/entid db :gene.status/dead)
-                                      (d/entid db :gene.status/live)]
+                                      (d/entid db (:db/ident gene-status))
+                                      (d/entid db to-status)]
                                      prov])]
       (http-response/ok {:updated (some-> tx-res
                                           :db-after
                                           (d/pull '[:gene/id {:gene/status [:db/ident]}] lur)
                                           (wnu/undatomicize))}))))
 
+(def live? #(= (:db/ident %) :gene.status/live))
+
+(def not-live? (complement live?))
+
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live
-                 :fail-precondition? #(= (:db/ident %) :gene.status/live)
-                 :preconditiion-failure-msg "Gene is already live."))
+                 :fail-precondition? live?
+                 :precondition-failure-msg "Gene is already live."))
 
 (defn suppress-gene [request id]
   (change-status request id :gene.status/suppressed
-                 :fail-precondition? #(= (:db/ident %) :gene.status/dead)
-                 :preconditiion-failure-msg "Dead gene cannot be suppressed. Kill and ressurect to do this."))
-
-(defn kill-gene [request id])
+                 :fail-precondition? not-live?
+                 :precondition-failure-msg "Gene must have a live status."))
 
 (defn kill-gene [request id]
   (let [[lur ent] (identify request id)
