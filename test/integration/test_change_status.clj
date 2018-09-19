@@ -38,11 +38,12 @@
                        :sub-path (str gene-id endpoint)
                        :current-user current-user))
 
-(def kill-gene (partial change-status "" :method :delete))
+(defn kill-gene [gene-id]
+  (change-status "" gene-id :method :delete))
 
-(def ressurect-gene (partial change-status "/ressurect"))
+(def resurrect-gene (partial change-status "/resurrect"))
 
-(def supress-gene (partial change-status "/suppress"))
+(def suppress-gene (partial change-status "/suppress"))
 
 (defn query-provenance [conn gene-id]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -87,42 +88,41 @@
                        :agent/web))
               (t/is (= (some-> prov :provenance/who :person/email)
                        "tester@wormbase.org")))
-            
-            (tu/status-is? status 200 body)
+            (tu/status-is? (:status (http-response/ok)) status body)
             (t/is (= (:gene/status ent) :gene.status/dead))))))))
 
 (t/deftest ressurecting
   (t/testing "Resurrecting a dead gene succesfully"
-    (let [[gene-id sample] (gen-sample)]
+    (let [[gene-id sample] (gen-sample :current-status :gene.status/dead)]
       (tu/with-gene-fixtures
-        sample
+        (assoc sample :gene/id gene-id)
         (fn [conn]
           (let [[status body] (resurrect-gene gene-id)]
-            (tu/status-is? status (:status (http-response/ok)) body))))))
+            (tu/status-is? (:status (http-response/ok)) status body))))))
   (t/testing "Cannot resurrect live gene"
     (let [[gene-id sample] (gen-sample)]
       (tu/with-gene-fixtures
-        sample
+        (assoc sample :gene/id gene-id)
         (fn [conn]
           (let [[status body] (resurrect-gene gene-id)]
-            (tu/status-is? status (:status (http-response/precondition-failed))
+            (tu/status-is? (:status (http-response/precondition-failed)) status
                            body)))))))
 
 (t/deftest suppressing
-  (t/testing "Cannot suppress a dead gene succesfully"
+  (t/testing "Cannot suppress a dead gene."
     (let [[gene-id sample] (gen-sample :current-status :gene.status/dead)]
       (tu/with-gene-fixtures
         sample
         (fn [conn]
           (let [[status body] (suppress-gene gene-id)]
-            (tu/status-is? (:status (http-response/precondition-failed) status)
+            (tu/status-is? (:status (http-response/precondition-failed)) status
                            body))))))
-  (t/testing "Supressing a live gene."
+  (t/testing "Suppressing a live gene."
     (let [[gene-id sample] (gen-sample)]
       (tu/with-gene-fixtures
         sample
         (fn [conn]
-          (let [[status body] (resurrect-gene gene-id)]
+          (let [[status body] (suppress-gene gene-id)]
             (tu/status-is? (:status (http-response/ok)) status
                            body)))))))
 
