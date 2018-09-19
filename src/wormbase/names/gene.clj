@@ -291,16 +291,16 @@
             {p-seq-name :gene/sequence-name
              p-biotype :gene/biotype} product
             p-seq-name (get-in cdata [:product :gene/sequence-name])
-            prov-from (-> request
-                          (wnp/assoc-provenance cdata :event/split-gene)
-                          (assoc :provenance/split-into p-seq-name)
-                          (assoc :provenance/split-from [:gene/id id]))
+            prov (-> request
+                     (wnp/assoc-provenance cdata :event/split-gene)
+                     (assoc :provenance/split-into p-seq-name)
+                     (assoc :provenance/split-from [:gene/id id]))
             species (-> existing-gene :gene/species :species/id)
             mint-new-id? true
             tx-result @(d/transact-async
                         conn
                         [[:wormbase.tx-fns/split-gene id cdata mint-new-id?]
-                         prov-from])
+                         prov])
             db (:db-after tx-result)
             new-gene-id (-> db
                             (d/entity [:gene/sequence-name p-seq-name])

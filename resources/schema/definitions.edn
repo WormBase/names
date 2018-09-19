@@ -19,6 +19,9 @@
  #:db{:ident :gene/status,
       :valueType :db.type/ref,
       :cardinality :db.cardinality/one}
+ #:db{:ident :gene/splits
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/many}
  #:db{:ident :provenance/compensates
       :valueType :db.type/ref
       :cardinality :db.cardinality/one

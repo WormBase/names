@@ -248,4 +248,25 @@
            tx-data))
        (throw (ex-info \"Gene does not exist\"
                        {:gene-id gene-id
-                        :type :wormbase.db/missing})))"}}]
+                        :type :wormbase.db/missing})))"}}
+
+ {:db/ident :wormbase.tx-fns/set-many-ref
+  :db/doc "Set the value for a cardinailty many reference."
+  :db/fn #db/fn
+  {:lang :clojure
+   :params [db e attr new-vals]
+   :code
+   "(let [ent (or (d/entity db e)
+                 (throw (ex-info "Entity not found" 
+                                   {:type :wormbase.db/missing
+                                    :e e :t (d/basis-t db)})))
+         entid (:db/id ent)
+         old-vals (get ent attr)]
+     (into
+      [{:db/id (:db/id ent) attr new-vals}]         ;; adding the new values
+      ;; retracting the old values
+      (comp (remove (set new-vals))
+            (map (fn [v]
+                   [:db/retract entid attr v])))
+      old-vals)
+     )"}}]
