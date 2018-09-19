@@ -110,7 +110,7 @@
 (s/def ::kill (stc/spec (s/nilable (s/keys :opt [:provenance/why
                                                  :provenance/when
                                                  :provenance/who]))))
-
+(s/def ::killed (s/keys :req [::identifier]))
 (s/def ::kill-response (stc/spec (s/keys :req-un [::killed])))
 
 
@@ -144,8 +144,6 @@
 (s/def ::identifier (s/or :gene/id :gene/id
                           :gene/cgc-name :gene/cgc-name
                           :gene/sequence-name :gene/sequence-name))
-
-(s/def ::killed ::identifier)
 
 (s/def ::find-term (stc/spec (s/and string? (complement str/blank?))))
 

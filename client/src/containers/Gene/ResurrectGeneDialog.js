@@ -24,7 +24,10 @@ class ResurrectGeneDialog extends Component {
       },
       () => {
         return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/resurrect`, {
-          method: 'POST',
+            method: 'POST',
+            body: JSON.stringify({
+            ...data
+          })
         });
       },
     );

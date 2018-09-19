@@ -364,17 +364,17 @@
                          and should return a truth-y value to indicate if a precondition-failed
                          (HTTP 412) should be returned.
   `predcondition-failure-msg` - An optional message to send back in the case fail-precondition?"
-  [request id to-status
+  [request id to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
-  (let [{db :db} request
+  (let [{db :db payload :body-params} request
         cid (s/conform :gene/id id)
         lur [:gene/id cid]
         {gene-status :gene/status} (d/pull db '[{:gene/status [:db/ident]}] lur)]
     (when (and fail-precondition? (fail-precondition? gene-status))
       (http-response/precondition-failed! {:message precondition-failure-msg
                                            :info (wnu/undatomicize gene-status)}))
-    (let [prov (wnp/assoc-provenance request {} :event/resurrect-gene)
+    (let [prov (wnp/assoc-provenance request payload event-type)
           tx-res @(d/transact-async (:conn request)
                                     [[:db.fn/cas
                                       lur
@@ -392,34 +392,19 @@
 (def not-live? (complement live?))
 
 (defn resurrect-gene [request id]
-  (change-status request id :gene.status/live
+  (change-status request id :gene.status/live :event/resurrect-gene
                  :fail-precondition? live?
                  :precondition-failure-msg "Gene is already live."))
 
 (defn suppress-gene [request id]
-  (change-status request id :gene.status/suppressed
+  (change-status request id :gene.status/suppressed :event/suppress-gene
                  :fail-precondition? not-live?
                  :precondition-failure-msg "Gene must have a live status."))
 
 (defn kill-gene [request id]
-  (let [[lur ent] (identify request id)
-        data (assoc-in (apply array-map lur)
-                       [:gene/species :species/id]
-                       (-> ent :gene/species :species/id))]
-    (validate-names request data)
-    (when (= (:gene/status ent) :gene.status/dead)
-      (throw (ex-info "Cannot kill dead gene"
-                      {:type ::wdb/conflict
-                       :lookup-ref lur
-                       :data data})))
-    (when ent
-      (let [payload (get request :body-params {})
-            prov (wnp/assoc-provenance request payload :event/kill-gene)
-            tx-result @(d/transact-async
-                        (:conn request)
-                        [[:wormbase.tx-fns/kill-gene lur] prov])]
-        (when tx-result
-          (http-response/ok {:killed id}))))))
+  (change-status request id :gene.status/dead :event/kill-gene
+                 :fail-precondition? not-live?
+                 :precondition-failure-msg "Gene must be live to be killed."))
 
 (def default-responses
   {http-response/ok {:schema {:updated ::wsg/updated}}

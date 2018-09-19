@@ -248,22 +248,4 @@
            tx-data))
        (throw (ex-info \"Gene does not exist\"
                        {:gene-id gene-id
-                        :type :wormbase.db/missing})))"}}
-
- {:db/ident :wormbase.tx-fns/kill-gene
-  :db/doc "Kill a gene"
-  :db/fn #db/fn
-  {:lang "clojure"
-   :params [db lookup-ref]
-   :code
-   "(let [{{:keys [:db/ident]} :gene/status} (d/pull
-                                              db
-                                              '[{:gene/status [:db/ident]}]
-                                              lookup-ref)]
-      (when (= ident :gene.status/dead)
-        (throw (ex-info \"Gene to be killed is already dead!\"
-                        (merge
-                          {:type :wormbase.db/conflict}
-                          (apply array-map lookup-ref)))))
-      (let [curr-status (d/entid db ident)]
-        [[:db/cas lookup-ref :gene/status curr-status :gene.status/dead]]))"}}]
+                        :type :wormbase.db/missing})))"}}]
