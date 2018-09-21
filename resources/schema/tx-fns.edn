@@ -213,43 +213,6 @@
                           txes)]
              tx-data)))"}}
 
- {:db/ident :wormbase.tx-fns/split-gene
-  :db/doc "Split gene `src` into a new gene."
-  :db/fn #db/fn
-  {:lang "clojure"
-   :params [db gene-id data mint-new-product-id?]
-   :code
-   "(if-let [gene (d/entity db [:gene/id gene-id])]
-      (if (= (:gene/status gene) :gene.status/dead)
-        (throw (ex-info \"Cannot split, gene specified is dead.\"
-                        {:gene-id gene-id
-                         :type :wormbase.db/conflict}))
-        (let [{biotype :gene/biotype product :product} data
-              {p-seq-name :gene/sequence-name
-               p-bt :gene/biotype
-               pgid :gene/id} product
-              entid (partial d/entid db)
-              bt-id (entid biotype)
-              src (d/entity db [:gene/id gene-id])
-              existing-bt-id (-> src :gene/biotype entid)
-              species (-> src :gene/species :species/id)
-              new-gene-data (merge
-                             {:gene/species {:species/id species}
-                              :gene/biotype p-bt
-                              :gene/sequence-name p-seq-name
-                              :db/id p-seq-name}
-                             (when pgid
-                              {:gene/id pgid}))
-              tx-data [[:db.fn/cas [:gene/id gene-id]
-                                    :gene/biotype
-                                    existing-bt-id
-                                    bt-id]
-                      [:wormbase.tx-fns/new-gene new-gene-data mint-new-product-id?]]]
-           tx-data))
-       (throw (ex-info \"Gene does not exist\"
-                       {:gene-id gene-id
-                        :type :wormbase.db/missing})))"}}
-
  {:db/ident :wormbase.tx-fns/set-many-ref
   :db/doc "Set the value for a cardinailty many reference."
   :db/fn #db/fn
@@ -257,16 +220,12 @@
    :params [db e attr new-vals]
    :code
    "(let [ent (or (d/entity db e)
-                 (throw (ex-info "Entity not found" 
+                 (throw (ex-info \"Entity not found\"
                                    {:type :wormbase.db/missing
                                     :e e :t (d/basis-t db)})))
          entid (:db/id ent)
          old-vals (get ent attr)]
-     (into
-      [{:db/id (:db/id ent) attr new-vals}]         ;; adding the new values
-      ;; retracting the old values
-      (comp (remove (set new-vals))
-            (map (fn [v]
-                   [:db/retract entid attr v])))
-      old-vals)
-     )"}}]
+     (into (->> new-vals (map (partial vector :db/add entid attr)) (vec))
+           (comp (remove (set new-vals))
+                 (map (partial vector :db/retract entid attr)))
+           old-vals))"}}]
