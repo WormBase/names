@@ -8,7 +8,7 @@ import {
   DialogContentText,
   ProgressButton,
   TextField,
-  Typography,
+  ValidationError,
 } from '../../components/elements';
 
 class ResurrectGeneDialog extends Component {
@@ -52,7 +52,7 @@ class ResurrectGeneDialog extends Component {
                   Gene <strong>{geneName}</strong> will be resurrected. Are you sure?
                 </DialogContentText>
                 <DialogContentText>
-                  <Typography color="error">{errorMessage}</Typography>
+                  <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <ReasonField
                   label="Reason"

@@ -28,7 +28,7 @@ class SimpleAjax extends React.Component {
           onSubmitSuccess && onSubmitSuccess({...body.updated});
         } else {
           this.setState({
-            errorMessage: JSON.stringify(body),
+            errorMessage: body,
             status: 'COMPLETE',
           });
           onSubmitError && onSubmitError(body);

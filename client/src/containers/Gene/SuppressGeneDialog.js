@@ -8,7 +8,7 @@ import {
   DialogContentText,
   ProgressButton,
   TextField,
-  Typography,
+  ValidationError,
 } from '../../components/elements';
 
 class SuppressGeneDialog extends Component {
@@ -58,7 +58,7 @@ class SuppressGeneDialog extends Component {
                   Gene <strong>{geneName}</strong> will be suppressed. Are you sure?
                 </DialogContentText>
                 <DialogContentText>
-                  <Typography color="error">{errorMessage}</Typography>
+                  <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <ReasonField
                   label="Reason"
