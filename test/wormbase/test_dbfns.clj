@@ -140,33 +140,6 @@
       (recur sample)
       sn)))
 
-(t/deftest test-split-genes
-  (let [db (d/db wdb/conn)
-        split-gene (partial d/invoke db :wormbase.tx-fns/split-gene)]
-    (t/testing "a valid split operation"
-      (let [[sample] (gene-samples 1 :gene.status/live)
-            gene-id (:gene/id sample)
-            p-seq-name (gen-prod-seq-name sample)
-            bt (first (gen/sample gs/biotype 1))
-            data (assoc {:gene/biotype bt}
-                        :product {:gene/sequence-name p-seq-name
-                                  :gene/biotype :biotype/cds})
-            data-sample (assoc sample :gene/biotype bt :gene/id gene-id)]
-        (tu/with-gene-fixtures
-          data-sample
-          (fn split-ok [conn]
-            (let [db (d/db conn)
-                  txes (split-gene db gene-id data true)
-                  tx-result @(d/transact conn txes)
-                  db (:db-after tx-result)
-                  src-gene (d/entity db [:gene/id gene-id])
-                  new-gene (d/entity db [:gene/sequence-name p-seq-name])]
-              (t/is (= (:gene/status new-gene) :gene.status/live))
-              (t/is (= (:gene/biotype new-gene)
-                       (-> data :product :gene/biotype)))
-              (t/is (= (:gene/biotype src-gene)
-                       (:gene/biotype data-sample))))))))))
-
 (t/deftest test-latest-id-number
   (let [latest-id-number (fn [db ident]
                            (d/invoke db

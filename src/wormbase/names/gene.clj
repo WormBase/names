@@ -318,30 +318,33 @@
             {p-seq-name :gene/sequence-name
              p-biotype :gene/biotype} product
             p-seq-name (get-in cdata [:product :gene/sequence-name])
-            prov (-> request
-                     (wnp/assoc-provenance cdata :event/split-gene)
-                     (assoc :provenance/split-into p-seq-name)
-                     (assoc :provenance/split-from [:gene/id id]))
-            species (-> existing-gene :gene/species :species/id)
+            prov-from (-> request
+                          (wnp/assoc-provenance cdata :event/split-gene)
+                          (assoc :provenance/split-from lur))
+            species (-> from-gene :gene/species :species/id)
+            new-gene-data (merge {:gene/species {:species/id species}} product)
             mint-new-id? true
-            tx-result @(d/transact-async
-                        conn
-                        [[:wormbase.tx-fns/split-gene id cdata mint-new-id?]
-                         prov])
-            db (:db-after tx-result)
-            new-gene-id (-> db
-                            (d/entity [:gene/sequence-name p-seq-name])
-                            :gene/id)
-            [ent product] (map #(d/entity db [:gene/id %]) [id new-gene-id])
-            updated (-> (wnu/entity->map ent)
-                        (select-keys [:gene/id
-                                      :gene/biotype
-                                      :gene/sequence-name])
-                        (assoc :gene/species {:species/id species}))
-            created (wnu/entity->map product)]
-        (http-response/created (str "/gene/" new-gene-id)
-                               {:updated updated :created created}))
-      (http-response/not-found {:gene/id id :message "Gene not found"}))))
+            new-result @(d/transact-async
+                         conn
+                         [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
+                          prov-from])
+            db (:db-after new-result)
+            p-gene (d/entity db [:gene/sequence-name p-seq-name])
+            p-gene-id (:gene/id p-gene)
+            p-gene-lur [:gene/id p-gene-id]
+            prov-into (-> request
+                          (wnp/assoc-provenance cdata :event/split-gene)
+                          (assoc :provenance/split-into p-gene-lur))
+            curr-splits (map :db/id (:gene/splits (d/entity db lur)))
+            new-splits (conj curr-splits (:db/id p-gene))
+            update-result @(d/transact-async
+                            conn
+                            [[:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
+                             prov-into])]
+        (->> [p-gene-lur lur]
+             (map (partial apply array-map))
+             (zipmap [:created :updated])
+             (http-response/created (str "/api/gene/" p-gene-id)))))))
 
 (defn- invert-split-tx [db e a v tx added?]
   (cond
@@ -469,8 +472,8 @@
      (sweet/resource
       {:delete
        {:summary "Kill a gene"
-        :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
+        :middleware [wna/restrict-to-authenticated]
         :parameters {:body-params ::wsg/kill}
         :responses (-> default-responses
                        response-map
@@ -481,8 +484,8 @@
        (sweet/resource
         {:post
          {:summary "Resurrect a gene."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::resurrect-gene
+          :middleware [wna/restrict-to-authenticated]
           :responses (response-map default-responses)
           :handler (fn [request]
                      (resurrect-gene request id))}}))
@@ -490,15 +493,15 @@
        (sweet/resource
         {:post
          {:summary "Suppress a gene."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::suppress-gene
+          :middleware [wna/restrict-to-authenticated]
           :responses (response-map default-responses)
           :handler (fn [request]
                      (suppress-gene request id))}})))
    ;; Endpoints uner this context work with any gene name or identifier.
    (sweet/context "/gene/:identifier" []
      :tags ["gene"]
-     :path-params [identifier :- ::wsg/identifier] 
+     :path-params [identifier :- ::wsg/identifier]
      (sweet/resource
       {:get
        {:summary "Information about a given gene."
@@ -511,10 +514,10 @@
                    (about-gene request identifier))}
        :put
        {:summary "Add new names to an existing gene"
-        :middleware [wna/restrict-to-authenticated]
         :x-name ::update-gene
         :parameters {:body-params ::wsg/update}
         :path-params [identifier :- ::wsg/identifier]
+        :middleware [wna/restrict-to-authenticated]
         :responses (-> default-responses
                        (dissoc http-response/conflict)
                        (response-map))

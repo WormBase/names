@@ -86,7 +86,7 @@
                                    :provenance/how
                                    :provenance/why]))
 
-(s/def ::created (stc/spec (s/keys :req [:gene/id :gene/status])))
+(s/def ::created (stc/spec (s/keys :req [:gene/id])))
 
 (s/def ::update (stc/spec ::new)) ;; same as new
 
@@ -119,15 +119,30 @@
 (s/def ::added sts/boolean?)
 (s/def ::change (s/keys :req-un [::attr ::value ::added]))
 (s/def ::changes (s/coll-of ::change))
-(s/def ::provenance (s/keys :req [:provenance/when
-                                  :provenance/who
-                                  :provenance/how]
+(s/def ::provenance (s/keys :req [:provenance/how
+                                  :provenance/what
+                                  :provenance/when
+                                  :provenance/who]
                             :req-un [::changes]
-                            :opt [:provenance/why
+                            :opt [
+                                  ;; most keys in the provenance
+                                  ;; namespace should be in :req
+                                  ;; --- *but* ----
+                                  ;; if someone manually transacted at
+                                  ;; the repl without going thru the
+                                  ;; app, the prov might not have been
+                                  ;; applied.
+                                  ;; :provenance/how
+                                  ;; :provenance/what
+                                  ;; :provenance/when
+                                  ;; :provenance/who
+
+                                  :provenance/why
                                   :provenance/split-from
                                   :provenance/split-into
                                   :provenance/merged-from
                                   :provenance/merged-into]))
+
 (s/def ::history (stc/spec (s/coll-of ::provenance :type vector? :min-count 1)))
 
 

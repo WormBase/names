@@ -9,7 +9,8 @@
    [wormbase.names.service :as service]
    [clojure.spec.gen.alpha :as gen]
    [clojure.spec.alpha :as s]
-   [wormbase.db :as wdb]))
+   [wormbase.db :as wdb]
+   [ring.util.http-response :as http-response]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -18,15 +19,14 @@
       :or {current-user "tester@wormbase.org"}}]
   (fake-auth/payload {"email" current-user}))
 
-(defn query-provenance [conn from-gene-id into-seq-name]
+(defn query-provenance [conn attr gene]
   (when-let [mtx (d/q '[:find ?tx .
-                        :in $ ?from ?into
+                        :in $ ?attr ?gene
                         :where
-                        [?tx :provenance/split-from ?from]
-                        [?tx :provenance/split-into ?into]]
+                        [?tx ?attr ?gene]]
                       (-> conn d/db d/history)
-                      [:gene/id from-gene-id]
-                      [:gene/sequence-name into-seq-name])]
+                      attr
+                      gene)]
     (d/pull (d/db conn)
             '[:provenance/why
               :provenance/when
@@ -122,8 +122,8 @@
                           {:gene/biotype :biotype/cds
                            :gene/sequence-name "FKM.1"}}
                          gene-id)]
-      (tu/status-is? status 404 body)))
-  (t/testing "409 for conflicting state"
+      (tu/status-is? (:status (http-response/not-found)) status body)))
+  (t/testing "Expect a conflict response when attempting to split a dead gene."
     (let [[data-sample] (tu/gene-samples 1)
           gene-id (:gene/id data-sample)
           sample (-> data-sample
@@ -142,7 +142,7 @@
                                 {:gene/biotype :biotype/transcript
                                  :gene/sequence-name seq-name}}
                                gene-id)]
-            (tu/status-is? status 409 body))))))
+            (tu/status-is? (:status (http-response/conflict)) status body))))))
   (t/testing "400 for validation errors"
     (let [[status body] (split-gene {:gene/biotype :biotype/godzilla}
                                     "WBGene00000001")]
@@ -179,21 +179,21 @@
                 [status body] (split-gene data
                                           gene-id
                                           :current-user user-email)]
-            (tu/status-is? status 201 body)
-            (let [prov (query-provenance conn gene-id prod-seq-name)
-                  src (d/entity (d/db conn) [:gene/id gene-id])
-                  prod (d/entity (d/db conn)
-                                 [:gene/sequence-name prod-seq-name])]
-              (t/is (some-> prov :provenance/when inst?))
-              (t/is (= (some-> prov :provenance/split-from :gene/id)
-                       gene-id))
-              (t/is (= (some-> prov :provenance/split-into :gene/id)
-                       (:gene/id prod)))
-              (t/is (= (some-> prov :provenance/who :person/email)
-                       user-email))
-              (t/is (= (:gene/species src) (:gene/species prod)))
-              (t/is (= (some-> prov :provenance/how :db/ident)
-                       :agent/web)))))))))
+            (tu/status-is? (:status (http-response/created "/")) status body)
+            (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
+                  src  (d/entity (d/db conn) from-lur)
+                  prod (d/entity (d/db conn) into-lur)
+                  prov-from (query-provenance conn :provenance/split-from (:db/id src))
+                  prov-into (query-provenance conn :provenance/split-into (:db/id prod))]
+              (t/is (some-> prov-from :provenance/when inst?))
+              (t/is (some-> prov-into :provenance/when inst?))
+              (t/is (= gene-id (some-> prov-from :provenance/split-from :gene/id)))
+              (t/is (= (:gene/id prod) (some-> prov-into :provenance/split-into :gene/id)))
+              (t/is (= user-email (some-> prov-from :provenance/who :person/email)))
+              (t/is (= user-email (some-> prov-into :provenance/who :person/email)))
+              (t/is (= (:gene/species prod) (:gene/species src)))
+              (t/is (= :agent/web (some-> prov-from :provenance/how :db/ident)))
+              (t/is (= :agent/web (some-> prov-into :provenance/how :db/ident))))))))))
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
