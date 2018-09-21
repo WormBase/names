@@ -29,10 +29,9 @@
   [request payload what]
   (let [id-token (-> request :identity :token)
         prov (or (wnu/select-keys-with-ns payload "provenance") {})
-        ;; TODO: accept :person/email OR :person/id (s/conform...)
         person-lur (or (person-lur-from-provenance prov)
                        [:person/email (.getEmail id-token)])
-        who (:db/id (d/entity (:db request) person-lur))
+        who (-> request :db (d/entity person-lur) :db/id)
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (wna/identify id-token)
         why (:provenance/why prov)
