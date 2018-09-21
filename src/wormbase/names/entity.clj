@@ -7,7 +7,7 @@
 (defn identify
   "Return an lookup ref and entity for a given identifier.
   Lookups `identifier` (conformed with `identify-spec`) in the database.
-  Returns nil when identifier cannot be found."
+  Returns `nil` when the entity cannot be found."
   [identitfy-spec request identifier]
   (when-not (s/valid? identitfy-spec identifier)
     (throw (ex-info "Found one or more invalid identifiers."
