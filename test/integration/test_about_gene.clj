@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
+   [ring.util.http-response :as http-response]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
@@ -25,9 +26,9 @@
 
 (t/deftest test-about
   (t/testing "Info about a live gene can be retrieved by WBGene ID."
-    (let [[id data-sample] (gen-sample)]
+    (let [[gene-id data-sample] (gen-sample)]
       (tu/with-gene-fixtures
         data-sample
         (fn check-gene-info [conn]
-          (let [[status body] (about-gene id)]
-            (tu/status-is? status 200 body)))))))
+          (let [[status body] (about-gene gene-id)]
+            (tu/status-is? (:status (http-response/ok)) status body)))))))
