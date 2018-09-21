@@ -19,6 +19,26 @@
 
 (def identify (partial wne/identify ::wsg/identifier))
 
+(defn live? [ent]
+  (some (partial = :gene.status/live)
+        ((juxt identity :db/ident) ent)))
+
+(def not-live? (comp not live?))
+
+(defn entity-must-exist!
+  "Middlewre for ensuring an entity exists in the database.
+
+  Calls the handler for a route iif a entity exists, else returns a
+  not-found response."
+  [request & identifier]
+  (doseq [identifier identifier]
+    (let [[_ ent] (identify request identifier)]
+      (if-not ent
+        (http-response/not-found!
+         {:message (str "Gene with identifier "
+                        identifier
+                        "does not exist")})))))
+
 (defn validate-names
   ([request data & {:keys [allow-blank-cgc-name?]
                     :or {allow-blank-cgc-name? true}}]
@@ -107,13 +127,13 @@
                          :gene/status [[:db/ident]]}])
 
 (defn about-gene [request identifier]
-  (when (s/valid? ::wsg/identifier identifier)
-    (let [db (:db request)
-          [lur _] (identify request identifier)
-          info (d/pull db info-pull-expr lur)
-          prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)
-          data (assoc info :history prov)]
-      (http-response/ok (transform-result data)))))
+  (entity-must-exist! request identifier)
+  (let [db (:db request)
+        [lur _] (identify request identifier)
+        info (d/pull db info-pull-expr lur)
+        prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)
+        data (assoc info :history prov)]
+    (http-response/ok (transform-result data))))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -170,6 +190,7 @@
     res))
 
 (defn update-gene [request identifier]
+  (entity-must-exist! request identifier)
   (let [{db :db conn :conn} request
         [lur entity] (identify request identifier)]
     (when entity
@@ -259,6 +280,7 @@
         (http-response/bad-request {:message "Invalid transaction"}))))
 
 (defn undo-merge-gene [request from-id into-id]
+  (entity-must-exist! request from-id into-id)
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -280,12 +302,17 @@
       (http-response/ok {:live into-id :dead from-id}))
     (http-response/not-found {:message "No transaction to undo"})))
 
-(defn split-gene [request id]
+(defn split-gene [request identifier]
+  (entity-must-exist! request identifier)
   (let [conn (:conn request)
         db (d/db conn)
         data (get request :body-params {})
-        spec ::wsg/split]
-    (if-let [[lur existing-gene] (identify request id)]
+        spec ::wsg/split
+        [lur from-gene] (identify request identifier)
+        from-gene-status (:gene/status from-gene)]
+    (if (not-live? from-gene-status)
+      (http-response/conflict! {:message "Gene must be live."
+                                :gene/status from-gene-status})
       (let [cdata (stc/conform spec data)
             {biotype :gene/biotype product :product} cdata
             {p-seq-name :gene/sequence-name
@@ -328,6 +355,7 @@
     [(if added? :db/retract :db/add) e a v]))
 
 (defn undo-split-gene [request from-id into-id]
+  (entity-must-exist! request from-id into-id)
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -367,6 +395,7 @@
   [request id to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
+  (entity-must-exist! request id)
   (let [{db :db payload :body-params} request
         cid (s/conform :gene/id id)
         lur [:gene/id cid]
@@ -386,10 +415,6 @@
                                           :db-after
                                           (d/pull '[:gene/id {:gene/status [:db/ident]}] lur)
                                           (wnu/undatomicize))}))))
-
-(def live? #(= (:db/ident %) :gene.status/live))
-
-(def not-live? (complement live?))
 
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live :event/resurrect-gene
