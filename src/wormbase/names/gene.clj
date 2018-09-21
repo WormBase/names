@@ -408,9 +408,9 @@
 
 (def default-responses
   {http-response/ok {:schema {:updated ::wsg/updated}}
-        http-response/bad-request {:schema {:errors ::wsc/error-response}}
-        http-response/conflict {:schema {:conflict ::wsc/error-response}}
-        http-response/precondition-failed {:schema ::wsc/error-response}})
+   http-response/bad-request {:schema {:errors ::wsc/error-response}}
+   http-response/conflict {:schema {:conflict ::wsc/error-response}}
+   http-response/precondition-failed {:schema ::wsc/error-response}})
 
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
