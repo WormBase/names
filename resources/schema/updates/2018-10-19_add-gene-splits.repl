@@ -1,0 +1,5 @@
+(require '[clojure.java.io :as io])
+(require '[datomic.api :as d])
+(require '[wormbase.db :as wdb])
+(require '[schema.migrations.add-gene-splits :as sma])
+(sma/migrate wdb/conn)
