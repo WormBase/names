@@ -3,14 +3,14 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [ring.util.http-response :as http-response]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.names.service :as service]
    [wormbase.specs.agent :as wsa]
-   [wormbase.test-utils :as tu]
-   [ring.util.http-response :as http-response]))
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -70,7 +70,7 @@
                 [status body] (kill-gene gene-id)
                 db (d/db conn)
                 ent (d/entity db [:gene/id gene-id])]
-            (tu/status-is? status 200 body)
+            (tu/status-is? (:status (http-response/ok)) status body)
             (t/is (= (:gene/status ent) :gene.status/dead)))))))
   (t/testing "killled ok and provenance recorded."
     (let [[gene-id sample] (gen-sample)]
