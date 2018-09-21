@@ -4,9 +4,9 @@
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
-   ;; for specs
+   ;; load these namespaces for spec registration
    [wormbase.specs.provenance]
-   [wormbase.specs.species]))            ;; for specs
+   [wormbase.specs.species]))
 
 
 (def gene-id-regexp #"WBGene\d{8}")
