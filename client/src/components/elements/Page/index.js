@@ -66,6 +66,7 @@ export const PageLeft = withStyles((theme) => ({
 export const PageMain = withStyles((theme) => ({
   main: {
     width: '60%',
+    margin: `0px ${theme.spacing.unit * 4}px`,
     [theme.breakpoints.down('sm')]: {
       margin: 0,
       width: `100%`,
