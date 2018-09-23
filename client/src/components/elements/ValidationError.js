@@ -43,7 +43,7 @@ class ValidationError extends React.Component {
 
   render() {
     const {classes, message, problems} = this.props;
-    const problemText = JSON.stringify(problems, null, 2);
+    const problemText = problems;
     return message || problems ? (
       <Card card className={classes.root}>
         <CardContent>
