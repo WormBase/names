@@ -542,7 +542,6 @@
       {:get
        {:summary "Information about a given gene."
         :x-name ::about-gene
-        :path-params [identifier :- ::wsg/identifier]
         :responses (-> default-responses
                        (assoc http-response/ok {:schema ::wsg/info})
                        (response-map))
@@ -552,7 +551,6 @@
        {:summary "Add new names to an existing gene"
         :x-name ::update-gene
         :parameters {:body-params ::wsg/update}
-        :path-params [identifier :- ::wsg/identifier]
         :middleware [wna/restrict-to-authenticated]
         :responses (-> default-responses
                        (dissoc http-response/conflict)
