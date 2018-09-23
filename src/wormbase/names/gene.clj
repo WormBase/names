@@ -14,7 +14,13 @@
    [wormbase.names.util :as wnu]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
-   [ring.util.http-response :as http-response]
+   [ring.util.http-response :refer [ok
+                                    bad-request
+                                    conflict
+                                    created
+                                    not-found
+                                    precondition-failed
+                                    precondition-failed!]]
    [spec-tools.core :as stc]))
 
 (def identify (partial wne/identify ::wsg/identifier))
@@ -101,7 +107,7 @@
                                             (array-map :gene/id gid attr name*)))
                                      (vec))
                             [])}]
-      (http-response/ok res))))
+      (ok res))))
 
 (defn- transform-result
   "Removes datomic internal keys from a pull-result map."
@@ -175,7 +181,7 @@
         ent (d/entity db [:gene/id new-id])
         emap (wnu/entity->map ent)
         result {:created emap}]
-    (http-response/created "/gene/" result)))
+    (created "/gene/" result)))
 
 (defn resolve-refs-to-dbids
   "Resolve references in a data payload to database ids for compare on swap operations."
@@ -209,8 +215,8 @@
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
               (let [ent (d/entity db-after lur)]
-                (http-response/ok {:updated (wnu/entity->map ent)}))
-              (http-response/not-found
+                (ok {:updated (wnu/entity->map ent)}))
+              (not-found
                (format "Gene '%s' does not exist" (last lur)))))
           (throw (ex-info "Not valid according to spec."
                           {:problems (expound-str spec data)
@@ -304,11 +310,11 @@
       (if-let [db (:db-after tx-result (:tx-data tx-result))]
         (let [[from into] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]
-          (http-response/ok {:updated (wnu/entity->map into)
+          (ok {:updated (wnu/entity->map into)
                              :statuses
                              {from-id (:gene/status from)
                               into-id (:gene/status into)}}))
-        (http-response/bad-request {:message "Invalid transaction"}))))
+        (bad-request {:message "Invalid transaction"}))))
 
 (defn undo-merge-gene [request from-id into-id]
   (entity-must-exist! request from-id into-id)
@@ -330,8 +336,8 @@
                            :provenance/why "Undoing merge"}))
           compensating-txes (wdb/invert-tx (d/log conn) tx prov)
           tx-result @(d/transact-async conn compensating-txes)]
-      (http-response/ok {:live into-id :dead from-id}))
-    (http-response/not-found {:message "No transaction to undo"})))
+      (ok {:live into-id :dead from-id}))
+    (not-found {:message "No transaction to undo"})))
 
 (defn split-gene [request identifier]
   (entity-must-exist! request identifier)
@@ -417,8 +423,8 @@
                                             prov
                                             fact-mapper)
           tx-result @(d/transact-async conn compensating-txes)]
-      (http-response/ok {:live from-id :dead into-id}))
-    (http-response/not-found {:message "No transaction to undo"})))
+      (ok {:live from-id :dead into-id}))
+    (not-found {:message "No transaction to undo"})))
 
 
 (defn change-status
@@ -440,7 +446,7 @@
         lur [:gene/id cid]
         {gene-status :gene/status} (d/pull db '[{:gene/status [:db/ident]}] lur)]
     (when (and fail-precondition? (fail-precondition? gene-status))
-      (http-response/precondition-failed! {:message precondition-failure-msg
+      (precondition-failed! {:message precondition-failure-msg
                                            :info (wnu/undatomicize gene-status)}))
     (let [prov (wnp/assoc-provenance request payload event-type)
           tx-res @(d/transact-async (:conn request)
@@ -450,10 +456,13 @@
                                       (d/entid db (:db/ident gene-status))
                                       (d/entid db to-status)]
                                      prov])]
-      (http-response/ok {:updated (some-> tx-res
-                                          :db-after
-                                          (d/pull '[:gene/id {:gene/status [:db/ident]}] lur)
-                                          (wnu/undatomicize))}))))
+      (ok {:updated
+           (some-> tx-res
+                   :db-after
+                   (d/pull '[:gene/id
+                             {:gene/status [:db/ident]}]
+                           lur)
+                   (wnu/undatomicize))}))))
 
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live :event/resurrect-gene
@@ -471,23 +480,23 @@
                  :precondition-failure-msg "Gene must be live to be killed."))
 
 (def default-responses
-  {http-response/ok {:schema {:updated ::wsg/updated}}
-   http-response/bad-request {:schema {:errors ::wsc/error-response}}
-   http-response/conflict {:schema {:conflict ::wsc/error-response}}
-   http-response/precondition-failed {:schema ::wsc/error-response}})
+  {ok {:schema {:updated ::wsg/updated}}
+   bad-request {:schema {:errors ::wsc/error-response}}
+   conflict {:schema {:conflict ::wsc/error-response}}
+   precondition-failed {:schema ::wsc/error-response}})
 
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
 
-(def routes
-  (sweet/routes
-   (sweet/context "/gene/" []
+(def coll-resources
+  (sweet/context "/gene/" []
      :tags ["gene"]
      (sweet/resource
       {:get
        {:summary "Find genes by any name."
         :responses (-> default-responses
-                       (assoc http-response/ok {:schema ::wsg/find-result})
+                       (assoc ok
+                              {:schema ::wsg/find-result})
                        (response-map))
         :parameters {:query-params ::wsg/find-request}
         :x-name ::find-gene
@@ -498,24 +507,18 @@
         :middleware [wna/restrict-to-authenticated]
         :x-name ::new-gene
         :parameters {:body-params ::wsg/new}
-        :responses {201 {:schema {:created ::wsg/created}}
-                    400 {:schema ::wsc/error-response}}
-        :handler new-gene}}))
-   ;; Endpoitns under this context only work with a WBGene ID.
-   (sweet/context "/gene/:id" []
-     :tags ["gene"]
-     :path-params [id :- :gene/id]
-     (sweet/resource
-      {:delete
-       {:summary "Kill a gene"
-        :x-name ::kill-gene
-        :middleware [wna/restrict-to-authenticated]
-        :parameters {:body-params ::wsg/kill}
         :responses (-> default-responses
-                       response-map
-                       (assoc (:status (http-response/ok)) {:schema ::wsg/kill}))
-        :handler (fn [request]
-                   (kill-gene request id))}})
+                       (assoc created
+                              {:schema {:created ::wsg/created}})
+                       (assoc bad-request
+                              {:schema ::wsc/error-response})
+                       (response-map))
+        :handler new-gene}})))
+
+(def item-resources
+  (sweet/context "/gene/:identifier" []
+     :tags ["gene"]
+     :path-params [identifier :- ::wsg/identifier]
      (sweet/context "/resurrect" []
        (sweet/resource
         {:post
@@ -524,7 +527,7 @@
           :middleware [wna/restrict-to-authenticated]
           :responses (response-map default-responses)
           :handler (fn [request]
-                     (resurrect-gene request id))}}))
+                     (resurrect-gene request identifier))}}))
      (sweet/context "/suppress" []
        (sweet/resource
         {:post
@@ -533,17 +536,24 @@
           :middleware [wna/restrict-to-authenticated]
           :responses (response-map default-responses)
           :handler (fn [request]
-                     (suppress-gene request id))}})))
-   ;; Endpoints uner this context work with any gene name or identifier.
-   (sweet/context "/gene/:identifier" []
-     :tags ["gene"]
-     :path-params [identifier :- ::wsg/identifier]
+                     (suppress-gene request identifier))}}))
+     (sweet/resource
+      {:delete
+       {:summary "Kill a gene"
+        :middleware [wna/restrict-to-authenticated]
+        :x-name ::kill-gene
+        :parameters {:body-params ::wsg/kill}
+        :responses (-> default-responses
+                       response-map
+                       (assoc ok {:schema ::wsg/kill}))
+        :handler (fn [request]
+                   (kill-gene request identifier))}})
      (sweet/resource
       {:get
        {:summary "Information about a given gene."
         :x-name ::about-gene
         :responses (-> default-responses
-                       (assoc http-response/ok {:schema ::wsg/info})
+                       (assoc ok {:schema ::wsg/info})
                        (response-map))
         :handler (fn [request]
                    (about-gene request identifier))}
@@ -553,7 +563,7 @@
         :parameters {:body-params ::wsg/update}
         :middleware [wna/restrict-to-authenticated]
         :responses (-> default-responses
-                       (dissoc http-response/conflict)
+                       (dissoc conflict)
                        (response-map))
         :handler (fn [request]
                    (update-gene request identifier))}})
@@ -575,7 +585,7 @@
           :x-name ::undo-merge-gene
           :path-params [from-identifier ::wsg/identifier]
           :responses (-> default-responses
-                         (assoc http-response/ok {:schema ::wsg/undone})
+                         (assoc ok {:schema ::wsg/undone})
                          (response-map))
           :handler (fn [request]
                      (undo-merge-gene request
@@ -588,8 +598,8 @@
           :middleware [wna/restrict-to-authenticated]
           :x-name ::split-genes
           :parameters {:body-params ::wsg/split}
-          :responses (-> (dissoc default-responses http-response/ok)
-                         (assoc http-response/created
+          :responses (-> (dissoc default-responses ok)
+                         (assoc created
                                 {:schema ::wsg/split-response})
                          (response-map))
           :handler
@@ -603,9 +613,15 @@
           :x-name ::undo-split-gene
           :path-params [into-identifier :- ::wsg/identifier]
           :responses (-> default-responses
-                         (assoc http-response/ok {:schema ::wsg/undone})
+                         (assoc ok {:schema ::wsg/undone})
                          (response-map))
           :handler (fn [request]
                      (undo-split-gene request
                                       identifier
-                                      into-identifier))}})))))
+                                      into-identifier))}}))))
+
+(def routes
+  (sweet/routes
+   coll-resources
+   item-resources))
+
