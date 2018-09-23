@@ -578,7 +578,9 @@
                          (assoc http-response/ok {:schema ::wsg/undone})
                          (response-map))
           :handler (fn [request]
-                     (undo-merge-gene request from-identifier identifier))}}))
+                     (undo-merge-gene request
+                                      from-identifier
+                                      identifier))}}))
      (sweet/context "/split" []
        (sweet/resource
         {:post
@@ -587,7 +589,8 @@
           :x-name ::split-genes
           :parameters {:body-params ::wsg/split}
           :responses (-> (dissoc default-responses http-response/ok)
-                         (assoc http-response/created {:schema ::wsg/split-response})
+                         (assoc http-response/created
+                                {:schema ::wsg/split-response})
                          (response-map))
           :handler
           (fn [request]
