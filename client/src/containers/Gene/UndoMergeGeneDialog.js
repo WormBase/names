@@ -8,7 +8,7 @@ import {
   DialogContentText,
   ProgressButton,
   TextField,
-  Typography,
+  ValidationError,
 } from '../../components/elements';
 
 class UndoMergeGeneDialog extends Component {
@@ -49,7 +49,7 @@ class UndoMergeGeneDialog extends Component {
                   Are you sure?
                 </DialogContentText>
                 <DialogContentText>
-                  <Typography color="error">{errorMessage}</Typography>
+                  <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <ReasonField
                   label="Reason"

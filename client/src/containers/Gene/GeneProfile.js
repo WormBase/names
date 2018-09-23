@@ -13,7 +13,8 @@ import {
   PageRight,
   Snackbar,
   SnackbarContent,
-  Typography
+  Typography,
+  ValidationError,
 } from '../../components/elements';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
@@ -183,10 +184,10 @@ class GeneProfile extends Component {
           const stateChanges = {
             status: 'COMPLETE',
           };
-          if (response.message) {
+          if (response.problems) {
             return {
               ...stateChanges,
-              errorMessage: JSON.stringify(response),
+              errorMessage: response,
             }
           } else {
             this.fetchData();
@@ -312,7 +313,7 @@ class GeneProfile extends Component {
         </PageLeft>
         <PageMain>
           <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
-          <Typography color="error">{this.state.errorMessage}</Typography>
+          <ValidationError {...this.state.errorMessage} />
           {
             this.state.status !== 'COMPLETE' ?
               <CircularProgress /> : this.state.data['gene/status'] === 'gene.status/live' ?

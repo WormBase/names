@@ -9,7 +9,7 @@ import {
   DialogContentText,
   ProgressButton,
   TextField,
-  Typography,
+  ValidationError,
 } from '../../components/elements';
 
 class SplitGeneDialog extends Component {
@@ -86,7 +86,7 @@ class SplitGeneDialog extends Component {
                   Gene <strong>{geneName}</strong> will be split.
                 </DialogContentText>
                 <DialogContentText>
-                  <Typography color="error">{errorMessage}</Typography>
+                  <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <ReasonField
                   label="Reason"
