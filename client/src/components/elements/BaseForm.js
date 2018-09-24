@@ -217,40 +217,9 @@ class BaseForm extends Component {
     return Field;
   }
 
-  withDirtyFormOnly = (WrappedComponent) => {
+  dirtinessContext = (renderer) => {
     const dataStore = this.dataStore;
     class DirtyFormOnly extends Component {
-      constructor(props) {
-        super(props);
-        this.state = {
-          show: false,
-        };
-      }
-
-      componentDidMount() {
-        dataStore.setEventListener('ALL_FIELDS', () => {
-          this.setState({
-            show: dataStore.isFormDirty(),
-          });
-        });
-      }
-
-      componentWillUnmount() {
-        dataStore.removeEventListener('ALL_FIELDS');
-      }
-
-      render() {
-        return this.state.show ? (
-          <WrappedComponent {...this.props} />
-        ) : null;
-      }
-    }
-    return DirtyFormOnly;
-  }
-
-  renderDirtyFormPrompt(fields) {
-    const dataStore = this.dataStore;
-    class DirtyFormPrompt extends Component {
       constructor(props) {
         super(props);
         this.state = {
@@ -259,7 +228,6 @@ class BaseForm extends Component {
       }
 
       componentDidMount() {
-        const originalData = dataStore.getDataFlat(fields);
         dataStore.setEventListener('ALL_FIELDS', () => {
           this.setState({
             dirty: dataStore.isFormDirty(),
@@ -272,27 +240,29 @@ class BaseForm extends Component {
       }
 
       render() {
-        return (
-          <Prompt
-            when={this.state.dirty}
-            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
-        );
+        return renderer({
+          dirty: this.state.dirty,
+        });
       }
     }
-
-    return <DirtyFormPrompt />;
+    return <DirtyFormOnly />;
   }
 
   render() {
-    const dirtyFormPrompt = this.renderDirtyFormPrompt(this.unpackFields(this.props));
     return (
       <form noValidate autoComplete="off">
-        {dirtyFormPrompt}
+        {this.dirtinessContext(({dirty}) => (
+          <Prompt
+            when={dirty}
+            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+          />
+        ))}
         {
+          /* render props changes causes inputs to lose focus */
+          /* to get around the issue, pass getter functions instead of values */
           this.props.children({
             withFieldData: this.withFieldData,
-            withDirtyFormOnly: this.withDirtyFormOnly,
+            dirtinessContext: this.dirtinessContext,
             getFormData: this.dataStore.getData,
             resetData: () => {
               this.dataStore.replaceFields(this.unpackFields(this.props));

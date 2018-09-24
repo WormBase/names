@@ -25,12 +25,12 @@ class GeneForm extends Component {
     return (
       <BaseForm data={dataNew} disabled={disabled || submitted}>
         {
-          ({withFieldData, withDirtyFormOnly, getFormData, resetData}) => {
+          ({withFieldData, dirtinessContext, getFormData, resetData}) => {
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
             const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
-            const ReasonField = withFieldData(withDirtyFormOnly(TextField), 'provenance/why');
+            const ReasonField = withFieldData(TextField, 'provenance/why');
             return (
               <div>
                 <CgcNameField
@@ -45,28 +45,36 @@ class GeneForm extends Component {
                   required={dataNew['gene/sequence-name'] || dataNew['gene/biotype']} // once a cloned gene, always a cloned gene
                   helperText={'For cloned genes, biotype is required. Otherwise, it\'s optional'}
                 />
-                <ReasonField
-                  label="Reason"
-                  helperText={createMode ? 'Why do you create this gene' : 'Why do you edit this gene?'}
-                />
+                {
+                  dirtinessContext(({dirty}) => (
+                    dirty ? <ReasonField
+                      label="Reason"
+                      helperText={createMode ? 'Why do you create this gene' : 'Why do you edit this gene?'}
+                    /> : null
+                  ))
+                }
                 <br/>
-                <div className={classes.actions}>
-                  <ProgressButton
-                    status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
-                    variant="raised"
-                    color="secondary"
-                    onClick={() => this.props.onSubmit(getFormData())}
-                    disabled={disabled}
-                  >Submit</ProgressButton>
-                  <Button
-                    variant="raised"
-                    onClick={() => {
-                      resetData();
-                      this.props.onCancel && this.props.onCancel();
-                    }}
-                    disabled={disabled}
-                  >Cancel</Button>
-                </div>
+                {
+                  dirtinessContext(({dirty}) => (
+                    <div className={classes.actions}>
+                      <ProgressButton
+                        status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
+                        variant="raised"
+                        color="secondary"
+                        onClick={() => dirty && this.props.onSubmit(getFormData())}
+                        disabled={disabled}
+                      >Submit</ProgressButton>
+                      <Button
+                        variant="raised"
+                        onClick={() => {
+                          resetData();
+                          this.props.onCancel && this.props.onCancel();
+                        }}
+                        disabled={disabled}
+                      >Cancel</Button>
+                    </div>
+                  ))
+                }
               </div>
             );
           }
