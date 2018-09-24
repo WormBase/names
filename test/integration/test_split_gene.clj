@@ -1,5 +1,6 @@
 (ns integration.test-split-gene
   (:require
+   [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
    [wormbase.fake-auth :as fake-auth]
@@ -7,10 +8,8 @@
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
-   [clojure.spec.gen.alpha :as gen]
-   [clojure.spec.alpha :as s]
    [wormbase.db :as wdb]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :refer [created]]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

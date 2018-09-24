@@ -7,13 +7,6 @@
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
    [java-time :as jt]
-   [wormbase.db :as wdb]
-   [wormbase.names.auth :as wna]
-   [wormbase.names.entity :as wne]
-   [wormbase.names.provenance :as wnp]
-   [wormbase.names.util :as wnu]
-   [wormbase.specs.common :as wsc]
-   [wormbase.specs.gene :as wsg]
    [ring.util.http-response :refer [ok
                                     bad-request
                                     conflict
@@ -21,7 +14,14 @@
                                     not-found
                                     precondition-failed
                                     precondition-failed!]]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]
+   [wormbase.db :as wdb]
+   [wormbase.names.auth :as wna]
+   [wormbase.names.entity :as wne]
+   [wormbase.names.provenance :as wnp]
+   [wormbase.names.util :as wnu]
+   [wormbase.specs.common :as wsc]
+   [wormbase.specs.gene :as wsg]))
 
 (def identify (partial wne/identify ::wsg/identifier))
 
@@ -431,38 +431,43 @@
   "Change the status of gene to `status`.
 
   `request` - the ring request.
-  `identifier` must uniquely identify a gene.
-  `to-status` - a keyword/ident identifiying a gene status. (e.g: :gene.status/live)
-  `fail-precondition?` - A function that takes a single argument of the current gene status *entity*,
-                         and should return a truth-y value to indicate if a precondition-failed
-                         (HTTP 412) should be returned.
-  `predcondition-failure-msg` - An optional message to send back in the case fail-precondition?"
-  [request id to-status event-type
+  `identifier` must uniquely identify a
+  gene.
+  `to-status` - a keyword/ident identifiying a gene
+  status. (e.g: :gene.status/live)
+  `event-type` - keyword/ident
+  `fail-precondition?` - A function that takes a single argument of
+  the current gene status *entity*, and should return a truth-y value
+  to indicate if a precondition-failed (HTTP 412) should be returned.
+  `predcondition-failure-msg` - An optional message to send back in the
+  case where fail-precondition? returns true."
+  [request identifier to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
   (entity-must-exist! request id)
   (let [{db :db payload :body-params} request
-        cid (s/conform :gene/id id)
-        lur [:gene/id cid]
-        {gene-status :gene/status} (d/pull db '[{:gene/status [:db/ident]}] lur)]
-    (when (and fail-precondition? (fail-precondition? gene-status))
+        lur (s/conform ::wsg/identifier identifier)
+        pull-status #(d/pull % '[{:gene/status [:db/ident]}] lur)
+        {gene-status :gene/status} (pull-status db)]
+    (when (and gene-status
+               fail-precondition?
+               (fail-precondition? gene-status))
       (precondition-failed! {:message precondition-failure-msg
-                                           :info (wnu/undatomicize gene-status)}))
+                             :info (wnu/undatomicize gene-status)}))
     (let [prov (wnp/assoc-provenance request payload event-type)
-          tx-res @(d/transact-async (:conn request)
-                                    [[:db.fn/cas
-                                      lur
-                                      :gene/status
-                                      (d/entid db (:db/ident gene-status))
-                                      (d/entid db to-status)]
-                                     prov])]
-      (ok {:updated
-           (some-> tx-res
-                   :db-after
-                   (d/pull '[:gene/id
-                             {:gene/status [:db/ident]}]
-                           lur)
-                   (wnu/undatomicize))}))))
+          conn (:conn request)
+          tx-res @(d/transact-async
+                   conn [[:db.fn/cas
+                          lur
+                          :gene/status
+                          (d/entid db (:db/ident gene-status))
+                          (d/entid db to-status)]
+                         prov])]
+      (-> tx-res
+          :db-after
+          pull-status
+          wnu/undatomicize
+          ok))))
 
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live :event/resurrect-gene
@@ -475,7 +480,8 @@
                  :precondition-failure-msg "Gene must have a live status."))
 
 (defn kill-gene [request id]
-  (change-status request id :gene.status/dead :event/kill-gene
+  (change-status request id
+                 :gene.status/dead :event/kill-gene
                  :fail-precondition? not-live?
                  :precondition-failure-msg "Gene must be live to be killed."))
 
@@ -487,6 +493,11 @@
 
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+
+(def status-changed-responses
+  (-> default-responses
+      (assoc ok {:schema ::wsg/status-changed})
+      (response-map)))
 
 (def coll-resources
   (sweet/context "/gene/" []
@@ -525,7 +536,7 @@
          {:summary "Resurrect a gene."
           :x-name ::resurrect-gene
           :middleware [wna/restrict-to-authenticated]
-          :responses (response-map default-responses)
+          :responses status-changed-responses
           :handler (fn [request]
                      (resurrect-gene request identifier))}}))
      (sweet/context "/suppress" []
@@ -534,7 +545,7 @@
          {:summary "Suppress a gene."
           :x-name ::suppress-gene
           :middleware [wna/restrict-to-authenticated]
-          :responses (response-map default-responses)
+          :responses status-changed-responses
           :handler (fn [request]
                      (suppress-gene request identifier))}}))
      (sweet/resource
@@ -543,9 +554,7 @@
         :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
         :parameters {:body-params ::wsg/kill}
-        :responses (-> default-responses
-                       response-map
-                       (assoc ok {:schema ::wsg/kill}))
+        :responses status-changed-responses
         :handler (fn [request]
                    (kill-gene request identifier))}})
      (sweet/resource
