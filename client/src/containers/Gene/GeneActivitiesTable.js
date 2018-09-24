@@ -119,6 +119,50 @@ class GeneActivitiesTable extends Component {
     return selectedActivity &&  selectedActivity[eventType] && selectedActivity[eventType]["gene/id"];
   }
 
+  renderChanges = (changes) => {
+    const changeLookup = changes.reduce((result, changeEntry) => {
+      const changeSumamry = {
+        ...result[changeEntry.attr],
+        [changeEntry.added ? 'added' : 'retracted']: changeEntry.value,
+      };
+      return ({
+        ...result,
+        [changeEntry.attr]: changeSumamry,
+      })
+    }, {});
+    //return JSON.stringify(changeLookup, null, 2);
+    return (
+      <Table className={this.props.classes.changeTable}>
+        <TableHead>
+          <TableRow>
+            <TableCell>Attribute changed</TableCell>
+            <TableCell>Old value</TableCell>
+            <TableCell><strong>New value</strong></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {
+            Object.keys(changeLookup).map((attr) => {
+              return (
+                <TableRow>
+                  <TableCell className={this.props.classes.changeTableCell}>
+                    {attr}
+                  </TableCell>
+                  <TableCell className={this.props.classes.changeTableCell}>
+                    {changeLookup[attr].retracted || '-'}
+                  </TableCell>
+                  <TableCell className={this.props.classes.changeTableCell}>
+                    <strong>{changeLookup[attr].added || '-'}</strong>
+                  </TableCell>
+                </TableRow>
+              )
+            })
+          }
+        </TableBody>
+      </Table>
+    );
+  }
+
   render() {
     const {classes, activities, onUpdate, selfGeneId} = this.props;
     const {selectedActivityIndex} = this.state;
@@ -156,8 +200,9 @@ class GeneActivitiesTable extends Component {
                             null
                         }
                       </TableCell>
-                      <TableCell>
-                        <Humanize>{eventLabel}</Humanize>
+                      <TableCell className={classes.eventCell}>
+                        <span className={classes.eventLabel}><Humanize>{eventLabel}</Humanize></span>
+                        {this.renderChanges(activityItem.changes)}
                       </TableCell>
                       <TableCell>
                         {
@@ -250,6 +295,18 @@ const styles = (theme) => ({
   },
   entityColumnHeader: {},
   entityCell: {},
+  eventCell: {
+  },
+  eventLabel: {
+    lineHeight: '1.5em',
+    fontStyle: 'italic',
+  },
+  changeTable: {
+    backgroundColor: theme.palette.background.default,
+  },
+  changeTableCell: {
+    border: 'none',
+  },
 });
 
 export default withStyles(styles)(GeneActivitiesTable);
