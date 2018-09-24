@@ -131,9 +131,11 @@
   (let [db (:db request)
         [lur _] (identify request identifier)
         info (d/pull db info-pull-expr lur)
-        prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)
-        data (assoc info :history prov)]
-    (http-response/ok (transform-result data))))
+        prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)]
+    (-> info
+        (assoc :history prov)
+        transform-result
+        http-response/ok)))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -251,25 +253,48 @@
                       {:from-id from-gene-id
                        :from-cgc-name (:gene/cgc-name from-gene)
                        :type :wormbase.db/conflict})))
+    (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
+                             [from-gene into-gene])]
+      (when-not (empty? deads)
+        (throw (ex-info "Both merge participants must be live"
+                        {:type :wormbase.db/conflict
+                         :dead-genes (map :gene/id deads)}))))
     [[into-lur into-gene] [from-lur from-gene]]))
 
+(defn uncloned-merge-target? [target]
+  (->> ((juxt :gene/biotype :gene/sequence-name) target)
+       (every? nil?)))
+
 (defn merge-genes [request into-id from-id]
-  (let [conn (:conn request)
-        data (:body-params request)
+  (let [{conn :conn db :db data :body-params} request
         into-biotype (:gene/biotype data)
-        [[into-lur into] [from-lur form]] (validate-merge-request
-                                           request
-                                           into-id
-                                           from-id
-                                           into-biotype)
-        prov (-> request
-                 (wnp/assoc-provenance data :event/merge-genes)
-                 (assoc :provenance/merged-from from-lur)
-                 (assoc :provenance/merged-into into-lur))
-        tx-result @(d/transact-async
-                    conn
-                    [[:wormbase.tx-fns/merge-genes from-id into-id into-biotype]
-                     prov])]
+        [[into-lur into-g] [from-lur from-g]] (validate-merge-request
+                                               request
+                                               into-id
+                                               from-id
+                                               into-biotype)
+        collate-cas-batch (partial d/invoke db :wormbase.tx-fns/collate-cas-batch db)
+        from-seq-name (:gene/sequence-name from-g)
+        assoc-merge-prov (partial wnp/assoc-provenance request data :event/merge-genes)
+        from-prov (assoc (assoc-merge-prov) :provenance/merged-from from-lur)
+        into-prov (assoc (assoc-merge-prov) :provenance/merged-into into-lur)
+        into-uncloned? (uncloned-merge-target? into-g)
+        from-txes (concat
+                   (when into-uncloned?
+                     [[:db/retract from-lur :gene/sequence-name from-seq-name]])
+                   (-> from-g
+                       (collate-cas-batch {:gene/status :gene.status/dead})
+                       (conj into-prov)))
+        into-txes (concat
+                   (when into-uncloned?
+                     [[:db.fn/cas into-lur :gene/sequence-name nil from-seq-name]])
+                   (-> into-g
+                       (collate-cas-batch {:gene/biotype into-biotype})
+                       (conj from-prov)))
+        tx-result (->> [from-txes into-txes]
+                       (map (partial d/transact-async conn))
+                       (map deref)
+                       (last))]
       (if-let [db (:db-after tx-result (:tx-data tx-result))]
         (let [[from into] (map #(d/entity db [:gene/id %])
                                [from-id into-id])]
@@ -310,41 +335,46 @@
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
-    (if (not-live? from-gene-status)
+    (when (not-live? from-gene-status)
       (http-response/conflict! {:message "Gene must be live."
-                                :gene/status from-gene-status})
-      (let [cdata (stc/conform spec data)
-            {biotype :gene/biotype product :product} cdata
-            {p-seq-name :gene/sequence-name
-             p-biotype :gene/biotype} product
-            p-seq-name (get-in cdata [:product :gene/sequence-name])
-            prov-from (-> request
-                          (wnp/assoc-provenance cdata :event/split-gene)
-                          (assoc :provenance/split-from lur))
-            species (-> from-gene :gene/species :species/id)
-            new-gene-data (merge {:gene/species {:species/id species}} product)
-            mint-new-id? true
-            new-result @(d/transact-async
-                         conn
-                         [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
-                          prov-from])
-            db (:db-after new-result)
-            p-gene (d/entity db [:gene/sequence-name p-seq-name])
-            p-gene-id (:gene/id p-gene)
-            p-gene-lur [:gene/id p-gene-id]
-            prov-into (-> request
-                          (wnp/assoc-provenance cdata :event/split-gene)
-                          (assoc :provenance/split-into p-gene-lur))
-            curr-splits (map :db/id (:gene/splits (d/entity db lur)))
-            new-splits (conj curr-splits (:db/id p-gene))
-            update-result @(d/transact-async
-                            conn
-                            [[:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
-                             prov-into])]
-        (->> [p-gene-lur lur]
-             (map (partial apply array-map))
-             (zipmap [:created :updated])
-             (http-response/created (str "/api/gene/" p-gene-id)))))))
+                                :gene/status from-gene-status}))
+    (let [cdata (stc/conform spec data)
+          {biotype :gene/biotype product :product} cdata
+          {p-seq-name :gene/sequence-name
+           p-biotype :gene/biotype} product
+          p-seq-name (get-in cdata [:product :gene/sequence-name])
+          prov-from (-> request
+                        (wnp/assoc-provenance cdata :event/split-gene)
+                        (assoc :provenance/split-from lur))
+          species (-> from-gene :gene/species :species/id)
+          new-gene-data (merge {:gene/species {:species/id species}} product)
+          mint-new-id? true
+          new-result @(d/transact-async
+                       conn
+                       [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
+                        prov-from])
+          db (:db-after new-result)
+          p-gene (d/entity db [:gene/sequence-name p-seq-name])
+          p-gene-id (:gene/id p-gene)
+          p-gene-lur [:gene/id p-gene-id]
+          prov-into (-> request
+                        (wnp/assoc-provenance cdata :event/split-gene)
+                        (assoc :provenance/split-into p-gene-lur))
+          curr-splits (map :db/id (:gene/splits (d/entity db lur)))
+          new-splits (conj curr-splits (:db/id p-gene))
+          update-result @(d/transact-async
+                          conn
+                          [[:db.fn/cas
+                            lur
+                            :gene/biotype
+                            (d/entid db (:gene/biotype from-gene))
+                            (d/entid db biotype)]
+                           [:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
+                           prov-into])]
+      (->> [p-gene-lur lur]
+           (map (partial apply array-map))
+           (zipmap [:created :updated])
+           (http-response/created (str "/api/gene/" p-gene-id))))))
 
 (defn- invert-split-tx [db e a v tx added?]
   (cond

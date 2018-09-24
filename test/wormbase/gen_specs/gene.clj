@@ -81,6 +81,7 @@
    :gene/status (constantly status)
    :gene/sequence-name (constantly (s/gen :gene/sequence-name))
    :provenance/how (constantly (s/gen ::wna/id))
+   :provenance/what (constantly (s/gen :provenance/what))
    :provenance/when (constantly (s/gen :provenance/when))
    :provenance/why (constantly (s/gen :provenance/why))
    [:provenance/who :person/id] (constantly wgsp/id)

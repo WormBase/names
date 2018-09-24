@@ -246,6 +246,7 @@
                 person [:person/email "tester@wormbase.org"]}}]
   (merge {:db/id "datomic.tx"
           :provenance/how how
+          :provenance/what what
           :provenance/when whence
           :provenance/who person}
          (when-not (:gene/status data)

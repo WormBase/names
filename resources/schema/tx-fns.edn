@@ -119,7 +119,7 @@
           (reduce-kv (fn [m k v]
                        (cond
                          (and (map? v) (:db/id v))  (assoc m k (:db/id v))
-                         (keyword? v) (d/entid db v)
+                         (keyword? v) (assoc m k (d/entid db v))
                          :else (assoc m k v)))
                        {}
                        x)
@@ -166,52 +166,6 @@
                              entity)
           tx-data (collate-cas-batch data)]
       tx-data)"}}
-
- {:db/ident :wormbase.tx-fns/merge-genes
-  :db/doc "Merge gene `src` into gene `into`."
-  :db/fn #db/fn
-  {:lang "clojure"
-   :params [db from-id into-id into-biotype]
-   :code
-   "(let [participants (->> [from-id into-id]
-                            (interleave (repeat :gene/id))
-                            (partition 2))]
-       (let [[from into] (map #(d/entity db %) participants)]
-         (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
-                                  [from into])]
-           (when-not (empty? deads)
-             (throw (ex-info \"Both merge participants must be live\"
-                             {:type :wormbase.db/conflict
-                              :dead-genes (map :gene/id deads)}))))
-         (when (some nil? [from into])
-           (throw (ex-info \"Merge participant does not exist!\"
-                            {:missing (remove (comp not nil?)
-                                              (map :gene/id [from into]))
-                             :type :wormbase.db/missing
-                             :participants participants})))
-          (let [entid (partial d/entid db)
-                from-seq-name (:gene/sequence-name from)
-                none? #(every? nil? %)
-                uncloned-into? (none?
-                                ((juxt :gene/biotype :gene/sequence-name)
-                                 into))
-                [sid tid] (map :db/id [from into])
-                txes [[:db.fn/cas sid :gene/status
-                                      (entid (:gene/status from))
-                                      (entid :gene.status/dead)]
-                      [:db.fn/cas tid :gene/biotype
-                                      (entid (:gene/biotype into))
-                                      (entid into-biotype)]]
-                tx-data (if uncloned-into?
-                          (-> txes
-                              (conj
-                               [:db/retract sid
-                                :gene/sequence-name from-seq-name])
-                              (conj
-                               [:db.fn/cas tid
-                                :gene/sequence-name nil from-seq-name]))
-                          txes)]
-             tx-data)))"}}
 
  {:db/ident :wormbase.tx-fns/set-many-ref
   :db/doc "Set the value for a cardinailty many reference."

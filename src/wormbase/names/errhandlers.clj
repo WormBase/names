@@ -76,6 +76,7 @@
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
+   (throw exc)
    (if-not (empty? ((juxt :test :dev) environ/env))
      (handle-unexpected-error exc)
      (http-response/internal-server-error data)))
