@@ -15,7 +15,9 @@
 
 (s/def ::existing-name (stc/spec string?))
 
-(s/def :gene/id (stc/spec (s/and string? (partial re-matches gene-id-regexp))))
+(s/def :gene/id (stc/spec
+                 (s/and string?
+                        (partial re-matches gene-id-regexp))))
 
 (s/def :gene/cgc-name (s/nilable ::new-name))
 
@@ -23,7 +25,9 @@
 
 (s/def :gene/biotype sts/keyword?)
 
-(s/def :gene/species (stc/spec (s/keys :req [(or :species/id :species/latin-name)])))
+(s/def :gene/species (stc/spec
+                      (s/keys
+                       :req [(or :species/id :species/latin-name)])))
 
 (s/def :gene.status/dead sts/boolean?)
 
@@ -94,12 +98,15 @@
 
 (s/def ::merge (stc/spec (s/keys :req [:gene/biotype])))
 
-(s/def ::product (stc/spec (s/keys :req [:gene/sequence-name :gene/biotype])))
+(s/def ::product (stc/spec
+                  (s/keys :req [:gene/sequence-name :gene/biotype])))
 
-(s/def ::split (stc/spec (s/keys :req [:gene/biotype]
-                                 :req-un [::product])))
+(s/def ::split (stc/spec
+                (s/keys :req [:gene/biotype]
+                        :req-un [::product])))
 
-(s/def ::split-response (stc/spec (s/keys :req-un [::updated ::created])))
+(s/def ::split-response (stc/spec
+                         (s/keys :req-un [::updated ::created])))
 
 (s/def ::live :gene/id)
 
@@ -142,19 +149,21 @@
                                   :provenance/split-into
                                   :provenance/merged-from
                                   :provenance/merged-into]))
+(s/def ::history (stc/spec
+                  (s/coll-of ::provenance :type vector? :min-count 1)))
 
-(s/def ::history (stc/spec (s/coll-of ::provenance :type vector? :min-count 1)))
 
-
-(s/def ::info (stc/spec (s/keys :req [:gene/id
-                                      :gene/species
-                                      :gene/status
-                                      (or (or :gene/cgc-name :gene/sequence-name)
-                                          (and :gene/cgc-name :gene/sequence-name))]
-                                :req-un [::history]
-                                :opt [:gene/biotype
-                                      :gene/sequence-name
-                                      :gene/cgc-name])))
+(s/def ::info (stc/spec
+               (s/keys
+                :req [:gene/id
+                      :gene/species
+                      :gene/status
+                      (or (or :gene/cgc-name :gene/sequence-name)
+                          (and :gene/cgc-name :gene/sequence-name))]
+                :req-un [::history]
+                :opt [:gene/biotype
+                      :gene/sequence-name
+                      :gene/cgc-name])))
 
 (s/def ::identifier (s/or :gene/id :gene/id
                           :gene/cgc-name :gene/cgc-name

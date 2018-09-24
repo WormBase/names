@@ -9,7 +9,7 @@ import {
   DialogContentText,
   ProgressButton,
   TextField,
-  Typography,
+  ValidationError,
 } from '../../components/elements';
 import GeneAutocomplete from './GeneAutocomplete';
 
@@ -62,7 +62,7 @@ class MergeGeneDialog extends Component {
                   Gene <strong>{geneName}</strong> will be merged. Are you sure?
                 </DialogContentText>
                 <DialogContentText>
-                  <Typography color="error">{errorMessage}</Typography>
+                  <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <GeneIdMergeIntoField
                   label="Merge into gene"

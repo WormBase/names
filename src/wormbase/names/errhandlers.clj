@@ -5,9 +5,8 @@
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
    [environ.core :as environ]
+   [expound.alpha :as expound]
    [wormbase.db :as wdb]
-   ;;   TODO: better API error messages
-   ;;   [phrase.alpha :as phrase]
    [ring.util.http-response :as http-response]
    [wormbase.names.gene :as wn-gene])
   (:import
@@ -30,27 +29,6 @@
 
 (def respond-missing (partial respond-with http-response/not-found))
 
-(defn custom-exc-handler [f type]
-  (fn [^Exception exc data request]
-    ;; Exceptions thrwn in a transaction function are wrapped
-    ;; in a concurrent.ExecutionException -
-    ;; override custom exc handler to be bad-request if the
-    ;; cause was thrwn with `exc-info`
-    (let [txfn-err? (instance? ExecutionException exc)
-          cause (.getCause exc)
-          err (if (and txfn-err? (instance? ExceptionInfo cause))
-                cause
-                exc)
-          info {:message (.getMessage err) :type type}]
-      (f (if (or (= type :validation-error) (= (name type) "validation-error"))
-           (let [info* (ex-data err)
-                 problems (if info*
-                            (:problems (str info*)))
-                 info* (when problems
-                         (assoc info* :problems problems))]
-             info*)
-           info)))))
-
 (defn assoc-error-message [data exc & {:keys [message]}]
   (if-let [msg (or message (.getMessage exc))]
     (assoc data :message msg)
@@ -58,13 +36,14 @@
 
 (defn handle-validation-error
   [^Exception exc data request
-   & {:keys [message stringify-problems?]
-      :or {stringify-problems? true}}]
-  (let [problems (get-in data [:data :problems])
-        info (if problems
-               (assoc data :problems (if stringify-problems? (str problems)
-                                         problems))
-               data)
+   & {:keys [message]}]
+  (let [data* (dissoc data :request :spec :coercion :in)
+        spec (:spec data)
+        info (if-let [problems (some-> data* :problems)]
+               (assoc data*
+                      :problems
+                      (expound/expound-str spec (:value data*)))
+               data*)
         body (assoc-error-message info exc :message message)]
     (respond-bad-request request body)))
 
@@ -113,9 +92,9 @@
    ;; strip out keys that won't encode succesfully
    (handle-validation-error
     exc
-    (dissoc data :request :spec :coercion :in)
+    data
     request
-    :message "Request validation failed: invalid request parameters/payload"))
+    :message "Request validation failed"))
   ([err]
    err))
 
@@ -124,9 +103,10 @@
     (http-response/unauthorized "Access denied")
     (http-response/forbidden)))
 
-(def ^{:doc "Error handler dispatch map for the compojure.api app"} handlers
+(def ^{:doc "Error handler dispatch map for the compojure.api app"}
+  handlers
   {;; Spec validation errors
-   ::ex/request-validation handle-request-validation ;; c-api
+   ::ex/request-validation handle-request-validation
    :user/validation-error handle-validation-error
    ::wn-gene/validation-error handle-validation-error
    ::wdb/validation-error handle-validation-error
