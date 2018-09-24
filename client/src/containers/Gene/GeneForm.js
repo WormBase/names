@@ -25,12 +25,12 @@ class GeneForm extends Component {
     return (
       <BaseForm data={dataNew} disabled={disabled || submitted}>
         {
-          ({withFieldData, getFormData, resetData}) => {
+          ({withFieldData, withDirtyFormOnly, getFormData, resetData}) => {
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
             const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
             const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
-            const ReasonField = withFieldData(TextField, 'provenance/why');
+            const ReasonField = withFieldData(withDirtyFormOnly(TextField), 'provenance/why');
             return (
               <div>
                 <CgcNameField

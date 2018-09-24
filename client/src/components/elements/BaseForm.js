@@ -108,6 +108,22 @@ class FormDataStore {
     );
   }
 
+  isFormDirty = () => {
+    const originalData = this.getDataFlat(this.originalFields);
+    const currentData = this.getDataFlat();
+    return [
+      ...Object.keys(originalData),
+      ...Object.keys(currentData)
+    ].reduce(
+      (result, fieldId) => {
+        return result || (
+          (originalData[fieldId] || '') !== (currentData[fieldId] || '')
+        );
+      },
+      false
+    );
+  }
+
 }
 
 class BaseForm extends Component {
@@ -162,7 +178,7 @@ class BaseForm extends Component {
       constructor(props) {
         super(props);
         this.state = {
-          ...dataStore.getField(fieldId)
+          ...dataStore.getField(fieldId),
         };
       }
 
@@ -201,6 +217,37 @@ class BaseForm extends Component {
     return Field;
   }
 
+  withDirtyFormOnly = (WrappedComponent) => {
+    const dataStore = this.dataStore;
+    class DirtyFormOnly extends Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          show: false,
+        };
+      }
+
+      componentDidMount() {
+        dataStore.setEventListener('ALL_FIELDS', () => {
+          this.setState({
+            show: dataStore.isFormDirty(),
+          });
+        });
+      }
+
+      componentWillUnmount() {
+        dataStore.removeEventListener('ALL_FIELDS');
+      }
+
+      render() {
+        return this.state.show ? (
+          <WrappedComponent {...this.props} />
+        ) : null;
+      }
+    }
+    return DirtyFormOnly;
+  }
+
   renderDirtyFormPrompt(fields) {
     const dataStore = this.dataStore;
     class DirtyFormPrompt extends Component {
@@ -214,20 +261,8 @@ class BaseForm extends Component {
       componentDidMount() {
         const originalData = dataStore.getDataFlat(fields);
         dataStore.setEventListener('ALL_FIELDS', () => {
-          const currentData = dataStore.getDataFlat();
-          const isDirty = [
-            ...Object.keys(originalData),
-            ...Object.keys(currentData)
-          ].reduce(
-            (result, fieldId) => {
-              return result || (
-                (originalData[fieldId] || '') !== (currentData[fieldId] || '')
-              );
-            },
-            false
-          );
           this.setState({
-            dirty: isDirty,
+            dirty: dataStore.isFormDirty(),
           });
         });
       }
@@ -257,6 +292,7 @@ class BaseForm extends Component {
         {
           this.props.children({
             withFieldData: this.withFieldData,
+            withDirtyFormOnly: this.withDirtyFormOnly,
             getFormData: this.dataStore.getData,
             resetData: () => {
               this.dataStore.replaceFields(this.unpackFields(this.props));
