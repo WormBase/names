@@ -114,7 +114,7 @@ class FormDataStore {
     return [
       ...Object.keys(originalData),
       ...Object.keys(currentData)
-    ].reduce(
+    ].filter((fieldId) => !fieldId.match(/provenance\//)).reduce(
       (result, fieldId) => {
         return result || (
           (originalData[fieldId] || '') !== (currentData[fieldId] || '')
