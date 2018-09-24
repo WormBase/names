@@ -30,7 +30,8 @@ class GeneProfile extends Component {
     this.state = {
       status: null,
       errorMessage: null,
-      successMessage: null,
+      shortMessage: null,
+      shortMessageVariant: 'info',
       data: {},
       showKillGeneDialog: false,
       showResurrectGeneDialog: false,
@@ -163,6 +164,15 @@ class GeneProfile extends Component {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
+      if (Object.keys(data).length === 0) {
+        this.setState({
+          status: 'COMPLETE',
+          shortMessage: 'You didn\'t modify anything in the form. No change is submitted',
+          shortMessageVariant: 'warning',
+        });
+        return;
+      }
+
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.put('*', {
@@ -202,7 +212,8 @@ class GeneProfile extends Component {
               ...stateChanges,
               errorMessage: null,
               data: response.updated,
-              successMessage: 'Update successful!',
+              shortMessage: 'Update successful!',
+              shortMessageVariant: 'success',
             }
           }
         });
@@ -272,7 +283,8 @@ class GeneProfile extends Component {
 
   closeSnackbar = () => {
     this.setState({
-      successMessage: null,
+      shortMessage: null,
+      shortMessageVariant: 'info',
     });
   }
 
@@ -407,7 +419,8 @@ class GeneProfile extends Component {
           onClose={this.closeKillGeneDialog}
           onSubmitSuccess={(data) => {
             this.setState({
-              successMessage: 'Kill successful!',
+              shortMessage: 'Kill successful!',
+              shortMessageVariant: 'success',
             }, () => {
               this.fetchData();
               this.closeKillGeneDialog();
@@ -428,7 +441,8 @@ class GeneProfile extends Component {
               },
             }), () => {
               this.setState({
-                successMessage: 'Resurrect successful!',
+                shortMessage: 'Resurrect successful!',
+                shortMessageVariant: 'success',
               }, () => {
                 this.fetchData();
                 this.closeResurrectGeneDialog();
@@ -455,7 +469,8 @@ class GeneProfile extends Component {
           onClose={this.closeMergeGeneDialog}
           onSubmitSuccess={(data) => {
             this.setState({
-              successMessage: 'Merge successful!',
+              shortMessage: 'Merge successful!',
+              shortMessageVariant: 'success',
             }, () => {
               this.fetchData();
               this.closeMergeGeneDialog();
@@ -471,7 +486,8 @@ class GeneProfile extends Component {
           onClose={this.closeSplitGeneDialog}
           onSubmitSuccess={(data) => {
             this.setState({
-              successMessage: 'Split successful!',
+              shortMessage: 'Split successful!',
+              shortMessageVariant: 'success',
             }, () => {
               this.fetchData();
               this.closeSplitGeneDialog();
@@ -480,12 +496,12 @@ class GeneProfile extends Component {
         />
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={this.state.successMessage}
+          open={this.state.shortMessage}
           onClose={this.closeSnackbar}
         >
           <SnackbarContent
-            variant="success"
-            message={<span>{this.state.successMessage}</span>}
+            variant={this.state.shortMessageVariant}
+            message={<span>{this.state.shortMessage}</span>}
           />
         </Snackbar>
       </Page>

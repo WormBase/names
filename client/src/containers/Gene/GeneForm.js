@@ -61,7 +61,7 @@ class GeneForm extends Component {
                         status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
                         variant="raised"
                         color="secondary"
-                        onClick={() => dirty && this.props.onSubmit(getFormData())}
+                        onClick={() => dirty ? this.props.onSubmit(getFormData()) : this.props.onSubmit({})}
                         disabled={disabled}
                       >Submit</ProgressButton>
                       <Button
