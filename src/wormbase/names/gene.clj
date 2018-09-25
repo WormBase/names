@@ -9,11 +9,10 @@
    [java-time :as jt]
    [ring.util.http-response :refer [ok
                                     bad-request
-                                    conflict
+                                    conflict conflict!
                                     created
-                                    not-found
-                                    precondition-failed
-                                    precondition-failed!]]
+                                    not-found not-found!
+                                    precondition-failed precondition-failed!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
@@ -40,7 +39,7 @@
   (doseq [identifier identifier]
     (let [[_ ent] (identify request identifier)]
       (if-not ent
-        (http-response/not-found!
+        (not-found!
          {:message (str "Gene with identifier "
                         identifier
                         "does not exist")})))))
@@ -141,7 +140,7 @@
     (-> info
         (assoc :history prov)
         transform-result
-        http-response/ok)))
+        ok)))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -348,8 +347,8 @@
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
     (when (not-live? from-gene-status)
-      (http-response/conflict! {:message "Gene must be live."
-                                :gene/status from-gene-status}))
+      (conflict! {:message "Gene must be live."
+                  :gene/status from-gene-status}))
     (let [cdata (stc/conform spec data)
           {biotype :gene/biotype product :product} cdata
           {p-seq-name :gene/sequence-name
@@ -386,7 +385,7 @@
       (->> [p-gene-lur lur]
            (map (partial apply array-map))
            (zipmap [:created :updated])
-           (http-response/created (str "/api/gene/" p-gene-id))))))
+           (created (str "/api/gene/" p-gene-id))))))
 
 (defn- invert-split-tx [db e a v tx added?]
   (cond
@@ -444,7 +443,7 @@
   [request identifier to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
-  (entity-must-exist! request id)
+  (entity-must-exist! request identifier)
   (let [{db :db payload :body-params} request
         lur (s/conform ::wsg/identifier identifier)
         pull-status #(d/pull % '[{:gene/status [:db/ident]}] lur)

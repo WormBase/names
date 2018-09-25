@@ -76,7 +76,7 @@
                          {:gene/biotype :biotype/transposable-element-gene}
                          "WB2"
                          "WB1")]
-      (tu/status-is? (:status (not-found)) status body)))
+      (tu/status-is? (:status (bad-request)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:gene/biotype :biotype/transposable-element-gene}
