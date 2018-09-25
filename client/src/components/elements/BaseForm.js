@@ -108,6 +108,22 @@ class FormDataStore {
     );
   }
 
+  isFormDirty = () => {
+    const originalData = this.getDataFlat(this.originalFields);
+    const currentData = this.getDataFlat();
+    return [
+      ...Object.keys(originalData),
+      ...Object.keys(currentData)
+    ].filter((fieldId) => !fieldId.match(/provenance\//)).reduce(
+      (result, fieldId) => {
+        return result || (
+          (originalData[fieldId] || '') !== (currentData[fieldId] || '')
+        );
+      },
+      false
+    );
+  }
+
 }
 
 class BaseForm extends Component {
@@ -162,7 +178,7 @@ class BaseForm extends Component {
       constructor(props) {
         super(props);
         this.state = {
-          ...dataStore.getField(fieldId)
+          ...dataStore.getField(fieldId),
         };
       }
 
@@ -201,9 +217,9 @@ class BaseForm extends Component {
     return Field;
   }
 
-  renderDirtyFormPrompt(fields) {
+  dirtinessContext = (renderer) => {
     const dataStore = this.dataStore;
-    class DirtyFormPrompt extends Component {
+    class DirtyFormOnly extends Component {
       constructor(props) {
         super(props);
         this.state = {
@@ -212,22 +228,9 @@ class BaseForm extends Component {
       }
 
       componentDidMount() {
-        const originalData = dataStore.getDataFlat(fields);
         dataStore.setEventListener('ALL_FIELDS', () => {
-          const currentData = dataStore.getDataFlat();
-          const isDirty = [
-            ...Object.keys(originalData),
-            ...Object.keys(currentData)
-          ].reduce(
-            (result, fieldId) => {
-              return result || (
-                (originalData[fieldId] || '') !== (currentData[fieldId] || '')
-              );
-            },
-            false
-          );
           this.setState({
-            dirty: isDirty,
+            dirty: dataStore.isFormDirty(),
           });
         });
       }
@@ -237,26 +240,29 @@ class BaseForm extends Component {
       }
 
       render() {
-        return (
-          <Prompt
-            when={this.state.dirty}
-            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
-        );
+        return renderer({
+          dirty: this.state.dirty,
+        });
       }
     }
-
-    return <DirtyFormPrompt />;
+    return <DirtyFormOnly />;
   }
 
   render() {
-    const dirtyFormPrompt = this.renderDirtyFormPrompt(this.unpackFields(this.props));
     return (
       <form noValidate autoComplete="off">
-        {dirtyFormPrompt}
+        {this.dirtinessContext(({dirty}) => (
+          <Prompt
+            when={dirty}
+            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+          />
+        ))}
         {
+          /* render props changes causes inputs to lose focus */
+          /* to get around the issue, pass getter functions instead of values */
           this.props.children({
             withFieldData: this.withFieldData,
+            dirtinessContext: this.dirtinessContext,
             getFormData: this.dataStore.getData,
             resetData: () => {
               this.dataStore.replaceFields(this.unpackFields(this.props));
