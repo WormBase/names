@@ -27,12 +27,14 @@
     :aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}
     :plugins
-    [[refactor-nrepl "2.4.0"]
-     [cider/cider-nrepl "0.18.0"]
-     [com.jakemccrary/lein-test-refresh "0.20.0"]
+    [[com.jakemccrary/lein-test-refresh "0.20.0"]
      [jonase/eastwood "0.2.4" :exclusions [org.clojure/clojure]]
      [lein-ancient "0.6.10" :exclusions [org.clojure/clojure]]]
     :ring {:nrepl {:start? true}}}
    :test
    {:lein-tools-deps/config {:resolve-aliases [:test]}
-    :env {:wb-db-uri "datomic:mem://test-db"}}})
+    :env {:wb-db-uri "datomic:mem://test-db"}}
+   :repl
+   {:plugins
+    [[refactor-nrepl "2.4.0"]
+     [cider/cider-nrepl "0.18.0"]]}})

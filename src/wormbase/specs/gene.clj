@@ -117,9 +117,8 @@
 (s/def ::kill (stc/spec (s/nilable (s/keys :opt [:provenance/why
                                                  :provenance/when
                                                  :provenance/who]))))
-(s/def ::killed (s/keys :req [::identifier]))
-(s/def ::kill-response (stc/spec (s/keys :req-un [::killed])))
 
+(s/def ::status-changed (s/keys :req [:gene/status]))
 
 (s/def ::attr sts/keyword?)
 (s/def ::value any?)

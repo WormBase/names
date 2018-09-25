@@ -40,7 +40,8 @@
       (let [[status body] (find-gene term)]
         (tu/status-is? 400 status body)
         (t/is (not (contains? body :matches)))
-        (t/is (re-matches #".*validation failed.*" (get body :message "")))
+        (t/is (re-matches #".*validation failed.*"
+                          (get body :message "")))
         (t/is (:problems body) (pr-str body)))))
   (let [data-samples (tu/gene-samples 3)]
     (tu/with-gene-fixtures
