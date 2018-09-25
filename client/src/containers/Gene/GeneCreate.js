@@ -2,7 +2,14 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { Button, Page, PageLeft, PageMain, Typography } from '../../components/elements';
+import {
+  Button,
+  Page,
+  PageLeft,
+  PageMain,
+  Typography,
+  ValidationError,
+} from '../../components/elements';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
@@ -59,7 +66,7 @@ class GeneCreate extends Component {
       }).then((response) => {
         if (!response.created) {
           this.setState({
-            error: response.message,
+            error: response,
             status: 'COMPLETE',
           });
         } else {
@@ -96,7 +103,7 @@ class GeneCreate extends Component {
         </PageLeft>
         <PageMain>
           <Typography variant="headline" gutterBottom>Add gene</Typography>
-          <Typography color="error">{this.state.error}</Typography>
+          <ValidationError {...this.state.error} />
           <GeneForm
             submitted={this.state.status === 'SUBMITTED'}
             onSubmit={this.handleCreateGene}
