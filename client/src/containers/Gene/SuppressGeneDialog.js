@@ -10,6 +10,7 @@ import {
   TextField,
   ValidationError,
 } from '../../components/elements';
+import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class SuppressGeneDialog extends Component {
   submitData = (data) => {
@@ -76,8 +77,8 @@ class SuppressGeneDialog extends Component {
 }
 
 SuppressGeneDialog.propTypes = {
-  geneName: PropTypes.string.isRequired,
-  wbId: PropTypes.string.isRequired,
+  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   authorizedFetch: PropTypes.func.isRequired,
 };
 

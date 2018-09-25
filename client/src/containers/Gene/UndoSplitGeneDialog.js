@@ -10,6 +10,7 @@ import {
   TextField,
   ValidationError,
 } from '../../components/elements';
+import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class UndoSplitGeneDialog extends Component {
 
@@ -67,10 +68,10 @@ class UndoSplitGeneDialog extends Component {
 }
 
 UndoSplitGeneDialog.propTypes = {
-  wbId: PropTypes.string.isRequired,
-  wbIntoId: PropTypes.string.isRequired,
-  geneName: PropTypes.string.isRequired,
-  geneIntoName: PropTypes.string.isRequired,
+  wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  wbIntoId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneIntoName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   authorizedFetch: PropTypes.func.isRequired,
 };
 

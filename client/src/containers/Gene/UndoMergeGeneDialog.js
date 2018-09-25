@@ -10,6 +10,7 @@ import {
   TextField,
   ValidationError,
 } from '../../components/elements';
+import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class UndoMergeGeneDialog extends Component {
 
@@ -67,10 +68,10 @@ class UndoMergeGeneDialog extends Component {
 }
 
 UndoMergeGeneDialog.propTypes = {
-  wbId: PropTypes.string.isRequired,
-  wbFromId: PropTypes.string.isRequired,
-  geneName: PropTypes.string.isRequired,
-  geneFromName: PropTypes.string.isRequired,
+  wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  wbFromId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneFromName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   authorizedFetch: PropTypes.func.isRequired,
 };
 

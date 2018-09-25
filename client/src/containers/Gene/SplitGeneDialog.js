@@ -11,6 +11,7 @@ import {
   TextField,
   ValidationError,
 } from '../../components/elements';
+import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class SplitGeneDialog extends Component {
 
@@ -121,9 +122,9 @@ class SplitGeneDialog extends Component {
 
 SplitGeneDialog.propTypes = {
   classes: PropTypes.object.isRequired,
-  wbId: PropTypes.string.isRequired,
-  geneName: PropTypes.string.isRequired,
-  biotypeOriginal: PropTypes.string.isRequired,
+  wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  biotypeOriginal: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 
 const styles = (theme) => ({
