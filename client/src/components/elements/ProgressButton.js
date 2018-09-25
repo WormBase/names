@@ -20,7 +20,7 @@ const ProgressButton =  ({classes, status, children, ...buttonProps}) => (
 );
 
 ProgressButton.propTypes = {
-  children: PropTypes.element,
+  children: PropTypes.any,
   status: PropTypes.oneOf([PROGRESS_BUTTON_READY, PROGRESS_BUTTON_PENDING]),
 };
 
