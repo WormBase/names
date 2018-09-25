@@ -5,22 +5,23 @@
    [wormbase.db :as wdb]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.db-testing :as db-testing]
+   [wormbase.names.provenance :as wnp]
    [wormbase.names.service :as service]
-   [wormbase.test-utils :as tu])
+   [wormbase.test-utils :as tu]
+   [ring.util.http-response :refer [bad-request conflict not-found ok]])
   (:import (java.util Date)))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn query-provenance [conn from-gene-id into-gene-id]
-  (when-let [mtx (d/q '[:find ?tx .
-                        :in $ ?from ?into
+(defn query-provenance [conn prov-attr lur]
+  (when-let [mtx (d/q '[:find ?tx
+                        :in $ ?prov-attr ?lur
                         :where
-                        [?tx :provenance/merged-from ?from]
-                        [?tx :provenance/merged-into ?into]
-                        [?from :gene/status :gene.status/dead]]
+                        [?pa :db/ident ?prov-attr]
+                        [?tx ?pa ?lur]]
                       (-> conn d/db d/history)
-                      [:gene/id from-gene-id]
-                      [:gene/id into-gene-id])]
+                      prov-attr
+                      lur)]
     (d/pull (d/db conn)
             '[:provenance/why
               :provenance/when
@@ -64,7 +65,7 @@
   (t/testing "Request to merge genes must meet spec."
     (let [response (merge-genes {} "WBGene0000001" "WBGene0000002")
           [status body] response]
-      (tu/status-is? status 400 body)))
+      (tu/status-is? (:status (bad-request)) status (pr-str body))))
   (t/testing "Target biotype always required when merging genes."
     (let [[status body] (merge-genes {} "WB000000002" "WBGene00000001")]
       (tu/status-is? status 400 body))))
@@ -75,7 +76,7 @@
                          {:gene/biotype :biotype/transposable-element-gene}
                          "WB2"
                          "WB1")]
-      (tu/status-is? 400 status body)))
+      (tu/status-is? (:status (bad-request)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:gene/biotype :biotype/transposable-element-gene}
@@ -110,7 +111,7 @@
           (let [[status body] (merge-genes {:gene/biotype :biotype/cds}
                                            from-id
                                            into-id)]
-            (tu/status-is? status 409 body))))))
+            (tu/status-is? (:status (conflict)) status body))))))
   (t/testing "400 for validation errors"
     (let [data-samples (tu/gene-samples 2)
           [from-id into-id] (map :gene/id data-samples)]
@@ -120,8 +121,8 @@
           (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
                                            from-id
                                            into-id)]
-            (tu/status-is? status 400 body)
-            (t/is (re-seq #"Invalid.*biotype" (:message body)))))))))
+            (tu/status-is? (:status (not-found)) status body)
+            (t/is (re-seq #"does not exist" (:message body)))))))))
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
@@ -143,22 +144,36 @@
                                {:gene/biotype :biotype/transposable-element-gene}
                                from-id
                                into-id)
-                prov (query-provenance conn from-id into-id)
-                [src tgt] (map #(d/entity db [:gene/id %])
-                               [from-id into-id])]
-            (tu/status-is? status 200 body)
-            (t/is (some-> prov :provenance/when inst?))
-            (t/is (= (some-> prov :provenance/merged-into :gene/id)
-                     into-id))
-            (t/is (= (some-> prov :provenance/merged-from :gene/id)
-                     from-id))
-            (t/is (= (some-> prov :provenance/who :person/email)
-                     "tester@wormbase.org"))
-            ;; TODO: this should be dependent on the client used for
-            ;;       the request.  at the momment, defaults to
-            ;;       web-form.
-            (t/is (= (some-> prov :provenance/how :db/ident)
-                     :agent/web))))))))
+                tx-for-gid (fn xyz [gid pattr] (d/q '[:find ?tx .
+                                                      :in $ ?lur ?pattr
+                                                      :where
+                                                      [?pa :db/ident ?pattr]
+                                                      [?tx ?pa ?lur]]
+                                                    (d/history db)
+                                                    [:gene/id gid]
+                                                    pattr))
+                [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
+                ppe '[*
+                      {:provenance/what [:db/ident]
+                       :provenance/who [:person/email :person/name :person/id]
+                       :provenance/how [:db/ident]
+                       :provenance/split-from [:gene/id]
+                       :provenance/split-into [:gene/id]
+                       :provenance/merged-from [:gene/id]
+                       :provenance/merged-into [:gene/id]}]
+                from-prov (some->> (wnp/query-provenance (d/db conn) [:gene/id from-id] ppe)
+                                   (filter #(= (:provenance/what %) :event/merge-genes))
+                                   first)
+                into-prov (some->> (wnp/query-provenance (d/db conn) [:gene/id into-id] ppe)
+                                   (filter #(= (:provenance/what %) :event/merge-genes))
+                                   first)]
+            (tu/status-is? (:status (ok)) status body)
+            (t/is (inst? (:provenance/when from-prov)))
+            (t/is (= (-> from-prov :provenance/merged-into :gene/id) into-id))
+            (t/is (= (-> into-prov :provenance/merged-from :gene/id) from-id))
+            (doseq [prov [from-prov into-prov]]
+              (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
+              (t/is (= (:provenance/how prov) :agent/web)))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
@@ -185,26 +200,15 @@
                      {:db/id "datomic.tx"
                       :provenance/merged-from from-seq-name
                       :provenance/merged-into into-seq-name
-                      :provenance/why
-                      "a gene that has been merged for testing undo"
+                      :provenance/why "a gene that has been merged for testing undo"
                       :provenance/how :agent/console}]
-          conn (db-testing/fixture-conn)]
+          conn (db-testing/fixture-conn)
+          _ @(d/transact-async conn init-txes)]
       (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
                     wdb/db (fn get-db [_] (d/db conn))]
-        (let [init-tx-res @(d/transact-async conn init-txes)
-              tx (d/q '[:find ?tx .
-                        :in $ ?from-lur ?into-lur
-                        :where
-                        [?from-lur :gene/status :gene.status/dead ?tx]
-                        [?tx :provenance/merged-from ?from-lur]
-                        [?tx :provenance/merged-into ?into-lur]
-                        ]
-                      (-> init-tx-res :db-after d/history)
-                      [:gene/id merged-from]
-                      [:gene/id merged-into])
-              [status body] (undo-merge-genes merged-from
+        (let [[status body] (undo-merge-genes merged-from
                                               merged-into)]
-          (tu/status-is? status 200 body)
+          (tu/status-is? (:status (ok)) status body)
           (t/is (map? body) (pr-str (type body)))
           (t/is (= (:dead body) merged-from) (pr-str body))
           (t/is (= (:live body) merged-into) (pr-str body)))))))

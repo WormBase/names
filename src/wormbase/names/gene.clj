@@ -131,7 +131,7 @@
   (let [db (:db request)
         [lur _] (identify request identifier)
         info (d/pull db info-pull-expr lur)
-        prov (wnp/query-provenance db lur provenance-pull-expr :event/import-gene)]
+        prov (wnp/query-provenance db lur provenance-pull-expr)]
     (-> info
         (assoc :history prov)
         transform-result
@@ -225,7 +225,7 @@
                                     [into-gene-id from-gene-id])]
     (when (some nil? [into-gene from-gene])
       (throw (ex-info "Missing gene in database, cannot merge."
-                      {:missing (if-not into
+                      {:missing (if-not into-gene
                                   into-gene-id
                                   from-gene-id)
                        :type :wormbase.db/missing})))
@@ -234,11 +234,16 @@
                       {:from-id from-gene-id
                        :into-id into-gene-id
                        :type ::validation-error})))
-    (when-not (and (s/valid? :gene/biotype into-biotype)
-                   (wdb/ident-exists? db into-biotype))
+    (cond
+      (not (s/valid? :gene/biotype into-biotype))
       (throw (ex-info "Invalid biotype"
-                      {:problems (expound-str :gene/biotype into-biotype)
-                       :type ::validation-error})))
+                      {:type ::validation-error
+                       :problems (expound-str :gene/biotype into-biotype)}))
+
+      (not (wdb/ident-exists? db into-biotype))
+      (throw (ex-info "Biotype does not exist"
+                      {:type ::wdb/missing
+                       :problems "Biotype entity does not exist"})))
     (when (reduce not=
                   (map :gene/species [from-gene into-gene]))
       (throw (ex-info
@@ -255,15 +260,15 @@
                        :type :wormbase.db/conflict})))
     (when-let [deads (filter #(= (:gene/status %) :gene.status/dead)
                              [from-gene into-gene])]
-      (when-not (empty? deads)
+      (when (seq deads)
         (throw (ex-info "Both merge participants must be live"
                         {:type :wormbase.db/conflict
                          :dead-genes (map :gene/id deads)}))))
     [[into-lur into-gene] [from-lur from-gene]]))
 
 (defn uncloned-merge-target? [target]
-  (->> ((juxt :gene/biotype :gene/sequence-name) target)
-       (every? nil?)))
+  (let [names ((juxt :gene/biotype :gene/sequence-name) target)]
+    (every? nil? names)))
 
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db data :body-params} request
@@ -279,18 +284,19 @@
         from-prov (assoc (assoc-merge-prov) :provenance/merged-from from-lur)
         into-prov (assoc (assoc-merge-prov) :provenance/merged-into into-lur)
         into-uncloned? (uncloned-merge-target? into-g)
+        [fid iid] (map :db/id [from-g into-g])
         from-txes (concat
-                   (when into-uncloned?
-                     [[:db/retract from-lur :gene/sequence-name from-seq-name]])
-                   (-> from-g
-                       (collate-cas-batch {:gene/status :gene.status/dead})
-                       (conj into-prov)))
+                   (concat
+                    (collate-cas-batch from-g {:gene/status :gene.status/dead})
+                    (when into-uncloned?
+                      [[:db/retract iid :gene/sequence-name from-seq-name]]))
+                   [into-prov])
         into-txes (concat
-                   (when into-uncloned?
-                     [[:db.fn/cas into-lur :gene/sequence-name nil from-seq-name]])
-                   (-> into-g
-                       (collate-cas-batch {:gene/biotype into-biotype})
-                       (conj from-prov)))
+                   (concat
+                    (when into-uncloned?
+                      [[:db.fn/cas iid :gene/sequence-name nil from-seq-name]])
+                    (collate-cas-batch into-g {:gene/biotype into-biotype}))
+                   [from-prov])
         tx-result (->> [from-txes into-txes]
                        (map (partial d/transact-async conn))
                        (map deref)
