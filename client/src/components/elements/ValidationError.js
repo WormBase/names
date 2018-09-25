@@ -44,7 +44,7 @@ class ValidationError extends React.Component {
   render() {
     const {classes, message, problems} = this.props;
     const problemText = problems;
-    return message || problems ? (
+    return (message || problems) ? (
       <Card card className={classes.root}>
         <CardContent>
           <Typography color="error">

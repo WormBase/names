@@ -9,7 +9,7 @@
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
    [wormbase.db :as wdb]
-   [ring.util.http-response :refer [created]]))
+   [ring.util.http-response :refer [conflict created not-found]]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -121,7 +121,7 @@
                           {:gene/biotype :biotype/cds
                            :gene/sequence-name "FKM.1"}}
                          gene-id)]
-      (tu/status-is? (:status (http-response/not-found)) status body)))
+      (tu/status-is? (:status (not-found)) status body)))
   (t/testing "Expect a conflict response when attempting to split a dead gene."
     (let [[data-sample] (tu/gene-samples 1)
           gene-id (:gene/id data-sample)
@@ -141,7 +141,7 @@
                                 {:gene/biotype :biotype/transcript
                                  :gene/sequence-name seq-name}}
                                gene-id)]
-            (tu/status-is? (:status (http-response/conflict)) status body))))))
+            (tu/status-is? (:status (conflict)) status body))))))
   (t/testing "400 for validation errors"
     (let [[status body] (split-gene {:gene/biotype :biotype/godzilla}
                                     "WBGene00000001")]
@@ -178,7 +178,7 @@
                 [status body] (split-gene data
                                           gene-id
                                           :current-user user-email)]
-            (tu/status-is? (:status (http-response/created "/")) status body)
+            (tu/status-is? (:status (created "/")) status body)
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
                   src  (d/entity (d/db conn) from-lur)
                   prod (d/entity (d/db conn) into-lur)
