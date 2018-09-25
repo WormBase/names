@@ -83,7 +83,7 @@ SuppressGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  suppressButton: {
+  submitButton: {
     color: theme.palette.error.main,
     textTransform: 'inherit',
   },

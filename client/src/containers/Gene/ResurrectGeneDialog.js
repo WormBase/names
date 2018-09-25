@@ -77,7 +77,7 @@ ResurrectGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  ResurrectButton: {
+  submitButton: {
     color: theme.palette.error.main,
     textTransform: 'inherit',
   },

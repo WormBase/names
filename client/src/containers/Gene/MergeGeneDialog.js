@@ -42,7 +42,7 @@ class MergeGeneDialog extends Component {
   }
 
   render() {
-    const {classes, wbId, geneName, authorizedFetch, ...otherProps} = this.props;
+    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
     return (
       <AjaxDialog
         title="Merge gene"
@@ -73,9 +73,6 @@ class MergeGeneDialog extends Component {
                 <BiotypeField
                   helperText={`Set the biotype of the merged gene`}
                   required
-                  classes={{
-                    root: classes.biotypeSelectField,
-                  }}
                 />
                 <ReasonField
                   label="Reason"
@@ -99,10 +96,6 @@ MergeGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  mergeButton: {
-    color: theme.palette.error.main,
-    textTransform: 'inherit',
-  },
 });
 
 export default withStyles(styles)(MergeGeneDialog);

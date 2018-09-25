@@ -76,10 +76,6 @@ UndoSplitGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  UndoSplitButton: {
-    color: theme.palette.error.main,
-    textTransform: 'inherit',
-  },
 });
 
 export default withStyles(styles)(UndoSplitGeneDialog);

@@ -83,7 +83,7 @@ KillGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  killButton: {
+  submitButton: {
     color: theme.palette.error.main,
     textTransform: 'inherit',
   },

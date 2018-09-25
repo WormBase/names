@@ -76,10 +76,6 @@ UndoMergeGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  UndoMergeButton: {
-    color: theme.palette.error.main,
-    textTransform: 'inherit',
-  },
 });
 
 export default withStyles(styles)(UndoMergeGeneDialog);
