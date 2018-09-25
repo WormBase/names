@@ -86,8 +86,10 @@
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
-  `entity-id` can be a datomic id number or a lookup-ref."
-  [db entity-id prov-pull-expr default-event]
+  `entity-id` can be a datomic id number or a lookup-ref.
+  `prov-pull-expr` should be a pull expression describing the attributes desired from
+                   a datomic pull operation for the entity id."
+  [db entity-id prov-pull-expr]
   (let [pull-changes (partial query-tx-changes-for-event db entity-id)
         pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
         sort-mrf #(sort-events-by-when % :most-recent-first true)
