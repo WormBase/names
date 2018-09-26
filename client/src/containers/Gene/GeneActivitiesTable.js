@@ -146,9 +146,9 @@ class GeneActivitiesTable extends Component {
         </TableHead>
         <TableBody>
           {
-            Object.keys(changeLookup).map((attr) => {
+            Object.keys(changeLookup).map((attr, index) => {
               return (
-                <TableRow>
+                <TableRow key={index}>
                   <TableCell className={this.props.classes.changeTableCell}>
                     {attr}
                   </TableCell>
