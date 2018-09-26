@@ -89,7 +89,15 @@
               (t/is (= (some-> prov :provenance/who :person/email)
                        "tester@wormbase.org")))
             (tu/status-is? (:status (ok)) status body)
-            (t/is (= (:gene/status ent) :gene.status/dead))))))))
+            (t/is (= (:gene/status ent) :gene.status/dead)))))))
+  (t/testing "Can kill a suppressed gene."
+    (let [[gene-id sample] (gen-sample :current-status :gene.status/suppressed)]
+      (tu/with-gene-fixtures
+        sample
+        (fn [conn]
+          (let [[status body] (kill-gene gene-id)]
+            (tu/status-is? (:status (ok)) status
+                           body)))))))
 
 (t/deftest ressurecting
   (t/testing "Resurrecting a dead gene succesfully"

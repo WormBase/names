@@ -97,3 +97,19 @@
                   :default m))
               data))
 
+(defn has-status?
+  "Return truthy if entity `ent` has status `status`.
+
+  `status` can be datomic entity or keyword/ident."
+  [status ent]
+  (some (partial = status)
+        ((juxt identity :db/ident) ent)))
+
+(def live? (partial has-status? :gene.status/live))
+
+(def dead? (partial has-status? :gene.status/dead))
+
+(def suppressed? (partial has-status? :gene.status/suppressed))
+
+(def not-live? (comp not live?))
+

@@ -24,12 +24,6 @@
 
 (def identify (partial wne/identify ::wsg/identifier))
 
-(defn live? [ent]
-  (some (partial = :gene.status/live)
-        ((juxt identity :db/ident) ent)))
-
-(def not-live? (comp not live?))
-
 (defn entity-must-exist!
   "Middlewre for ensuring an entity exists in the database.
 
@@ -346,7 +340,7 @@
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
-    (when (not-live? from-gene-status)
+    (when (wnu/not-live? from-gene-status)
       (conflict! {:message "Gene must be live."
                   :gene/status from-gene-status}))
     (let [cdata (stc/conform spec data)
@@ -470,19 +464,19 @@
 
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live :event/resurrect-gene
-                 :fail-precondition? live?
+                 :fail-precondition? wnu/live?
                  :precondition-failure-msg "Gene is already live."))
 
 (defn suppress-gene [request id]
   (change-status request id :gene.status/suppressed :event/suppress-gene
-                 :fail-precondition? not-live?
+                 :fail-precondition? wnu/not-live?
                  :precondition-failure-msg "Gene must have a live status."))
 
 (defn kill-gene [request id]
   (change-status request id
                  :gene.status/dead :event/kill-gene
-                 :fail-precondition? not-live?
-                 :precondition-failure-msg "Gene must be live to be killed."))
+                 :fail-precondition? wnu/dead?
+                 :precondition-failure-msg "Gene to be killed cannot be dead."))
 
 (def default-responses
   {ok {:schema {:updated ::wsg/updated}}
