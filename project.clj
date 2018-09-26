@@ -1,5 +1,5 @@
-(defproject wormbase-names "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject wormbase-names "0.2.0-SNAPSHOT"
+  :description "WormBase names service."
   :plugins
   [[lein-environ "1.1.0"]
    [lein-pprint "1.1.2"]
