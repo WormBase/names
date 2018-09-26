@@ -196,15 +196,8 @@ class GeneProfile extends Component {
             status: 'COMPLETE',
           };
           if (response.problems) {
-            const {history : newHistory, ...newData} = response.value;
             return {
               ...stateChanges,
-              data: {
-                ...newData,
-                history: Object.keys(newHistory).map((index) => parseInt(index, 10)).sort().map(
-                  (index) => newHistory[index]
-                ),
-              },
               errorMessage: response,
             }
           } else {
