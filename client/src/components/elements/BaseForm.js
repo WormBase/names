@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Prompt } from 'react-router';
+import { createStore } from 'redux';
 
 /*
   BaseForm intends to **centrally** track the state of the (controlled) form
@@ -20,117 +21,66 @@ import { Prompt } from 'react-router';
 
 */
 
-class FormDataStore {
-  constructor(fields) {
-    this.fields = {...fields};
-    this.originalFields = {...fields};
-    this.eventListeners = [];
-  }
+const defaultInitalState = {
+  dirty: false,
+};
 
-  setEventListener = (fieldId, handler) => {
-    this.eventListeners = [
-      ...this.eventListeners,
-      {
-        fieldId: fieldId,
-        eventHandler: handler,
-      },
-    ];
-  }
-
-  removeEventListener = (fieldId) => {
-    this.eventListeners = this.eventListeners.filter((eventListener) => {
-      return eventListener.fieldId !== fieldId;
-    });
-  }
-
-  getUpdateFunction = (fieldId) => {
-    return (value) => {
-      this.fields = {
-        ...this.fields,
-        [fieldId]: {
-          value: value,
+function formReducer(state={...defaultInitalState}, action) {
+  switch (action.type) {
+    case 'INITIALIZE':
+      return {
+        fields: action.fields,
+      };
+    case 'UPDATE_FIELD':
+      const {fieldId, value} = action;
+      return {
+        dirty: !fieldId.match(/provenance\//),
+        fields: {
+          ...state.fields,
+          [fieldId]: {
+            value: value,
+          },
         },
       };
-      this.eventListeners.filter((eventListener) => {
-        return eventListener.fieldId === fieldId || eventListener.fieldId === 'ALL_FIELDS';
-      }).forEach((eventListener) => {
-        eventListener.eventHandler(value);
-      });
-    };
+    default:
+      return state
   }
-
-  getField = (fieldId) => {
-    return {
-      ...this.fields[fieldId],
-    };
-  }
-
-  replaceFields = (fields) => {
-    this.fields = {...fields};
-    this.eventListeners.forEach((eventListener) => {
-      if (eventListener.fieldId === 'ALL_FIELDS') {
-        eventListener.eventHandler();
-      } else {
-        const field = this.fields[eventListener.fieldId];
-        eventListener.eventHandler(field ? field.value : null);
-      }
-    });
-  }
-
-  getData = (otherFields) => {
-    const fields = otherFields || this.fields;
-    return Object.keys(fields).reduce(
-      (result, fieldId) => {
-        const value = fields[fieldId] && fields[fieldId].value;
-        const idSegments = fieldId.split(':');
-        idSegments.reduce((resultSubtree, idSegment, index) => {
-          if (index < idSegments.length - 1) {
-            resultSubtree[idSegment] = resultSubtree[idSegment] || {};
-          } else {
-            resultSubtree[idSegment] = value;
-          }
-          return resultSubtree[idSegment]
-        }, result);
-        return result;
-      },
-      {}
-    );
-  }
-
-  getDataFlat = (otherFields) => {
-    const fields = otherFields || this.fields;
-    return Object.keys(fields).reduce(
-      (result, fieldId) => {
-        result[fieldId] = fields[fieldId] && fields[fieldId].value;
-        return result;
-      },
-      {}
-    );
-  }
-
-  isFormDirty = () => {
-    const originalData = this.getDataFlat(this.originalFields);
-    const currentData = this.getDataFlat();
-    return [
-      ...Object.keys(originalData),
-      ...Object.keys(currentData)
-    ].filter((fieldId) => !fieldId.match(/provenance\//)).reduce(
-      (result, fieldId) => {
-        return result || (
-          (originalData[fieldId] || '') !== (currentData[fieldId] || '')
-        );
-      },
-      false
-    );
-  }
-
 }
 
 class BaseForm extends Component {
   constructor(props) {
     super(props);
+    // const fields = this.unpackFields(props);
+    // this.dataStore = new FormDataStore(fields);
+    this.initialize(props);
+  }
+
+  // componentDidMount() {
+  //   this.initialize(this.props);
+  // }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevProps.fields !== this.props.fields ||
+      prevProps.data !== this.props.data
+    ) {
+      this.initialize(this.props);
+      // const fields = this.unpackFields(this.props);
+      // this.dataStore.replaceFields(fields);
+      // this.dataStore = new FormDataStore(fields);
+    }
+  }
+
+  initialize(props) {
     const fields = this.unpackFields(props);
-    this.dataStore = new FormDataStore(fields);
+    this.dataStore = this.dataStore || createStore(formReducer);
+    this.dataStore.dispatch({
+      type: 'INITIALIZE',
+      fields: fields,
+    });
+    this.dataStore.subscribe(() => {
+      console.log(this.dataStore.getState().dirty);
+    });
   }
 
   unpackFields = (props) => {
@@ -161,53 +111,83 @@ class BaseForm extends Component {
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevProps.fields !== this.props.fields ||
-      prevProps.data !== this.props.data
-    ) {
-      const fields = this.unpackFields(this.props);
-      this.dataStore.replaceFields(fields);
-    }
+  getData = () => {
+    const fields = this.dataStore.getState().fields;
+    const data = Object.keys(fields).reduce(
+      (result, fieldId) => {
+        const value = fields[fieldId] && fields[fieldId].value;
+        const idSegments = fieldId.split(':');
+        idSegments.reduce((resultSubtree, idSegment, index) => {
+          if (index < idSegments.length - 1) {
+            resultSubtree[idSegment] = resultSubtree[idSegment] || {};
+          } else {
+            resultSubtree[idSegment] = value;
+          }
+          return resultSubtree[idSegment]
+        }, result);
+        return result;
+      },
+      {}
+    );
+    return data;
   }
 
   withFieldData = (WrappedComponent, fieldId) => {
-    const dataStore = this.dataStore;
     const {disabled} = this.props;
+    const dataStore = this.dataStore;
+
+    const fieldSelect = (state) => {
+      const fields = state.fields;
+      if (fields && fields[fieldId]) {
+        return fields[fieldId];
+      } else {
+        return {};
+      }
+    }
+
     class Field extends Component {
+
       constructor(props) {
         super(props);
         this.state = {
-          ...dataStore.getField(fieldId),
+          value: fieldSelect(dataStore.getState()).value || '',
+          error: fieldSelect(dataStore.getState()).error || '',
         };
       }
 
       componentDidMount() {
-        dataStore.setEventListener(fieldId, (value) => {
-          this.setState({
-            value: value,
-            error: null,
-          });
+        this.unsubscribe = dataStore.subscribe(() => {
+          const currentValue = fieldSelect(dataStore.getState()).value || '';
+          const currentError = fieldSelect(dataStore.getState()).error || '';
+          if (this.state.value !== currentValue || this.state.error !== currentError) {
+            this.setState({
+              value: currentValue,
+              error: currentError,
+            });
+          }
         });
       }
 
       componentWillUnmount() {
-        dataStore.removeEventListener(fieldId);
+        this.unsubscribe && this.unsubscribe();
       }
 
       render() {
-        const updateStoreField = dataStore.getUpdateFunction(fieldId);
         return (
           <WrappedComponent
             {...this.props}
             id={fieldId}
             disabled={disabled || this.props.disabled}
-            value={this.state.value || ''}
+            value={this.state.value}
             error={Boolean(this.state.error)} //Boolean function not constructor
             helperText={this.state.error || this.props.helperText}
             onChange={
               (event) => {
-                updateStoreField(event.target.value)
+                dataStore.dispatch({
+                  type: 'UPDATE_FIELD',
+                  fieldId: fieldId,
+                  value: event.target.value,
+                });
               }
             }
           />
@@ -219,43 +199,52 @@ class BaseForm extends Component {
 
   dirtinessContext = (renderer) => {
     const dataStore = this.dataStore;
-    class DirtyFormOnly extends Component {
+    function dirtySelect(state) {
+      return state.dirty;
+    }
+
+    class DirtyContext extends Component {
+
       constructor(props) {
         super(props);
         this.state = {
-          dirty: false,
+          dirty: dirtySelect(dataStore.getState()),
         };
       }
 
       componentDidMount() {
-        dataStore.setEventListener('ALL_FIELDS', () => {
-          this.setState({
-            dirty: dataStore.isFormDirty(),
-          });
+        this.unsubscribe = dataStore.subscribe(() => {
+          const currentDirty = dirtySelect(dataStore.getState());
+          if (this.state.dirty !== currentDirty) {
+            this.setState({
+              dirty: currentDirty,
+            });
+          }
         });
       }
 
       componentWillUnmount() {
-        dataStore.removeEventListener('ALL_FIELDS');
+        this.unsubscribe && this.unsubscribe();
       }
 
       render() {
         return renderer({
-          dirty: this.state.dirty,
+          dirty: dirtySelect(dataStore.getState()),
         });
       }
     }
-    return <DirtyFormOnly />;
+    return <DirtyContext />;
   }
 
   render() {
     return (
       <form noValidate autoComplete="off">
         {this.dirtinessContext(({dirty}) => (
-          <Prompt
-            when={dirty}
+          dirty ? <Prompt
+            when={true}
             message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
+          /> :
+          null
         ))}
         {
           /* render props changes causes inputs to lose focus */
@@ -263,9 +252,9 @@ class BaseForm extends Component {
           this.props.children({
             withFieldData: this.withFieldData,
             dirtinessContext: this.dirtinessContext,
-            getFormData: this.dataStore.getData,
+            getFormData: this.getData,
             resetData: () => {
-              this.dataStore.replaceFields(this.unpackFields(this.props));
+              this.initialize(this.props)
             }
           })
         }
