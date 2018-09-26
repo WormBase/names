@@ -395,14 +395,14 @@ class GeneProfile extends Component {
                 >Kill Gene</Button>
                 <h5>Tips:</h5>
                 <p>To un-suppress the gene, kill then resurrect it.</p>
-              </div> :
+              </div> : this.state.data['gene/status'] === 'gene.status/dead' ?
               <div className={classes.operations}>
                 <Button
                   className={classes.killButton}
                   variant="raised"
                   onClick={this.openResurrectGeneDialog}
                 >Resurrect Gene</Button>
-              </div>
+              </div> : null
           }
         </PageRight>
         <KillGeneDialog
