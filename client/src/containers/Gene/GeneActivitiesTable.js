@@ -120,6 +120,10 @@ class GeneActivitiesTable extends Component {
   }
 
   renderChanges = (changes) => {
+    if (!changes || changes.length === 0) {
+      return null;
+    }
+
     const changeLookup = changes.reduce((result, changeEntry) => {
       const changeSumamry = {
         ...result[changeEntry.attr],
