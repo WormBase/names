@@ -11,6 +11,7 @@ import {
   TextField,
   ValidationError,
 } from '../../components/elements';
+import { createOpenOnlyTypeChecker } from '../../utils/types';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
@@ -41,7 +42,7 @@ class MergeGeneDialog extends Component {
   }
 
   render() {
-    const {classes, wbId, geneName, authorizedFetch, ...otherProps} = this.props;
+    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
     return (
       <AjaxDialog
         title="Merge gene"
@@ -72,9 +73,6 @@ class MergeGeneDialog extends Component {
                 <BiotypeField
                   helperText={`Set the biotype of the merged gene`}
                   required
-                  classes={{
-                    root: classes.biotypeSelectField,
-                  }}
                 />
                 <ReasonField
                   label="Reason"
@@ -92,16 +90,12 @@ class MergeGeneDialog extends Component {
 }
 
 MergeGeneDialog.propTypes = {
-  wbId: PropTypes.string.isRequired,
-  geneName: PropTypes.string.isRequired,
+  wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({
-  mergeButton: {
-    color: theme.palette.error.main,
-    textTransform: 'inherit',
-  },
 });
 
 export default withStyles(styles)(MergeGeneDialog);

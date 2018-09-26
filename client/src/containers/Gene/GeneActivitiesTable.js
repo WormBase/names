@@ -189,7 +189,7 @@ class GeneActivitiesTable extends Component {
                 (activityItem, activityIndex) => {
                   const [eventLabel, entity, relatedEntity] = this.getActivityDescriptor(activityItem, this.props.selfGeneId);
                   return (
-                    <TableRow>
+                    <TableRow key={activityIndex}>
                       <TableCell className={classes.time}>
                         <Timestamp time={activityItem['provenance/when']}/>
                       </TableCell>

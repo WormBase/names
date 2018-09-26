@@ -42,7 +42,7 @@ class GeneForm extends Component {
                 />
                 <SpeciesSelectField required />
                 <BiotypeSelectField
-                  required={dataNew['gene/sequence-name'] || dataNew['gene/biotype']} // once a cloned gene, always a cloned gene
+                  required={Boolean(dataNew['gene/sequence-name'] || dataNew['gene/biotype'])} // once a cloned gene, always a cloned gene
                   helperText={'For cloned genes, biotype is required. Otherwise, it\'s optional'}
                 />
                 {

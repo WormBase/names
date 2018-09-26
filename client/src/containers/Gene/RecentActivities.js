@@ -58,7 +58,6 @@ class RecentActivities extends Component {
 }
 
 RecentActivities.propTypes = {
-  wbId: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func,
 };
 
