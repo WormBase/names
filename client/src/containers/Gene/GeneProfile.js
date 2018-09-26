@@ -532,9 +532,6 @@ const styles = (theme) => ({
     margin: `${theme.spacing.unit * 8}px 0`,
   },
   historyTable: {
-    [theme.breakpoints.down('sm')]: {
-      overflow: 'scroll',
-    },
   },
 });
 

@@ -175,7 +175,7 @@ class GeneActivitiesTable extends Component {
     const selectedActivity = selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
 
     return (
-      <Paper>
+      <Paper className={classes.root}>
         <Table>
           <TableBody>
             {
@@ -288,6 +288,9 @@ GeneActivitiesTable.defaultProps = {
 const styles = (theme) => ({
   time: {
     whiteSpace: 'nowrap',
+  },
+  root: {
+    overflow: 'scroll',
   },
   entityColumnHeader: {},
   entityCell: {},
