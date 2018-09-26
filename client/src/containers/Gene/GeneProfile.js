@@ -29,7 +29,7 @@ class GeneProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      status: null,
+      status: 'LOADING',
       errorMessage: null,
       shortMessage: null,
       shortMessageVariant: 'info',
@@ -323,7 +323,7 @@ class GeneProfile extends Component {
           <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           <ValidationError {...this.state.errorMessage} />
           {
-            this.state.status !== 'COMPLETE' ?
+            this.state.status === 'LOADING' ?
               <CircularProgress /> :
               <div>
                 {
