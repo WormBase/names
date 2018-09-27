@@ -213,20 +213,25 @@ class BaseForm extends Component {
 
       constructor(props) {
         super(props);
+        // work around issue https://github.com/ReactTraining/react-router/issues/5707
         this.state = {
-          dirty: dirtySelect(dataStore.getState()),
+          dirty: false, //dirtySelect(dataStore.getState()),
         };
       }
 
       componentDidMount() {
-        this.unsubscribe = dataStore.subscribe(() => {
-          const currentDirty = dirtySelect(dataStore.getState());
-          if (this.state.dirty !== currentDirty) {
-            this.setState({
-              dirty: currentDirty,
+          this.setState({
+            dirty: dirtySelect(dataStore.getState()),
+          }, () => {
+            this.unsubscribe = dataStore.subscribe(() => {
+              const currentDirty = dirtySelect(dataStore.getState());
+              if (this.state.dirty !== currentDirty) {
+                this.setState({
+                  dirty: currentDirty,
+                });
+              }
             });
-          }
-        });
+          });
       }
 
       componentWillUnmount() {
@@ -235,7 +240,7 @@ class BaseForm extends Component {
 
       render() {
         return renderer({
-          dirty: dirtySelect(dataStore.getState()),
+          dirty: this.state.dirty,
         });
       }
     }
@@ -246,11 +251,10 @@ class BaseForm extends Component {
     return (
       <form noValidate autoComplete="off">
         {this.dirtinessContext(({dirty}) => (
-          dirty ? <Prompt
-            when={true}
+          <Prompt
+            when={dirty}
             message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          /> :
-          null
+          />
         ))}
         {
           /* render props changes causes inputs to lose focus */
