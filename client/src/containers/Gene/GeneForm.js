@@ -59,13 +59,6 @@ class GeneForm extends Component {
                 {
                   dirtinessContext(({dirty}) => (
                     <div className={classes.actions}>
-                      <ProgressButton
-                        status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
-                        variant="raised"
-                        color="secondary"
-                        onClick={() => dirty ? this.props.onSubmit(getFormData()) : this.props.onSubmit({})}
-                        disabled={disabled}
-                      >Submit</ProgressButton>
                       <Button
                         variant="raised"
                         onClick={() => {
@@ -73,7 +66,14 @@ class GeneForm extends Component {
                           this.props.onCancel && this.props.onCancel();
                         }}
                         disabled={disabled}
-                      >Cancel</Button>
+                      >{createMode ? 'Cancel' : 'Reset'}</Button>
+                      <ProgressButton
+                        status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
+                        variant="raised"
+                        color="secondary"
+                        onClick={() => dirty ? this.props.onSubmit(getFormData()) : this.props.onSubmit({})}
+                        disabled={disabled}
+                      >Submit</ProgressButton>
                     </div>
                   ))
                 }
@@ -108,6 +108,10 @@ const styles = (theme) => ({
     marginTop: theme.spacing.unit * 2,
     '& > *': {
       marginRight: theme.spacing.unit,
+      width: 150,
+      [theme.breakpoints.down('xs')]: {
+        width: `calc(50% - ${theme.spacing.unit}px)`,
+      },
     },
   },
 });
