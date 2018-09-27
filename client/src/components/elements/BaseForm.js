@@ -50,24 +50,15 @@ function formReducer(state={...defaultInitalState}, action) {
 class BaseForm extends Component {
   constructor(props) {
     super(props);
-    // const fields = this.unpackFields(props);
-    // this.dataStore = new FormDataStore(fields);
     this.initialize(props);
   }
 
-  // componentDidMount() {
-  //   this.initialize(this.props);
-  // }
-
   componentDidUpdate(prevProps, prevState) {
     if (
-      prevProps.fields !== this.props.fields ||
-      prevProps.data !== this.props.data
+      (!this.dataStore || !this.dataStore.getState().dirty) && /* dirty form cannot be reinitialized */
+      (prevProps.fields !== this.props.fields || prevProps.data !== this.props.data)
     ) {
       this.initialize(this.props);
-      // const fields = this.unpackFields(this.props);
-      // this.dataStore.replaceFields(fields);
-      // this.dataStore = new FormDataStore(fields);
     }
   }
 
