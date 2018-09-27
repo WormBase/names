@@ -29,7 +29,7 @@ class GeneProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      status: 'LOADING',
+      status: 'BEGIN',
       errorMessage: null,
       shortMessage: null,
       shortMessageVariant: 'info',
@@ -51,9 +51,9 @@ class GeneProfile extends Component {
   }
 
   fetchData = () => {
-    this.setState({
-      status: 'SUBMITTED',
-    }, () => {
+    this.setState((prevState) => ({
+      status: prevState.status === 'BEGIN' ? 'LOADING' : 'SUBMITTED',
+    }), () => {
       mockFetchOrNot(
         (mockFetch) => {
           const historyMock = [
