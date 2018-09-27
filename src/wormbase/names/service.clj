@@ -79,7 +79,7 @@
 
 (defn wrap-static-resources [handler]
   (-> handler
-      (ring-resource/wrap-resource handler "client_build")
+      (ring-resource/wrap-resource "client_build")
       (ring-content-type/wrap-content-type)))
 
 (def ^{:doc "The main application."} app
