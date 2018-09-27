@@ -72,8 +72,8 @@ class BaseForm extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      (!this.dataStore || !dirtySelect(this.dataStore.getState())) && /* dirty form cannot be reinitialized */
-      (prevProps.fields !== this.props.fields || prevProps.data !== this.props.data)
+      prevProps.fields !== this.props.fields ||
+      JSON.stringify(prevProps.data) !== JSON.stringify(this.props.data)
     ) {
       this.initialize(this.props);
     }

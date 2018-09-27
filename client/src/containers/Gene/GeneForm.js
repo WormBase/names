@@ -17,10 +17,12 @@ class GeneForm extends Component {
   render() {
     const {classes, data = {}, disabled, submitted, createMode} = this.props;
     const dataNew = {
-      ...data,
+      'gene/cgc-name': data['gene/cgc-name'],
+      'gene/sequence-name': data['gene/sequence-name'],
       'gene/species': {
         'species/latin-name': data['gene/species'] && data['gene/species']['species/latin-name'],
-      }
+      },
+      'gene/biotype': data['gene/biotype'],
     };
     return (
       <BaseForm data={dataNew} disabled={disabled || submitted}>
