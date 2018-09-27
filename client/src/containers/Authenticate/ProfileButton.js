@@ -8,6 +8,7 @@ const ProfileButton = (props) => {
   return props.name ? (
     <Button
       component={({...props}) => <Link to='/me' {...props} />}
+      className={props.classes.button}
     >
       <PersonIcon className={props.classes.icon} />
       Hello, {props.name}
@@ -20,6 +21,9 @@ ProfileButton.propTypes = {
 };
 
 const styles = (theme) => ({
+  button: {
+    color: theme.palette.common.white,
+  },
   icon: {
     marginRight: theme.spacing.unit,
   },

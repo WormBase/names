@@ -76,7 +76,7 @@ export const colors = {
 export const theme = createMuiTheme({
   palette: {
     primary: {
-      main: blue[600],
+      main: blue[700],
     },
     secondary: {
       main: yellow['A700'],

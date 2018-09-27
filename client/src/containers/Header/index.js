@@ -44,7 +44,7 @@ const styles = (theme) => ({
     flexGrow: 1,
     '& a': {
       textDecoration: 'initial',
-      color: 'initial',
+      color: theme.palette.common.white,
     },
   },
 });

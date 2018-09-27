@@ -15,7 +15,7 @@ const styles = (theme) => ({
     width: '100%',
     height: theme.spacing.unit * 6,
     textAlign: 'center',
-    backgroundColor: colors.lightBlue['A200'], //'#03a9f4',
+    backgroundColor: theme.palette.grey['50'],
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
