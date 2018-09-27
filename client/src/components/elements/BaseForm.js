@@ -43,7 +43,7 @@ function formReducer(state={...defaultInitalState}, action) {
     case 'UPDATE_FIELD':
       const {fieldId, value} = action;
       return {
-        dirty: !fieldId.match(/provenance\//) && value !== state.fields[fieldId].initialValue,
+        dirty: !fieldId.match(/provenance\//) && value !== (state.fields[fieldId] || {}).initialValue,
         fields: {
           ...state.fields,
           [fieldId]: {
