@@ -68,6 +68,9 @@ class BaseForm extends Component {
   constructor(props) {
     super(props);
     this.initialize(props);
+
+    // NOTE: BaseForm cannnot have any state, because its state change
+    //      will trigger render and cause the input to lose focus
   }
 
   componentDidUpdate(prevProps, prevState) {
