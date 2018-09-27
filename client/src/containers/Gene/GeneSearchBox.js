@@ -98,8 +98,10 @@ class GeneSearchBox extends Component {
                       id = inputValue;
                     }
 
-                    history.push(`/gene/id/${id}`);
-
+                    if (id) {
+                      // ignore empty input
+                      history.push(`/gene/id/${id}`);
+                    }
                   }
                 },
               }),
