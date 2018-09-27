@@ -190,12 +190,12 @@ class GeneProfile extends Component {
             }),
           });
         },
-      ).then((response) => response.json()).then((response) => {
+      ).then((response) => Promise.all([response.ok, response.json()])).then(([ok, response]) => {
         this.setState(() => {
           const stateChanges = {
             status: 'COMPLETE',
           };
-          if (response.problems) {
+          if (!ok || response.problems) {
             return {
               ...stateChanges,
               errorMessage: response,
