@@ -28,16 +28,26 @@ const defaultInitalState = {
 function formReducer(state={...defaultInitalState}, action) {
   switch (action.type) {
     case 'INITIALIZE':
+      const fields = Object.keys(action.fields).reduce((result, fieldId) => {
+        const {value, error} = action.fields[fieldId];
+        result[fieldId] = {
+          value: value,
+          initialValue: value,
+          error: error,
+        };
+        return result;
+      }, {});
       return {
-        fields: action.fields,
+        fields: fields,
       };
     case 'UPDATE_FIELD':
       const {fieldId, value} = action;
       return {
-        dirty: !fieldId.match(/provenance\//),
+        dirty: !fieldId.match(/provenance\//) && value !== state.fields[fieldId].initialValue,
         fields: {
           ...state.fields,
           [fieldId]: {
+            ...state.fields[fieldId],
             value: value,
           },
         },
@@ -71,6 +81,7 @@ class BaseForm extends Component {
     });
     this.dataStore.subscribe(() => {
       console.log(this.dataStore.getState().dirty);
+      console.log(this.dataStore.getState().fields);
     });
   }
 
