@@ -148,6 +148,9 @@ const styles = (theme) => ({
     width: '20em',
     position: 'relative',
   },
+  inputRoot: {
+    backgroundColor: theme.palette.common.white,
+  },
   paper: {
     position: 'absolute',
     zIndex: 1,
