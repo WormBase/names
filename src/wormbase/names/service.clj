@@ -78,9 +78,9 @@
      {:name "person"}]}})
 
 (defn wrap-static-resources [handler]
-  (->>
-    (ring-resource/wrap-resource handler "client_build")
-    (ring-content-type/wrap-content-type)))
+  (-> handler
+      (ring-resource/wrap-resource handler "client_build")
+      (ring-content-type/wrap-content-type)))
 
 (def ^{:doc "The main application."} app
   (sweet/api
