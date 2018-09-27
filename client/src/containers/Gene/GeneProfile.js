@@ -323,7 +323,16 @@ class GeneProfile extends Component {
         <Typography>
           <strong>{wbId}</strong> does not exist
         </Typography>
-        {backToDirectoryButton}
+        <div className={classes.operations}>
+          {backToDirectoryButton}
+          <Button
+            variant="raised"
+            color="secondary"
+            component={({...props}) => <Link to='/gene/new' {...props} />}
+          >
+            Create Gene
+          </Button>
+        </div>
       </NotFound>
     ) : (
       <Page>
