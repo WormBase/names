@@ -57,8 +57,7 @@
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
-   {;; :basePath "/api"
-    :info
+   {:info
     {:title "WormBase name service"
      :description "Provides naming operations for WormBase entities."}
 
