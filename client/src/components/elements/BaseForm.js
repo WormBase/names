@@ -21,9 +21,7 @@ import { createStore } from 'redux';
 
 */
 
-const defaultInitalState = {
-  dirty: false,
-};
+const defaultInitalState = {};
 
 function formReducer(state={...defaultInitalState}, action) {
   switch (action.type) {
@@ -43,7 +41,6 @@ function formReducer(state={...defaultInitalState}, action) {
     case 'UPDATE_FIELD':
       const {fieldId, value} = action;
       return {
-        dirty: !fieldId.match(/provenance\//) && value !== (state.fields[fieldId] || {}).initialValue,
         fields: {
           ...state.fields,
           [fieldId]: {
@@ -57,6 +54,16 @@ function formReducer(state={...defaultInitalState}, action) {
   }
 }
 
+function dirtySelect(state) {
+  return Object.keys(state.fields).filter((fieldId) => (
+    !fieldId.match(/provenance\//)
+  )).reduce((result, fieldId) => {
+    const value = (state.fields[fieldId] || {}).value || '';
+    const initialValue = (state.fields[fieldId] || {}).initialValue || '';
+    return result || (value !== initialValue);
+  }, false);
+}
+
 class BaseForm extends Component {
   constructor(props) {
     super(props);
@@ -65,7 +72,7 @@ class BaseForm extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      (!this.dataStore || !this.dataStore.getState().dirty) && /* dirty form cannot be reinitialized */
+      (!this.dataStore || !dirtySelect(this.dataStore.getState())) && /* dirty form cannot be reinitialized */
       (prevProps.fields !== this.props.fields || prevProps.data !== this.props.data)
     ) {
       this.initialize(this.props);
@@ -80,7 +87,7 @@ class BaseForm extends Component {
       fields: fields,
     });
     this.dataStore.subscribe(() => {
-      console.log(this.dataStore.getState().dirty);
+      console.log(dirtySelect(this.dataStore.getState()));
       console.log(this.dataStore.getState().fields);
     });
   }
@@ -201,9 +208,6 @@ class BaseForm extends Component {
 
   dirtinessContext = (renderer) => {
     const dataStore = this.dataStore;
-    function dirtySelect(state) {
-      return state.dirty;
-    }
 
     class DirtyContext extends Component {
 
