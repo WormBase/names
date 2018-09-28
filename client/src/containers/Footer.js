@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles, colors } from '../components/elements'
+import { withStyles } from '../components/elements'
 
 const Footer = (props) => {
   const {classes} = props;
