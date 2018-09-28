@@ -22,6 +22,7 @@ export {
   DialogTitle,
   Divider,
   Icon,
+  IconButton,
   InputAdornment,
   MenuItem,
   Paper,

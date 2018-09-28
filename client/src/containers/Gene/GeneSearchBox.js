@@ -2,8 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import SearchIcon from '@material-ui/icons/Search';
+import CancelIcon from '@material-ui/icons/Cancel';
 import {
   withStyles,
+  Chip,
+  IconButton,
   InputAdornment,
   Paper,
   MenuItem,
@@ -13,7 +16,7 @@ import {
 import GeneAutocompleteBase from './GeneAutocompleteBase';
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, ...other } = inputProps;
+  const { InputProps, classes, ref, item, reset, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
@@ -21,10 +24,28 @@ function renderInput(inputProps) {
         inputRef: ref,
         classes: {
           root: classes.inputRoot,
+          input:  item ? classes.inputDisabled : '',
         },
+        value: item ? '' : InputProps.value,
         startAdornment: (
           <InputAdornment position="start">
-            <SearchIcon />
+            <SearchIcon className={classes.searchIcon} />
+            {
+              item ?
+                <Chip
+                  tabIndex={-1}
+                  label={`${item.label} [${item.id}]`}
+                  className={classes.chip}
+                /> :
+                null
+            }
+          </InputAdornment>
+        ),
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton onClick={reset}>
+              <CancelIcon />
+            </IconButton>
           </InputAdornment>
         ),
       }}
@@ -72,6 +93,10 @@ class GeneSearchBox extends Component {
             {renderInput({
               fullWidth: true,
               classes,
+              item: (selectedItem || inputValue) ? suggestions.filter(
+                (item) => item.id === selectedItem || item.id === inputValue,
+              )[0] : null,
+              reset: downshift.clearSelection,
               InputProps: getInputProps({
                 placeholder: 'Search a gene...',
                 id: 'gene-search-box',
@@ -156,6 +181,10 @@ const styles = (theme) => ({
   },
   inputRoot: {
     backgroundColor: theme.palette.common.white,
+    justifyContent: 'space-between',
+  },
+  inputDisabled: {
+    display: 'none',
   },
   paper: {
     position: 'absolute',
@@ -163,6 +192,13 @@ const styles = (theme) => ({
     marginTop: -1 * theme.spacing.unit,
     left: 0,
     right: 0,
+  },
+  searchIcon: {
+    paddingLeft: theme.spacing.unit,
+  },
+  chip: {
+    height: theme.spacing.unit * 3,
+    marginLeft: theme.spacing.unit,
   },
 });
 
