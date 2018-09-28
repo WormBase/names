@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 import {
   withStyles,
   Button,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Timestamp,
+  Typography,
 } from '../../components/elements';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
@@ -120,6 +122,10 @@ class GeneActivitiesTable extends Component {
   }
 
   renderChanges = (changes) => {
+    if (!changes || changes.length === 0) {
+      return null;
+    }
+
     const changeLookup = changes.reduce((result, changeEntry) => {
       const changeSumamry = {
         ...result[changeEntry.attr],
@@ -142,9 +148,9 @@ class GeneActivitiesTable extends Component {
         </TableHead>
         <TableBody>
           {
-            Object.keys(changeLookup).map((attr) => {
+            Object.keys(changeLookup).map((attr, index) => {
               return (
-                <TableRow>
+                <TableRow key={index}>
                   <TableCell className={this.props.classes.changeTableCell}>
                     {attr}
                   </TableCell>
@@ -169,20 +175,8 @@ class GeneActivitiesTable extends Component {
     const selectedActivity = selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
 
     return (
-      <div>
+      <Paper className={classes.root}>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Time</TableCell>
-              <TableCell className={classes.entityColumnHeader}>Entity</TableCell>
-              <TableCell>Event type</TableCell>
-              <TableCell>Related entity</TableCell>
-              <TableCell>Curated by</TableCell>
-              <TableCell>Reason</TableCell>
-              <TableCell>Agent</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
-          </TableHead>
           <TableBody>
             {
               this.props.activities.map(
@@ -191,7 +185,10 @@ class GeneActivitiesTable extends Component {
                   return (
                     <TableRow key={activityIndex}>
                       <TableCell className={classes.time}>
-                        <Timestamp time={activityItem['provenance/when']}/>
+                        <p><Timestamp time={activityItem['provenance/when']}/></p>
+                        <em>{activityItem['provenance/who']['person/name']}</em>
+                        <span className={classes.via}> via </span>
+                        <em><Humanize>{activityItem['provenance/how']}</Humanize></em>
                       </TableCell>
                       <TableCell className={classes.entityCell}>
                         {
@@ -201,31 +198,30 @@ class GeneActivitiesTable extends Component {
                         }
                       </TableCell>
                       <TableCell className={classes.eventCell}>
-                        <span className={classes.eventLabel}><Humanize>{eventLabel}</Humanize></span>
+                        <Typography gutterBottom className={classes.eventLabel}>
+                          <span><Humanize>{eventLabel}</Humanize> </span>
+                          {
+                            relatedEntity ?
+                              <Link to={`/gene/id/${relatedEntity['gene/id']}`}>{relatedEntity['gene/id']}</Link> :
+                              null
+                          }
+                        </Typography>
+                        {
+                          activityItem['provenance/why'] &&
+                          <Typography gutterBottom>
+                            <span className={classes.reason}>Reason:</span> <em>{activityItem['provenance/why']}</em>
+                          </Typography>
+                        }
                         {this.renderChanges(activityItem.changes)}
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         {
-                          relatedEntity ?
-                            <Link to={`/gene/id/${relatedEntity['gene/id']}`}>{relatedEntity['gene/id']}</Link> :
-                            null
+                          this.renderActions({
+                            ...activityItem,
+                            activityIndex,
+                          })
                         }
-                      </TableCell>
-                      <TableCell>{activityItem['provenance/who']['person/name']}</TableCell>
-                      <TableCell>{activityItem['provenance/why']}</TableCell>
-                      <TableCell>
-                        <Humanize>
-                          {activityItem['provenance/how']}
-                        </Humanize>
-                      </TableCell>
-                      <TableCell>
-                        {
-                          // this.renderActions({
-                          //   ...activityItem,
-                          //   activityIndex,
-                          // })
-                        }
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   )
                 }
@@ -272,7 +268,7 @@ class GeneActivitiesTable extends Component {
             }}
           />
         </div>
-      </div>
+      </Paper>
     );
   }
 }
@@ -293,16 +289,26 @@ const styles = (theme) => ({
   time: {
     whiteSpace: 'nowrap',
   },
+  root: {
+    overflow: 'scroll',
+  },
   entityColumnHeader: {},
   entityCell: {},
   eventCell: {
   },
   eventLabel: {
-    lineHeight: '1.5em',
-    fontStyle: 'italic',
+    textTransform: 'capitalize',
+    // fontStyle: 'italic',
   },
   changeTable: {
     backgroundColor: theme.palette.background.default,
+  },
+  via: {
+    color: theme.palette.text.secondary,
+  },
+  reason: {
+    color: theme.palette.text.secondary,
+    fontStyle: 'normal',
   },
   changeTableCell: {
     border: 'none',

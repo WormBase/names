@@ -6,12 +6,12 @@ import {
   withStyles,
   Button,
   CircularProgress,
+  Divider,
   Humanize,
   NotFound,
   Page,
   PageLeft,
   PageMain,
-  PageRight,
   Snackbar,
   SnackbarContent,
   Typography,
@@ -319,45 +319,10 @@ class GeneProfile extends Component {
     ) : (
       <Page>
         <PageLeft>
-          {backToDirectoryButton}
-        </PageLeft>
-        <PageMain>
-          <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
-          <ValidationError {...this.state.errorMessage} />
-          {
-            this.state.status === 'LOADING' ?
-              <CircularProgress /> :
-              <div>
-                {
-                  this.state.data['gene/status'] !== 'gene.status/live' ?
-                    <Typography variant="display1" gutterBottom>
-                      <Humanize>{this.state.data['gene/status']}</Humanize>
-                    </Typography> :
-                    null
-                }
-                <GeneForm
-                  data={this.state.data}
-                  onSubmit={this.handleGeneUpdate}
-                  submitted={this.state.status === 'SUBMITTED'}
-                  disabled={Boolean(this.state.data['gene/status'] === 'gene.status/dead')}
-                />
-              </div>
-          }
-          <div className={classes.section}>
-            <Typography variant="title" gutterBottom>Change history</Typography>
-            <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene
-                wbId={wbId}
-                authorizedFetch={this.props.authorizedFetch}
-                activities={this.state.data.history}
-                onUpdate={() => {
-                  this.fetchData();
-                }}
-              />
-            </div>
+          <div className={classes.operations}>
+            {backToDirectoryButton}
+            <Divider light />
           </div>
-        </PageMain>
-        <PageRight>
           {
             this.state.data['gene/status'] === 'gene.status/live' ?
               <div className={classes.operations}>
@@ -395,16 +360,53 @@ class GeneProfile extends Component {
                 >Kill Gene</Button>
                 <h5>Tips:</h5>
                 <p>To un-suppress the gene, kill then resurrect it.</p>
-              </div> :
+              </div> : this.state.data['gene/status'] === 'gene.status/dead' ?
               <div className={classes.operations}>
                 <Button
                   className={classes.killButton}
                   variant="raised"
                   onClick={this.openResurrectGeneDialog}
                 >Resurrect Gene</Button>
+              </div> : null
+          }
+        </PageLeft>
+        <PageMain>
+          <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
+          <ValidationError {...this.state.errorMessage} />
+          {
+            this.state.status === 'LOADING' ?
+              <CircularProgress /> :
+              <div>
+                {
+                  this.state.data['gene/status'] !== 'gene.status/live' ?
+                    <Typography variant="display1" gutterBottom>
+                      <Humanize>{this.state.data['gene/status']}</Humanize>
+                    </Typography> :
+                    null
+                }
+                <GeneForm
+                  data={this.state.data}
+                  onSubmit={this.handleGeneUpdate}
+                  submitted={this.state.status === 'SUBMITTED'}
+                  disabled={Boolean(this.state.data['gene/status'] === 'gene.status/dead')}
+                />
               </div>
           }
-        </PageRight>
+          <div className={classes.section}>
+            <Typography variant="title" gutterBottom>Change history</Typography>
+            <div className={classes.historyTable}>
+              <RecentActivitiesSingleGene
+                wbId={wbId}
+                authorizedFetch={this.props.authorizedFetch}
+                activities={this.state.data.history}
+                onUpdate={() => {
+                  this.fetchData();
+                }}
+              />
+            </div>
+          </div>
+        </PageMain>
+
         <KillGeneDialog
           geneName={this.getDisplayName(this.state.data)}
           wbId={wbId}
@@ -516,9 +518,13 @@ const styles = (theme) => ({
   operations: {
     display: 'flex',
     flexDirection: 'column',
-    maxWidth: 150,
+    width: 150,
     '& > *': {
       marginBottom: theme.spacing.unit,
+    },
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+      alignItems: 'stretch',
     },
   },
   killButton: {
@@ -532,9 +538,6 @@ const styles = (theme) => ({
     margin: `${theme.spacing.unit * 8}px 0`,
   },
   historyTable: {
-    [theme.breakpoints.down('sm')]: {
-      overflow: 'scroll',
-    },
   },
 });
 

@@ -65,7 +65,7 @@ export const PageLeft = withStyles((theme) => ({
 
 export const PageMain = withStyles((theme) => ({
   main: {
-    width: '60%',
+    width: '80%',
     margin: `0px ${theme.spacing.unit * 4}px`,
     [theme.breakpoints.down('sm')]: {
       margin: 0,
@@ -74,13 +74,13 @@ export const PageMain = withStyles((theme) => ({
   },
 }))(pageMain);
 
-export const PageRight = withStyles((theme) => ({
-  right: {
-    width: '20%',
-    [theme.breakpoints.down('sm')]: {
-      width: `100%`,
-    },
-  },
-}))(pageRight);
+// export const PageRight = withStyles((theme) => ({
+//   right: {
+//     width: '20%',
+//     [theme.breakpoints.down('sm')]: {
+//       width: `100%`,
+//     },
+//   },
+// }))(pageRight);
 
 export default Page;
