@@ -12,7 +12,6 @@ class AutocompleteBase extends Component {
         return {
           ...changes,
           inputValue: state.inputValue,
-          isOpen: state.isOpen, // prevent menu from being closed when input blur
         };
       case Downshift.stateChangeTypes.mouseUp:
         return {

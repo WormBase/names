@@ -67,7 +67,7 @@ class GeneSearchBox extends Component {
     const {classes, history} = this.props;
     return (
       <GeneAutocompleteBase>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, setItemCount}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, ...downshift}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -100,6 +100,7 @@ class GeneSearchBox extends Component {
 
                     if (id) {
                       // ignore empty input
+                      downshift.closeMenu();
                       history.push(`/gene/id/${id}`);
                     }
                   }
@@ -108,7 +109,10 @@ class GeneSearchBox extends Component {
             })}
             <SimpleListPagination
               items={suggestions}
-              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
+              onPageChange={(startIndex, endIndex) => {
+                downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                downshift.setItemCount(endIndex - startIndex);
+              }}
             >
               {({pageItems, navigation}) => (
                 isOpen ? (

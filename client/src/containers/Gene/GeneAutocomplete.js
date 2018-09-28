@@ -85,7 +85,7 @@ class GeneAutocomplete extends Component {
         })}
         defaultInputValue={value}
       >
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount, suggestions, clearSelection}) => (
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, clearSelection, ...downshift}) => (
           <div className={classes.root}>
             {renderInput({
               fullWidth: true,
@@ -101,7 +101,10 @@ class GeneAutocomplete extends Component {
             })}
             <SimpleListPagination
               items={suggestions}
-              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
+              onPageChange={(startIndex, endIndex) => {
+                downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                downshift.setItemCount(endIndex - startIndex);
+              }}
             >
               {({pageItems, navigation}) => (
                 isOpen ? (
