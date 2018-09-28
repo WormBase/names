@@ -6,6 +6,7 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
+   [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]
    [wormbase.names.util :as wnu]))
@@ -101,7 +102,7 @@
                     entity-id)]
     (some->> tx-ids
              (map pull-prov)
-             (map wnu/undatomicize)
+             (map wu/undatomicize)
              (remove #(= (:provenance/what %) :event/import-gene))
              (map #(update % :provenance/how (fnil identity :agent/importer)))
              (sort-mrf)
