@@ -6,6 +6,7 @@ import {
   withStyles,
   Button,
   CircularProgress,
+  Humanize,
   NotFound,
   Page,
   PageLeft,
@@ -28,7 +29,7 @@ class GeneProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      status: null,
+      status: 'BEGIN',
       errorMessage: null,
       shortMessage: null,
       shortMessageVariant: 'info',
@@ -50,9 +51,9 @@ class GeneProfile extends Component {
   }
 
   fetchData = () => {
-    this.setState({
-      status: 'SUBMITTED',
-    }, () => {
+    this.setState((prevState) => ({
+      status: prevState.status === 'BEGIN' ? 'LOADING' : 'SUBMITTED',
+    }), () => {
       mockFetchOrNot(
         (mockFetch) => {
           const historyMock = [
@@ -189,21 +190,14 @@ class GeneProfile extends Component {
             }),
           });
         },
-      ).then((response) => response.json()).then((response) => {
+      ).then((response) => Promise.all([response.ok, response.json()])).then(([ok, response]) => {
         this.setState(() => {
           const stateChanges = {
             status: 'COMPLETE',
           };
-          if (response.problems) {
-            const {history : newHistory, ...newData} = response.value;
+          if (!ok || response.problems) {
             return {
               ...stateChanges,
-              data: {
-                ...newData,
-                history: Object.keys(newHistory).map((index) => parseInt(index, 10)).sort().map(
-                  (index) => newHistory[index]
-                ),
-              },
               errorMessage: response,
             }
           } else {
@@ -294,18 +288,6 @@ class GeneProfile extends Component {
     data['gene/id']
   )
 
-  renderGeneForm = (otherProps) => {
-    return (
-      <GeneForm
-        data={this.state.data}
-        onSubmit={this.handleGeneUpdate}
-        submitted={this.state.status === 'SUBMITTED'}
-        {...otherProps}
-      />
-    )
-
-  }
-
   render() {
     const {classes} = this.props;
     const wbId = this.getId();
@@ -343,20 +325,23 @@ class GeneProfile extends Component {
           <Typography variant="headline" gutterBottom>Gene <em>{wbId}</em></Typography>
           <ValidationError {...this.state.errorMessage} />
           {
-            this.state.status !== 'COMPLETE' ?
-              <CircularProgress /> : this.state.data['gene/status'] === 'gene.status/live' ?
+            this.state.status === 'LOADING' ?
+              <CircularProgress /> :
               <div>
-                {this.renderGeneForm()}
-              </div> : this.state.data['gene/status'] === 'gene.status/suppressed' ?
-              <div>
-                <Typography variant="display1" gutterBottom>Suppressed</Typography>
-                {this.renderGeneForm()}
-              </div> : this.state.data['gene/status'] === 'gene.status/dead' ?
-              <div>
-                <Typography variant="display1" gutterBottom>Dead</Typography>
-                {this.renderGeneForm({disabled: true})}
-              </div> :
-              null
+                {
+                  this.state.data['gene/status'] !== 'gene.status/live' ?
+                    <Typography variant="display1" gutterBottom>
+                      <Humanize>{this.state.data['gene/status']}</Humanize>
+                    </Typography> :
+                    null
+                }
+                <GeneForm
+                  data={this.state.data}
+                  onSubmit={this.handleGeneUpdate}
+                  submitted={this.state.status === 'SUBMITTED'}
+                  disabled={Boolean(this.state.data['gene/status'] === 'gene.status/dead')}
+                />
+              </div>
           }
           <div className={classes.section}>
             <Typography variant="title" gutterBottom>Change history</Typography>

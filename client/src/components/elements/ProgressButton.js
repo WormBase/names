@@ -9,6 +9,7 @@ const ProgressButton =  ({classes, status, children, ...buttonProps}) => (
   <div className={classes.wrapper}>
     <Button
       disabled={status === PROGRESS_BUTTON_PENDING}
+      className={classes.button}
       {...buttonProps}
     >{children}</Button>
     {
@@ -35,6 +36,9 @@ const styles = (theme) => ({
     left: '50%',
     marginTop: -12,
     marginLeft: -12,
+  },
+  button: {
+    width: '100%',
   },
 });
 
