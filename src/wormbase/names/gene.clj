@@ -129,12 +129,9 @@
   (entity-must-exist! request identifier)
   (let [db (:db request)
         [lur _] (identify request identifier)
-        info (d/pull db info-pull-expr lur)
+        info (wdb/pull db info-pull-expr lur)
         prov (wnp/query-provenance db lur provenance-pull-expr)]
-    (-> info
-        (assoc :history prov)
-        transform-result
-        ok)))
+    (-> info (assoc :history prov) ok)))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)

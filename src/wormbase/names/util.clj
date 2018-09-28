@@ -87,16 +87,6 @@
                  xs))
              entity-like-mapping))
 
-(defn undatomicize
-  "Remove datomic internal attribute/value pairs from a seq of maps."
-  [data]
-  (w/postwalk (fn presenter [m]
-                (cond
-                  (and (map? m) (:db/ident m)) (:db/ident m)
-                  (map? m) (dissoc m :db/id :db/txInstant)
-                  :default m))
-              data))
-
 (defn has-status?
   "Return truthy if entity `ent` has status `status`.
 
