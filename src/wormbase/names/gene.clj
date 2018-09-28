@@ -444,7 +444,7 @@
                fail-precondition?
                (fail-precondition? gene-status))
       (precondition-failed! {:message precondition-failure-msg
-                             :info (wnu/undatomicize gene-status)}))
+                             :info (wu/undatomicize gene-status)}))
     (let [prov (wnp/assoc-provenance request payload event-type)
           conn (:conn request)
           tx-res @(d/transact-async
