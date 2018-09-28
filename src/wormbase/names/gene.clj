@@ -15,6 +15,7 @@
                                     precondition-failed precondition-failed!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
+   [wormbase.util :as wu]
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
@@ -456,7 +457,7 @@
       (-> tx-res
           :db-after
           pull-status
-          wnu/undatomicize
+          wu/undatomicize
           ok))))
 
 (defn resurrect-gene [request id]
