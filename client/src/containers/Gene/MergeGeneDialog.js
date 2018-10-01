@@ -68,6 +68,7 @@ class MergeGeneDialog extends Component {
                   label="Merge into gene"
                   helperText="Enter WBID or search by CGC name"
                   required
+                  pageSize={3}
                 />
                 <BiotypeField
                   helperText={`Set the biotype of the merged gene`}

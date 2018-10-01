@@ -79,7 +79,7 @@ class GeneAutocomplete extends Component {
   itemToString = (item) => (item ? item.id : '');
 
   render() {
-    const {classes, onChange, value, ...otherProps} = this.props;
+    const {classes, onChange, value, pageSize, ...otherProps} = this.props;
     return (
       <AutocompleteBase
         itemToString={this.itemToString}
@@ -121,6 +121,7 @@ class GeneAutocomplete extends Component {
                   })}
                   <SimpleListPagination
                     items={suggestions}
+                    pageSize={pageSize}
                     onPageChange={(startIndex, endIndex) => {
                       downshift.openMenu();  // otherwise inputBlur would cause the menu to close
                       downshift.setItemCount(endIndex - startIndex);
