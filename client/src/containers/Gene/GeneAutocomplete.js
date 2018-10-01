@@ -79,9 +79,9 @@ class GeneAutocomplete extends Component {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
       <AutocompleteBase
-        onChange={(selectItem) => onChange({
+        onInputValueChange={(inputValue) => onChange({
           target: {
-            value: selectItem,
+            value: inputValue,
           },
         })}
         defaultInputValue={value}
