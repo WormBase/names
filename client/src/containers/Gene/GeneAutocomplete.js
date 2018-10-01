@@ -88,7 +88,21 @@ class GeneAutocomplete extends Component {
       >
         {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, clearSelection, ...downshift}) => (
           <div>
-            <GeneAutocompleteLoader inputValue={inputValue} selectedValue={selectedItem}>
+            <GeneAutocompleteLoader
+              inputValue={inputValue}
+              selectedValue={selectedItem}
+              onSuggestionChange={(suggestions) => {
+                if (!isOpen) {
+                  // when suggestion loads when user isn't interacting with the field
+                  const [nextSelectedItem] = suggestions.filter(
+                    (item) => item.label === inputValue || item.id === inputValue
+                  );
+                  if (nextSelectedItem) {
+                    downshift.selectItem(nextSelectedItem.id);
+                  }
+                }
+              }}
+            >
               {({suggestions}) => (
                 <div className={classes.root}>
                   {renderInput({

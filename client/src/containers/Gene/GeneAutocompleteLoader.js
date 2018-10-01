@@ -73,6 +73,8 @@ export default class GeneAutocompleteLoader extends React.Component {
           }));
           this.setState({
             suggestions,
+          }, () => {
+            this.props.onSuggestionChange && this.props.onSuggestionChange(suggestions);
           });
         }
       }).catch((e) => console.log('error', e));
@@ -91,4 +93,5 @@ export default class GeneAutocompleteLoader extends React.Component {
 GeneAutocompleteLoader.propTypes = {
   inputValue: PropTypes.string,
   selectedValue: PropTypes.string,
+  onSuggestionChange: PropTypes.func,
 };
