@@ -120,7 +120,6 @@
         merged-from (geneace-text-ref event-text)]
     (-> m
         (assoc :provenance/what :event/merge-genes)
-        (assoc :provenance/merged-into [:gene/id merged-into])
         (assoc :provenance/merged-from [:gene/id merged-from]))))
 
 (defn decode-split-event [m event-text]
@@ -128,8 +127,7 @@
         split-into (geneace-text-ref event-text)]
     (-> m
         (assoc :provenance/what :event/split-gene)
-        (assoc :provenance/split-into [:gene/id split-into])
-        (assoc :provenance/split-from [:gene/id split-from]))))
+        (assoc :provenance/split-into [:gene/id split-into]))))
 
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
@@ -219,6 +217,45 @@
                          no-created)]
     [gid (wnp/sort-events-by-when fixedup-events)]))
 
+(defn update-reciprocal-events
+  [target-attr src-attr src-gene-id events history-actions]
+  (let [orig-event (first (filter target-attr events))]
+    (if-let [target-gene-id (-> (select-keys orig-event [target-attr]) target-attr second)]
+      (let [target-events (vec (get history-actions target-gene-id))]
+        (update history-actions
+                target-gene-id
+                (fn [old-events]
+                  (conj old-events
+                        (-> orig-event
+                            (dissoc target-attr :gene/id :geneace/event-text)
+                            (assoc src-attr [:gene/id src-gene-id]
+                                   :gene/id target-gene-id))))))
+      history-actions)))
+
+(defn map-reciprocal-events
+  "In the GeneACe export, only one side of a merge or split event is dumped.
+  This function adds the reciprocal entry to the corresponding event list in the
+  mapping of all history actions."
+  [history-actions]
+  (reduce-kv (fn record-inverse-refs [ha gene-id events]
+               (let [splits (filter :provenance/split-into events)
+                     update-splits (partial update-reciprocal-events
+                                            :provenance/split-into
+                                            :provenance/split-from
+                                            gene-id
+                                            splits)
+                     merges (filter :provenance/merged-from events)
+                     update-merges (partial update-reciprocal-events
+                                            :provenance/merged-from
+                                            :provenance/merged-into
+                                            gene-id
+                                            merges)]
+                 (->> ha
+                      (update-splits)
+                      (update-merges))))
+             history-actions
+             history-actions))
+
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
         cast-fns {:gene/id cast-gene-id-fn
@@ -230,6 +267,7 @@
            (group-by :gene/id)
            (map process-gene-events)
            (into {})
+           (map-reciprocal-events)
            (doall)))))
 
 (defn transact-gene-event
