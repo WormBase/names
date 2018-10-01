@@ -19,7 +19,10 @@ export default class GeneAutocompleteLoader extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.inputValue !== this.props.inputValue) {
+    if (
+      prevProps.inputValue !== this.props.inputValue &&
+      this.props.inputValue !== this.props.selectedValue  // don't reload suggestion when selecting an item from selection
+    ) {
       this.loadSuggestions(this.props.inputValue);
     }
   }
@@ -87,4 +90,5 @@ export default class GeneAutocompleteLoader extends React.Component {
 
 GeneAutocompleteLoader.propTypes = {
   inputValue: PropTypes.string,
+  selectedValue: PropTypes.string,
 };

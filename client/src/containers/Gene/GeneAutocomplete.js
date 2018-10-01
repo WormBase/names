@@ -88,7 +88,7 @@ class GeneAutocomplete extends Component {
       >
         {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, clearSelection, ...downshift}) => (
           <div>
-            <GeneAutocompleteLoader inputValue={inputValue}>
+            <GeneAutocompleteLoader inputValue={inputValue} selectedValue={selectedItem}>
               {({suggestions}) => (
                 <div className={classes.root}>
                   {renderInput({
