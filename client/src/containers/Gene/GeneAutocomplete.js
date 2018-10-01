@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  AutocompleteBase,
   withStyles,
   Chip,
   InputAdornment,
@@ -9,7 +10,7 @@ import {
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
-import GeneAutocompleteBase from './GeneAutocompleteBase';
+import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
@@ -77,7 +78,7 @@ class GeneAutocomplete extends Component {
   render() {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
-      <GeneAutocompleteBase
+      <AutocompleteBase
         onChange={(selectItem) => onChange({
           target: {
             value: selectItem,
@@ -85,49 +86,55 @@ class GeneAutocomplete extends Component {
         })}
         defaultInputValue={value}
       >
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, clearSelection, ...downshift}) => (
-          <div className={classes.root}>
-            {renderInput({
-              fullWidth: true,
-              classes,
-              InputProps: getInputProps({
-                id: 'gene-id',
-              }),
-              item: (selectedItem || inputValue) ? suggestions.filter(
-                (item) => item.id === selectedItem || item.id === inputValue,
-              )[0] : null,
-              reset: clearSelection,
-              ...otherProps,
-            })}
-            <SimpleListPagination
-              items={suggestions}
-              onPageChange={(startIndex, endIndex) => {
-                downshift.openMenu();  // otherwise inputBlur would cause the menu to close
-                downshift.setItemCount(endIndex - startIndex);
-              }}
-            >
-              {({pageItems, navigation}) => (
-                isOpen ? (
-                  <Paper className={classes.paper} square>
-                    {
-                      pageItems.map((suggestion, index) => (
-                        renderSuggestion({
-                          suggestion,
-                          index,
-                          itemProps: getItemProps({item: suggestion.id}),
-                          highlightedIndex,
-                          selectedItem,
-                        })
-                      ))
-                    }
-                    {navigation}
-                  </Paper>
-                ) : null
-              )}
-            </SimpleListPagination>
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, clearSelection, ...downshift}) => (
+          <div>
+            <GeneAutocompleteLoader inputValue={inputValue}>
+              {({suggestions}) => (
+                <div className={classes.root}>
+                  {renderInput({
+                    fullWidth: true,
+                    classes,
+                    InputProps: getInputProps({
+                      id: 'gene-id',
+                    }),
+                    item: selectedItem ? suggestions.filter(
+                      (item) => item.id === selectedItem
+                    )[0] : null,
+                    reset: clearSelection,
+                    ...otherProps,
+                  })}
+                  <SimpleListPagination
+                    items={suggestions}
+                    onPageChange={(startIndex, endIndex) => {
+                      downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      downshift.setItemCount(endIndex - startIndex);
+                    }}
+                  >
+                    {({pageItems, navigation}) => (
+                      isOpen ? (
+                        <Paper className={classes.paper} square>
+                          {
+                            pageItems.map((suggestion, index) => (
+                              renderSuggestion({
+                                suggestion,
+                                index,
+                                itemProps: getItemProps({item: suggestion.id}),
+                                highlightedIndex,
+                                selectedItem,
+                              })
+                            ))
+                          }
+                          {navigation}
+                        </Paper>
+                      ) : null
+                    )}
+                  </SimpleListPagination>
+              </div>
+            )}
+            </GeneAutocompleteLoader>
           </div>
         )}
-      </GeneAutocompleteBase>
+      </AutocompleteBase>
     );
   }
 }

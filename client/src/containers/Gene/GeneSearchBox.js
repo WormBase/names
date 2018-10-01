@@ -4,6 +4,7 @@ import { Link, withRouter } from 'react-router-dom';
 import SearchIcon from '@material-ui/icons/Search';
 import CancelIcon from '@material-ui/icons/Cancel';
 import {
+  AutocompleteBase,
   withStyles,
   Chip,
   IconButton,
@@ -13,10 +14,12 @@ import {
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
-import GeneAutocompleteBase from './GeneAutocompleteBase';
+import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
+  console.log('item');
+  console.log(item);
   return (
     <TextField
       InputProps={{
@@ -87,80 +90,86 @@ class GeneSearchBox extends Component {
   render() {
     const {classes, history} = this.props;
     return (
-      <GeneAutocompleteBase>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, ...downshift}) => (
-          <div className={classes.root}>
-            {renderInput({
-              fullWidth: true,
-              classes,
-              item: (selectedItem || inputValue) ? suggestions.filter(
-                (item) => item.id === selectedItem || item.id === inputValue,
-              )[0] : null,
-              reset: downshift.clearSelection,
-              InputProps: getInputProps({
-                placeholder: 'Search a gene...',
-                id: 'gene-search-box',
-                onKeyDown: event => {
-                  if (event.key === 'Enter') {
+      <AutocompleteBase>
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, ...downshift}) => (
+          <div>
+            <GeneAutocompleteLoader inputValue={inputValue}>
+              {({suggestions}) => (
+                <div className={classes.root}>
+                  {renderInput({
+                    fullWidth: true,
+                    classes,
+                    item: selectedItem ? suggestions.filter(
+                      (item) => item.id === selectedItem
+                    )[0] : null,
+                    reset: downshift.clearSelection,
+                    InputProps: getInputProps({
+                      placeholder: 'Search a gene...',
+                      id: 'gene-search-box',
+                      onKeyDown: event => {
+                        if (event.key === 'Enter') {
 
-                    let id;
+                          let id;
 
-                    if (highlightedIndex || highlightedIndex === 0) {
-                      const highlightedSuggestion = suggestions[highlightedIndex];
-                      if (highlightedSuggestion) {
-                        id = highlightedSuggestion.id;
-                      }
-                    }
+                          if (highlightedIndex || highlightedIndex === 0) {
+                            const highlightedSuggestion = suggestions[highlightedIndex];
+                            if (highlightedSuggestion) {
+                              id = highlightedSuggestion.id;
+                            }
+                          }
 
-                    if (!id) {
-                      const [nextSelectedItem] = suggestions.filter(
-                        (item) => item.id === inputValue || item.label === inputValue
-                      );
-                      id = nextSelectedItem && nextSelectedItem.id;
-                    }
+                          if (!id) {
+                            const [nextSelectedItem] = suggestions.filter(
+                              (item) => item.id === inputValue || item.label === inputValue
+                            );
+                            id = nextSelectedItem && nextSelectedItem.id;
+                          }
 
-                    if (!id) {
-                      id = inputValue;
-                    }
+                          if (!id) {
+                            id = inputValue;
+                          }
 
-                    if (id) {
-                      // ignore empty input
-                      downshift.closeMenu();
-                      history.push(`/gene/id/${id}`);
-                    }
-                  }
-                },
-              }),
-            })}
-            <SimpleListPagination
-              items={suggestions}
-              onPageChange={(startIndex, endIndex) => {
-                downshift.openMenu();  // otherwise inputBlur would cause the menu to close
-                downshift.setItemCount(endIndex - startIndex);
-              }}
-            >
-              {({pageItems, navigation}) => (
-                isOpen ? (
-                  <Paper className={classes.paper} square>
-                    {
-                      pageItems.map((suggestion, index) => (
-                        renderSuggestion({
-                          suggestion,
-                          index,
-                          itemProps: getItemProps({item: suggestion.id}),
-                          highlightedIndex,
-                          selectedItem,
-                        })
-                      ))
-                    }
-                    {navigation}
-                  </Paper>
-                ) : null
+                          if (id) {
+                            // ignore empty input
+                            downshift.closeMenu();
+                            history.push(`/gene/id/${id}`);
+                          }
+                        }
+                      },
+                    }),
+                  })}
+                  <SimpleListPagination
+                    items={suggestions}
+                    onPageChange={(startIndex, endIndex) => {
+                      downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      downshift.setItemCount(endIndex - startIndex);
+                    }}
+                  >
+                    {({pageItems, navigation}) => (
+                      isOpen ? (
+                        <Paper className={classes.paper} square>
+                          {
+                            pageItems.map((suggestion, index) => (
+                              renderSuggestion({
+                                suggestion,
+                                index,
+                                itemProps: getItemProps({item: suggestion.id}),
+                                highlightedIndex,
+                                selectedItem,
+                              })
+                            ))
+                          }
+                          {navigation}
+                        </Paper>
+                      ) : null
+                    )}
+                  </SimpleListPagination>
+                </div>
               )}
-            </SimpleListPagination>
+            </GeneAutocompleteLoader>
           </div>
         )}
-      </GeneAutocompleteBase>
+      </AutocompleteBase>
     );
   }
 }

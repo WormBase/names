@@ -1,10 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { mockFetchOrNot } from '../../mock';
 import { extract as extractQueryString, parse as parseQueryString} from 'query-string';
-import { AutocompleteBase } from '../../components/elements';
 
-export default class GeneAutocompleteBase extends Component {
+export default class GeneAutocompleteLoader extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -14,8 +13,14 @@ export default class GeneAutocompleteBase extends Component {
   };
 
   componentDidMount() {
-    if (this.props.defaultInputValue) {
-      this.loadSuggestions(this.props.defaultInputValue);
+    if (this.props.inputValue) {
+      this.loadSuggestions(this.props.inputValue);
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.inputValue !== this.props.inputValue) {
+      this.loadSuggestions(this.props.inputValue);
     }
   }
 
@@ -72,16 +77,14 @@ export default class GeneAutocompleteBase extends Component {
   }
 
   render() {
-    return (
-      <AutocompleteBase
-        onInputChange={this.loadSuggestions}
-        suggestions={this.state.suggestions}
-        {...this.props}
-      />
-    );
+    console.log(`loader prop inputValue ${this.props.inputValue}`);
+    console.log(this.state.suggestions);
+    return this.props.children({
+      suggestions: this.state.suggestions || [],
+    });
   }
 };
 
-GeneAutocompleteBase.propTypes = {
-  defaultInputValue: PropTypes.string,
+GeneAutocompleteLoader.propTypes = {
+  inputValue: PropTypes.string,
 };

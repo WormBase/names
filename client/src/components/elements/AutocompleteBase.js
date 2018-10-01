@@ -24,21 +24,15 @@ class AutocompleteBase extends Component {
   }
 
   handleStateChange = changes => {
-    // console.log(Object.keys(Downshift.stateChangeTypes));
-    const {inputValue} = changes;
+    console.log(Object.keys(Downshift.stateChangeTypes));
     switch (changes.type) {
-      case Downshift.stateChangeTypes.changeInput:
-        if (this.props.onInputChange) {
-          this.props.onInputChange(inputValue)
-        }
-        break;
       default:
         // do nothing
     }
   }
 
   render() {
-    const {onInputChange, children, ...downshiftProps} = this.props;
+    const {children, ...downshiftProps} = this.props;
     return (
       <Downshift
         stateReducer={this.stateReducer}
@@ -52,17 +46,6 @@ class AutocompleteBase extends Component {
             getInputProps: (inputProps) => {
               return getInputProps({
                 ...inputProps,
-                onKeyDown: (event) => {
-                  inputProps.onKeyDown && inputProps.onKeyDown(event);
-                  if (event.key === 'Enter') {
-                    const [selectedItem] = this.props.suggestions.filter(
-                      (item) => item.id === inputValue || item.label === inputValue
-                    );
-                    if (selectedItem) {
-                      otherProps.selectItem(selectedItem.id);
-                    }
-                  }
-                },
                 onFocus: (event) => {
                   inputProps.onFocus && inputProps.onFocus();
                   if (inputValue) {
@@ -71,7 +54,6 @@ class AutocompleteBase extends Component {
                 },
               });
             },
-            suggestions: this.props.suggestions,
           })
         )}
       </Downshift>
@@ -81,13 +63,6 @@ class AutocompleteBase extends Component {
 
 AutocompleteBase.propTypes = {
   children: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func,
-  suggestions: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string,
-      label: PropTypes.strig,
-    }),
-  ).isRequired,
 }
 
 
