@@ -44,7 +44,7 @@ function renderInput(inputProps) {
         ),
         endAdornment: (
           <InputAdornment position="end">
-            <IconButton onClick={reset}>
+            <IconButton onClick={reset} disabled={!item && !InputProps.value}>
               <CancelIcon />
             </IconButton>
           </InputAdornment>
