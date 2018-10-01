@@ -5,8 +5,6 @@ import Downshift from 'downshift';
 class AutocompleteBase extends Component {
 
   stateReducer = (state, changes) => {
-    console.log(state);
-    console.log(changes);
     switch (changes.type) {
       case Downshift.stateChangeTypes.blurInput:
         return {
@@ -24,7 +22,7 @@ class AutocompleteBase extends Component {
   }
 
   handleStateChange = changes => {
-    console.log(Object.keys(Downshift.stateChangeTypes));
+    // console.log(Object.keys(Downshift.stateChangeTypes));
     switch (changes.type) {
       default:
         // do nothing

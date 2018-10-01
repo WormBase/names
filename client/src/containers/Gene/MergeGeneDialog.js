@@ -19,7 +19,6 @@ class MergeGeneDialog extends Component {
   submitData = ({geneIdMergeInto, ...data}) => {
     return mockFetchOrNot(
       (mockFetch) => {
-        console.log(data);
         if (data['provenance/why']) {
           return mockFetch.post('*', {
           });

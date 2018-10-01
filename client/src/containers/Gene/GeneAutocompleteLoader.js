@@ -82,8 +82,6 @@ export default class GeneAutocompleteLoader extends React.Component {
   }
 
   render() {
-    console.log(`loader prop inputValue ${this.props.inputValue}`);
-    console.log(this.state.suggestions);
     return this.props.children({
       suggestions: this.state.suggestions || [],
     });

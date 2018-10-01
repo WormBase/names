@@ -18,8 +18,6 @@ import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
-  console.log('item');
-  console.log(item);
   return (
     <TextField
       InputProps={{
