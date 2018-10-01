@@ -23,9 +23,6 @@
    [wormbase.specs.species :as wss]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu])
-  (:import
-   (clojure.lang ExceptionInfo)
-   (java.time.format DateTimeFormatter))
   (:gen-class))
 
 (defn- throw-parse-exc! [spec value]
