@@ -57,7 +57,7 @@ function renderInput(inputProps) {
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
   const isHighlighted = highlightedIndex === index;
-  const isSelected = selectedItem === suggestion.id;
+  const isSelected = selectedItem === suggestion;
 
   return (
     <MenuItem
@@ -88,18 +88,17 @@ class GeneSearchBox extends Component {
   render() {
     const {classes, history} = this.props;
     return (
-      <AutocompleteBase>
+      <AutocompleteBase itemToString={(item) => item ? item.id : ''}>
         {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, ...downshift}) => (
           <div>
-            <GeneAutocompleteLoader inputValue={inputValue} selectedValue={selectedItem}>
+            <GeneAutocompleteLoader
+              inputValue={inputValue} selectedValue={selectedItem && selectedItem.id}>
               {({suggestions}) => (
                 <div className={classes.root}>
                   {renderInput({
                     fullWidth: true,
                     classes,
-                    item: selectedItem ? suggestions.filter(
-                      (item) => item.id === selectedItem
-                    )[0] : null,
+                    item: selectedItem,
                     reset: downshift.clearSelection,
                     InputProps: getInputProps({
                       placeholder: 'Search a gene...',
@@ -151,7 +150,7 @@ class GeneSearchBox extends Component {
                               renderSuggestion({
                                 suggestion,
                                 index,
-                                itemProps: getItemProps({item: suggestion.id}),
+                                itemProps: getItemProps({item: suggestion}),
                                 highlightedIndex,
                                 selectedItem,
                               })

@@ -47,7 +47,7 @@ function renderInput(inputProps) {
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
   const isHighlighted = highlightedIndex === index;
-  const isSelected = selectedItem === suggestion.id;
+  const isSelected = selectedItem === suggestion;
 
   return (
     <MenuItem
@@ -75,10 +75,14 @@ renderSuggestion.propTypes = {
 };
 
 class GeneAutocomplete extends Component {
+
+  itemToString = (item) => (item ? item.id : '');
+
   render() {
     const {classes, onChange, value, ...otherProps} = this.props;
     return (
       <AutocompleteBase
+        itemToString={this.itemToString}
         onInputValueChange={(inputValue) => onChange({
           target: {
             value: inputValue,
@@ -90,7 +94,7 @@ class GeneAutocomplete extends Component {
           <div>
             <GeneAutocompleteLoader
               inputValue={inputValue}
-              selectedValue={selectedItem}
+              selectedValue={this.itemToString(selectedItem)}
               onSuggestionChange={(suggestions) => {
                 if (!isOpen) {
                   // when suggestion loads when user isn't interacting with the field
@@ -98,7 +102,7 @@ class GeneAutocomplete extends Component {
                     (item) => item.label === inputValue || item.id === inputValue
                   );
                   if (nextSelectedItem) {
-                    downshift.selectItem(nextSelectedItem.id);
+                    downshift.selectItem(nextSelectedItem);
                   }
                 }
               }}
@@ -111,9 +115,7 @@ class GeneAutocomplete extends Component {
                     InputProps: getInputProps({
                       id: 'gene-id',
                     }),
-                    item: selectedItem ? suggestions.filter(
-                      (item) => item.id === selectedItem
-                    )[0] : null,
+                    item: selectedItem,
                     reset: clearSelection,
                     ...otherProps,
                   })}
@@ -132,7 +134,7 @@ class GeneAutocomplete extends Component {
                               renderSuggestion({
                                 suggestion,
                                 index,
-                                itemProps: getItemProps({item: suggestion.id}),
+                                itemProps: getItemProps({item: suggestion}),
                                 highlightedIndex,
                                 selectedItem,
                               })
