@@ -95,9 +95,11 @@ class GeneAutocomplete extends Component {
             <GeneAutocompleteLoader
               inputValue={inputValue}
               selectedValue={this.itemToString(selectedItem)}
-              onSuggestionChange={(suggestions) => {
-                if (!isOpen) {
-                  // when suggestion loads when user isn't interacting with the field
+              onSuggestionChange={(suggestions, isInitialLoad) => {
+                if (!isOpen || isInitialLoad) {
+                  // set selectedItem based on matching of inputValue with suggestions, when
+                  // 1) suggestion loads when user isn't interacting with the field, OR
+                  // 2) suggestion loads is first loaded with the initial/unmodified inputValue
                   const [nextSelectedItem] = suggestions.filter(
                     (item) => item.label === inputValue || item.id === inputValue
                   );

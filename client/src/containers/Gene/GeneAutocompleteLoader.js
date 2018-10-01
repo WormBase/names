@@ -14,7 +14,7 @@ export default class GeneAutocompleteLoader extends React.Component {
 
   componentDidMount() {
     if (this.props.inputValue) {
-      this.loadSuggestions(this.props.inputValue);
+      this.loadSuggestions(this.props.inputValue, true);
     }
   }
 
@@ -27,7 +27,7 @@ export default class GeneAutocompleteLoader extends React.Component {
     }
   }
 
-  loadSuggestions = (inputValue) => {
+  loadSuggestions = (inputValue, isInitialLoad) => {
     if (inputValue.length < 2) {
       return;
     }
@@ -74,7 +74,7 @@ export default class GeneAutocompleteLoader extends React.Component {
           this.setState({
             suggestions,
           }, () => {
-            this.props.onSuggestionChange && this.props.onSuggestionChange(suggestions);
+            this.props.onSuggestionChange && this.props.onSuggestionChange(suggestions, isInitialLoad);
           });
         }
       }).catch((e) => console.log('error', e));
