@@ -90,11 +90,11 @@ class GeneSearchBox extends Component {
     return (
       <AutocompleteBase itemToString={(item) => item ? item.id : ''}>
         {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, ...downshift}) => (
-          <div>
+          <div className={classes.root}>
             <GeneAutocompleteLoader
               inputValue={inputValue} selectedValue={selectedItem && selectedItem.id}>
               {({suggestions}) => (
-                <div className={classes.root}>
+                <div>
                   {renderInput({
                     fullWidth: true,
                     classes,
