@@ -138,7 +138,7 @@ class GeneSearchBox extends Component {
                   <SimpleListPagination
                     items={suggestions}
                     onPageChange={(startIndex, endIndex) => {
-                      downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
                       downshift.setItemCount(endIndex - startIndex);
                     }}
                   >

@@ -125,7 +125,7 @@ class GeneAutocomplete extends Component {
                     items={suggestions}
                     pageSize={pageSize}
                     onPageChange={(startIndex, endIndex) => {
-                      downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
                       downshift.setItemCount(endIndex - startIndex);
                     }}
                   >
