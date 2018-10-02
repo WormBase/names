@@ -18,7 +18,7 @@ class App extends Component {
         {
           ({isAuthenticated, user, login, profile, authorizedFetch}) => (
             <div className={this.props.classes.root}>
-              <Header>
+              <Header isAuthenticated={isAuthenticated}>
                 <ProfileButton name={user.name}/>
               </Header>
               {

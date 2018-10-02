@@ -23,9 +23,11 @@ const Header = (props) => {
               </Typography>
             </Link>
           </div>
-          <GeneSearchBox classes={{
-            root: classes.searchBox,
-          }} />
+          {
+            props.isAuthenticated ? <GeneSearchBox classes={{
+              root: classes.searchBox,
+            }} /> : null
+          }
           {props.children}
         </Toolbar>
       </AppBar>
@@ -35,6 +37,7 @@ const Header = (props) => {
 
 Header.propTypes = {
   classes: PropTypes.object.isRequired,
+  isAuthenticated: PropTypes.bool,
 };
 
 const styles = (theme) => ({
