@@ -1,10 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { mockFetchOrNot } from '../../mock';
 import { extract as extractQueryString, parse as parseQueryString} from 'query-string';
-import { AutocompleteBase } from '../../components/elements';
 
-export default class GeneAutocompleteBase extends Component {
+export default class GeneAutocompleteLoader extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -14,12 +13,21 @@ export default class GeneAutocompleteBase extends Component {
   };
 
   componentDidMount() {
-    if (this.props.defaultInputValue) {
-      this.loadSuggestions(this.props.defaultInputValue);
+    if (this.props.inputValue) {
+      this.loadSuggestions(this.props.inputValue, true);
     }
   }
 
-  loadSuggestions = (inputValue) => {
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevProps.inputValue !== this.props.inputValue &&
+      this.props.inputValue !== this.props.selectedValue  // don't reload suggestion when selecting an item from selection
+    ) {
+      this.loadSuggestions(this.props.inputValue);
+    }
+  }
+
+  loadSuggestions = (inputValue, isInitialLoad) => {
     if (inputValue.length < 2) {
       return;
     }
@@ -65,6 +73,8 @@ export default class GeneAutocompleteBase extends Component {
           }));
           this.setState({
             suggestions,
+          }, () => {
+            this.props.onSuggestionChange && this.props.onSuggestionChange(suggestions, isInitialLoad);
           });
         }
       }).catch((e) => console.log('error', e));
@@ -72,16 +82,14 @@ export default class GeneAutocompleteBase extends Component {
   }
 
   render() {
-    return (
-      <AutocompleteBase
-        onInputChange={this.loadSuggestions}
-        suggestions={this.state.suggestions}
-        {...this.props}
-      />
-    );
+    return this.props.children({
+      suggestions: this.state.suggestions || [],
+    });
   }
 };
 
-GeneAutocompleteBase.propTypes = {
-  defaultInputValue: PropTypes.string,
+GeneAutocompleteLoader.propTypes = {
+  inputValue: PropTypes.string,
+  selectedValue: PropTypes.string,
+  onSuggestionChange: PropTypes.func,
 };

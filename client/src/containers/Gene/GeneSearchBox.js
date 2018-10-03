@@ -2,18 +2,22 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import SearchIcon from '@material-ui/icons/Search';
+import CancelIcon from '@material-ui/icons/Cancel';
 import {
+  AutocompleteBase,
   withStyles,
+  Chip,
+  IconButton,
   InputAdornment,
   Paper,
   MenuItem,
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
-import GeneAutocompleteBase from './GeneAutocompleteBase';
+import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
-  const { InputProps, classes, ref, ...other } = inputProps;
+  const { InputProps, classes, ref, item, reset, ...other } = inputProps;
   return (
     <TextField
       InputProps={{
@@ -21,10 +25,28 @@ function renderInput(inputProps) {
         inputRef: ref,
         classes: {
           root: classes.inputRoot,
+          input:  item ? classes.inputDisabled : '',
         },
+        value: item ? '' : InputProps.value,
         startAdornment: (
           <InputAdornment position="start">
-            <SearchIcon />
+            <SearchIcon className={classes.searchIcon} />
+            {
+              item ?
+                <Chip
+                  tabIndex={-1}
+                  label={`${item.label} [${item.id}]`}
+                  className={classes.chip}
+                /> :
+                null
+            }
+          </InputAdornment>
+        ),
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton onClick={reset} disabled={!item && !InputProps.value}>
+              <CancelIcon />
+            </IconButton>
           </InputAdornment>
         ),
       }}
@@ -35,7 +57,7 @@ function renderInput(inputProps) {
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
   const isHighlighted = highlightedIndex === index;
-  const isSelected = selectedItem === suggestion.id;
+  const isSelected = selectedItem === suggestion;
 
   return (
     <MenuItem
@@ -66,70 +88,85 @@ class GeneSearchBox extends Component {
   render() {
     const {classes, history} = this.props;
     return (
-      <GeneAutocompleteBase>
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, suggestions, setItemCount}) => (
+      <AutocompleteBase itemToString={(item) => item ? item.id : ''}>
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, ...downshift}) => (
           <div className={classes.root}>
-            {renderInput({
-              fullWidth: true,
-              classes,
-              InputProps: getInputProps({
-                placeholder: 'Search a gene...',
-                id: 'gene-search-box',
-                onKeyDown: event => {
-                  if (event.key === 'Enter') {
+            <GeneAutocompleteLoader
+              inputValue={inputValue} selectedValue={selectedItem && selectedItem.id}>
+              {({suggestions}) => (
+                <div>
+                  {renderInput({
+                    fullWidth: true,
+                    classes,
+                    item: selectedItem,
+                    reset: downshift.clearSelection,
+                    InputProps: getInputProps({
+                      placeholder: 'Search a gene...',
+                      id: 'gene-search-box',
+                      onKeyDown: event => {
+                        if (event.key === 'Enter') {
 
-                    let id;
+                          let id;
 
-                    if (highlightedIndex || highlightedIndex === 0) {
-                      const highlightedSuggestion = suggestions[highlightedIndex];
-                      if (highlightedSuggestion) {
-                        id = highlightedSuggestion.id;
-                      }
-                    }
+                          if (highlightedIndex || highlightedIndex === 0) {
+                            const highlightedSuggestion = suggestions[highlightedIndex];
+                            if (highlightedSuggestion) {
+                              id = highlightedSuggestion.id;
+                            }
+                          }
 
-                    if (!id) {
-                      const [nextSelectedItem] = suggestions.filter(
-                        (item) => item.id === inputValue || item.label === inputValue
-                      );
-                      id = nextSelectedItem && nextSelectedItem.id;
-                    }
+                          if (!id) {
+                            const [nextSelectedItem] = suggestions.filter(
+                              (item) => item.id === inputValue || item.label === inputValue
+                            );
+                            id = nextSelectedItem && nextSelectedItem.id;
+                          }
 
-                    if (!id) {
-                      id = inputValue;
-                    }
+                          if (!id) {
+                            id = inputValue;
+                          }
 
-                    history.push(`/gene/id/${id}`);
-
-                  }
-                },
-              }),
-            })}
-            <SimpleListPagination
-              items={suggestions}
-              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
-            >
-              {({pageItems, navigation}) => (
-                isOpen ? (
-                  <Paper className={classes.paper} square>
-                    {
-                      pageItems.map((suggestion, index) => (
-                        renderSuggestion({
-                          suggestion,
-                          index,
-                          itemProps: getItemProps({item: suggestion.id}),
-                          highlightedIndex,
-                          selectedItem,
-                        })
-                      ))
-                    }
-                    {navigation}
-                  </Paper>
-                ) : null
+                          if (id) {
+                            // ignore empty input
+                            downshift.closeMenu();
+                            history.push(`/gene/id/${id}`);
+                          }
+                        }
+                      },
+                    }),
+                  })}
+                  <SimpleListPagination
+                    items={suggestions}
+                    onPageChange={(startIndex, endIndex) => {
+                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      downshift.setItemCount(endIndex - startIndex);
+                    }}
+                  >
+                    {({pageItems, navigation}) => (
+                      isOpen ? (
+                        <Paper className={classes.paper} square>
+                          {
+                            pageItems.map((suggestion, index) => (
+                              renderSuggestion({
+                                suggestion,
+                                index,
+                                itemProps: getItemProps({item: suggestion}),
+                                highlightedIndex,
+                                selectedItem,
+                              })
+                            ))
+                          }
+                          {navigation}
+                        </Paper>
+                      ) : null
+                    )}
+                  </SimpleListPagination>
+                </div>
               )}
-            </SimpleListPagination>
+            </GeneAutocompleteLoader>
           </div>
         )}
-      </GeneAutocompleteBase>
+      </AutocompleteBase>
     );
   }
 }
@@ -148,12 +185,26 @@ const styles = (theme) => ({
     width: '20em',
     position: 'relative',
   },
+  inputRoot: {
+    backgroundColor: theme.palette.common.white,
+    justifyContent: 'space-between',
+  },
+  inputDisabled: {
+    display: 'none',
+  },
   paper: {
     position: 'absolute',
     zIndex: 1,
     marginTop: -1 * theme.spacing.unit,
     left: 0,
     right: 0,
+  },
+  searchIcon: {
+    paddingLeft: theme.spacing.unit,
+  },
+  chip: {
+    height: theme.spacing.unit * 3,
+    marginLeft: theme.spacing.unit,
   },
 });
 
