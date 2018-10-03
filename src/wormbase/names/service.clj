@@ -87,10 +87,10 @@
     :coercion :pure-spec
     :middleware [ring-gzip/wrap-gzip
                  wrap-static-resources
-                 wrap-not-found
                  wdb/wrap-datomic
                  wna/wrap-auth
-                 mmw/wrap-format]
+                 mmw/wrap-format
+                 wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
