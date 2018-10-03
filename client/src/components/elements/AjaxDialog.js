@@ -12,6 +12,10 @@ import ProgressButton, { PROGRESS_BUTTON_PENDING, PROGRESS_BUTTON_READY} from '.
 import SimpleAjax from './SimpleAjax';
 
 class AjaxDialog extends Component {
+  handleClose = (reset) => {
+    reset();
+    this.props.onClose && this.props.onClose();
+  }
 
   render() {
     return (
@@ -30,7 +34,7 @@ class AjaxDialog extends Component {
                     return (
                       <Dialog
                         open={this.props.open}
-                        onClose={this.props.onClose}
+                        onClose={() => this.handleClose(resetData)}
                         aria-labelledby="form-dialog-title"
                       >
                         <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
@@ -48,7 +52,7 @@ class AjaxDialog extends Component {
                         }
                         <DialogActions>
                           <Button
-                            onClick={this.props.onClose}
+                            onClick={() => this.handleClose(resetData)}
                         //    color="primary"
                           >
                             Cancel
