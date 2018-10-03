@@ -100,9 +100,11 @@
                         (re-pattern (str "^" term)))
           res {:matches (or (some->> q-result
                                      (map (fn matched [[gid cgc-name seq-name]]
-                                            (array-map :gene/id gid
-                                                       :gene/cgc-name cgc-name
-                                                       :gene/sequence-name seq-name)))
+                                            (merge {:gene/id gid}
+                                                   (when (s/valid? :gene/cgc-name cgc-name)
+                                                     {:gene/cgc-name cgc-name})
+                                                   (when (s/valid? :gene/sequence-name seq-name)
+                                                     {:gene/sequence-name seq-name}))))
                                      (vec))
                             [])}]
       (ok res))))
