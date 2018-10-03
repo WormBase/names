@@ -18,14 +18,10 @@
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
    [wormbase.specs.gene :as wsg]
-   [wormbase.names.event-broadcast :as wneb]
    [wormbase.specs.person :as wsp]
    [wormbase.specs.species :as wss]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu])
-  (:import
-   (clojure.lang ExceptionInfo)
-   (java.time.format DateTimeFormatter))
   (:gen-class))
 
 (defn- throw-parse-exc! [spec value]
@@ -123,7 +119,6 @@
         merged-from (geneace-text-ref event-text)]
     (-> m
         (assoc :provenance/what :event/merge-genes)
-        (assoc :provenance/merged-into [:gene/id merged-into])
         (assoc :provenance/merged-from [:gene/id merged-from]))))
 
 (defn decode-split-event [m event-text]
@@ -131,8 +126,7 @@
         split-into (geneace-text-ref event-text)]
     (-> m
         (assoc :provenance/what :event/split-gene)
-        (assoc :provenance/split-into [:gene/id split-into])
-        (assoc :provenance/split-from [:gene/id split-from]))))
+        (assoc :provenance/split-into [:gene/id split-into]))))
 
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
@@ -222,6 +216,45 @@
                          no-created)]
     [gid (wnp/sort-events-by-when fixedup-events)]))
 
+(defn update-reciprocal-events
+  [target-attr src-attr src-gene-id events history-actions]
+  (let [orig-event (first (filter target-attr events))]
+    (if-let [target-gene-id (-> (select-keys orig-event [target-attr]) target-attr second)]
+      (let [target-events (vec (get history-actions target-gene-id))]
+        (update history-actions
+                target-gene-id
+                (fn [old-events]
+                  (conj old-events
+                        (-> orig-event
+                            (dissoc target-attr :gene/id :geneace/event-text)
+                            (assoc src-attr [:gene/id src-gene-id]
+                                   :gene/id target-gene-id))))))
+      history-actions)))
+
+(defn map-reciprocal-events
+  "In the GeneACe export, only one side of a merge or split event is dumped.
+  This function adds the reciprocal entry to the corresponding event list in the
+  mapping of all history actions."
+  [history-actions]
+  (reduce-kv (fn record-inverse-refs [ha gene-id events]
+               (let [splits (filter :provenance/split-into events)
+                     update-splits (partial update-reciprocal-events
+                                            :provenance/split-into
+                                            :provenance/split-from
+                                            gene-id
+                                            splits)
+                     merges (filter :provenance/merged-from events)
+                     update-merges (partial update-reciprocal-events
+                                            :provenance/merged-from
+                                            :provenance/merged-into
+                                            gene-id
+                                            merges)]
+                 (->> ha
+                      (update-splits)
+                      (update-merges))))
+             history-actions
+             history-actions))
+
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
         cast-fns {:gene/id cast-gene-id-fn
@@ -233,6 +266,7 @@
            (group-by :gene/id)
            (map process-gene-events)
            (into {})
+           (map-reciprocal-events)
            (doall)))))
 
 (defn transact-gene-event
@@ -246,8 +280,10 @@
 
 (defn build-data-txes
   "Build the current entity representation of each gene."
-  [tsv-path conf & {:keys [batch-size]
-                    :or {batch-size 1000}}]
+  [tsv-path conf filter-fn
+   & {:keys [munge batch-size]
+      :or {munge identity
+           batch-size 500}}]
   (let [cast-fns {:gene/id cast-gene-id-fn
                   :gene/species (partial conformed-ref
                                          :species/latin-name)
@@ -259,6 +295,8 @@
     (with-open [in-file (io/reader tsv-path)]
       (->> (parse-transform-cast in-file conf cast-fns)
            (map discard-empty-valued-entries)
+           (filter filter-fn)
+           (map munge)
            (partition-all batch-size)
            doall))))
 
@@ -268,11 +306,30 @@
                                 :provenance/how :agent/importer})]
     (d/transact-async conn tx-data)))
 
+(defn fixup-non-live-gene [db gene]
+  (let [gene* (cond-> gene
+                (d/entity db [:gene/cgc-name (:gene/cgc-name gene)]) (dissoc :gene/cgc-name)
+                (d/entity db [:gene/sequence-name (:gene/sequence-name gene)]) (dissoc :gene/sequence-name))]
+    gene*))
+
 (defn batch-transact-data [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
-    (doseq [txf (pmap (partial transact-batch conn)
-                      (build-data-txes tsv-path cd-ex-conf))]
-      @txf)))
+    ;; process all genes that are not dead, using the default batch size of 500.
+    (doseq [batch (build-data-txes tsv-path
+                                   cd-ex-conf
+                                   #(not= (:gene/status %) :gene.status/dead))]
+      @(transact-batch conn batch))
+    ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
+    ;; - only process the dead genees now, 1 at a time.
+    ;; - hack (munge) :  remove names from dead genes if they are already aassigned in db.
+    ;; - use batch-size of 1, since there are dead genes with
+    ;;   that share names (e.g sequence names)
+    (doseq [batch (build-data-txes tsv-path
+                                   cd-ex-conf
+                                   #(= (:gene/status %) :gene.status/dead)
+                                   :munge (partial fixup-non-live-gene (d/db conn))
+                                   :batch-size 1)]
+      @(transact-batch conn batch))))
 
 (defn process
   [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
@@ -322,12 +379,18 @@
       (exit 1 "set the WB_DB_URI environement variable w/datomic URI.")
 
       tsv-paths
-      (do (when-not (d/create-database db-uri)
+      (do (if (true? (d/create-database db-uri))
             (let [conn (d/connect db-uri) ]
+              (print "Installing schema... ")
               (wdbs/install conn 1)
-              (d/release conn)))
+              (println "done")
+              (d/release conn)
+              (println "DB installed at:" db-uri))
+            (println "Assuming schema has been installed."))
           (let [conn (d/connect db-uri)
                 proc (partial process conn)]
-            (apply proc tsv-paths))))))
+            (print "Importing...")
+            (apply proc tsv-paths)
+            (println "[ok]"))))))
 
 
