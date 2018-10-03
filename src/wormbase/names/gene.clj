@@ -88,17 +88,21 @@
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (let [db (:db request)
           term (stc/conform ::wsg/find-term pattern)
-          q-result (d/q '[:find ?gid ?attr ?name
+          q-result (d/q '[:find ?gid ?cgc-name ?sequence-name
                           :in $ % ?term
                           :where
                           (gene-name ?term ?name ?eid ?attr)
-                          [?eid :gene/id ?gid]]
+                          [?eid :gene/id ?gid]
+                          [(get-else $ ?eid :gene/cgc-name "") ?cgc-name]
+                          [(get-else $ ?eid :gene/sequence-name "") ?sequence-name]]
                         db
                         name-matching-rules
                         (re-pattern (str "^" term)))
           res {:matches (or (some->> q-result
-                                     (map (fn matched [[gid attr name*]]
-                                            (array-map :gene/id gid attr name*)))
+                                     (map (fn matched [[gid cgc-name seq-name]]
+                                            (array-map :gene/id gid
+                                                       :gene/cgc-name cgc-name
+                                                       :gene/sequence-name seq-name)))
                                      (vec))
                             [])}]
       (ok res))))
