@@ -38,6 +38,7 @@
 (s/def :gene/status sts/keyword?)
 
 (s/def ::anonymous (stc/spec (s/keys :req [:gene/id
+                                           :gene/species
                                            :gene/status])))
 
 (s/def ::cloned (stc/spec
