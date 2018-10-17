@@ -69,10 +69,11 @@ eb-local: docker-ecr-login $(call print-help,eb-local,\
 .PHONY: build-client-app
 build-client-app: $(call print-help,build-client-app,\
 		    "Build the React Javascript client Application")
-	@yarn --silent --cwd ./client build
+	@cd client && yarn install --frozen-lockfile && yarn build
 
 .PHONY: build
-build: build-client-app \
+build: clean \
+       build-client-app \
        docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
