@@ -37,6 +37,10 @@
 
 (s/def :gene/status sts/keyword?)
 
+(s/def ::anonymous (stc/spec (s/keys :req [:gene/id
+                                           :gene/species
+                                           :gene/status])))
+
 (s/def ::cloned (stc/spec
                  (stc/merge
                   (s/keys :req [:gene/biotype
@@ -152,17 +156,18 @@
                   (s/coll-of ::provenance :type vector? :min-count 1)))
 
 
-(s/def ::info (stc/spec
-               (s/keys
-                :req [:gene/id
-                      :gene/species
-                      :gene/status
-                      (or (or :gene/cgc-name :gene/sequence-name)
-                          (and :gene/cgc-name :gene/sequence-name))]
-                :req-un [::history]
-                :opt [:gene/biotype
-                      :gene/sequence-name
-                      :gene/cgc-name])))
+(s/def ::info (stc/spec (s/or :cloned ::cloned
+                              :uncloned ::uncloned
+                              :anonymous ::anonymous)))
+;; (s/def ::info (stc/spec
+;;                (s/keys
+;;                 :req [:gene/id
+;;                       :gene/species
+;;                       :gene/status]
+;;                 :req-un [::history]
+;;                 :opt [:gene/biotype
+;;                       (or (or :gene/cgc-name :gene/sequence-name)
+;;                           (and :gene/cgc-name :gene/sequence-name))])))
 
 (s/def ::identifier (s/or :gene/id :gene/id
                           :gene/cgc-name :gene/cgc-name

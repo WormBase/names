@@ -15,6 +15,7 @@
                                     precondition-failed precondition-failed!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
+   [wormbase.util :as wu]
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
@@ -87,17 +88,23 @@
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (let [db (:db request)
           term (stc/conform ::wsg/find-term pattern)
-          q-result (d/q '[:find ?gid ?attr ?name
+          q-result (d/q '[:find ?gid ?cgc-name ?sequence-name
                           :in $ % ?term
                           :where
                           (gene-name ?term ?name ?eid ?attr)
-                          [?eid :gene/id ?gid]]
+                          [?eid :gene/id ?gid]
+                          [(get-else $ ?eid :gene/cgc-name "") ?cgc-name]
+                          [(get-else $ ?eid :gene/sequence-name "") ?sequence-name]]
                         db
                         name-matching-rules
                         (re-pattern (str "^" term)))
           res {:matches (or (some->> q-result
-                                     (map (fn matched [[gid attr name*]]
-                                            (array-map :gene/id gid attr name*)))
+                                     (map (fn matched [[gid cgc-name seq-name]]
+                                            (merge {:gene/id gid}
+                                                   (when (s/valid? :gene/cgc-name cgc-name)
+                                                     {:gene/cgc-name cgc-name})
+                                                   (when (s/valid? :gene/sequence-name seq-name)
+                                                     {:gene/sequence-name seq-name}))))
                                      (vec))
                             [])}]
       (ok res))))
@@ -129,12 +136,9 @@
   (entity-must-exist! request identifier)
   (let [db (:db request)
         [lur _] (identify request identifier)
-        info (d/pull db info-pull-expr lur)
+        info (wdb/pull db info-pull-expr lur)
         prov (wnp/query-provenance db lur provenance-pull-expr)]
-    (-> info
-        (assoc :history prov)
-        transform-result
-        ok)))
+    (-> info (assoc :history prov) ok)))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -446,7 +450,7 @@
                fail-precondition?
                (fail-precondition? gene-status))
       (precondition-failed! {:message precondition-failure-msg
-                             :info (wnu/undatomicize gene-status)}))
+                             :info (wu/undatomicize gene-status)}))
     (let [prov (wnp/assoc-provenance request payload event-type)
           conn (:conn request)
           tx-res @(d/transact-async
@@ -459,7 +463,7 @@
       (-> tx-res
           :db-after
           pull-status
-          wnu/undatomicize
+          wu/undatomicize
           ok))))
 
 (defn resurrect-gene [request id]

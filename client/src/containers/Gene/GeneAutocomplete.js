@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  AutocompleteBase,
   withStyles,
   Chip,
   InputAdornment,
@@ -9,7 +10,7 @@ import {
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
-import GeneAutocompleteBase from './GeneAutocompleteBase';
+import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
@@ -46,7 +47,7 @@ function renderInput(inputProps) {
 
 function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
   const isHighlighted = highlightedIndex === index;
-  const isSelected = selectedItem === suggestion.id;
+  const isSelected = selectedItem === suggestion;
 
   return (
     <MenuItem
@@ -74,57 +75,85 @@ renderSuggestion.propTypes = {
 };
 
 class GeneAutocomplete extends Component {
+
+  itemToString = (item) => (item ? item.id : '');
+
   render() {
-    const {classes, onChange, value, ...otherProps} = this.props;
+    const {classes, onChange, value, pageSize, ...otherProps} = this.props;
     return (
-      <GeneAutocompleteBase
-        onChange={(selectItem) => onChange({
+      <AutocompleteBase
+        itemToString={this.itemToString}
+        onInputValueChange={(inputValue) => onChange({
           target: {
-            value: selectItem,
+            value: inputValue,
           },
         })}
         defaultInputValue={value}
       >
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, setItemCount, suggestions, clearSelection}) => (
-          <div className={classes.root}>
-            {renderInput({
-              fullWidth: true,
-              classes,
-              InputProps: getInputProps({
-                id: 'gene-id',
-              }),
-              item: (selectedItem || inputValue) ? suggestions.filter(
-                (item) => item.id === selectedItem || item.id === inputValue,
-              )[0] : null,
-              reset: clearSelection,
-              ...otherProps,
-            })}
-            <SimpleListPagination
-              items={suggestions}
-              onPageChange={(startIndex, endIndex) => setItemCount(endIndex - startIndex)}
+        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, clearSelection, ...downshift}) => (
+          <div>
+            <GeneAutocompleteLoader
+              inputValue={inputValue}
+              selectedValue={this.itemToString(selectedItem)}
+              onSuggestionChange={(suggestions, isInitialLoad) => {
+                if (!isOpen || isInitialLoad) {
+                  // set selectedItem based on matching of inputValue with suggestions, when
+                  // 1) suggestion loads when user isn't interacting with the field, OR
+                  // 2) suggestion loads is first loaded with the initial/unmodified inputValue
+                  const [nextSelectedItem] = suggestions.filter(
+                    (item) => item.label === inputValue || item.id === inputValue
+                  );
+                  if (nextSelectedItem) {
+                    downshift.selectItem(nextSelectedItem);
+                  }
+                }
+              }}
             >
-              {({pageItems, navigation}) => (
-                isOpen ? (
-                  <Paper className={classes.paper} square>
-                    {
-                      pageItems.map((suggestion, index) => (
-                        renderSuggestion({
-                          suggestion,
-                          index,
-                          itemProps: getItemProps({item: suggestion.id}),
-                          highlightedIndex,
-                          selectedItem,
-                        })
-                      ))
-                    }
-                    {navigation}
-                  </Paper>
-                ) : null
-              )}
-            </SimpleListPagination>
+              {({suggestions}) => (
+                <div className={classes.root}>
+                  {renderInput({
+                    fullWidth: true,
+                    classes,
+                    InputProps: getInputProps({
+                      id: 'gene-id',
+                    }),
+                    item: selectedItem,
+                    reset: clearSelection,
+                    ...otherProps,
+                  })}
+                  <SimpleListPagination
+                    items={suggestions}
+                    pageSize={pageSize}
+                    onPageChange={(startIndex, endIndex) => {
+                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      downshift.setItemCount(endIndex - startIndex);
+                    }}
+                  >
+                    {({pageItems, navigation}) => (
+                      isOpen ? (
+                        <Paper className={classes.paper} square>
+                          {
+                            pageItems.map((suggestion, index) => (
+                              renderSuggestion({
+                                suggestion,
+                                index,
+                                itemProps: getItemProps({item: suggestion}),
+                                highlightedIndex,
+                                selectedItem,
+                              })
+                            ))
+                          }
+                          {navigation}
+                        </Paper>
+                      ) : null
+                    )}
+                  </SimpleListPagination>
+              </div>
+            )}
+            </GeneAutocompleteLoader>
           </div>
         )}
-      </GeneAutocompleteBase>
+      </AutocompleteBase>
     );
   }
 }

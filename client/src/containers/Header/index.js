@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { AppBar, Toolbar, Typography, withStyles } from '../../components/elements';
+import GeneSearchBox from '../Gene/GeneSearchBox';
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
@@ -18,11 +19,15 @@ const Header = (props) => {
           <div className={classes.title}>
             <Link to="/" >
               <Typography variant="title" color="inherit" >
-                WormBase Names Service
+                Names Service
               </Typography>
             </Link>
           </div>
-
+          {
+            props.isAuthenticated ? <GeneSearchBox classes={{
+              root: classes.searchBox,
+            }} /> : null
+          }
           {props.children}
         </Toolbar>
       </AppBar>
@@ -32,20 +37,34 @@ const Header = (props) => {
 
 Header.propTypes = {
   classes: PropTypes.object.isRequired,
+  isAuthenticated: PropTypes.bool,
 };
 
 const styles = (theme) => ({
   root: {
   },
   toolbar: {
-    minHeight: theme.spacing.unit * 4
+    minHeight: theme.spacing.unit * 4,
+    [theme.breakpoints.down('sm')]: {
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      padding: 0,
+    },
   },
   title: {
     flexGrow: 1,
     '& a': {
       textDecoration: 'initial',
-      color: 'initial',
+      color: theme.palette.common.white,
     },
+  },
+  searchBox: {
+    top: theme.spacing.unit,
+    [theme.breakpoints.down('sm')]: {
+      order: 10,
+      width: '100%',
+    },
+    margin: `0px ${theme.spacing.unit * 2}px`,
   },
 });
 

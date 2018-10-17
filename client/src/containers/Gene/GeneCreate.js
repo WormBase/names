@@ -9,6 +9,7 @@ import {
   PageMain,
   Typography,
   ValidationError,
+  withStyles,
 } from '../../components/elements';
 import GeneForm from './GeneForm';
 
@@ -97,6 +98,7 @@ class GeneCreate extends Component {
           <Button
             variant="raised"
             component={({...props}) => <Link to='/gene' {...props} />}
+            className={this.props.classes.backToDirectoryButton}
           >
             Back to directory
           </Button>
@@ -123,4 +125,13 @@ GeneCreate.propTypes = {
   authorizedFetch: PropTypes.func.isRequired,
 };
 
-export default withRouter(GeneCreate);
+const styles = (theme) => ({
+  backToDirectoryButton: {
+    width: 150,
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+    },
+  },
+});
+
+export default withStyles(styles)(withRouter(GeneCreate));

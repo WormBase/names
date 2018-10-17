@@ -20,7 +20,9 @@ export {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   Icon,
+  IconButton,
   InputAdornment,
   MenuItem,
   Paper,
@@ -43,7 +45,7 @@ export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as SimpleAjax } from './SimpleAjax';
 export { default as NotFound } from './NotFound';
-export { Page, PageLeft, PageMain, PageRight } from './Page';
+export { Page, PageLeft, PageMain } from './Page';
 export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
 export { default as SimpleListPagination } from './SimpleListPagination';
@@ -76,7 +78,7 @@ export const colors = {
 export const theme = createMuiTheme({
   palette: {
     primary: {
-      main: blue[600],
+      main: blue[700],
     },
     secondary: {
       main: yellow['A700'],

@@ -57,8 +57,7 @@
    :spec "/swagger.json"
    :ignore-missing-mappings? false
    :data
-   {;; :basePath "/api"
-    :info
+   {:info
     {:title "WormBase name service"
      :description "Provides naming operations for WormBase entities."}
 
@@ -78,7 +77,9 @@
      {:name "person"}]}})
 
 (defn wrap-static-resources [handler]
-  (ring-resource/wrap-resource handler "client_build"))
+  (-> handler
+      (ring-resource/wrap-resource "client_build")
+      (ring-content-type/wrap-content-type)))
 
 (def ^{:doc "The main application."} app
   (sweet/api
@@ -86,10 +87,10 @@
     :coercion :pure-spec
     :middleware [ring-gzip/wrap-gzip
                  wrap-static-resources
-                 wrap-not-found
                  wdb/wrap-datomic
                  wna/wrap-auth
-                 mmw/wrap-format]
+                 mmw/wrap-format
+                 wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
     :swagger swagger-ui}
    (sweet/context "" []
@@ -100,4 +101,5 @@
 (defn init
   "Entry-point for ring server initialization."
   []
+  (require '[wormbase.names.event-broadcast])
   (mount/start))
