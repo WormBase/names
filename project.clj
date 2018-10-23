@@ -1,4 +1,4 @@
-(defproject wormbase-names "0.4.1"
+(defproject wormbase-names "0.4.2-SNAPSHOT"
   :description "WormBase names service."
   :plugins
   [[lein-environ "1.1.0"]
