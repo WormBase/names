@@ -109,16 +109,6 @@
                             [])}]
       (ok res))))
 
-(defn- transform-result
-  "Removes datomic internal keys from a pull-result map."
-  [pull-result]
-  (reduce-kv (fn unravel-enums [m k v]
-               (assoc m k (if (and (map? v) (:db/ident v))
-                            (:db/ident v)
-                            v)))
-             (empty pull-result)
-             (dissoc pull-result :db/id)))
-
 (def provenance-pull-expr '[*
                             {:provenance/what [:db/ident]
                              :provenance/who [:person/email :person/name :person/id]
