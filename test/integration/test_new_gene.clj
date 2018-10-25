@@ -32,15 +32,14 @@
       (tu/status-is? 400 status body)
       (t/is (contains? (tu/parse-body body) :message))))
   (t/testing "Species should always be required when creating gene name."
-    (let [[status
-           body] (new-gene {:gene/cgc-name (tu/cgc-name-for-species
-                                            :species/c-elegans)})]
-      (tu/status-is? 400 status (format "Body: " body)))))
+    (let [cgc-name (tu/cgc-name-for-species :species/c-elegans)
+          [status body] (new-gene {:gene/cgc-name cgc-name})]
+      (tu/status-is? 400 status body))))
 
 (t/deftest wrong-data-shape
   (t/testing "Non-conformant data should result in HTTP Bad Request 400"
     (let [[status body] (new-gene {})]
-      (tu/status-is? 400 status (format "Body: " body)))))
+      (tu/status-is? 400 status body))))
 
 (t/deftest invalid-species-specified
   (t/testing "What happens when you specify an invalid species"

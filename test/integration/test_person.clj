@@ -35,13 +35,14 @@
 
 (def person-update (partial api-tc/update "person"))
 
-(t/deftest update-person
+(t/deftest update-person-requires-admin
   (t/testing "Security - updating person requires admin role"
     (let [current-user "tester2@wormbase.org"
           sample (-> (tu/person-samples 1)
                      first
                      (assoc-in [:provenance/who :person/email]
-                               "tester2@wormbase.org"))
+                               "tester2@wormbase.org")
+                     (assoc :person/active? true))
           identifier (:person/id sample)
           update-data {:person/roles #{:person.role/sequence-curator}}]
       (tu/with-person-fixtures
@@ -50,25 +51,24 @@
           (let [[status body] (person-update identifier
                                              update-data
                                              :current-user current-user)]
-            (tu/status-is? 401 status body))))))
+            (tu/status-is? 401 status body)))))))
+
+(t/deftest update-person-name
   (t/testing "Successfully updating a person."
-    (let [sample (first (tu/person-samples 1))
+    (let [sample (-> (tu/person-samples 1)
+                     first
+                     (assoc :person/active? true))
           identifier (:person/id sample)]
       (tu/with-person-fixtures
         [sample]
         (fn check-update-success [conn]
-          (assert (d/entity (d/db conn) [:person/id identifier]),
-                  (str "Nobody home?:" identifier))
           (let [[status body] (person-update identifier
                                              (assoc sample
                                                     :person/name
                                                     "Joe Bloggs"))]
             (tu/status-is? 200 status body)
-            (t/is (= (:person/name
-                      (d/pull (d/db conn)
-                              '[:person/name]
-                              [:person/id identifier]))
-                     "Joe Bloggs"))))))))
+            (let [result (d/pull (d/db conn) '[*] [:person/id identifier])]
+              (t/is (= (:person/name result) "Joe Bloggs")))))))))
 
 (def person-info (partial api-tc/info "person"))
 
