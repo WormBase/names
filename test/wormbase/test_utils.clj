@@ -188,18 +188,6 @@
            (partition 2)
            (set)))
 
-(defn body-contains? [body expected-data spec]
-  (assert (map? expected-data) "expected-data must be a map")
-  (let [exp-data (map->set expected-data)
-        act-data (map->set body)]
-    (t/is (set/subset? exp-data act-data)
-          (str/join "\n" ["Expected data:"
-                          (pr-str exp-data)
-                          "not found in response body:"
-                          (pr-str body)]))
-    (when-let [rspec (:spec body)]
-      (pprint (stc/deserialize rspec)))))
-
 (defn gene-sample-to-txes
   "Convert a sample generated from a spec into a transactable form."
   [sample]
