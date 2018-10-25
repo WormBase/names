@@ -17,7 +17,6 @@
                           (map :db/ident)
                           (set)))}))
 
-
 (def person-overrides
   {[:person/id] (constantly id)
    [:person/email] (constantly email)
