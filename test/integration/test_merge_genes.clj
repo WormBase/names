@@ -144,14 +144,6 @@
                                {:gene/biotype :biotype/transposable-element-gene}
                                from-id
                                into-id)
-                tx-for-gid (fn xyz [gid pattr] (d/q '[:find ?tx .
-                                                      :in $ ?lur ?pattr
-                                                      :where
-                                                      [?pa :db/ident ?pattr]
-                                                      [?tx ?pa ?lur]]
-                                                    (d/history db)
-                                                    [:gene/id gid]
-                                                    pattr))
                 [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
                 ppe '[*
                       {:provenance/what [:db/ident]
