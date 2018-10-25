@@ -12,7 +12,8 @@
                                     conflict conflict!
                                     created
                                     not-found not-found!
-                                    precondition-failed precondition-failed!]]
+                                    precondition-failed precondition-failed!
+                                    internal-server-error]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
@@ -165,8 +166,9 @@
         tx-result @(d/transact-async (:conn request) tx-data)
         db (:db-after tx-result)
         new-id (wdb/extract-id tx-result :gene/id)
-        ent (d/entity db [:gene/id new-id])
-        emap (wnu/entity->map ent)
+        emap (some->> [:gene/id new-id]
+                      (d/pull db info-pull-expr)
+                      (wu/undatomicize))
         result {:created emap}]
     (created "/gene/" result)))
 
@@ -201,10 +203,10 @@
                 txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (if-let [db-after (:db-after tx-result)]
-              (let [ent (d/entity db-after lur)]
-                (ok {:updated (wnu/entity->map ent)}))
-              (not-found
-               (format "Gene '%s' does not exist" (last lur)))))
+              (if-let [ent (d/pull db-after info-pull-expr lur)]
+                (ok {:updated (wu/undatomicize ent)})
+                (not-found
+                 (format "Gene '%s' does not exist" (last lur))))))
           (throw (ex-info "Not valid according to spec."
                           {:problems (expound-str spec data)
                            :type ::validation-error
@@ -263,6 +265,12 @@
   (let [names ((juxt :gene/biotype :gene/sequence-name) target)]
     (every? nil? names)))
 
+(defn merged-info [db id & more-ids]
+  (some->> (cons id more-ids)
+           (map (partial vector :gene/id))
+           (map (partial d/pull db info-pull-expr))
+           (wu/undatomicize)))
+
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db data :body-params} request
         into-biotype (:gene/biotype data)
@@ -294,14 +302,13 @@
                        (map (partial d/transact-async conn))
                        (map deref)
                        (last))]
-      (if-let [db (:db-after tx-result (:tx-data tx-result))]
-        (let [[from into] (map #(d/entity db [:gene/id %])
-                               [from-id into-id])]
-          (ok {:updated (wnu/entity->map into)
-                             :statuses
-                             {from-id (:gene/status from)
-                              into-id (:gene/status into)}}))
-        (bad-request {:message "Invalid transaction"}))))
+    (if-let [db (:db-after tx-result (:tx-data tx-result))]
+      (let [[from-gene into-gene] (merged-info db from-id into-id)]
+        (ok {:updated into-gene
+             :statuses {from-id (:gene/status from-gene)
+                        into-id (:gene/status into-gene)}}))
+      (internal-server-error
+       {:message "Invalid transaction - should never get here."}))))
 
 (defn undo-merge-gene [request from-id into-id]
   (entity-must-exist! request from-id into-id)
@@ -571,7 +578,7 @@
           :x-name ::merge-gene
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:gene/biotype :gene/biotype}}
-          :responses (response-map default-responses)
+;;          :responses (response-map default-responses)
           :handler
           (fn [request]
             (merge-genes request identifier from-identifier))}

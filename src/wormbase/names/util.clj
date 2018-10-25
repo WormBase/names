@@ -34,12 +34,6 @@
                    %)
        data))
 
-(defn entity->map [ent]
-  (w/prewalk #(if (instance? datomic.query.EntityMap %)
-                (into {} %)
-                %)
-             ent))
-
 ;; trunc and datom-table taken from day-of-datomic repo (congnitect).
 
 (defn trunc
@@ -73,10 +67,10 @@
 
 (defn- resolve-ref [db m k v]
   (cond
-    (pos-int? v)
+    (and v (pos-int? v))
     (if-let [ident (d/ident db v)]
       (assoc m k ident)
-      (assoc m k (->> v (d/entity db) entity->map)))
+      (assoc m k (d/pull db '[*] v)))
     :default
     (assoc m k v)))
 

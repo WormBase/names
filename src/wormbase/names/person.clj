@@ -8,7 +8,7 @@
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
    [wormbase.names.auth :as wna]
-   [wormbase.names.util :as wnu]
+   [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
    [ring.util.http-response :as http-response]
    [spec-tools.core :as stc]))
@@ -33,19 +33,18 @@
               pid (wdb/extract-id tx-res :person/id)]
           (http-response/created (str "/person/" pid) person))))))
 
+(defn info [db lur]
+  (let [person (d/pull db '[*] lur)]
+    (when (:db/id person)
+      (wu/undatomicize person))))
+
 (defn about-person
   "Return info about a WBPerson."
   [identifier request]
   (let [db (:db request)
-        lur (s/conform ::wsp/identifier identifier)
-        person (wnu/entity->map (d/pull db '[*] lur))]
-    (when (:db/id person)
+        lur (s/conform ::wsp/identifier identifier)]
+    (when-let [person (info db lur)]
       (http-response/ok person))))
-
-(defn info [db lur]
-  (let [person (d/pull db '[*] lur)]
-    (when (:db/id person)
-      (wnu/entity->map person))))
 
 (defn update-person
   "Handler for apply an update a person."
@@ -54,7 +53,7 @@
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)
         person (info db lur)]
-    (if (:db/id person)
+    (if person
       (let [spec ::wsp/person
             conn (:conn request)
             data (some-> request
@@ -95,31 +94,27 @@
    (sweet/context "/person/" []
      :tags ["person"]
      (sweet/resource
-      {:coercion :spec
-       :post
+      {:post
        {:summary "Create a new person."
         :x-name ::new-person
         :parameters {:body-params ::wsp/person}
         :responses {201 {:schema ::wsp/person}}
         :handler create-person}}))
-   (sweet/context "/person/:identifier" [identifier]
+   (sweet/context "/person/:identifier" []
      :tags ["person"]
+     :path-params [identifier :- ::wsp/identifier]
      (sweet/resource
-      {:coercion :spec
-       :get
+      {:get
        {:summary "Information about a person."
         :x-name ::about-person
-        :path-params [identifier :- ::wsp/identifier]
         :handler (wrap-id-validation about-person identifier)}
        :put
        {:summary "Update information about a person."
         :x-name ::update-person
-        :path-params [identifier :- ::wsp/identifier]
         :parameters {:body-params ::wsp/update}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
         :x-name ::deactivate-person
-        :path-params [identifier :- ::wsp/identifier]
         :handler (wrap-id-validation deactivate-person identifier)}}))))
 
