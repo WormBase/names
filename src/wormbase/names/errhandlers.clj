@@ -88,15 +88,12 @@
         (handle-unexpected-error exc data request)))))
 
 (defn handle-request-validation
-  ([^Exception exc data request]
-   ;; strip out keys that won't encode succesfully
-   (handle-validation-error
-    exc
-    data
-    request
-    :message "Request validation failed"))
-  ([err]
-   err))
+  [^Exception exc data request]
+  (handle-validation-error
+   exc
+   data
+   request
+   :message "Request validation failed"))
 
 (defn handle-unauthenticated [^Exception exc data request]
   (if-not (authenticated? request)
