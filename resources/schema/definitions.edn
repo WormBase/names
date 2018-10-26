@@ -107,4 +107,9 @@
       :doc "Person's name as presented by Google APIs"}
  #:db{:ident :person/active?
       :valueType :db.type/boolean,
-      :cardinality :db.cardinality/one}]
+      :cardinality :db.cardinality/one}
+ #:db{:ident :saga/id
+      :cardinality :db.cardinality/one
+      :valueType :db.type/uuid
+      :unique :db.unique/value}]
+
