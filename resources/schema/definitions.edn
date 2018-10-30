@@ -111,5 +111,5 @@
  #:db{:ident :saga/id
       :cardinality :db.cardinality/one
       :valueType :db.type/uuid
-      :unique :db.unique/value}]
+      :index true}]
 
