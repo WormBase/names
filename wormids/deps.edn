@@ -5,8 +5,7 @@
  ;; console by default (compojure-api integration)
  :deps
  {org.clojure/clojure {:mvn/version "1.9.0"}
-  org.clojure/tools.cli {:mvn/version "0.3.6"}
-  danlentz/clj-uuid {:mvn/version "0.1.7"}}
+  org.clojure/tools.cli {:mvn/version "0.3.6"}}
  ;; aliases
  ;;   resolve-deps aliases (-R) affect dependency resolution, options:
  ;;     :extra-deps - specifies extra deps to add to :deps
