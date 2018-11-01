@@ -7,7 +7,7 @@
 
 (defn resolve-ref [db m k v]
   (assoc m
-         k 
+         k
          (cond
            (and (map? v) (:db/id v))  (:db/id v)
            (keyword? v) [:db/ident v]
@@ -91,6 +91,3 @@
              (interleave coll)
              (partition 2)
              (map (partial apply merge)))))
-
-
-
