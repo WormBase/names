@@ -11,7 +11,7 @@
 
   Conflicts caused by transaction data are not handled her;
   they are expected to be handled by the caller.
-  
+
   No-op transactions are avoided by examining the results of attempted transactions
   via `with` and skipping `transact` calls when there is no data to transact."
   (:refer-clojure :exclude [update])
@@ -50,7 +50,7 @@
   `coll` - A collection of one or more mappings from which to record corresponding new entities.
   `prov` - the provenance to assoicate with each batch.
 
-  Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."  
+  Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
   [conn uiident coll prov & {:keys [batch-size]
                              :or {batch-size 100}}]
   (let [{template :template/format} (-> conn
@@ -62,7 +62,7 @@
                        (some->> [['wormids.core/allocate-block template uiident xs] sp]
                                 (transact-fn db)
                                 db-after-when-data-transacted)))
-                   conn 
+                   conn
                    uiident
                    coll
                    prov
@@ -142,4 +142,3 @@
   [conn uiident coll prov & {:keys [batch-size]
                              :or {batch-size 100}}]
   (update conn uiident coll prov :batch-size batch-size))
-
