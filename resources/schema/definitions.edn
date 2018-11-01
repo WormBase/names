@@ -108,8 +108,9 @@
  #:db{:ident :person/active?
       :valueType :db.type/boolean,
       :cardinality :db.cardinality/one}
- #:db{:ident :saga/id
+ #:db{:ident :batch/id
       :cardinality :db.cardinality/one
       :valueType :db.type/uuid
-      :index true}]
+      :index true
+      :doc "A saga identifier for tracking batches of operations."}]
 
