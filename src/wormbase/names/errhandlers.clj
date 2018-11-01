@@ -53,6 +53,15 @@
 (defn handle-db-conflict [^Exception exc data request]
   (respond-conflict request (assoc-error-message data exc)))
 
+(defn handle-db-unique-conflict [^Exception exc data request]
+  (let [msg (.getMessage exc)
+        [k v] (->> msg
+                   (re-find #"Unique conflict: :(.*), value: (.*) already*")
+                   rest)
+        [ident v] [(keyword k) v]
+        body (assoc-error-message (merge data {ident v}) exc)]
+    (respond-conflict request body)))
+
 (defn handle-unexpected-error
   ([^Exception exc data request]
    (throw exc)
@@ -119,7 +128,7 @@
    ;; Datomic db exceptions
    :db.error/not-an-entity handle-missing
    :db/error handle-db-conflict
-   :db.error/unique-conflict handle-db-conflict
+   :db.error/unique-conflict handle-db-unique-conflict
    :db.error/nil-value handle-unexpected-error
 
    ;; TODO: this shouldn't really be here...spec not tight enough?
