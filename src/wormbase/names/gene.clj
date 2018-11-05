@@ -145,7 +145,7 @@
         tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
     @(d/transact-async (:conn request) tx-data)))
 
-(defn conform-gene-data [request spec data]
+(defn conform-data [request spec data]
   (let [conformed (stc/conform spec (validate-names request data))]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
@@ -160,7 +160,7 @@
   (let [payload (:body-params request)
         data (wnu/select-keys-with-ns payload "gene")
         spec ::wsg/new
-        [_ cdata] (conform-gene-data request spec data)
+        [_ cdata] (conform-data request spec data)
         prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
         tx-result @(d/transact-async (:conn request) tx-data)
@@ -196,7 +196,7 @@
             data (wnu/select-keys-with-ns payload "gene")]
         (if (s/valid? ::wsg/update data)
           (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
-                           (conform-gene-data request spec)
+                           (conform-data request spec)
                            (second)
                            (resolve-refs-to-dbids db))
                 prov (wnp/assoc-provenance request payload :event/update-gene)
