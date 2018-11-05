@@ -22,7 +22,8 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.common :as wsc]
-   [wormbase.specs.gene :as wsg]))
+   [wormbase.specs.gene :as wsg]
+   [wormbase.specs.provenance :as wsp]))
 
 (def identify (partial wne/identify ::wsg/identifier))
 
@@ -133,7 +134,7 @@
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
-        data (wnu/select-keys-with-ns payload "gene")
+        data (:data payload)
         spec ::wsg/new-unnamed
         cdata (if (s/valid? spec data)
                 (s/conform spec data)
@@ -158,7 +159,7 @@
 (defn new-gene [request & {:keys [mint-new-id?]
                            :or {mint-new-id? true}}]
   (let [payload (:body-params request)
-        data (wnu/select-keys-with-ns payload "gene")
+        data (:data payload)
         spec ::wsg/new
         [_ cdata] (conform-gene-data request spec data)
         prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -193,24 +194,19 @@
     (when entity
       (let [payload (some-> request :body-params)
             spec ::wsg/update
-            data (wnu/select-keys-with-ns payload "gene")]
-        (if (s/valid? ::wsg/update data)
-          (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
-                           (conform-gene-data request spec)
-                           (second)
-                           (resolve-refs-to-dbids db))
-                prov (wnp/assoc-provenance request payload :event/update-gene)
-                txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
-                tx-result @(d/transact-async conn txes)]
-            (if-let [db-after (:db-after tx-result)]
-              (if-let [ent (d/pull db-after info-pull-expr lur)]
-                (ok {:updated (wu/undatomicize ent)})
-                (not-found
-                 (format "Gene '%s' does not exist" (last lur))))))
-          (throw (ex-info "Not valid according to spec."
-                          {:problems (expound-str spec data)
-                           :type ::validation-error
-                           :data data})))))))
+            data (:data payload)]
+        (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
+                         (conform-gene-data request spec)
+                         (second)
+                         (resolve-refs-to-dbids db))
+              prov (wnp/assoc-provenance request payload :event/update-gene)
+              txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
+              tx-result @(d/transact-async conn txes)]
+          (if-let [db-after (:db-after tx-result)]
+            (if-let [ent (d/pull db-after info-pull-expr lur)]
+              (ok {:updated (wu/undatomicize ent)})
+              (not-found
+               (format "Gene '%s' does not exist" (last lur))))))))))
 
 (defn- validate-merge-request
   [request into-gene-id from-gene-id into-biotype]
@@ -272,7 +268,8 @@
            (wu/undatomicize)))
 
 (defn merge-genes [request into-id from-id]
-  (let [{conn :conn db :db data :body-params} request
+  (let [{conn :conn db :db payload :body-params} request
+        data (:data payload)
         into-biotype (:gene/biotype data)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
@@ -337,7 +334,7 @@
   (entity-must-exist! request identifier)
   (let [conn (:conn request)
         db (d/db conn)
-        data (get request :body-params {})
+        data (get-in request [:body-params :data] {})
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
@@ -493,32 +490,33 @@
       (assoc ok {:schema ::wsg/status-changed})
       (response-map)))
 
+
 (def coll-resources
   (sweet/context "/gene/" []
-     :tags ["gene"]
-     (sweet/resource
-      {:get
-       {:summary "Find genes by any name."
-        :responses (-> default-responses
-                       (assoc ok
-                              {:schema ::wsg/find-result})
-                       (response-map))
-        :parameters {:query-params ::wsg/find-request}
-        :x-name ::find-gene
-        :handler (fn find-by-any-name [request]
-                   (find-gene request))}
-       :post
-       {:summary "Create new names for a gene (cloned or un-cloned)"
-        :middleware [wna/restrict-to-authenticated]
-        :x-name ::new-gene
-        :parameters {:body-params ::wsg/new}
-        :responses (-> default-responses
-                       (assoc created
-                              {:schema {:created ::wsg/created}})
-                       (assoc bad-request
-                              {:schema ::wsc/error-response})
-                       (response-map))
-        :handler new-gene}})))
+    :tags ["gene"]
+    (sweet/resource
+     {:get
+      {:summary "Find genes by any name."
+       :responses (-> default-responses
+                      (assoc ok
+                             {:schema ::wsg/find-result})
+                      (response-map))
+       :parameters {:query-params ::wsg/find-request}
+       :x-name ::find-gene
+       :handler (fn find-by-any-name [request]
+                  (find-gene request))}
+      :post
+      {:summary "Create new names for a gene (cloned or un-cloned)"
+       :middleware [wna/restrict-to-authenticated]
+       :x-name ::new-gene
+       :parameters {:body-params {:data ::wsg/new :prov ::wsp/provenance}}
+       :responses (-> default-responses
+                      (assoc created
+                             {:schema {:created ::wsg/created}})
+                      (assoc bad-request
+                             {:schema ::wsc/error-response})
+                      (response-map))
+       :handler new-gene}})))
 
 (def item-resources
   (sweet/context "/gene/:identifier" []
@@ -563,7 +561,7 @@
        :put
        {:summary "Add new names to an existing gene"
         :x-name ::update-gene
-        :parameters {:body-params ::wsg/update}
+        :parameters {:body-params {:data ::wsg/update :prov ::wsp/provenance}}
         :middleware [wna/restrict-to-authenticated]
         :responses (-> default-responses
                        (dissoc conflict)
@@ -577,7 +575,8 @@
           :middleware [wna/restrict-to-authenticated]
           :x-name ::merge-gene
           :path-params [from-identifier ::wsg/identifier]
-          :parameters {:body-params {:gene/biotype :gene/biotype}}
+          :parameters {:body-params {:data ::wsg/merge
+                                     :prov ::wsp/provenance}}
 ;;          :responses (response-map default-responses)
           :handler
           (fn [request]
@@ -599,8 +598,8 @@
         {:post
          {:summary "Split a gene."
           :middleware [wna/restrict-to-authenticated]
-          :x-name ::split-genes
-          :parameters {:body-params ::wsg/split}
+          :x-name ::split-gene
+          :parameters {:body-params {:data ::wsg/split :prov ::wsp/provenance}}
           :responses (-> (dissoc default-responses ok)
                          (assoc created
                                 {:schema ::wsg/split-response})
@@ -627,4 +626,3 @@
   (sweet/routes
    coll-resources
    item-resources))
-

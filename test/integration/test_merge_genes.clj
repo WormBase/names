@@ -73,13 +73,15 @@
 (t/deftest response-codes
   (t/testing "400 for invalid gene "
     (let [[status body] (merge-genes
-                         {:gene/biotype :biotype/transposable-element-gene}
+                         {:data {:gene/biotype :biotype/transposable-element-gene}
+                          :prov nil}
                          "WB2"
                          "WB1")]
       (tu/status-is? (:status (not-found)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
-                         {:gene/biotype :biotype/transposable-element-gene}
+                         {:data {:gene/biotype :biotype/transposable-element-gene}
+                          :prov nil}
                          "WBGene20000000"
                          "WBGene10000000")]
       (tu/status-is? 404 status body)))
@@ -108,7 +110,8 @@
                                       :gene/status
                                       (-> lur entity :gene/status entid)
                                       (entid :gene.status/dead)]]))
-          (let [[status body] (merge-genes {:gene/biotype :biotype/cds}
+          (let [[status body] (merge-genes {:data {:gene/biotype :biotype/cds}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (conflict)) status body))))))
@@ -118,7 +121,8 @@
       (tu/with-gene-fixtures
         data-samples
         (fn check-biotype-validation-error [conn]
-          (let [[status body] (merge-genes {:gene/biotype :biotype/godzilla}
+          (let [[status body] (merge-genes {:data {:gene/biotype :biotype/godzilla}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (not-found)) status body)
@@ -141,7 +145,8 @@
         (fn check-provenance [conn]
           (let [db (d/db conn)
                 [status body] (merge-genes
-                               {:gene/biotype :biotype/transposable-element-gene}
+                               {:data {:gene/biotype :biotype/transposable-element-gene}
+                                :prov nil}
                                from-id
                                into-id)
                 [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
@@ -161,15 +166,15 @@
                                    first)]
             (tu/status-is? (:status (ok)) status body)
             (t/is (inst? (:provenance/when from-prov)))
-            (t/is (= (-> from-prov :provenance/merged-into :gene/id) into-id))
-            (t/is (= (-> into-prov :provenance/merged-from :gene/id) from-id))
+            (t/is (= into-id (-> from-prov :provenance/merged-into :gene/id)))
+            (t/is (= from-id (-> into-prov :provenance/merged-from :gene/id)))
             (doseq [prov [from-prov into-prov]]
               (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
               (t/is (= (:provenance/how prov) :agent/web)))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
-    (let [species :species/c-elegans
+    (let [species "Caenorhabditis elegans"
           merged-into "WBGene00000001"
           merged-from "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
@@ -177,12 +182,12 @@
           from-gene {:db/id from-seq-name
                      :gene/id merged-from
                      :gene/sequence-name from-seq-name
-                     :gene/species [:species/id species]
+                     :gene/species [:species/latin-name species]
                      :gene/status :gene.status/dead
                      :gene/biotype :biotype/cds}
           into-gene {:db/id into-seq-name
                      :gene/id merged-into
-                     :gene/species [:species/id species]
+                     :gene/species [:species/latin-name species]
                      :gene/sequence-name into-seq-name
                      :gene/cgc-name (tu/cgc-name-for-species species)
                      :gene/status :gene.status/live

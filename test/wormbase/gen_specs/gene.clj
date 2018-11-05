@@ -24,9 +24,9 @@
 
 
 (def species-overrides (->> (util/load-seed-data)
-                            (filter :species/id)
-                            (map :species/id)
-                            (map (partial array-map :species/id))
+                            (filter :species/latin-name)
+                            (map :species/latin-name)
+                            (map (partial array-map :species/latin-name))
                             set))
 
 (def species (s/gen :gene/species species-overrides))
@@ -41,7 +41,7 @@
 
 (defn one-of-name-regexps [species-regexp-kw]
   (gen/one-of (->> (util/load-seed-data)
-                   (filter :species/id)
+                   (filter :species/latin-name)
                    (map species-regexp-kw)
                    (map re-pattern)
                    (map sg/string-generator)
@@ -75,18 +75,11 @@
 
 (def overrides
   {:gene/biotype (constantly biotype)
-   :gene/species (constantly (s/gen ::species-id))
+   :gene/species (constantly (s/gen ::species-latin-name))
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
    :gene/id (constantly id)
    :gene/status (constantly status)
-   :gene/sequence-name (constantly (s/gen :gene/sequence-name))
-   :provenance/how (constantly (s/gen ::wna/id))
-   :provenance/what (constantly (s/gen :provenance/what))
-   :provenance/when (constantly (s/gen :provenance/when))
-   :provenance/why (constantly (s/gen :provenance/why))
-   [:provenance/who :person/id] (constantly wgsp/id)
-   [:provenance/who :person/email] (constantly wgsp/email)
-   [:provenance/who :person/roles] (constantly wgsp/roles)})
+   :gene/sequence-name (constantly (s/gen :gene/sequence-name))})
 
 (def info (s/gen ::wsg/info overrides))
 

@@ -271,7 +271,7 @@
 (defn- gen-valid-name-for-sample [sample generator]
   (-> sample
       :gene/species
-      :species/id
+      :species/latin-name
       generator
       (gen/sample 1)
       first))

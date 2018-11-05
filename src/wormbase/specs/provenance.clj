@@ -30,11 +30,13 @@
 
 (s/def :provenance/split-into ::gene-ref)
 
-(s/def ::provenance (s/keys :opt [:provenance/how
-                                  :provenance/what
-                                  :provenance/when
-                                  :provenance/why
-                                  :provenance/merged-from
-                                  :provenance/merged-into
-                                  :provenance/split-from
-                                  :provenance/split-into]))
+(s/def ::provenance (stc/spec
+                     (s/nilable
+                      (s/keys :opt [:provenance/how
+                                    :provenance/what
+                                    :provenance/when
+                                    :provenance/why
+                                    :provenance/merged-from
+                                    :provenance/merged-into
+                                    :provenance/split-from
+                                    :provenance/split-into]))))

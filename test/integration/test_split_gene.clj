@@ -63,7 +63,9 @@
 
 (t/deftest must-meet-spec
   (t/testing "Target biotype and product must be specified."
-    (let [[status body] (split-gene {:gene/cgc-name "abc-1"} "WB1")]
+    (let [[status body] (split-gene {:data {:gene/cgc-name "abc-1"}
+                                     :prov nil}
+                                    "WB1")]
       (tu/status-is? status 400 (format "Body: " body))))
   (t/testing "Request to split gene must meet spec."
     (let [[data-sample] (tu/gene-samples 1)]
@@ -71,8 +73,9 @@
         data-sample
         (fn check-validation-error [conn]
           (let [[status body] (split-gene
-                               {:gene/biotype :biotype/godzilla
-                                :product {}}
+                               {:data {:gene/biotype :biotype/godzilla
+                                       :product {}}
+                                :prov nil}
                                (:gene/id data-sample))]
             (tu/status-is? status 400 body)
             (t/is (contains? (tu/parse-body body) :problems)
@@ -82,33 +85,36 @@
   (t/testing (str "Get 400 response if biotypes "
                   "of both gene and split product not supplied.")
     (let [[status body] (split-gene
-                         {:product
-                          {:gene/sequence-name "ABC.1"
-                           :gene/biotype "transcript"}}
+                         {:data {:product
+                                 {:gene/sequence-name "ABC.1"
+                                  :gene/biotype "transcript"}}
+                          :prov nil}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 response for product must be specified"
     (let [[status body] (split-gene
-                         {:gene/biotype :biotype/transcript}
+                         {:data {:gene/biotype :biotype/transcript}
+                          :prov nil}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body)))))
   (t/testing "Get 400 if product biotype not supplied"
     (let [[status body] (split-gene
-                         {:product
-                          {:gene/sequence-name "ABC.1"
-                           :gene/biotype "transcript"}}
+                         {:data {:product
+                                 {:gene/sequence-name "ABC.1"
+                                  :gene/biotype "transcript"}}
+                          :prov nil}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 if sequence-name not supplied"
     (let [[status body] (split-gene
-                         {:gene/biotype :biotype/cds
-                          :product
-                          {:gene/biotype :biotype/transposable-element-gene}}
+                         {:data {:gene/biotype :biotype/cds
+                                 :product {:gene/biotype :biotype/transposable-element-gene}}
+                          :prov nil}
                          "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-matches #".*validation failed.*" (:message body))
@@ -116,10 +122,11 @@
   (t/testing "Get 404 when gene to be operated on is missing"
     (let [gene-id (first (gen/sample gs/id 1))
           [status body] (split-gene
-                         {:gene/biotype :biotype/cds
-                          :product
-                          {:gene/biotype :biotype/cds
-                           :gene/sequence-name "FKM.1"}}
+                         {:data {:gene/biotype :biotype/cds
+                                 :product
+                                 {:gene/biotype :biotype/cds
+                                  :gene/sequence-name "FKM.1"}}
+                          :prov nil}
                          gene-id)]
       (tu/status-is? (:status (not-found)) status body)))
   (t/testing "Expect a conflict response when attempting to split a dead gene."
@@ -134,16 +141,18 @@
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
           (let [seq-name (tu/seq-name-for-species
-                          (-> sample :gene/species :species/id))
+                          (-> sample :gene/species :species/latin-name))
                 [status body] (split-gene
-                               {:gene/biotype :biotype/cds
-                                :product
-                                {:gene/biotype :biotype/transcript
-                                 :gene/sequence-name seq-name}}
+                               {:data {:gene/biotype :biotype/cds
+                                       :product
+                                       {:gene/biotype :biotype/transcript
+                                        :gene/sequence-name seq-name}}
+                                :prov nil}
                                gene-id)]
             (tu/status-is? (:status (conflict)) status body))))))
   (t/testing "400 for validation errors"
-    (let [[status body] (split-gene {:gene/biotype :biotype/godzilla}
+    (let [[status body] (split-gene {:data {:gene/biotype :biotype/godzilla}
+                                     :prov nil}
                                     "WBGene00000001")]
       (tu/status-is? status 400 body)
       (t/is (re-seq #".*validation failed" (:message body))
@@ -153,7 +162,7 @@
                                 :or {status :gene.status/live}}]
   (let [[sample] (tu/gene-samples 1)
         gene-id (:gene/id sample)
-        species (-> sample :gene/species :species/id)
+        species (-> sample :gene/species :species/latin-name)
         prod-seq-name (tu/seq-name-for-species species)]
     [gene-id
      (-> sample
@@ -172,10 +181,10 @@
                 user-email "tester@wormbase.org"
                 data {:product {:gene/biotype :biotype/transposable-element-gene
                                 :gene/sequence-name prod-seq-name}
-                      :gene/biotype :biotype/cds
-                      :provenance/why "testing"
+                      :gene/biotype :biotype/cds}
+                prov {:provenance/why "testing"
                       :provenance/who {:person/email user-email}}
-                [status body] (split-gene data
+                [status body] (split-gene {:data data :prov prov}
                                           gene-id
                                           :current-user user-email)]
             (tu/status-is? (:status (created "/")) status body)
@@ -196,7 +205,7 @@
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
-    (let [species :species/c-elegans
+    (let [species "Caenorhabditis elegans"
           split-from "WBGene00000001"
           split-into "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
@@ -204,12 +213,12 @@
           from-gene {:db/id from-seq-name
                      :gene/id split-from
                      :gene/sequence-name from-seq-name
-                     :gene/species [:species/id species]
+                     :gene/species [:species/latin-name species]
                      :gene/status :gene.status/live
                      :gene/biotype :biotype/cds}
           into-gene {:db/id into-seq-name
                      :gene/id split-into
-                     :gene/species [:species/id species]
+                     :gene/species [:species/latin-name species]
                      :gene/sequence-name into-seq-name
                      :gene/cgc-name "ABC.1"
                      :gene/status :gene.status/live
