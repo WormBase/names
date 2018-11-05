@@ -18,18 +18,37 @@
   (:require
    [datomic.api :as d]))
 
+(defn data-transacted?
+  "Determine if there was any data transact from a tranasction result.
+
+  Returns `nil` if provenance-only attributes in the tranasction result."
+  [tx-result]
+  (some->> tx-result
+           :tx-data
+           (map (juxt :e :tx))
+           (filter (partial apply not=))
+           (seq)))
+
+(defn db-after-when-data-transacted [tx-result]
+  (when (data-transacted? tx-result)
+    (:db-after tx-result)))
+
 (defn assoc-prov
   "Attach an identifier to `prov` making this a mapping suitable for tracking provenance for a batch.
 
   A `UUID` under the key `:batch/id` is added."
-  [prov]
-  (assoc prov
-         :db/id "datomic.tx"
-         :batch/id (d/squuid)))
+  [coll prov]
+  (cond-> prov
+    true (assoc :db/id "datomic.tx")
+    (> (count coll) 1) (assoc :batch/id (d/squuid))))
+
+(defn add-prov-maybe [prov tx-data]
+  (when tx-data
+    (cons prov tx-data)))
 
 (defn process-batch
   [processor-fn conn uiident coll prov batch-size]
-  (let [sp (assoc-prov prov)
+  (let [sp (assoc-prov coll prov)
         batch (partition-all batch-size coll)
         db (d/db conn)]
     (when-let [dba (reduce (partial processor-fn sp d/with) db batch)]
@@ -67,25 +86,6 @@
                    coll
                    prov
                    batch-size)))
-
-(defn add-prov-maybe [prov tx-data]
-  (when tx-data
-    (cons prov tx-data)))
-
-(defn data-transacted?
-  "Determine if there was any data transact from a tranasction result.
-
-  Returns `nil` if provenance-only attributes in the tranasction result."
-  [tx-result]
-  (some->> tx-result
-           :tx-data
-           (map (juxt :e :tx))
-           (filter (partial apply not=))
-           (seq)))
-
-(defn db-after-when-data-transacted [tx-result]
-  (when (data-transacted? tx-result)
-    (:db-after tx-result)))
 
 (defn update
   "Update entities identified by `uiident` with data provided in `coll`.
@@ -136,9 +136,3 @@
                  coll
                  prov
                  batch-size))
-
-
-(defn kill
-  [conn uiident coll prov & {:keys [batch-size]
-                             :or {batch-size 100}}]
-  (update conn uiident coll prov :batch-size batch-size))
