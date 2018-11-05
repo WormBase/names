@@ -11,34 +11,23 @@
                                     bad-request
                                     conflict conflict!
                                     created
+                                    internal-server-error
                                     not-found not-found!
-                                    precondition-failed precondition-failed!
-                                    internal-server-error]]
+                                    precondition-failed precondition-failed!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
+   [wormbase.names.responses :as wnr]
    [wormbase.names.util :as wnu]
    [wormbase.specs.common :as wsc]
-   [wormbase.specs.gene :as wsg]))
+   [wormbase.specs.gene :as wsg]
+   [wormbase.specs.provenance :as wsp]
+   [wormids.batch :as wbid-b]))
 
 (def identify (partial wne/identify ::wsg/identifier))
-
-(defn entity-must-exist!
-  "Middlewre for ensuring an entity exists in the database.
-
-  Calls the handler for a route iif a entity exists, else returns a
-  not-found response."
-  [request & identifier]
-  (doseq [identifier identifier]
-    (let [[_ ent] (identify request identifier)]
-      (if-not ent
-        (not-found!
-         {:message (str "Gene with identifier "
-                        identifier
-                        "does not exist")})))))
 
 (defn validate-names
   ([request data & {:keys [allow-blank-cgc-name?]
@@ -124,12 +113,11 @@
                          :gene/status [[:db/ident]]}])
 
 (defn about-gene [request identifier]
-  (entity-must-exist! request identifier)
   (let [db (:db request)
-        [lur _] (identify request identifier)
-        info (wdb/pull db info-pull-expr lur)
-        prov (wnp/query-provenance db lur provenance-pull-expr)]
-    (-> info (assoc :history prov) ok)))
+        [lur _] (identify request identifier)]
+    (when-let [info (wdb/pull db info-pull-expr lur)]
+      (let [prov (wnp/query-provenance db lur provenance-pull-expr)]
+        (-> info (assoc :history prov) ok)))))
 
 (defn new-unnamed-gene [request payload]
   (let [prov (wnp/assoc-provenance request payload :event/new-gene)
@@ -187,7 +175,6 @@
     res))
 
 (defn update-gene [request identifier]
-  (entity-must-exist! request identifier)
   (let [{db :db conn :conn} request
         [lur entity] (identify request identifier)]
     (when entity
@@ -311,7 +298,6 @@
        {:message "Invalid transaction - should never get here."}))))
 
 (defn undo-merge-gene [request from-id into-id]
-  (entity-must-exist! request from-id into-id)
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -334,7 +320,6 @@
     (not-found {:message "No transaction to undo"})))
 
 (defn split-gene [request identifier]
-  (entity-must-exist! request identifier)
   (let [conn (:conn request)
         db (d/db conn)
         data (get request :body-params {})
@@ -394,7 +379,6 @@
     [(if added? :db/retract :db/add) e a v]))
 
 (defn undo-split-gene [request from-id into-id]
-  (entity-must-exist! request from-id into-id)
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
@@ -438,7 +422,6 @@
   [request identifier to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
-  (entity-must-exist! request identifier)
   (let [{db :db payload :body-params} request
         lur (s/conform ::wsg/identifier identifier)
         pull-status #(d/pull % '[{:gene/status [:db/ident]}] lur)
