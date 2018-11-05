@@ -13,15 +13,15 @@
    [java-time :as jt]
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
-   [wormbase.db-testing :as db-testing]
+   [peridot.core :as p]
+   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
+   [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as wns]
-   [wormbase.specs.gene :as wsg]
-   [peridot.core :as p]
-   [spec-tools.core :as stc])
+   [wormbase.specs.gene :as wsg])
   (:import
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))
@@ -45,14 +45,14 @@
 
 (defn parse-body [body]
   (let [body (read-body body)
-        body (if (instance? String body)
-               (try
-                 (muuntaja/decode mformats "application/json" body)
-                 (catch ExceptionInfo exc
-                   (log-decode-err exc body)
-                   (throw exc)))
-               body)]
-    body))
+        body* (if (instance? String body)
+                (try
+                  (muuntaja/decode mformats "application/json" body)
+                  (catch ExceptionInfo exc
+                    (log-decode-err exc body)
+                    (throw exc)))
+                body)]
+    body*))
 
 (defn extract-schema-name [ref-str]
   (last (str/split ref-str #"/")))
