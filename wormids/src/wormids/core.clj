@@ -11,7 +11,7 @@
          (cond
            (and (map? v) (:db/id v))  (:db/id v)
            (keyword? v) [:db/ident v]
-           (vector? v) (:db/id (d/entity db v))
+           (vector? v) (:db/id (d/pull db '[*] v))
            :else v)))
 
 (defn resolve-refs
