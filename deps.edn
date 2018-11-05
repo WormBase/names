@@ -59,8 +59,8 @@
              javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
              ring/ring-devel {:mvn/version "1.6.3"}
              peridot {:mvn/version "0.5.0"}
-             vvvvalvalval/datomock {:mvn/version "0.2.0"}}}
-           :extra-paths ["test"]
+             vvvvalvalval/datomock {:mvn/version "0.2.0"}}
+            :extra-paths ["wormids/src" "test"]}
            :datomic-pro
            {:extra-deps
             {com.datomic/datomic-pro
