@@ -1,23 +1,23 @@
-[#:db{:ident :gene/biotype,
-      :valueType :db.type/ref,
+[#:db{:ident :gene/biotype
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one}
- #:db{:ident :gene/sequence-name,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :gene/sequence-name
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
- #:db{:ident :gene/species,
-      :valueType :db.type/ref,
+ #:db{:ident :gene/species
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one}
- #:db{:ident :gene/id,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :gene/id
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/identity}
- #:db{:ident :gene/cgc-name,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :gene/cgc-name
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
- #:db{:ident :gene/status,
-      :valueType :db.type/ref,
+ #:db{:ident :gene/status
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one}
  #:db{:ident :gene/splits
       :valueType :db.type/ref
@@ -26,24 +26,24 @@
       :valueType :db.type/ref
       :cardinality :db.cardinality/one
       :doc "A transaction that this provenance compensates for."}
- #:db{:ident :provenance/why,
-      :valueType :db.type/string,
+ #:db{:ident :provenance/why
+      :valueType :db.type/string
       :cardinality :db.cardinality/one
       :doc "An optional string describing the reason for an event."}
- #:db{:ident :provenance/how,
-      :valueType :db.type/ref,
+ #:db{:ident :provenance/how
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one
       :doc "A reference to an agent (client) that made the change."}
  #:db{:ident :provenance/what
-      :valueType :db.type/ref,
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one
       :doc "The event that occurred."}
- #:db{:ident :provenance/who,
-      :valueType :db.type/ref,
+ #:db{:ident :provenance/who
+      :valueType :db.type/ref
       :cardinality :db.cardinality/one
       :doc "A reference to the person who performed the event."}
- #:db{:ident :provenance/when,
-      :valueType :db.type/instant,
+ #:db{:ident :provenance/when
+      :valueType :db.type/instant
       :cardinality :db.cardinality/one
       :doc "When the event occurred."}
  #:db{:ident :provenance/merged-from,
@@ -62,9 +62,9 @@
       :valueType :db.type/keyword,
       :cardinality :db.cardinality/one,
       :unique :db.unique/value}
- #:db{:ident :species/latin-name,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :species/latin-name
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
  #:db{:ident :species/cgc-name-pattern
       :valueType :db.type/string
@@ -72,39 +72,40 @@
  #:db{:ident :species/sequence-name-pattern
       :valueType :db.type/string
       :cardinality :db.cardinality/one}
- #:db{:ident :template/format,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :template/format
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
- #:db{:ident :template/describes,
-      :valueType :db.type/keyword,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :template/describes
+      :valueType :db.type/keyword
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
- #:db {:ident :person/id,
-       :valueType :db.type/string,
-       :cardinality :db.cardinality/one,
-       :unique :db.unique/identity
-       :doc "WBPerson ID"}
- #:db {:ident :person/google-id,
-       :valueType :db.type/bigint,
-       :cardinality :db.cardinality/one,
-       :unique :db.unique/value,
-       :doc "Unique value representing a google user, returned by Google verification APIs"}
- #:db{:ident :person/email,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :person/id
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
+      :unique :db.unique/identity
+      :doc "WBPerson ID"}
+ #:db{:ident :person/google-id
+      :valueType :db.type/bigint
+      :cardinality :db.cardinality/one
+      :unique :db.unique/value
+      :doc
+      "Unique value representing a google user returned by Google verification APIs"}
+ #:db{:ident :person/email
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :unique :db.unique/identity}
  #:db{:ident :person/auth-token
       :valueType :db.type/string
       :cardinality :db.cardinality/one
       :unique :db.unique/identity}
- #:db{:ident :person/roles,
-      :valueType :db.type/keyword,
+ #:db{:ident :person/roles
+      :valueType :db.type/keyword
       :cardinality :db.cardinality/many}
- #:db{:ident :person/name,
-      :valueType :db.type/string,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :person/name
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
       :doc "Person's name as presented by Google APIs"}
  #:db{:ident :person/active?
-      :valueType :db.type/boolean,
+      :valueType :db.type/boolean
       :cardinality :db.cardinality/one}]

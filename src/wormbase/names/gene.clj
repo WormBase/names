@@ -64,9 +64,12 @@
             (when-not (and allow-blank-cgc-name?
                            (empty? (get data gname))
                            (= gname :gene/cgc-name))
-              (throw (ex-info "Invalid name"
-                              {:type :user/validation-error
-                               :data {:problems {:invalid {:name gname :ident name-ident}}}}))))))
+              (throw
+               (ex-info "Invalid name"
+                        {:type :user/validation-error
+                         :data {:problems
+                                {:invalid
+                                 {:name gname :ident name-ident}}}}))))))
       data)))
   ([request data]
    (validate-names request data :allow-blank-cgc-name? false)))
