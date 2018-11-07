@@ -49,21 +49,25 @@
       :valueType :db.type/instant
       :cardinality :db.cardinality/one
       :doc "When the event occurred."}
- #:db{:ident :provenance/merged-from,
-      :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
- #:db{:ident :provenance/merged-into,
-      :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
- #:db{:ident :provenance/split-from,
-      :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
-  #:db{:ident :provenance/split-into,
-      :valueType :db.type/ref,
-      :cardinality :db.cardinality/one}
- #:db{:ident :species/id,
-      :valueType :db.type/keyword,
-      :cardinality :db.cardinality/one,
+ #:db{:ident :provenance/merged-from
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "DEPRECATED"}
+ #:db{:ident :provenance/merged-into
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "DEPRECATED"}
+ #:db{:ident :provenance/split-from
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "DEPRECATED"}
+ #:db{:ident :provenance/split-into
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "DEPRECATED"}
+ #:db{:ident :species/id
+      :valueType :db.type/keyword
+      :cardinality :db.cardinality/one
       :unique :db.unique/value}
  #:db{:ident :species/latin-name
       :valueType :db.type/string
