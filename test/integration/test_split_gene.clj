@@ -19,21 +19,20 @@
   (fake-auth/payload {"email" current-user}))
 
 (defn query-provenance [conn attr gene]
-  (when-let [mtx (d/q '[:find ?tx .
-                        :in $ ?attr ?gene
-                        :where
-                        [?tx ?attr ?gene]]
-                      (-> conn d/db d/history)
-                      attr
-                      gene)]
-    (d/pull (d/db conn)
-            '[:provenance/why
-              :provenance/when
-              {:provenance/split-into [:gene/id]
-               :provenance/split-from [:gene/id]
-               :provenance/how [:db/ident]
-               :provenance/who [:person/email]}]
-            mtx)))
+  (let [mtx (d/q '[:find ?tx .
+                   :in $ ?attr ?gene
+                   :where
+                   [?gene ?attr _ ?tx]]
+                 (-> conn d/db d/history)
+                 attr
+                 gene)]
+    (when mtx
+      (d/pull (d/db conn)
+              '[:provenance/why
+                :provenance/when
+                {:provenance/how [:db/ident]
+                 :provenance/who [:person/email]}]
+              mtx))))
 
 (defn split-gene
   [payload gene-id
@@ -189,19 +188,19 @@
                                           :current-user user-email)]
             (tu/status-is? (:status (created "/")) status body)
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
-                  src  (d/entity (d/db conn) from-lur)
-                  prod (d/entity (d/db conn) into-lur)
-                  prov-from (query-provenance conn :provenance/split-from (:db/id src))
-                  prov-into (query-provenance conn :provenance/split-into (:db/id prod))]
-              (t/is (some-> prov-from :provenance/when inst?))
-              (t/is (some-> prov-into :provenance/when inst?))
-              (t/is (= gene-id (some-> prov-from :provenance/split-from :gene/id)))
-              (t/is (= (:gene/id prod) (some-> prov-into :provenance/split-into :gene/id)))
-              (t/is (= user-email (some-> prov-from :provenance/who :person/email)))
-              (t/is (= user-email (some-> prov-into :provenance/who :person/email)))
+                  src  (d/pull (d/db conn) '[* {:gene/splits [[:gene/id]]}] from-lur)
+                  src-id (:gene/id src)
+                  prod (d/pull (d/db conn) '[* {:gene/_splits [[:gene/id]]}] into-lur)
+                  prod-id (:gene/id prod)
+                  prov (query-provenance conn :gene/splits (:db/id src))]
+              (t/is ((set (map :gene/id (:gene/splits src))) prod-id))
+              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id)
+                    (str "PROD ID:" prod-id " in _splits?:" (pr-str (:gene/_splits prod))))
+              (t/is (some-> prov :provenance/when inst?))
+              (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
-              (t/is (= :agent/web (some-> prov-from :provenance/how :db/ident)))
-              (t/is (= :agent/web (some-> prov-into :provenance/how :db/ident))))))))))
+              (t/is (= :agent/web (some-> prov :provenance/how :db/ident))))))))))
+
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
@@ -210,52 +209,39 @@
           split-into "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
           into-seq-name (tu/seq-name-for-species species)
-          from-gene {:db/id from-seq-name
-                     :gene/id split-from
-                     :gene/sequence-name from-seq-name
-                     :gene/species [:species/latin-name species]
-                     :gene/status :gene.status/live
-                     :gene/biotype :biotype/cds}
-          into-gene {:db/id into-seq-name
+          init-from-gene {:db/id "from"
+                          :gene/id split-from
+                          :gene/species [:species/latin-name species]
+                          :gene/sequence-name from-seq-name
+                          :gene/cgc-name "ABC.1"
+                          :gene/status :gene.status/live
+                          :gene/biotype :biotype/transcript}
+          from-gene {:gene/id split-from :gene/splits "into"}
+          into-gene {:db/id "into"
                      :gene/id split-into
                      :gene/species [:species/latin-name species]
                      :gene/sequence-name into-seq-name
-                     :gene/cgc-name "ABC.1"
+                     :gene/cgc-name "ABC.2"
                      :gene/status :gene.status/live
                      :gene/biotype :biotype/transcript}
-          init-txes [[from-gene
-                       {:db/id "datomic.tx"
-                        :provenance/why "A gene in the system"
-                        :provenance/how :agent/console}]
-                     [into-gene
+          split-txes [from-gene
+                      into-gene
                       {:db/id "datomic.tx"
-                       :provenance/split-from [:gene/sequence-name
-                                               from-seq-name]
-                       :provenance/split-into into-seq-name
-                       :provenance/why
-                       "a gene that has been split for testing undo"
-                       :provenance/how :agent/console}]]
+                       :provenance/why "2 genes for undo split test"
+                       :provenance/how :agent/console}]
           conn (db-testing/fixture-conn)]
       (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
                     wdb/db (fn get-db [_] (d/db conn))]
-        (doseq [init-tx init-txes]
-          @(d/transact-async conn init-tx))
+        @(d/transact conn [init-from-gene])
+        @(d/transact conn split-txes)
         (let [tx (d/q '[:find ?tx .
-                        :in $ ?into-id ?from-lur ?into-lur
+                        :in $ ?from-lur ?into-lur
                         :where
-                        [?tx :provenance/split-from ?from-lur]
-                        [?tx :provenance/split-into ?into-lur]
-                        [?e :gene/id ?into-id ?tx]]
+                        [?from-lur :gene/splits ?into-lur ?tx]
+                        [?into-lur :gene/splits ?from-lur ?tx]]
                       (-> conn d/db d/history)
-                      split-into
                       [:gene/id split-from]
                       [:gene/id split-into])
-              [ent-id tx-id] (d/q '[:find [?e ?tx]
-                                    :in $ ?gid
-                                    :where
-                                    [?e :gene/id ?gid ?tx]]
-                                  (-> conn d/db d/history)
-                                  split-into)
               user-email "tester@wormbase.org"
               [status body] (undo-split-gene split-from
                                              split-into
@@ -263,10 +249,14 @@
           (tu/status-is? status 200 body)
           (let [db (d/db conn)
                 invoke (partial d/invoke db)
-                [from-g into-g] (map #(d/entity db [:gene/id %])
+                [from-g into-g] (map #(d/pull db '[*
+                                                   {:gene/splits [[:gene/id]]
+                                                    :gene/status [:db/ident]}]
+                                                   [:gene/id %])
                                      [split-from split-into])]
-            (t/is (= (:gene/status from-g) :gene.status/live))
-            (t/is (= (:gene/status into-g) :gene.status/dead)
+            (t/is (nil? (:gene/splits from-g)))
+            (t/is (nil? (:gene/splits into-g)))
+            (t/is (= (get-in into-g [:gene/status :db/ident]) :gene.status/dead)
                   (str "Into gene:"
                        (d/q '[:find ?e ?aname ?v ?added
                               :in $ ?gid
@@ -276,6 +266,8 @@
                               [?a :db/ident ?aname]]
                             (d/history db)
                             split-into)))
+            (t/is (= (get-in from-g [:gene/status :db/ident]) :gene.status/live)
+                  (str "Expecting live got dead for from gene" split-from))
             ;; prove we don't "reclaim" the identifier
             (t/is (= (invoke :wormbase.tx-fns/next-identifier
                              db

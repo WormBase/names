@@ -114,18 +114,15 @@
                             [])}]
       (ok res))))
 
-(def provenance-pull-expr '[*
-                            {:provenance/what [:db/ident]
-                             :provenance/who [:person/email :person/name :person/id]
-                             :provenance/how [:db/ident]
-                             :provenance/split-from [:gene/id]
-                             :provenance/split-into [:gene/id]
-                             :provenance/merged-from [:gene/id]
-                             :provenance/merged-into [:gene/id]}])
+(def provenance-pull-expr '[* {:provenance/what [:db/ident]
+                               :provenance/who [:person/email :person/name :person/id]
+                               :provenance/how [:db/ident]}])
 
 (def info-pull-expr '[* {:gene/biotype [[:db/ident]]
                          :gene/species [[:species/id][:species/latin-name]]
-                         :gene/status [[:db/ident]]}])
+                         :gene/status [[:db/ident]]
+                         :gene/merges [[:gene/id]]
+                         :gene/splits [[:gene/id]]}])
 
 (defn about-gene [request identifier]
   (entity-must-exist! request identifier)
@@ -238,8 +235,7 @@
       (throw (ex-info "Biotype does not exist"
                       {:type ::wdb/missing
                        :problems "Biotype entity does not exist"})))
-    (when (reduce not=
-                  (map :gene/species [from-gene into-gene]))
+    (when (reduce not= (map :gene/species [from-gene into-gene]))
       (throw (ex-info
               "Refusing to merge: genes have differing species"
               {:from {:gen/species (-> from-gene :gene/species :species/id)
@@ -274,6 +270,7 @@
   (let [{conn :conn db :db payload :body-params} request
         data (:data payload)
         into-biotype (:gene/biotype data)
+        _ (println "**MERGE-GENES:: INTO:" into-id "FROM:" from-id)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
                                                into-id
@@ -281,46 +278,39 @@
                                                into-biotype)
         collate-cas-batch (partial d/invoke db :wormbase.tx-fns/collate-cas-batch db)
         from-seq-name (:gene/sequence-name from-g)
-        assoc-merge-prov (partial wnp/assoc-provenance request data :event/merge-genes)
-        from-prov (assoc (assoc-merge-prov) :provenance/merged-from from-lur)
-        into-prov (assoc (assoc-merge-prov) :provenance/merged-into into-lur)
+        prov (wnp/assoc-provenance request data :event/merge-genes)
         into-uncloned? (uncloned-merge-target? into-g)
         [fid iid] (map :db/id [from-g into-g])
-        from-txes (concat
-                   (concat
-                    (collate-cas-batch from-g {:gene/status :gene.status/dead})
-                    (when into-uncloned?
-                      [[:db/retract iid :gene/sequence-name from-seq-name]]))
-                   [into-prov])
-        into-txes (concat
-                   (concat
-                    (when into-uncloned?
-                      [[:db.fn/cas iid :gene/sequence-name nil from-seq-name]])
-                    (collate-cas-batch into-g {:gene/biotype into-biotype}))
-                   [from-prov])
-        tx-result (->> [from-txes into-txes]
-                       (map (partial d/transact-async conn))
-                       (map deref)
-                       (last))]
-    (if-let [db (:db-after tx-result (:tx-data tx-result))]
+        curr-merges (map :db/id (:gene/merges from-g))
+        new-merges (conj curr-merges (:db/id into-g))
+        txes (concat
+              (concat
+               (collate-cas-batch from-g {:gene/status :gene.status/dead})
+               (collate-cas-batch into-g {:gene/biotype into-biotype})
+               [[:wormbase.tx-fns/set-many-ref from-lur :gene/merges new-merges]]
+               (when into-uncloned?
+                 [[:db/retract fid :gene/sequence-name from-seq-name]
+                  [:db.fn/cas iid :gene/sequence-name nil from-seq-name]]))
+              [prov])
+        tx-result @(d/transact-async conn txes)]
+    (if-let [db (:db-after tx-result)]
       (let [[from-gene into-gene] (merged-info db from-id into-id)]
         (ok {:updated into-gene
+             :merges (:gene/merges from-gene)
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
       (internal-server-error
        {:message "Invalid transaction - should never get here."}))))
 
-(defn undo-merge-gene [request from-id into-id]
-  (entity-must-exist! request from-id into-id)
+(defn undo-merge-gene [request into-id from-id]
+  (entity-must-exist! request into-id from-id)
   (if-let [tx (d/q '[:find ?tx .
-                     :in $ ?from ?into
+                     :in $ ?into ?from
                      :where
-                     [?from :gene/status :gene.status/dead ?tx]
-                     [?tx :provenance/merged-from ?from]
-                     [?tx :provenance/merged-into ?into]]
+                     [?from :gene/merges ?into ?tx]]
                    (-> request :db d/history)
-                   [:gene/id from-id]
-                   [:gene/id into-id])]
+                   [:gene/id into-id]
+                   [:gene/id from-id])]
     (let [conn (:conn request)
           payload (get request :body-params {})
           prov (-> request
@@ -349,35 +339,25 @@
           {p-seq-name :gene/sequence-name
            p-biotype :gene/biotype} product
           p-seq-name (get-in cdata [:product :gene/sequence-name])
-          prov-from (-> request
-                        (wnp/assoc-provenance cdata :event/split-gene)
-                        (assoc :provenance/split-from lur))
+          prov (wnp/assoc-provenance request cdata :event/split-gene)
           species (-> from-gene :gene/species :species/id)
           new-gene-data (merge {:gene/species {:species/id species}} product)
           mint-new-id? true
-          new-result @(d/transact-async
-                       conn
-                       [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
-                        prov-from])
-          db (:db-after new-result)
-          p-gene (d/entity db [:gene/sequence-name p-seq-name])
+          curr-bt (d/entid db (:gene/biotype from-gene))
+          new-bt (d/entid db biotype)
+          p-gene-lur [:gene/sequence-name p-seq-name]
+          curr-splits (map :db/id (:gene/splits (d/pull db [:gene/splits] lur)))
+          new-splits (conj curr-splits p-seq-name)
+          txes [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
+                [:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
+                [:db.fn/cas lur :gene/biotype curr-bt new-bt]
+                prov]
+          tx-result @(d/transact-async conn txes)
+          dba (:db-after tx-result)
+          p-gene (d/pull dba '[*] p-gene-lur)
           p-gene-id (:gene/id p-gene)
-          p-gene-lur [:gene/id p-gene-id]
-          prov-into (-> request
-                        (wnp/assoc-provenance cdata :event/split-gene)
-                        (assoc :provenance/split-into p-gene-lur))
-          curr-splits (map :db/id (:gene/splits (d/entity db lur)))
-          new-splits (conj curr-splits (:db/id p-gene))
-          update-result @(d/transact-async
-                          conn
-                          [[:db.fn/cas
-                            lur
-                            :gene/biotype
-                            (d/entid db (:gene/biotype from-gene))
-                            (d/entid db biotype)]
-                           [:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
-                           prov-into])]
-      (->> [p-gene-lur lur]
+          p-gene-lur* [:gene/id p-gene-id]]
+      (->> [p-gene-lur* lur]
            (map (partial apply array-map))
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
@@ -398,9 +378,7 @@
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?from ?into
                      :where
-                     [?into :gene/id]
-                     [?tx :provenance/split-into ?into]
-                     [?tx :provenance/split-from ?from]]
+                     [?from :gene/splits ?into ?tx]]
                    (-> request :db d/history)
                    [:gene/id from-id]
                    [:gene/id into-id])]
@@ -413,9 +391,9 @@
                            :provenance/why "Undoing split"}))
           fact-mapper (partial invert-split-tx (d/db conn))
           compensating-txes (wdb/invert-tx (d/log conn)
-                                            tx
-                                            prov
-                                            fact-mapper)
+                                           tx
+                                           prov
+                                           fact-mapper)
           tx-result @(d/transact-async conn compensating-txes)]
       (ok {:live from-id :dead into-id}))
     (not-found {:message "No transaction to undo"})))
@@ -594,8 +572,8 @@
                          (response-map))
           :handler (fn [request]
                      (undo-merge-gene request
-                                      from-identifier
-                                      identifier))}}))
+                                      identifier
+                                      from-identifier))}}))
      (sweet/context "/split" []
        (sweet/resource
         {:post

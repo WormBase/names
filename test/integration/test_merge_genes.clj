@@ -8,8 +8,8 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.service :as service]
    [wormbase.test-utils :as tu]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]])
-  (:import (java.util Date)))
+   [ring.util.http-response :refer [bad-request conflict not-found ok]]
+   [clojure.string :as str]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -25,9 +25,7 @@
     (d/pull (d/db conn)
             '[:provenance/why
               :provenance/when
-              {:provenance/merged-into [:gene/id]
-               :provenance/merged-from [:gene/id]
-               :provenance/how [:db/ident]
+              {:provenance/how [:db/ident]
                :provenance/who [:person/email]}]
             mtx)))
 
@@ -51,7 +49,7 @@
       [status (tu/parse-body body)])))
 
 (defn undo-merge-genes
-  [from-id into-id & {:keys [current-user]
+  [into-id from-id & {:keys [current-user]
                       :or {current-user "tester@wormbase.org"}}]
   (binding [fake-auth/*gapi-verify-token-response*
             (fake-auth/payload {"email" current-user})]
@@ -153,59 +151,58 @@
                 ppe '[*
                       {:provenance/what [:db/ident]
                        :provenance/who [:person/email :person/name :person/id]
-                       :provenance/how [:db/ident]
-                       :provenance/split-from [:gene/id]
-                       :provenance/split-into [:gene/id]
-                       :provenance/merged-from [:gene/id]
-                       :provenance/merged-into [:gene/id]}]
-                from-prov (some->> (wnp/query-provenance (d/db conn) [:gene/id from-id] ppe)
-                                   (filter #(= (:provenance/what %) :event/merge-genes))
-                                   first)
-                into-prov (some->> (wnp/query-provenance (d/db conn) [:gene/id into-id] ppe)
-                                   (filter #(= (:provenance/what %) :event/merge-genes))
-                                   first)]
+                       :provenance/how [:db/ident]}]
+                prov (some->> ppe
+                              (wnp/query-provenance (d/db conn) [:gene/id from-id])
+                              (filter #(= (:provenance/what %) :event/merge-genes))
+                              first)]
             (tu/status-is? (:status (ok)) status body)
-            (t/is (inst? (:provenance/when from-prov)))
-            (t/is (= into-id (-> from-prov :provenance/merged-into :gene/id)))
-            (t/is (= from-id (-> into-prov :provenance/merged-from :gene/id)))
-            (doseq [prov [from-prov into-prov]]
+            (t/is (inst? (:provenance/when prov)))
+
+            (let [{src-merges :gene/merges} (d/pull (d/db conn)
+                                                    [{:gene/merges [[:gene/id]]}]
+                                                    [:gene/id from-id])
+                  {tgt-merges :gene/_merges} (d/pull (d/db conn)
+                                                     [{:gene/_merges [[:gene/id]]}]
+                                                     [:gene/id into-id])]
+              (t/is (contains? (set (map :gene/id src-merges)) into-id))
+              (t/is ((set (map :gene/id tgt-merges)) from-id))
               (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
               (t/is (= (:provenance/how prov) :agent/web)))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
     (let [species "Caenorhabditis elegans"
-          merged-into "WBGene00000001"
-          merged-from "WBGene00000002"
+          merged-from "WBGene00000001"
+          merged-into "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
           into-seq-name (tu/seq-name-for-species species)
-          from-gene {:db/id from-seq-name
-                     :gene/id merged-from
-                     :gene/sequence-name from-seq-name
-                     :gene/species [:species/latin-name species]
-                     :gene/status :gene.status/dead
-                     :gene/biotype :biotype/cds}
-          into-gene {:db/id into-seq-name
+          init-from-gene {:db/id "from"
+                          :gene/id merged-from
+                          :gene/sequence-name from-seq-name
+                          :gene/species [:species/latin-name species]
+                          :gene/status :gene.status/dead
+                          :gene/biotype :biotype/cds}
+          from-gene {:gene/id merged-from :gene/merges "into"}
+          into-gene {:db/id "into"
                      :gene/id merged-into
                      :gene/species [:species/latin-name species]
                      :gene/sequence-name into-seq-name
                      :gene/cgc-name (tu/cgc-name-for-species species)
                      :gene/status :gene.status/live
                      :gene/biotype :biotype/transcript}
-          init-txes [from-gene
-                     into-gene
-                     {:db/id "datomic.tx"
-                      :provenance/merged-from from-seq-name
-                      :provenance/merged-into into-seq-name
-                      :provenance/why "a gene that has been merged for testing undo"
-                      :provenance/how :agent/console}]
-          conn (db-testing/fixture-conn)
-          _ @(d/transact-async conn init-txes)]
-      (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
-                    wdb/db (fn get-db [_] (d/db conn))]
-        (let [[status body] (undo-merge-genes merged-from
-                                              merged-into)]
-          (tu/status-is? (:status (ok)) status body)
-          (t/is (map? body) (pr-str (type body)))
-          (t/is (= (:dead body) merged-from) (pr-str body))
-          (t/is (= (:live body) merged-into) (pr-str body)))))))
+          merge-txes [from-gene
+                      into-gene
+                      {:db/id "datomic.tx"
+                       :provenance/why "a gene that has been merged for testing undo"
+                       :provenance/how :agent/console}]
+          conn (db-testing/fixture-conn)]
+      @(d/transact conn [init-from-gene])
+      (let [tx-result @(d/transact conn merge-txes)]
+        (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+                      wdb/db (fn get-db [_] (d/db conn))]
+          (let [[status body] (undo-merge-genes merged-into merged-from)]
+            (tu/status-is? (:status (ok)) status body)
+            (t/is (map? body) (pr-str (type body)))
+            (t/is (= (:dead body) merged-from) (pr-str body))
+            (t/is (= (:live body) merged-into) (pr-str body))))))))
