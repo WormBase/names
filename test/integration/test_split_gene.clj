@@ -51,13 +51,15 @@
       [status (tu/parse-body body)])))
 
 (defn undo-split-gene
-  [from-id into-id & {:keys [current-user]}]
+  [from-id into-id & {:keys [payload current-user]
+                      :or {payload {:prov {}}}}]
   (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
                                                     :current-user
                                                     current-user)]
     (tu/delete service/app
                (str "/api/gene/" from-id "/split/" into-id)
                "application/json"
+               (tu/->json payload)
                {"authorization" (str "Token " "FAKED")})))
 
 (t/deftest must-meet-spec

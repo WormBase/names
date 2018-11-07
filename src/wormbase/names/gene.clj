@@ -509,6 +509,7 @@
          {:summary "Resurrect a gene."
           :x-name ::resurrect-gene
           :middleware [wna/restrict-to-authenticated]
+          :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
                      (resurrect-gene request identifier))}}))
@@ -518,6 +519,7 @@
          {:summary "Suppress a gene."
           :x-name ::suppress-gene
           :middleware [wna/restrict-to-authenticated]
+          :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
                      (suppress-gene request identifier))}}))
@@ -526,7 +528,7 @@
        {:summary "Kill a gene"
         :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
-        :parameters {:body-params ::wsg/kill}
+        :parameters {:body-params {:prov ::wsp/provenance}}
         :responses status-changed-responses
         :handler (fn [request]
                    (kill-gene request identifier))}})
@@ -558,7 +560,7 @@
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:data ::wsg/merge
                                      :prov ::wsp/provenance}}
-;;          :responses (response-map default-responses)
+          :responses (response-map default-responses)
           :handler
           (fn [request]
             (merge-genes request identifier from-identifier))}
@@ -567,6 +569,7 @@
           :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-merge-gene
           :path-params [from-identifier ::wsg/identifier]
+          :parameters {:body-params {:prov ::wsp/provenance}}
           :responses (-> default-responses
                          (assoc ok {:schema ::wsg/undone})
                          (response-map))

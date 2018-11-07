@@ -49,14 +49,16 @@
       [status (tu/parse-body body)])))
 
 (defn undo-merge-genes
-  [into-id from-id & {:keys [current-user]
-                      :or {current-user "tester@wormbase.org"}}]
+  [into-id from-id & {:keys [current-user payload]
+                      :or {current-user "tester@wormbase.org"
+                           payload {:prov {}}}}]
   (binding [fake-auth/*gapi-verify-token-response*
             (fake-auth/payload {"email" current-user})]
     (let [current-user-token (get fake-auth/tokens current-user)]
       (tu/delete service/app
                  (str "/api/gene/" into-id "/merge/" from-id)
                  "application/json"
+                 (tu/->json payload)
                  {"authorization" (str "Token " current-user-token)}))))
 
 (t/deftest must-meet-spec
@@ -72,14 +74,14 @@
   (t/testing "400 for invalid gene "
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
-                          :prov nil}
+                          :prov {}}
                          "WB2"
                          "WB1")]
       (tu/status-is? (:status (not-found)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
-                          :prov nil}
+                          :prov {}}
                          "WBGene20000000"
                          "WBGene10000000")]
       (tu/status-is? 404 status body)))
@@ -109,7 +111,7 @@
                                       (-> lur entity :gene/status entid)
                                       (entid :gene.status/dead)]]))
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/cds}
-                                            :prov nil}
+                                            :prov {}}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (conflict)) status body))))))
@@ -120,7 +122,7 @@
         data-samples
         (fn check-biotype-validation-error [conn]
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/godzilla}
-                                            :prov nil}
+                                            :prov {}}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (not-found)) status body)
@@ -144,7 +146,7 @@
           (let [db (d/db conn)
                 [status body] (merge-genes
                                {:data {:gene/biotype :biotype/transposable-element-gene}
-                                :prov nil}
+                                :prov {}}
                                from-id
                                into-id)
                 [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
