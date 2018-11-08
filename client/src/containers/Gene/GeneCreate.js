@@ -22,7 +22,7 @@ class GeneCreate extends Component {
     };
   }
 
-  handleCreateGene = (data) => {
+  handleCreateGene = ({data, provenance}) => {
     if (this.state.status === 'SUBMITTED') {
       return;
     }
@@ -58,7 +58,8 @@ class GeneCreate extends Component {
           return this.props.authorizedFetch(`/api/gene/`, {
             method: 'POST',
             body: JSON.stringify({
-              ...data
+              data: data,
+              prov: provenance,
             }),
           });
         },
