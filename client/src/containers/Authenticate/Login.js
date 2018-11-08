@@ -4,41 +4,8 @@ import { Button, withStyles } from '../../components/elements';
 
 class Login extends Component {
 
-  // adapted from https://developers.google.com/identity/sign-in/web/build-button
-  initializeSignIn = (element) => {
-    const gapi = window.gapi;
-    gapi.load('auth2', () => {
-      // Retrieve the singleton for the GoogleAuth library and set up the client.
-      const auth2 = gapi.auth2.init({
-        client_id: '514830196757-8464k0qoaqlb4i238t8o6pc6t9hnevv0.apps.googleusercontent.com',
-        cookiepolicy: 'single_host_origin',
-        // Request scopes in addition to 'profile' and 'email'
-        //scope: 'additional_scope'
-      });
-
-      auth2.attachClickHandler(element, {},
-        (googleUser) => {
-          const googleUserProfile = googleUser.getBasicProfile();
-          this.props.onSuccess({
-            name: googleUserProfile.getName(),
-            email: googleUserProfile.getEmail(),
-            id_token: googleUser.getAuthResponse().id_token,
-          }, () => {
-            auth2.disconnect();
-          });
-        }, (error) => {
-          this.props.onError(error);
-        }
-      );
-    });
-  }
-
-  componentDidMount() {
-    this.initializeSignIn(this.buttonElement);
-  }
-
   render() {
-    const {classes, errorMessage} = this.props;
+    const {classes, onSignIn, errorMessage} = this.props;
     return (
       <div className={classes.root}>
         {
@@ -52,7 +19,7 @@ class Login extends Component {
             null
         }
         <Button
-          buttonRef={element => this.buttonElement = element}
+          onClick={onSignIn}
           variant="raised"
         >
           Login with Google
@@ -64,8 +31,7 @@ class Login extends Component {
 
 Login.propTypes = {
   classes: PropTypes.object.isRequired,
-  onSuccess: PropTypes.func.isRequired,
-  onError: PropTypes.func.isRequired,
+  onSignIn: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
 };
 
