@@ -270,7 +270,6 @@
   (let [{conn :conn db :db payload :body-params} request
         data (:data payload)
         into-biotype (:gene/biotype data)
-        _ (println "**MERGE-GENES:: INTO:" into-id "FROM:" from-id)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
                                                into-id
