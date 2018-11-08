@@ -24,6 +24,26 @@
    [wormbase.names.util :as wnu])
   (:gen-class))
 
+(def deferred (atom {}))
+
+(defn defer [data-attr d event]
+  (update-in d [data-attr] (partial merge-with concat) event))
+
+(defn defer-event [event data-attr event-type event-text & {:keys [src-into?]}]
+  (let [from-lur (find event :gene/id)
+        into-lur [:gene/id (geneace-text-ref event-text)]
+        [f i] (if src-into?
+                [into-lur from-lur]
+                [from-lur into-lur])
+        prov (-> event
+                 (wnu/select-keys-with-ns "provenance")
+                 (assoc :provenance/what event-type))]
+    (swap! deferred
+           (partial defer data-attr)
+           {:tx-data
+            [[:wormbase.tx-fns/set-many-ref f data-attr i]
+             prov]})))
+
 (defn- throw-parse-exc! [spec value]
   (throw (ex-info "Could not parse"
                   {:spec spec
@@ -114,20 +134,6 @@
         (assoc :import-event/biotype-to bt-to)
         (discard-empty-valued-entries))))
 
-(defn decode-merge-event [m event-text]
-  (let [merged-into (:gene/id m)
-        merged-from (geneace-text-ref event-text)]
-    (-> m
-        (assoc :provenance/what :event/merge-genes)
-        (assoc :provenance/merged-from [:gene/id merged-from]))))
-
-(defn decode-split-event [m event-text]
-  (let [split-from (:gene/id m)
-        split-into (geneace-text-ref event-text)]
-    (-> m
-        (assoc :provenance/what :event/split-gene)
-        (assoc :provenance/split-into [:gene/id split-into]))))
-
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
       (assoc :provenance/what :event/update-gene)
@@ -146,10 +152,13 @@
       (decode-biotype-event what)
 
       (str/starts-with? what "Acquires_merge")
-      (decode-merge-event what)
+      (defer-event :gene/merges :event/merge-genes what :src-into? true)
+
+      (str/starts-with? what "Merged_into")
+      (defer-event :gene/merges :event/merge-genes what)
 
       (str/starts-with? what "Split_into")
-      (decode-split-event what)
+      (defer-event :gene/splits :event/split-gene what)
 
       (= what "Killed")
       (assoc :provenance/what :event/kill-gene)
@@ -231,30 +240,6 @@
                                    :gene/id target-gene-id))))))
       history-actions)))
 
-(defn map-reciprocal-events
-  "In the GeneACe export, only one side of a merge or split event is dumped.
-  This function adds the reciprocal entry to the corresponding event list in the
-  mapping of all history actions."
-  [history-actions]
-  (reduce-kv (fn record-inverse-refs [ha gene-id events]
-               (let [splits (filter :provenance/split-into events)
-                     update-splits (partial update-reciprocal-events
-                                            :provenance/split-into
-                                            :provenance/split-from
-                                            gene-id
-                                            splits)
-                     merges (filter :provenance/merged-from events)
-                     update-merges (partial update-reciprocal-events
-                                            :provenance/merged-from
-                                            :provenance/merged-into
-                                            gene-id
-                                            merges)]
-                 (->> ha
-                      (update-splits)
-                      (update-merges))))
-             history-actions
-             history-actions))
-
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
         cast-fns {:gene/id cast-gene-id-fn
@@ -266,7 +251,6 @@
            (group-by :gene/id)
            (map process-gene-events)
            (into {})
-           (map-reciprocal-events)
            (doall)))))
 
 (defn transact-gene-event
@@ -312,6 +296,13 @@
                 (d/entity db [:gene/sequence-name (:gene/sequence-name gene)]) (dissoc :gene/sequence-name))]
     gene*))
 
+(defn process-deferred [conn]
+  (let [{merges :gene/merges splits :gene/splits} @deferred]
+    (doseq [g-merges (partition-all 100 (:tx-data merges))]
+      @(d/transact-async conn g-merges))
+    (doseq [g-splits (partition-all 100 (:tx-data splits))]
+      @(d/transact-async conn g-splits))))
+
 (defn batch-transact-data [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
     ;; process all genes that are not dead, using the default batch size of 500.
@@ -342,7 +333,8 @@
       ;; keep `n-in-fllght` transactions  running at a time for performance.
       (doseq [event-txes-p (partition-all n-in-flight event-txes)]
         (doseq [event-tx event-txes-p]
-          @event-tx)))))
+          @event-tx))))
+  (process-deferred conn))
 
 (def cli-options [])
 
