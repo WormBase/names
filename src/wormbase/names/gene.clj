@@ -280,6 +280,16 @@
         prov (wnp/assoc-provenance request data :event/merge-genes)
         into-uncloned? (uncloned-merge-target? into-g)
         [fid iid] (map :db/id [from-g into-g])
+
+        ;;; TODO : set-many-ref - can do better!
+        ;;;; ---------------------------------------------------------------------------
+        ;;;   - (merge-(manyref-)values attr new-values)
+        ;;;   below becomes:
+        ;;;
+        ;;; ('merge-values from-lur :gene/merges [(:db/id into-g)])
+        ;;; The retrival of "curr-merges" should be done within the transactor process.
+        ;;;; ---------------------------------------------------------------------------
+
         curr-merges (map :db/id (:gene/merges from-g))
         new-merges (conj curr-merges (:db/id into-g))
         txes (concat
