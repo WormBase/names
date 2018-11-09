@@ -29,7 +29,7 @@
   Returns a map."
   [request payload what]
   (let [id-token (-> request :identity :token)
-        prov (or (wnu/select-keys-with-ns payload "provenance") {})
+        prov (get payload :prov {})
         person-lur (or (person-lur-from-provenance prov)
                        [:person/email (.getEmail id-token)])
         who (-> request :db (d/entity person-lur) :db/id)

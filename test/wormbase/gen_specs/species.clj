@@ -17,7 +17,7 @@
 
 (defn- valid-name-for-species [pattern-ident species]
   (->> (species-seed-data)
-       (filter #(= (:species/id %) species))
+       (filter #(= (:species/latin-name %) species))
        (map pattern-ident)
        (first)
        (sg/string-generator)))

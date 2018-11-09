@@ -114,26 +114,29 @@
                        :params params))]
     [status (parse-body body)]))
 
-(defn delete [app uri content-type headers]
-  (let [request (-> app
+(defn delete [app uri content-type & [data headers]]
+  (let [payload (.getBytes data)
+        request (-> app
                     p/session
                     (p/request uri
                                :request-method :delete
                                :headers (or headers {})
                                :content-type (or content-type
-                                                 "application/edn")))
+                                                 "application/edn")
+                               :body payload))
         {{:keys [status body response-headers]} :response} request]
     [status (parse-body body) response-headers]))
 
 (defn raw-put-or-post* [app uri method data content-type headers]
-  (let [request (-> app
+  (let [payload (.getBytes data)
+        request (-> app
                     p/session
                     (p/request uri
                                :request-method method
                                :headers (or headers {})
                                :content-type (or content-type
                                                  "application/edn")
-                               :body (.getBytes data)))
+                               :body payload))
         {{:keys [status body response-headers]} :response} request]
     [status (read-body body) response-headers]))
 
@@ -271,7 +274,7 @@
 (defn- gen-valid-name-for-sample [sample generator]
   (-> sample
       :gene/species
-      :species/id
+      :species/latin-name
       generator
       (gen/sample 1)
       first))

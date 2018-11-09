@@ -5,7 +5,7 @@
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    ;; load these namespaces for spec registration
-   [wormbase.specs.provenance]
+   [wormbase.specs.provenance :as wsp]
    [wormbase.specs.species]))
 
 
@@ -47,52 +47,30 @@
                                 :gene/sequence-name
                                 :gene/species]
                           :opt [:gene/cgc-name
-                                :gene/status
-                                :provenance/when
-                                :provenance/who
-                                :provenance/how
-                                :provenance/why])
+                                :gene/status])
                   (s/map-of #{:gene/biotype
                               :gene/sequence-name
                               :gene/species
                               :gene/cgc-name
                               :gene/id
-                              :gene/status
-                              :history
-                              :provenance/when
-                              :provenance/who
-                              :provenance/how
-                              :provenance/why}
+                              :gene/status}
                             any?))))
 
 (s/def ::uncloned (stc/spec
                    (stc/merge
                     (s/keys :req [:gene/species :gene/cgc-name]
-                            :opt [:gene/status
-                                  :provenance/when
-                                  :provenance/who
-                                  :provenance/how
-                                  :provenance/why])
+                            :opt [:gene/status])
                     (s/map-of #{:gene/species
                                 :gene/cgc-name
                                 :gene/status
-                                :gene/id
-                                :history
-                                :provenance/when
-                                :provenance/who
-                                :provenance/how
-                                :provenance/why}
+                                :gene/id}
                               any?))))
 
 (s/def ::new (stc/spec (s/or :cloned ::cloned
                              :uncloned ::uncloned)))
 
 (s/def ::new-unnamed (s/keys :req [:gene/id
-                                   :gene/species]
-                             :opt [:provenance/when
-                                   :provenance/who
-                                   :provenance/how
-                                   :provenance/why]))
+                                   :gene/species]))
 
 (s/def ::created (stc/spec (s/keys :req [:gene/id])))
 
@@ -129,32 +107,9 @@
 (s/def ::added sts/boolean?)
 (s/def ::change (s/keys :req-un [::attr ::value ::added]))
 (s/def ::changes (s/coll-of ::change))
-(s/def ::provenance-history (s/keys :req [:provenance/how
-                                          :provenance/what
-                                          :provenance/when
-                                          :provenance/who]
-                                    :req-un [::changes]
-                                    :opt [
-                                          ;; most keys in the provenance
-                                          ;; namespace should be in :req
-                                          ;; --- *but* ----
-                                          ;; if someone manually transacted at
-                                          ;; the repl without going thru the
-                                          ;; app, the prov might not have been
-                                          ;; applied.
-                                          ;; :provenance/how
-                                          ;; :provenance/what
-                                          ;; :provenance/when
-                                          ;; :provenance/who
-
-                                          :provenance/why
-                                          :provenance/split-from
-                                          :provenance/split-into
-                                          :provenance/merged-from
-                                          :provenance/merged-into]))
+(s/def ::provenance (s/merge :wsp/provenance (s/keys :req-un [::changes])))
 (s/def ::history (stc/spec
                   (s/coll-of ::provenance-history :type vector? :min-count 1)))
-
 
 (s/def ::info (stc/spec (s/or :cloned ::cloned
                               :uncloned ::uncloned
