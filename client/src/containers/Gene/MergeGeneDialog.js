@@ -59,14 +59,15 @@ class MergeGeneDialog extends Component {
             return (
               <DialogContent>
                 <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be merged. Are you sure?
+                  Gene <strong>{geneName}</strong> will be merged into the gene you specify below.
+                  Are you sure?
                 </DialogContentText>
                 <DialogContentText>
                   <ValidationError {...errorMessage} />
                 </DialogContentText>
                 <GeneIdMergeIntoField
                   label="Merge into gene"
-                  helperText="Enter WBID or search by CGC name"
+                  helperText={<span>Enter WBID or CGC name of the gene that <strong>{geneName}</strong> will be merged into</span>}
                   required
                   pageSize={3}
                 />
