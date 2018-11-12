@@ -161,7 +161,7 @@ class GeneProfile extends Component {
     });
   }
 
-  handleGeneUpdate = (data) => {
+  handleGeneUpdate = ({data, provenance}) => {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
@@ -186,7 +186,8 @@ class GeneProfile extends Component {
           return this.props.authorizedFetch(`/api/gene/${this.getId()}`, {
             method: 'PUT',
             body: JSON.stringify({
-              ...data
+              data: data,
+              prov: provenance,
             }),
           });
         },

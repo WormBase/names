@@ -6,18 +6,18 @@
 
 (def id-regexp #"[a-z]{1}-[a-z]+$")
 
-(def latin-name-regexp #"[A-Z]{1}[a-z]+\s{1}[a-z]+$") 
+(def latin-name-regexp #"[A-Z]{1}[a-z]+\s{1}[a-z]+$")
 
 ;; TODO: do we need short-name now use EDN?
 (s/def ::short-name (stc/spec (s/and sts/string? #(re-matches id-regexp %))))
 
-(s/def :species/id sts/keyword?)
-;; DISABLED predicate whilst attempting to resolve JSON coercion
-;; #(and (= (namespace %) "species")
-;;       (re-matches id-regexp (name %))))))
+(s/def :species/id  (stc/spec
+                     (s/and sts/keyword?
+                            #(= (namespace %) "species")
+                            #(re-matches id-regexp (name %)))))
 
 (s/def :species/latin-name (stc/spec
                             (s/and sts/string? #(re-matches latin-name-regexp %))))
 
-(s/def ::identifier (s/or :species/id :species/id
-                          :species/latin-name :species/latin-name))
+(s/def ::identifier (stc/spec (s/or :species/id :species/id
+                                    :species/latin-name :species/latin-name)))

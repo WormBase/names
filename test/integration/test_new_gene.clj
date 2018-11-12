@@ -14,6 +14,8 @@
 
 (def not-nil? (complement nil?))
 
+(def elegans-ln "Caenorhabditis elegans")
+
 (defn check-db [db gene-id]
   (let [qr (d/q '[:find (count ?e) .
                   :in $ ?gid status
@@ -44,15 +46,17 @@
 (t/deftest invalid-species-specified
   (t/testing "What happens when you specify an invalid species"
     (let [[status body] (new-gene
-                         {:gene/cgc-name "abc-1"
-                          :gene/species {:species/id :species/c-elegant}})]
+                         {:data {:gene/cgc-name "abc-1"
+                                 :gene/species {:species/latin-name "Cabornot Elegant"}}
+                          :prov nil})]
       (tu/status-is? 400 status body))))
 
 (t/deftest invalid-names
   (t/testing "Invalid CGC name for species causes validation error."
     (let [[status body] (new-gene
-                         {:gene/cgc-name "_INVALID!_"
-                          :gene/species {:species/id :species/c-elegans}})]
+                         {:data {:gene/cgc-name "_INVALID!_"
+                                 :gene/species {:species/latin-name elegans-ln}}
+                          :prov nil})]
       (tu/status-is? 400 status body))))
 
 (t/deftest naming-uncloned
@@ -61,9 +65,9 @@
       []
       (fn new-uncloned [conn]
         (let [[status body] (new-gene
-                             {:gene/cgc-name (tu/cgc-name-for-species
-                                              :species/c-elegans)
-                              :gene/species {:species/id :species/c-elegans}})
+                             {:data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
+                                     :gene/species {:species/latin-name elegans-ln}}
+                              :prov nil})
               expected-id "WBGene00000001"]
           (tu/status-is? 201 status body)
           (let [db (d/db conn)
@@ -74,10 +78,9 @@
 
 (t/deftest naming-with-provenance
   (t/testing "Naming some genes providing provenance."
-    (let [data {:gene/cgc-name (tu/cgc-name-for-species :species/c-elegans)
-                :gene/species {:species/id :species/c-elegans}
-                :provenance/who {:person/email
-                                 "tester@wormbase.org"}}
-          [status body] (new-gene data)]
+    (let [data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
+                :gene/species {:species/latin-name elegans-ln}}
+          prov {:provenance/who {:person/email "tester@wormbase.org"}}
+          [status body] (new-gene {:data data :prov prov})]
       (tu/status-is? 201 status body)
       (t/is (some-> body :created :gene/id) (pr-str body)))))

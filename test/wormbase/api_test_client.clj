@@ -62,8 +62,9 @@
     [status (tu/parse-body body)]))
 
 (defn delete
-  [entity-kind path & {:keys [current-user]
-                       :or {current-user default-user}}]
+  [entity-kind path & {:keys [payload current-user]
+                       :or {current-user default-user
+                            payload {:prov {}}}}]
   (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
                                                     :current-user
                                                     current-user)]
@@ -71,4 +72,5 @@
       (tu/delete service/app
                  uri
                  "application/json"
+                 (tu/->json payload)
                  {"authorization" "Token FAKED"}))))

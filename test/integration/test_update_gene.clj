@@ -67,14 +67,16 @@
           (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                 [status body] (update-gene
                                gid
-                               (-> sample-data
-                                   (dissoc :gene/id) (assoc :gene/cgc-name new-cgc-name)))]
+                               {:data (-> sample-data
+                                          (dissoc :gene/id)
+                                          (assoc :gene/cgc-name new-cgc-name))
+                                :prov nil})]
             (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   gid-2 (some-> body :updated :gene/id)
                   updated (:updated body)]
-              (t/is (= (-> updated :gene/species :species/id keyword)
-                       (get-in sample-data [:gene/species :species/id])))
+              (t/is (= (-> updated :gene/species :species/latin-name)
+                       (get-in sample-data [:gene/species :species/latin-name])))
               (t/is (= (:gene/cgc-name updated) new-cgc-name))
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
@@ -93,9 +95,10 @@
         [sample-data]
         (fn do-update [conn]
           (let [[status body] (update-gene gid
-                                           (-> sample-data
-                                               (dissoc :gene/id)
-                                               (assoc :gene/cgc-name nil)))]
+                                           {:data (-> sample-data
+                                                      (dissoc :gene/id)
+                                                      (assoc :gene/cgc-name nil))
+                                            :prov nil})]
             (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   identifier (some-> body :updated :gene/id)
@@ -119,12 +122,11 @@
        (fn [conn]
          (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                why "udpate prov test"
-               payload (-> sample-data
-                           (dissoc :gene/id :gene/status)
-                           (assoc :gene/cgc-name new-cgc-name)
-                           (assoc :provenance/who
-                                  {:person/email "tester@wormbase.org"})
-                           (assoc :provenance/why why))]
+               payload {:data  (-> sample-data
+                                   (dissoc :gene/id :gene/status)
+                                   (assoc :gene/cgc-name new-cgc-name))
+                        :prov {:provenance/why why
+                               :provenance/who {:person/email "tester@wormbase.org"}}}]
            (let [response (update-gene gid payload)
                  [status body] response
                  db (d/db conn)

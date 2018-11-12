@@ -25,7 +25,7 @@
   com.google.api-client/google-api-client {:mvn/version "1.23.0"}
   io.rkn/conformity {:mvn/version "0.5.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
-  metosin/compojure-api {:mvn/version "2.0.0-alpha21"
+  metosin/compojure-api {:mvn/version "2.0.0-alpha26"
                          :exclusions [potemkin
                                       instaparse]}
   metosin/spec-tools {:mvn/version "0.7.1"}

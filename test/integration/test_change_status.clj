@@ -31,7 +31,7 @@
   [endpoint gene-id & {:keys [current-user method payload]
                        :or {current-user "tester@wormbase.org"
                             method :post
-                            payload {}}}]
+                            payload {:prov {}}}}]
   (api-tc/send-request "gene"
                        method
                        payload
