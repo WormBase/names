@@ -499,6 +499,7 @@ class GeneProfile extends Component {
           <SnackbarContent
             variant={this.state.shortMessageVariant}
             message={<span>{this.state.shortMessage}</span>}
+            onClose={this.closeSnackbar}
           />
         </Snackbar>
       </Page>

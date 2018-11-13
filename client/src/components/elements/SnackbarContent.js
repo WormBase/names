@@ -2,8 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
 import InfoIcon from '@material-ui/icons/Info';
+import IconButton from '@material-ui/core/IconButton';
 import green from '@material-ui/core/colors/green';
 import amber from '@material-ui/core/colors/amber';
 import MuiSnackbarContent from '@material-ui/core/SnackbarContent';
@@ -48,6 +50,11 @@ const styles = theme => ({
     display: 'flex',
     alignItems: 'center',
   },
+  messageWrapper: {
+    display: 'flex',
+    flexGrow: 1,
+    justifyContent: 'space-around',
+  },
 });
 
 function SnackbarContent(props) {
@@ -57,6 +64,9 @@ function SnackbarContent(props) {
   return (
     <MuiSnackbarContent
       className={classNames(classes.snackbarContent, classes[variant], className)}
+      classes={{
+        message: classes.messageWrapper,
+      }}
       aria-describedby="client-snackbar"
       message={
         <span id="client-snackbar" className={classes.message}>
@@ -64,6 +74,17 @@ function SnackbarContent(props) {
           {message}
         </span>
       }
+      action={[
+        <IconButton
+          key="close"
+          aria-label="Close"
+          color="inherit"
+          className={classes.close}
+          onClick={onClose}
+        >
+          <CloseIcon />
+        </IconButton>,
+      ]}
       {...other}
     />
   );
@@ -73,7 +94,7 @@ SnackbarContent.propTypes = {
   classes: PropTypes.object.isRequired,
   className: PropTypes.string,
   message: PropTypes.node,
-  onClose: PropTypes.func,
+  onClose: PropTypes.func.isRequired,
   variant: PropTypes.oneOf(['success', 'warning', 'error', 'info']).isRequired,
 };
 
