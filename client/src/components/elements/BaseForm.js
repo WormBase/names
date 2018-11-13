@@ -149,7 +149,7 @@ class BaseForm extends Component {
     const provenanceFieldIds = Object.keys(fields).filter((fieldId) => fieldId.match(/provenance\//g));
     return {
       data: this.gatherFields(dataFieldIds),
-      provenance: this.gatherFields(provenanceFieldIds),
+      prov: this.gatherFields(provenanceFieldIds),
     };
   }
 

@@ -22,7 +22,7 @@ class GeneCreate extends Component {
     };
   }
 
-  handleCreateGene = ({data, provenance}) => {
+  handleCreateGene = ({data, prov: provenance}) => {
     if (this.state.status === 'SUBMITTED') {
       return;
     }
