@@ -26,22 +26,21 @@
 
 (def deferred (atom {}))
 
+(def geneace-text-ref #(last (str/split % #"\s")))
+
 (defn defer [data-attr d event]
   (update-in d [data-attr] (partial merge-with concat) event))
 
 (defn defer-event [event data-attr event-type event-text & {:keys [src-into?]}]
   (let [from-lur (find event :gene/id)
         into-lur [:gene/id (geneace-text-ref event-text)]
-        [f i] (if src-into?
-                [into-lur from-lur]
-                [from-lur into-lur])
         prov (-> event
                  (wnu/select-keys-with-ns "provenance")
                  (assoc :provenance/what event-type))]
     (swap! deferred
            (partial defer data-attr)
            {:tx-data
-            [[:wormbase.tx-fns/set-many-ref f data-attr i]
+            [[:db/add from-lur data-attr into-lur]
              prov]})))
 
 (defn- throw-parse-exc! [spec value]
@@ -110,7 +109,7 @@
    string?
    (s/or :event/import-gene #(str/starts-with? % "Imported")
          :event/resurrect-gene (partial = "Resurrected")
-         :event/new-unnamed-ge>ne (partial = "Allocate")
+         :event/new-unnamed-gene (partial = "Allocate")
          :event/new-gene (partial = "Created")
          :event/kill-gene (partial = "Killed")
          :event/update-gene #(or
@@ -121,8 +120,6 @@
                               (= % "Transposon_in_origin"))
          :event/merge-genes #(str/includes? (str/lower-case %) "merge")
          :event/split-gene #(str/includes? (str/lower-case %) "split"))))
-
-(def geneace-text-ref #(last (str/split % #"\s")))
 
 (defn decode-biotype-event [m event-text]
   (let [[bt-from bt-to] (-> event-text
@@ -292,8 +289,11 @@
 
 (defn fixup-non-live-gene [db gene]
   (let [gene* (cond-> gene
-                (d/entity db [:gene/cgc-name (:gene/cgc-name gene)]) (dissoc :gene/cgc-name)
-                (d/entity db [:gene/sequence-name (:gene/sequence-name gene)]) (dissoc :gene/sequence-name))]
+                (d/entity db [:gene/cgc-name (:gene/cgc-name gene)])
+                (dissoc :gene/cgc-name)
+
+                (d/entity db [:gene/sequence-name (:gene/sequence-name gene)])
+                (dissoc :gene/sequence-name))]
     gene*))
 
 (defn process-deferred [conn]
