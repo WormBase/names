@@ -21,7 +21,8 @@
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as wns]
-   [wormbase.specs.gene :as wsg])
+   [wormbase.specs.gene :as wsg]
+   [wormbase.specs.species :as wss])
   (:import
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))
@@ -195,7 +196,7 @@
   "Convert a sample generated from a spec into a transactable form."
   [sample]
   (let [biotype (:gene/biotype sample)
-        species (-> sample :gene/species vec first)
+        ;; species (-> sample :gene/species vec first)
         assoc-if (fn [m k v]
                    (if v
                      (assoc m k v)
@@ -205,9 +206,7 @@
         (dissoc :provenance/why)
         (dissoc :provenance/when)
         (dissoc :provenance/how)
-        (dissoc :gene/species)
         (dissoc :gene/biotype)
-        (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures
@@ -272,12 +271,16 @@
          tx-ids)))
 
 (defn- gen-valid-name-for-sample [sample generator]
-  (-> sample
-      :gene/species
-      :species/latin-name
-      generator
-      (gen/sample 1)
-      first))
+  (let [select-species-name (fn [v]
+                              (if (vector? v)
+                                (second v)
+                                v))]
+    (-> sample
+        :gene/species
+        select-species-name
+        generator
+        (gen/sample 1)
+        first)))
 
 (defn cgc-name-for-sample [sample]
   (gen-valid-name-for-sample sample gss/cgc-name))
@@ -313,6 +316,19 @@
        (map #(into {} %))
        (map #(dissoc % :history))))
 
+(defn species->ref
+  "Updates the value corresponding to `:gene/species` to be a lookup reference. "
+  [data]
+  (update data
+          :gene/species
+          (fn [sname]
+            (s/conform ::wss/identifier sname))))
+
+(defn species-ref->latin-name
+  "Retrive the name of the gene species from a mapping."
+  [data]
+  (-> data :gene/species second))
+
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (into {}
@@ -320,9 +336,10 @@
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
         gene-recs (map (fn make-valid [m]
-                         (assoc m
-                                :gene/cgc-name (cgc-name-for-sample m)
-                                :gene/sequence-name (seq-name-for-sample m)))
+                         (-> m
+                             (assoc :gene/cgc-name (cgc-name-for-sample m)
+                                    :gene/sequence-name (seq-name-for-sample m))
+                             (species->ref)))
                        (gen-sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]

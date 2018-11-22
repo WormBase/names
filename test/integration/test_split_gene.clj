@@ -142,7 +142,7 @@
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
           (let [seq-name (tu/seq-name-for-species
-                          (-> sample :gene/species :species/latin-name))
+                          (-> sample :gene/species second))
                 [status body] (split-gene
                                {:data {:gene/biotype :biotype/cds
                                        :product
@@ -163,7 +163,7 @@
                                 :or {status :gene.status/live}}]
   (let [[sample] (tu/gene-samples 1)
         gene-id (:gene/id sample)
-        species (-> sample :gene/species :species/latin-name)
+        species (-> sample :gene/species second)
         prod-seq-name (tu/seq-name-for-species species)]
     [gene-id
      (-> sample
@@ -190,7 +190,7 @@
                                           :current-user user-email)]
             (tu/status-is? (:status (created "/")) status body)
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
-                  src  (d/pull (d/db conn) '[* {:gene/splits [[:gene/id]]}] from-lur)
+                  src (d/pull (d/db conn) '[* {:gene/splits [[:gene/id]]}] from-lur)
                   src-id (:gene/id src)
                   prod (d/pull (d/db conn) '[* {:gene/_splits [[:gene/id]]}] into-lur)
                   prod-id (:gene/id prod)

@@ -26,7 +26,6 @@
 (def species-overrides (->> (util/load-seed-data)
                             (filter :species/latin-name)
                             (map :species/latin-name)
-                            (map (partial array-map :species/latin-name))
                             set))
 
 (def species (s/gen :gene/species species-overrides))
@@ -55,7 +54,6 @@
   (->> (util/load-seed-data)
        (filter species-kw)
        (map species-kw)
-       (map (partial array-map species-kw))
        set))
 
 (s/def ::species-id
