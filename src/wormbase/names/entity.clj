@@ -15,5 +15,5 @@
                      :type ::validation-error})))
   (let [lookup-ref (s/conform identitfy-spec identifier)
         db (:db request)
-        ent (d/pull db '[*] lookup-ref)]
+        ent (d/entity db lookup-ref)]
     [lookup-ref ent]))

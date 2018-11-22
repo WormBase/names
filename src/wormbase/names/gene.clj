@@ -24,7 +24,8 @@
    [wormbase.names.util :as wnu]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
-   [wormbase.specs.provenance :as wsp]))
+   [wormbase.specs.provenance :as wsp]
+   [wormids.core :as wormids]))
 
 (def identify (partial wne/identify ::wsg/identifier))
 
@@ -32,7 +33,7 @@
   ([request data & {:keys [allow-blank-cgc-name?]
                     :or {allow-blank-cgc-name? true}}]
    (let [db (:db request)
-         species-lur (some-> data :gene/species vec first)
+         species-lur (s/conform :gene/species (:gene/species data))
          species-ent (d/entity db species-lur)]
     (if (empty? data)
       (throw (ex-info "No names to validate (empty data)"
@@ -60,6 +61,16 @@
       data)))
   ([request data]
    (validate-names request data :allow-blank-cgc-name? false)))
+
+(defn conform-data [request spec data]
+  (let [conformed (stc/conform spec (validate-names request data))]
+    (if (s/invalid? conformed)
+      (let [problems (expound-str spec data)]
+        (throw (ex-info "Not valid according to spec."
+                        {:problems problems
+                         :type ::validation-error
+                         :data data})))
+      conformed)))
 
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
@@ -106,7 +117,7 @@
                                :provenance/how [:db/ident]}])
 
 (def info-pull-expr '[* {:gene/biotype [[:db/ident]]
-                         :gene/species [[:species/id][:species/latin-name]]
+                         :gene/species [[:species/latin-name]]
                          :gene/status [[:db/ident]]
                          :gene/merges [[:gene/id]]
                          :gene/splits [[:gene/id]]}])
@@ -118,51 +129,39 @@
       (let [prov (wnp/query-provenance db lur provenance-pull-expr)]
         (-> info (assoc :history prov) ok)))))
 
-(defn new-unnamed-gene [request payload]
-  (let [prov (wnp/assoc-provenance request payload :event/new-gene)
+(defn new-unnamed-gene [request]
+  (let [{payload :body-params conn :conn} request
+        prov (wnp/assoc-provenance request payload :event/new-gene)
         data (:data payload)
         spec ::wsg/new-unnamed
-        cdata (if (s/valid? spec data)
-                (s/conform spec data)
-                (let [problems (expound-str spec data)]
-                  (throw (ex-info "Invalid data"
-                                  {:problems problems
-                                   :type ::validation-error
-                                   :data data}))))
-        tx-data [[:wormbase.tx-fns/new-unnamed-gene cdata] prov]]
-    @(d/transact-async (:conn request) tx-data)))
-
-(defn conform-data [request spec data]
-  (let [conformed (stc/conform spec (validate-names request data))]
-    (if (s/invalid? conformed)
-      (let [problems (expound-str spec data)]
-        (throw (ex-info "Not valid according to spec."
-                        {:problems problems
-                         :type ::validation-error
-                         :data data})))
-      conformed)))
+        cdata (conform-data request spec data)
+        tx-data [cdata prov]]
+    @(d/transact-async conn tx-data)))
 
 (defn new-gene [request & {:keys [mint-new-id?]
                            :or {mint-new-id? true}}]
-  (let [payload (:body-params request)
-        data (:data payload)
+  (let [{payload :body-params db :db conn :conn} request
+        template (wormids/identifier-format db :gene/id)
+        data (-> payload
+                 :data
+                 (update :gene/status (fnil identity :gene.status/live)))
         spec ::wsg/new
         [_ cdata] (conform-data request spec data)
         prov (wnp/assoc-provenance request payload :event/new-gene)
-        tx-data [[:wormbase.tx-fns/new-gene cdata mint-new-id?] prov]
-        tx-result @(d/transact-async (:conn request) tx-data)
-        db (:db-after tx-result)
-        new-id (wdb/extract-id tx-result :gene/id)
+        tx-data [['wormids.core/new template :gene/id [cdata]] prov]
+        tx-res @(d/transact-async conn tx-data)
+        dba (:db-after tx-res)
+        new-id (wdb/extract-id tx-res :gene/id)
         emap (some->> [:gene/id new-id]
-                      (d/pull db info-pull-expr)
-                      (wu/undatomicize))
+                      (d/pull dba info-pull-expr)
+                      (wu/undatomicize db))
         result {:created emap}]
     (created "/gene/" result)))
 
 (defn resolve-refs-to-dbids
   "Resolve references in a data payload to database ids for compare on swap operations."
   [db data]
-  (let [species-lur (-> data :gene/species vec first)
+  (let [species-lur (-> data :gene/species vec)
         species-entid (d/entid db species-lur)
         biotype-ident (get data :gene/biotype)
         biotype-entid (d/entid db biotype-ident)
@@ -174,22 +173,21 @@
     res))
 
 (defn update-gene [request identifier]
-  (let [{db :db conn :conn} request
+  (let [{db :db conn :conn payload :body-params} request
         [lur entity] (identify request identifier)]
     (when entity
-      (let [payload (some-> request :body-params)
-            spec ::wsg/update
+      (let [spec ::wsg/update
             data (:data payload)]
         (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
-                         (conform-gene-data request spec)
+                         (conform-data request spec)
                          (second)
                          (resolve-refs-to-dbids db))
               prov (wnp/assoc-provenance request payload :event/update-gene)
-              txes [[:wormbase.tx-fns/update-gene lur cdata] prov]
+              txes [['wormids.core/cas-batch lur cdata] prov]
               tx-result @(d/transact-async conn txes)]
           (if-let [db-after (:db-after tx-result)]
-            (if-let [ent (d/pull db-after info-pull-expr lur)]
-              (ok {:updated (wu/undatomicize ent)})
+            (if-let [updated (wdb/pull db-after info-pull-expr lur)]
+              (ok {:updated updated})
               (not-found
                (format "Gene '%s' does not exist" (last lur))))))))))
 
@@ -223,9 +221,9 @@
     (when (reduce not= (map :gene/species [from-gene into-gene]))
       (throw (ex-info
               "Refusing to merge: genes have differing species"
-              {:from {:gen/species (-> from-gene :gene/species :species/id)
+              {:from {:gen/species (-> from-gene :gene/species)
                       :gene/id from-gene-id}
-               :into {:species (-> into :gene/species :species/id)
+               :into {:species (-> into-gene :gene/species)
                       :gene/id into-gene-id}})))
     (when (:gene/cgc-name from-gene)
       (throw (ex-info (str "Gene to be killed has a CGC name,"
@@ -260,35 +258,21 @@
                                                into-id
                                                from-id
                                                into-biotype)
-        collate-cas-batch (partial d/invoke db :wormbase.tx-fns/collate-cas-batch db)
         from-seq-name (:gene/sequence-name from-g)
         prov (wnp/assoc-provenance request data :event/merge-genes)
-        into-uncloned? (uncloned-merge-target? into-g)
-        [fid iid] (map :db/id [from-g into-g])
-
-        ;;; TODO : set-many-ref - can do better!
-        ;;;; ---------------------------------------------------------------------------
-        ;;;   - (merge-(manyref-)values attr new-values)
-        ;;;   below becomes:
-        ;;;
-        ;;; ('merge-values from-lur :gene/merges [(:db/id into-g)])
-        ;;; The retrival of "curr-merges" should be done within the transactor process.
-        ;;;; ---------------------------------------------------------------------------
-
-        curr-merges (map :db/id (:gene/merges from-g))
-        new-merges (conj curr-merges (:db/id into-g))
         txes (concat
               (concat
-               (collate-cas-batch from-g {:gene/status :gene.status/dead})
-               (collate-cas-batch into-g {:gene/biotype into-biotype})
-               [[:wormbase.tx-fns/set-many-ref from-lur :gene/merges new-merges]]
-               (when into-uncloned?
-                 [[:db/retract fid :gene/sequence-name from-seq-name]
-                  [:db.fn/cas iid :gene/sequence-name nil from-seq-name]]))
+               [['wormids.core/cas-batch from-lur {:gene/status :gene.status/dead}]
+                ['wormids.core/cas-batch into-lur {:gene/biotype into-biotype}]
+                [:db/add from-lur :gene/merges into-lur]]
+               [[:db/add from-lur :gene/merges into-lur]]
+               (when (uncloned-merge-target? into-g)
+                 [[:db/retract from-lur :gene/sequence-name from-seq-name]
+                  [:db/cas into-lur :gene/sequence-name nil from-seq-name]]))
               [prov])
         tx-result @(d/transact-async conn txes)]
-    (if-let [db (:db-after tx-result)]
-      (let [[from-gene into-gene] (merged-info db from-id into-id)]
+    (if-let [dba (:db-after tx-result)]
+      (let [[from-gene into-gene] (merged-info dba from-id into-id)]
         (ok {:updated into-gene
              :merges (:gene/merges from-gene)
              :statuses {from-id (:gene/status from-gene)
@@ -317,12 +301,14 @@
     (not-found {:message "No transaction to undo"})))
 
 (defn split-gene [request identifier]
-  (let [conn (:conn request)
-        db (d/db conn)
+  (let [{conn :conn db :db} request
         data (get-in request [:body-params :data] {})
+        template (wormids/identifier-format db :gene/id)
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
+    (when (nil? from-gene)
+      (not-found! {:message "Gene missing"}))
     (when (wnu/not-live? from-gene-status)
       (conflict! {:message "Gene must be live."
                   :gene/status from-gene-status}))
@@ -332,21 +318,20 @@
            p-biotype :gene/biotype} product
           p-seq-name (get-in cdata [:product :gene/sequence-name])
           prov (wnp/assoc-provenance request cdata :event/split-gene)
-          species (-> from-gene :gene/species :species/id)
-          new-gene-data (merge {:gene/species {:species/id species}} product)
-          mint-new-id? true
+          species (get-in from-gene [:gene/species :species/latin-name])
+          new-data (merge {:gene/species (s/conform :gene/species species)}
+                          (assoc product :db/id p-seq-name))
           curr-bt (d/entid db (:gene/biotype from-gene))
           new-bt (d/entid db biotype)
           p-gene-lur [:gene/sequence-name p-seq-name]
-          curr-splits (map :db/id (:gene/splits (d/pull db [:gene/splits] lur)))
-          new-splits (conj curr-splits p-seq-name)
-          txes [[:wormbase.tx-fns/new-gene new-gene-data mint-new-id?]
-                [:wormbase.tx-fns/set-many-ref lur :gene/splits new-splits]
-                [:db.fn/cas lur :gene/biotype curr-bt new-bt]
+          xs [new-data]
+          txes [['wormids.core/new template :gene/id xs]
+                [:db/add lur :gene/splits p-seq-name]
+                [:db/cas lur :gene/biotype curr-bt new-bt]
                 prov]
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
-          p-gene (d/pull dba '[*] p-gene-lur)
+          p-gene (wdb/pull dba info-pull-expr p-gene-lur)
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
       (->> [p-gene-lur* lur]
@@ -357,7 +342,7 @@
 (defn- invert-split-tx [db e a v tx added?]
   (cond
     (= (d/ident db a) :gene/status)
-    [:db.fn/cas e a v (d/entid db :gene.status/dead)]
+    [:db/cas e a v (d/entid db :gene.status/dead)]
 
     (= (d/ident db a) :gene/id)
     [:db/add e a v]
@@ -407,7 +392,7 @@
   [request identifier to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "gene status cannot be updated."}}]
-  (let [{db :db payload :body-params} request
+  (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsg/identifier identifier)
         pull-status #(d/pull % '[{:gene/status [:db/ident]}] lur)
         {gene-status :gene/status} (pull-status db)]
@@ -415,11 +400,10 @@
                fail-precondition?
                (fail-precondition? gene-status))
       (precondition-failed! {:message precondition-failure-msg
-                             :info (wu/undatomicize gene-status)}))
+                             :info (wu/undatomicize db gene-status)}))
     (let [prov (wnp/assoc-provenance request payload event-type)
-          conn (:conn request)
           tx-res @(d/transact-async
-                   conn [[:db.fn/cas
+                   conn [[:db/cas
                           lur
                           :gene/status
                           (d/entid db (:db/ident gene-status))

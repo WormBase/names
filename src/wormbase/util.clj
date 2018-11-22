@@ -2,7 +2,9 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [clojure.walk :as w])
+   [clojure.walk :as w]
+   [datomic.api :as d]
+   [wormids.core :as wormids])
   (:import
    (java.io PushbackReader)))
 
@@ -15,10 +17,13 @@
 
 (defn undatomicize
   "Remove datomic internal attribute/value pairs from a seq of maps."
-  [data]
+  [db data]
   (w/postwalk (fn presenter [m]
                 (cond
                   (and (map? m) (:db/ident m)) (:db/ident m)
+                  (and (map? m)
+                       (= (count m) 1)
+                       (wormids/attr-schema-unique? db (-> m first key))) (-> m first val)
                   (map? m) (dissoc m :db/id :db/txInstant)
                   :default m))
               data))

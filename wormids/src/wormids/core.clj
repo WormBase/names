@@ -5,22 +5,39 @@
    [clojure.walk :as w]
    [datomic.api :as d]))
 
-(defn resolve-ref [db m k v]
+(defn attr-schema-unique? [db attr]
+  (try
+    (let [s-attr (:db/unique (d/entity db attr))]
+      (#{:db.unique/identity :db.unique/value} s-attr))
+    (catch IllegalArgumentException iae)))
+
+(defn entids->data [db m k v]
+    (assoc m
+           k
+           (cond
+             (or (pos-int? v) (vector? v))
+             (let [prs (d/pull db '[*] v)
+                   uniq-keys (filter (fn [[a v]]
+                                          (attr-schema-unique? db a)) prs)]
+               (select-keys prs (first uniq-keys)))
+             :else v)))
+
+(defn data->entid [db m k v]
   (assoc m
          k
          (cond
-           (and (map? v) (:db/id v))  (:db/id v)
+           (and (map? v) (:db/id v)) (:db/id v)
            (keyword? v) [:db/ident v]
-           (vector? v) (:db/id (d/pull db '[*] v))
+           (or (pos-int? v) (vector? v)) (:db/id (d/pull db '[*] v))
            :else v)))
 
-(defn resolve-refs
-  "Resolve datomic db references in entity-map `em`."
+(defn data->entids
+  "Resolve datomic db entids to data in entity-map `em`."
   [db em]
   (w/postwalk
-      (fn ref-resolve [xs]
+      (fn id-resolve [xs]
         (if (map? xs)
-          (reduce-kv (partial resolve-ref db) {} xs)
+          (reduce-kv (partial data->entid db) {} xs)
           xs))
       em))
 
@@ -29,9 +46,10 @@
   [db eid data]
   (let [entity-map (d/pull db '[*] eid)]
     (some->> data
-             (resolve-refs db)
+             (data->entids db)
              (map (fn gen-cas [[k v]]
-                    (let [old-v (k (resolve-refs db entity-map))]
+                    (let [e-data (data->entids db entity-map)
+                          old-v (k e-data)]
                       (when-not (or (nil? v)
                                     (= old-v v))
                         [:db/cas eid k old-v v]))))
@@ -72,8 +90,14 @@
   [db ident template]
   (->> (latest-id-number db ident) inc (format template)))
 
-(defn allocate-block
-  "Allocate a block of sequential monitonically increasing identifiers.
+(defn identifier-format [db uiident]
+  (let [{template :template/format} (d/pull db
+                                            '[:template/format]
+                                            [:template/describes uiident])]
+    template))
+
+(defn new
+  "Asssign new monitonically increasing identifiers in collections of mappings.
 
   `template` - A c-style template string that can be used to format identifiers for a `uiident`.
   `uiident` - A datomic ident that uniquely identifies an entity.
