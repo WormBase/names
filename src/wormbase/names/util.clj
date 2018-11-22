@@ -2,6 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
+   [clojure.set :as set]
    [clojure.walk :as w]
    [aero.core :as aero]
    [datomic.api :as d]))
@@ -46,21 +47,28 @@
 
 (defn datom-table
   "Print a collection of datoms in an org-mode compatible table."
-  [db datoms]
-  (->> datoms
-       (map
-        (fn [{:keys [e a v tx added]}]
-          {"part" (d/part e)
-           "e" (format "0x%016x" e)
-           "a" (d/ident db a)
-           "v" (if (nat-int? v)
-                 (or (d/ident db v)
-                     (format "0x%016x" (:db/id (d/entity db v))))
-                 (trunc v 24))
-           "tx" (format "0x%x" tx)
-           "added" added}))
-       (pp/print-table ["part" "e" "a" "v" "tx" "added"])))
-
+  [db datoms & {:keys [id-format tx-id-format omit-cols]
+                :or {omit-cols #{}
+                     id-format "0x%016x"
+                     tx-id-format "0x%x"}}]
+  (let [headers ["part" "e" "a" "v" "tx" "added"]
+        cols (->> omit-cols
+                  (set/difference (set headers))
+                  (sort-by #(.indexOf headers %)))]
+    (->> datoms
+         (map
+          (fn [{:keys [e a v tx added]}]
+            (let [data {"part" (d/part e)
+                        "e" (format id-format e)
+                        "a" (d/ident db a)
+                        "v" (if (nat-int? v)
+                              (or (d/ident db v)
+                                  (format id-format (:db/id (d/entity db v))))
+                              (trunc v 24))
+                        "tx" (format tx-id-format tx)
+                        "added" added}]
+              (select-keys data cols))))
+         (pp/print-table cols))))
 
 (defn select-keys-with-ns [data key-ns]
   (into {} (filter #(= (namespace (key %)) key-ns) data)))
@@ -96,4 +104,3 @@
 (def suppressed? (partial has-status? :gene.status/suppressed))
 
 (def not-live? (comp not live?))
-
