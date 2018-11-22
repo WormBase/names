@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
-   [ring.util.http-response :as http-response]
+   [ring.util.http-response :refer [ok]]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
@@ -18,8 +18,6 @@
     [gene-id (assoc
               sample
               :gene/id gene-id
-              :gene/cgc-name (tu/cgc-name-for-sample sample)
-              :gene/sequence-name (tu/seq-name-for-sample sample)
               :gene/status :gene.status/live)]))
 
 (def about-gene (partial api-tc/info "gene"))
@@ -31,4 +29,4 @@
         data-sample
         (fn check-gene-info [conn]
           (let [[status body] (about-gene gene-id)]
-            (tu/status-is? (:status (http-response/ok)) status body)))))))
+            (tu/status-is? (:status (ok)) status body)))))))
