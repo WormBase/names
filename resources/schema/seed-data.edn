@@ -67,6 +67,7 @@
  #:db{:ident :person.role/viewer}
 
  ;; Events
+ #:db{:ident :event/deactivate-person}
  #:db{:ident :event/import-gene}
  #:db{:ident :event/new-person}
  #:db{:ident :event/new-gene}
