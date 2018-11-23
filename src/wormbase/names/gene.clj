@@ -247,7 +247,7 @@
   (some->> (cons id more-ids)
            (map (partial vector :gene/id))
            (map (partial d/pull db info-pull-expr))
-           (wu/undatomicize)))
+           (wu/undatomicize db)))
 
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db payload :body-params} request
@@ -408,12 +408,12 @@
                           :gene/status
                           (d/entid db (:db/ident gene-status))
                           (d/entid db to-status)]
-                         prov])]
-      (-> tx-res
-          :db-after
-          pull-status
-          wu/undatomicize
-          ok))))
+                         prov])
+          dba (:db-after tx-res)]
+      (->> dba
+           pull-status
+           (wu/undatomicize dba)
+           ok))))
 
 (defn resurrect-gene [request id]
   (change-status request id :gene.status/live :event/resurrect-gene
