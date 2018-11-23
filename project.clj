@@ -23,7 +23,8 @@
    :datomic-pro
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
    :dev
-   {:lein-tools-deps/config {:resolve-aliases [:dev]}
+   {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :dev]
+                             :aliases [:datomic-pro :dev]}
     :aliases {"code-qa" ["do" ["eastwood"] "test"]
               "spec-test" ["run" "-m" "spec-test"]}
     :plugins

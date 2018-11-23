@@ -8,9 +8,6 @@
 
 (def latin-name-regexp #"[A-Z]{1}[a-z]+\s{1}[a-z]+$")
 
-;; TODO: do we need short-name now use EDN?
-(s/def ::short-name (stc/spec (s/and sts/string? #(re-matches id-regexp %))))
-
 (s/def :species/id  (stc/spec
                      (s/and sts/keyword?
                             #(= (namespace %) "species")

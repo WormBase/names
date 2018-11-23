@@ -102,7 +102,7 @@
                     entity-id)]
     (some->> tx-ids
              (map pull-prov)
-             (map wu/undatomicize)
+             (map (partial wu/undatomicize db))
              (remove #(= (:provenance/what %) :event/import-gene))
              (map #(update % :provenance/how (fnil identity :agent/importer)))
              (sort-mrf)

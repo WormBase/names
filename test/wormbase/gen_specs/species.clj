@@ -1,11 +1,13 @@
 (ns wormbase.gen-specs.species
   (:require
    [clojure.spec.alpha :as s]
-   [wormbase.gen-specs.util :as util]
-   [miner.strgen :as sg]))
+   [miner.strgen :as sg]
+   [wormbase.gen-specs.util :as util]))
+
+(def load-seed-data (memoize util/load-seed-data))
 
 (defn- species-seed-data []
-  (filter :species/id (util/load-seed-data)))
+  (filter :species/id (load-seed-data)))
 
 (def id (s/gen (->> (species-seed-data)
                     (map :species/id)
@@ -16,11 +18,12 @@
                             (set))))
 
 (defn- valid-name-for-species [pattern-ident species]
-  (->> (species-seed-data)
-       (filter #(= (:species/latin-name %) species))
-       (map pattern-ident)
-       (first)
-       (sg/string-generator)))
+  (let [[ident species*] (s/conform :gene/species species)]
+    (->> (species-seed-data)
+         (filter #(= (ident %) species*))
+         (map pattern-ident)
+         (first)
+         (sg/string-generator))))
 
 
 (s/def ::name-patterns #{:species/cgc-name-pattern

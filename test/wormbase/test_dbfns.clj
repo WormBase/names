@@ -134,7 +134,7 @@
 (defn- gen-prod-seq-name [sample]
   (let [sn (-> sample
                :gene/species
-               :species/id
+               second
                tu/seq-name-for-species)]
     (if (= sn (:gene/sequence-name sample))
       (recur sample)

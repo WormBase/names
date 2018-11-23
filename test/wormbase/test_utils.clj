@@ -13,15 +13,16 @@
    [java-time :as jt]
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
-   [wormbase.db-testing :as db-testing]
+   [peridot.core :as p]
+   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
+   [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as wns]
    [wormbase.specs.gene :as wsg]
-   [peridot.core :as p]
-   [spec-tools.core :as stc])
+   [wormbase.specs.species :as wss])
   (:import
    (clojure.lang ExceptionInfo)
    (java.io InputStream)))
@@ -45,14 +46,14 @@
 
 (defn parse-body [body]
   (let [body (read-body body)
-        body (if (instance? String body)
-               (try
-                 (muuntaja/decode mformats "application/json" body)
-                 (catch ExceptionInfo exc
-                   (log-decode-err exc body)
-                   (throw exc)))
-               body)]
-    body))
+        body* (if (instance? String body)
+                (try
+                  (muuntaja/decode mformats "application/json" body)
+                  (catch ExceptionInfo exc
+                    (log-decode-err exc body)
+                    (throw exc)))
+                body)]
+    body*))
 
 (defn extract-schema-name [ref-str]
   (last (str/split ref-str #"/")))
@@ -195,7 +196,7 @@
   "Convert a sample generated from a spec into a transactable form."
   [sample]
   (let [biotype (:gene/biotype sample)
-        species (-> sample :gene/species vec first)
+        ;; species (-> sample :gene/species vec first)
         assoc-if (fn [m k v]
                    (if v
                      (assoc m k v)
@@ -205,9 +206,7 @@
         (dissoc :provenance/why)
         (dissoc :provenance/when)
         (dissoc :provenance/how)
-        (dissoc :gene/species)
         (dissoc :gene/biotype)
-        (assoc :gene/species species)
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures
@@ -271,13 +270,17 @@
                   %)
          tx-ids)))
 
-(defn- gen-valid-name-for-sample [sample generator]
-  (-> sample
-      :gene/species
-      :species/latin-name
-      generator
-      (gen/sample 1)
-      first))
+(defn gen-valid-name-for-sample [sample generator]
+  (let [select-species-name (fn [v]
+                              (if (vector? v)
+                                (second v)
+                                v))]
+    (-> sample
+        :gene/species
+        select-species-name
+        generator
+        (gen/sample 1)
+        first)))
 
 (defn cgc-name-for-sample [sample]
   (gen-valid-name-for-sample sample gss/cgc-name))
@@ -313,17 +316,36 @@
        (map #(into {} %))
        (map #(dissoc % :history))))
 
+(defn species->latin-name [lu-ref]
+  (let [[ident value] lu-ref]
+    (if (= ident :species/latin-name)
+      value
+      (->> (gss/load-seed-data)
+           (filter #(= (ident %) value))
+           (first)
+           :species/latin-name))))
+
+(defn species->ref
+  "Updates the value corresponding to `:gene/species` to be a lookup reference. "
+  [data]
+  (update data
+          :gene/species
+          (fn use-latin-name [sname]
+            (let [lur (s/conform ::wss/identifier sname)]
+              [:species/latin-name (species->latin-name lur)]))))
+
+(defn species-ref->latin-name
+  "Retrive the name of the gene species from a mapping."
+  [data]
+  (-> data :gene/species second))
+
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (into {}
                         (keep-indexed (fn [idx sample-id]
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
-        gene-recs (map (fn make-valid [m]
-                         (assoc m
-                                :gene/cgc-name (cgc-name-for-sample m)
-                                :gene/sequence-name (seq-name-for-sample m)))
-                       (gen-sample gsg/payload n))
+        gene-recs (map species->ref (gen-sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)

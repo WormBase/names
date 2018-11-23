@@ -10,7 +10,7 @@
    [wormbase.names.auth :as wna]
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
-   [ring.util.http-response :as http-response]
+   [ring.util.http-response :refer [bad-request created ok]]
    [spec-tools.core :as stc]))
 
 (def admin-required (partial wna/require-role! #{:person.role/admin}))
@@ -21,22 +21,21 @@
         spec ::wsp/person
         person (some-> request :body-params)]
     (let [transformed (stc/conform spec person stc/json-transformer)]
-      (if (= transformed ::s/invalid)
+      (if (s/invalid? transformed)
         (let [problems (expound-str  spec person)]
           (throw (ex-info "Invalid person data"
                           {:type :user/validation-error
                            :problems problems})))
-        (let [tempid "datomic.tx"
-              prov (wnp/assoc-provenance request person :event/new-person)
+        (let [prov (wnp/assoc-provenance request person :event/new-person)
               tx-data [(assoc person :person/active? true) prov]
               tx-res @(d/transact conn tx-data)
               pid (wdb/extract-id tx-res :person/id)]
-          (http-response/created (str "/person/" pid) person))))))
+          (created (str "/person/" pid) person))))))
 
 (defn info [db lur]
   (let [person (d/pull db '[*] lur)]
     (when (:db/id person)
-      (wu/undatomicize person))))
+      (wu/undatomicize db person))))
 
 (defn about-person
   "Return info about a WBPerson."
@@ -44,7 +43,7 @@
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)]
     (when-let [person (info db lur)]
-      (http-response/ok person))))
+      (ok person))))
 
 (defn update-person
   "Handler for apply an update a person."
@@ -68,18 +67,23 @@
                              (select-keys person [:person/id]))))]
         (if (s/valid? spec data*)
           (let [tx-res @(d/transact-async conn [data*])]
-            (http-response/ok (info (:db-after tx-res) lur)))
-          (http-response/bad-request
+            (ok (info (:db-after tx-res) lur)))
+          (bad-request
            {:type :user/validation-error
             :problems (expound-str spec data*)}))))))
 
 (defn deactivate-person [identifier request]
   (admin-required request)
-  (let [conn (:conn request)
+  (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsp/identifier identifier)
+        person (d/pull db [:person/email :person/active?] lur)
+        active? (:person/active? person)
+        prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
         tx-result @(d/transact-async conn
-                                     [[:wormbase.tx-fns/deactivate-person lur]])]
-    (http-response/ok)))
+                                     [[:db/cas lur :person/active? active? false] prov])]
+    (if-let [dba (:db-after tx-result)]
+      (ok (wu/undatomicize dba (assoc person :person/active? false)))
+      (bad-request))))
   
 (defn wrap-id-validation [handler identifier]
   (fn [request]

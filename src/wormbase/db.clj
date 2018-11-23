@@ -131,4 +131,5 @@
 (def txfn-schema (partial edn-definition "tx-fns"))
 
 (defn pull [db expr & args]
-  ((comp wu/undatomicize wu/elide-importer-info) (apply d/pull db expr args)))
+  (let [format-result (comp (partial wu/undatomicize db) wu/elide-importer-info)]
+    (format-result (apply d/pull db expr args))))

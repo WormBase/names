@@ -22,6 +22,7 @@
   (let [identifier (first (gen/sample gsg/id 1))
         sample (-> (tu/gen-sample gsg/cloned 1)
                    (first)
+                   (tu/species->ref)
                    (assoc :provenance/who "tester@wormbase.org"))
         sample-data (merge sample {:gene/id identifier})]
     (tu/with-gene-fixtures
@@ -57,6 +58,7 @@
     (let [gid (first (gen/sample gsg/id 1))
           sample (-> (tu/gen-sample gsg/uncloned 1)
                      first
+                     tu/species->ref
                      (select-keys [:gene/cgc-name :gene/species]))
           sample-data (assoc sample
                              :gene/id gid
@@ -65,18 +67,19 @@
         [sample-data]
         (fn do-update [conn]
           (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
-                [status body] (update-gene
-                               gid
-                               {:data (-> sample-data
-                                          (dissoc :gene/id)
-                                          (assoc :gene/cgc-name new-cgc-name))
-                                :prov nil})]
+                species (tu/species-ref->latin-name sample)
+                payload {:data (-> sample-data
+                                   (assoc :gene/species species)
+                                   (dissoc :gene/id)
+                                   (assoc :gene/cgc-name new-cgc-name))
+                         :prov nil}
+                [status body] (update-gene gid payload)]
             (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   gid-2 (some-> body :updated :gene/id)
                   updated (:updated body)]
-              (t/is (= (-> updated :gene/species :species/latin-name)
-                       (get-in sample-data [:gene/species :species/latin-name])))
+              (t/is (= (:gene/species updated)
+                       (get-in payload [:data :gene/species])))
               (t/is (= (:gene/cgc-name updated) new-cgc-name))
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
@@ -85,7 +88,9 @@
     (let [gid (first (gen/sample gsg/id 1))
           sample (-> (tu/gen-sample gsg/cloned 1)
                      first
+                     tu/species->ref
                      (select-keys [:gene/cgc-name :gene/species]))
+          species (tu/species-ref->latin-name sample)
           sample-data (assoc sample
                              :gene/id gid
                              :gene/biotype :biotype/cds
@@ -96,6 +101,7 @@
         (fn do-update [conn]
           (let [[status body] (update-gene gid
                                            {:data (-> sample-data
+                                                      (assoc :gene/species species)
                                                       (dissoc :gene/id)
                                                       (assoc :gene/cgc-name nil))
                                             :prov nil})]
@@ -109,7 +115,7 @@
 (t/deftest provenance
   (t/testing (str "Provenance is recorded for successful transactions")
    (let [gid (first (gen/sample gsg/id 1))
-         sample (first (tu/gen-sample gsg/cloned 1))
+         sample (-> (tu/gen-sample gsg/cloned 1) first tu/species->ref)
          orig-cgc-name (tu/cgc-name-for-sample sample)
          sample-data (merge
                       sample
@@ -122,7 +128,9 @@
        (fn [conn]
          (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                why "udpate prov test"
+               species (tu/species-ref->latin-name sample-data)
                payload {:data  (-> sample-data
+                                   (assoc :gene/species species)
                                    (dissoc :gene/id :gene/status)
                                    (assoc :gene/cgc-name new-cgc-name))
                         :prov {:provenance/why why

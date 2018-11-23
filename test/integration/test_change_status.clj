@@ -18,7 +18,7 @@
                       :or {current-status :gene.status/live}}]
   (let [[sample] (tu/gene-samples 1)
         gene-id (first (gen/sample gsg/id 1))
-        species (-> sample :gene/species :species/id)
+        species (-> sample :gene/species second)
         prod-seq-name (tu/seq-name-for-species species)
         data-sample (assoc sample
                            :gene/id gene-id
