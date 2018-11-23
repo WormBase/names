@@ -62,20 +62,21 @@
         (doseq [attr [:gene/id :gene/cgc-name :gene/sequence-name]]
           (let [sample (rand-nth data-samples)
                 gid (:gene/id sample)
-                value (attr sample)
-                valid-prefix (rand-prefix value)
-                [status body] (find-gene valid-prefix)
-                matches (:matches body)]
-            (tu/status-is? 200 status body)
-            (t/is (seq matches)
-                  (str "No matches found for " valid-prefix))
-            (t/is (some (fn [match] (= (:gene/id match) gid)) matches)
-                  (str "Could not find any GeneID matching " gid
-                       " matches:" (pr-str matches)))
-            (t/is (some (fn [match]
-                          (assert (not (nil? match)))
-                          (str/starts-with? (attr match) valid-prefix))
-                        matches)
-                  (str "Could not verify and match startswith prefix "
-                       (pr-str valid-prefix) ""
-                       (pr-str matches))))))))))
+                value (attr sample)]
+            (when value
+              (let [valid-prefix (rand-prefix value)
+                    [status body] (find-gene valid-prefix)
+                    matches (:matches body)]
+                (tu/status-is? 200 status body)
+                (t/is (seq matches)
+                      (str "No matches found for " valid-prefix))
+                (t/is (some (fn [match] (= (:gene/id match) gid)) matches)
+                      (str "Could not find any GeneID matching " gid
+                           " matches:" (pr-str matches)))
+                (t/is (some (fn [match]
+                              (assert (not (nil? match)))
+                              (str/starts-with? (attr match) valid-prefix))
+                            matches)
+                      (str "Could not verify and match startswith prefix "
+                           (pr-str valid-prefix) ""
+                           (pr-str matches))))))))))))
