@@ -4,9 +4,8 @@
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
-   ;; load these namespaces for spec registration
    [wormbase.specs.provenance :as wsp]
-   [wormbase.specs.species]))
+   [wormbase.specs.species :as wss]))
 
 
 (def gene-id-regexp #"WBGene\d{8}")
@@ -25,9 +24,7 @@
 
 (s/def :gene/biotype sts/keyword?)
 
-(s/def :gene/species (stc/spec
-                      (s/keys
-                       :req [(or :species/id :species/latin-name)])))
+(s/def :gene/species ::wss/identifier)
 
 (s/def :gene.status/dead sts/boolean?)
 
