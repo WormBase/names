@@ -29,38 +29,44 @@ class Authenticate extends Component {
     }
   }
 
-  handleLoginSuccess = (user, logout) => {
-    const {name, email, id_token} = user;
-    this.logout = logout;
-    this.setState({
-      ...DEFAULT_AUTHENTICATION_STATE,
-      user: {
-        name,
-        email,
-        id_token,
-      },
-      isAuthenticated: true,
-    }, () => {
-      window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
-    });
-  }
-
-  handleLoginError = (error) => {
-    this.setState({
-      ...DEFAULT_AUTHENTICATION_STATE,
-      isAuthenticated: false,
-      errorMessage: JSON.stringify(error, undefined, 2),
-    }, () => {
-      window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
+  handleLogin = () => {
+    this.auth2.signIn().then(
+      (googleUser) => {
+        const googleUserProfile = googleUser.getBasicProfile();
+        const name = googleUserProfile.getName();
+        const email = googleUserProfile.getEmail();
+        const id_token = googleUser.getAuthResponse().id_token;
+        this.setState({
+          ...DEFAULT_AUTHENTICATION_STATE,
+          user: {
+            name,
+            email,
+            id_token,
+          },
+          isAuthenticated: true,
+        }, () => {
+          window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
+        });
+      }
+    ).catch((error) => {
+      this.setState({
+        ...DEFAULT_AUTHENTICATION_STATE,
+        isAuthenticated: false,
+        errorMessage: JSON.stringify(error, undefined, 2),
+      }, () => {
+        window.sessionStorage.setItem(sessionStorageKey, JSON.stringify(this.state));
+      });
     });
   }
 
   handleLogout = () => {
-    this.setState({
-      ...DEFAULT_AUTHENTICATION_STATE,
+    this.auth2.disconnect();  // revoke scopes
+    this.auth2.signOut().then(() => {
+      window.sessionStorage.removeItem(sessionStorageKey);
+      this.setState({
+        ...DEFAULT_AUTHENTICATION_STATE,
+      });
     });
-    window.sessionStorage.removeItem(sessionStorageKey);
-    this.logout && this.logout();
   }
 
   componentDidMount() {
@@ -70,6 +76,21 @@ class Authenticate extends Component {
         ...saveState
       });
     }
+    this.initializeSignIn();
+  }
+
+  // adapted from https://developers.google.com/identity/sign-in/web/build-button
+  initializeSignIn = () => {
+    const gapi = window.gapi;
+    gapi.load('auth2', () => {
+      // Retrieve the singleton for the GoogleAuth library and set up the client.
+      this.auth2 = gapi.auth2.init({
+        client_id: '514830196757-8464k0qoaqlb4i238t8o6pc6t9hnevv0.apps.googleusercontent.com',
+        cookiepolicy: 'single_host_origin',
+        // Request scopes in addition to 'profile' and 'email'
+        //scope: 'additional_scope'
+      });
+    });
   }
 
   authorizedFetch = (url, options = {}) => {
@@ -102,8 +123,7 @@ class Authenticate extends Component {
         isAuthenticated: this.state.isAuthenticated,
         user: {...user},
         login: <Login
-          onSuccess={this.handleLoginSuccess}
-          onError={this.handleLoginError}
+          onSignIn={this.handleLogin}
           errorMessage={this.state.errorMessage}
         />,
         logout: logout,
