@@ -161,7 +161,8 @@ class GeneProfile extends Component {
     });
   }
 
-  handleGeneUpdate = ({data={}, provenance}) => {
+
+  handleGeneUpdate = ({data={}, prov: provenance}) => {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
