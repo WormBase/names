@@ -12,6 +12,12 @@
    [wormbase.gen-specs.species :as gss])
   (:refer-clojure :exclude [identity update]))
 
+(defn species-vals [species-kw]
+  (->> (util/load-seed-data)
+       (filter species-kw)
+       (map species-kw)
+       set))
+
 (def id (s/gen :gene/id
                {:gene/id #(sg/string-generator wsg/gene-id-regexp)}))
 
@@ -22,13 +28,6 @@
 
 (def biotype (s/gen :gene/biotype biotype-overrides))
 
-
-(def species-overrides (->> (util/load-seed-data)
-                            (filter :species/latin-name)
-                            (map :species/latin-name)
-                            set))
-
-(def species (s/gen :gene/species species-overrides))
 
 (def all-statuses #{:gene.status/dead
                     :gene.status/live
@@ -50,12 +49,6 @@
 
 (def cgc-name (one-of-name-regexps :species/cgc-name-pattern))
 
-(defn species-vals [species-kw]
-  (->> (util/load-seed-data)
-       (filter species-kw)
-       (map species-kw)
-       set))
-
 (s/def ::species-id
   (s/with-gen
     :gene/species
@@ -66,6 +59,10 @@
     :gene/species
     #(s/gen (species-vals :species/latin-name))))
 
+(def species (s/gen :gene/species
+                    {:species/latin-name (constantly (s/gen ::species-latin-name))
+                     :species/id (constantly (s/gen ::species-id))}))
+
 (def identity (s/gen ::wsg/identifier
                      {:gene/id (constantly id)
                       :gene/cgc-name (constantly cgc-name)
@@ -73,7 +70,8 @@
 
 (def overrides
   {:gene/biotype (constantly biotype)
-   :gene/species (constantly (s/gen ::species-latin-name))
+   :species/latin-name (constantly species)
+   :species/id (constantly species)
    :gene/cgc-name (constantly (s/gen :gene/cgc-name))
    :gene/id (constantly id)
    :gene/status (constantly status)

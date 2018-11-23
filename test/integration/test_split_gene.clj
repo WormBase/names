@@ -159,7 +159,7 @@
       (t/is (re-seq #".*validation failed" (:message body))
             (pr-str body)))))
 
-(defn- gen-sample-for-split [& {:keys [status]
+(defn gen-sample-for-split [& {:keys [status]
                                 :or {status :gene.status/live}}]
   (let [[sample] (tu/gene-samples 1)
         gene-id (:gene/id sample)

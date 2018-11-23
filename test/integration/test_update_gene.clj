@@ -68,19 +68,18 @@
         (fn do-update [conn]
           (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                 species (tu/species-ref->latin-name sample)
-                [status body] (update-gene
-                               gid
-                               {:data (-> sample-data
-                                          (assoc :gene/species species)
-                                          (dissoc :gene/id)
-                                          (assoc :gene/cgc-name new-cgc-name))
-                                :prov nil})]
+                payload {:data (-> sample-data
+                                   (assoc :gene/species species)
+                                   (dissoc :gene/id)
+                                   (assoc :gene/cgc-name new-cgc-name))
+                         :prov nil}
+                [status body] (update-gene gid payload)]
             (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   gid-2 (some-> body :updated :gene/id)
                   updated (:updated body)]
               (t/is (= (:gene/species updated)
-                       (second (get-in sample-data [:gene/species]))))
+                       (get-in payload [:data :gene/species])))
               (t/is (= (:gene/cgc-name updated) new-cgc-name))
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 

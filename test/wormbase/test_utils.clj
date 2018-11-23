@@ -270,7 +270,7 @@
                   %)
          tx-ids)))
 
-(defn- gen-valid-name-for-sample [sample generator]
+(defn gen-valid-name-for-sample [sample generator]
   (let [select-species-name (fn [v]
                               (if (vector? v)
                                 (second v)
@@ -316,13 +316,23 @@
        (map #(into {} %))
        (map #(dissoc % :history))))
 
+(defn species->latin-name [lu-ref]
+  (let [[ident value] lu-ref]
+    (if (= ident :species/latin-name)
+      value
+      (->> (gss/load-seed-data)
+           (filter #(= (ident %) value))
+           (first)
+           :species/latin-name))))
+
 (defn species->ref
   "Updates the value corresponding to `:gene/species` to be a lookup reference. "
   [data]
   (update data
           :gene/species
-          (fn [sname]
-            (s/conform ::wss/identifier sname))))
+          (fn use-latin-name [sname]
+            (let [lur (s/conform ::wss/identifier sname)]
+              [:species/latin-name (species->latin-name lur)]))))
 
 (defn species-ref->latin-name
   "Retrive the name of the gene species from a mapping."
@@ -335,12 +345,7 @@
                         (keep-indexed (fn [idx sample-id]
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
-        gene-recs (map (fn make-valid [m]
-                         (-> m
-                             (assoc :gene/cgc-name (cgc-name-for-sample m)
-                                    :gene/sequence-name (seq-name-for-sample m))
-                             (species->ref)))
-                       (gen-sample gsg/payload n))
+        gene-recs (map species->ref (gen-sample gsg/payload n))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)
