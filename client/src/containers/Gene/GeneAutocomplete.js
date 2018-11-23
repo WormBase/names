@@ -24,21 +24,16 @@ function renderInput(inputProps) {
           classes: {
             root: classes.inputRoot,
           },
-          startAdornment: (
+          startAdornment: item ? (
             <InputAdornment position="start">
-              {
-                item ?
-                  <Chip
-                    tabIndex={-1}
-                    label={`${item.label} [ID: ${item.id}]`}
-                    className={classes.chip}
-                    onDelete={reset}
-                  /> :
-                  null
-              }
-
+              <Chip
+                tabIndex={-1}
+                label={`${item.label} [ID: ${item.id}]`}
+                className={classes.chip}
+                onDelete={reset}
+              />
             </InputAdornment>
-          ),
+          ) : null,
         }}
         {...other}
       />

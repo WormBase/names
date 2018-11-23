@@ -123,9 +123,9 @@ class BaseForm extends Component {
     };
   }
 
-  getData = () => {
+  gatherFields(fieldIds) {
     const fields = this.dataStore.getState().fields;
-    const data = Object.keys(fields).reduce(
+    return fieldIds.reduce(
       (result, fieldId) => {
         const value = fields[fieldId] && fields[fieldId].value;
         const idSegments = fieldId.split(':');
@@ -141,7 +141,16 @@ class BaseForm extends Component {
       },
       {}
     );
-    return data;
+  }
+
+  getData = () => {
+    const fields = this.dataStore.getState().fields;
+    const dataFieldIds = Object.keys(fields).filter((fieldId) => !fieldId.match(/provenance\//g));
+    const provenanceFieldIds = Object.keys(fields).filter((fieldId) => fieldId.match(/provenance\//g));
+    return {
+      data: this.gatherFields(dataFieldIds),
+      provenance: this.gatherFields(provenanceFieldIds),
+    };
   }
 
   withFieldData = (WrappedComponent, fieldId) => {
