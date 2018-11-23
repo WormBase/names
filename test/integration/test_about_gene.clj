@@ -13,8 +13,7 @@
 
 (defn- gen-sample []
   (let [[sample] (tu/gene-samples 1)
-        gene-id (:gene/id sample)
-        prod-seq-name (tu/seq-name-for-sample sample)]
+        gene-id (:gene/id sample)]
     [gene-id (assoc
               sample
               :gene/id gene-id
