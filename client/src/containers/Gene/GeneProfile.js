@@ -161,7 +161,8 @@ class GeneProfile extends Component {
     });
   }
 
-  handleGeneUpdate = ({data, prov: provenance}) => {
+
+  handleGeneUpdate = ({data={}, prov: provenance}) => {
     this.setState({
       status: 'SUBMITTED',
     }, () => {
@@ -499,6 +500,7 @@ class GeneProfile extends Component {
           <SnackbarContent
             variant={this.state.shortMessageVariant}
             message={<span>{this.state.shortMessage}</span>}
+            onClose={this.closeSnackbar}
           />
         </Snackbar>
       </Page>
