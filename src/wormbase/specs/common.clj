@@ -8,3 +8,9 @@
 (s/def ::message sts/string?)
 
 (s/def ::error-response (stc/spec (s/keys :req-un [::info ::message])))
+
+(s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
+
+(s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
+
+(s/def ::entity-type sts/string?)

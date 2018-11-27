@@ -5,7 +5,12 @@
    [clojure.set :as set]
    [clojure.walk :as w]
    [aero.core :as aero]
-   [datomic.api :as d]))
+   [datomic.api :as d]
+   [ring.util.http-response :refer [bad-request
+                                    conflict
+                                    ok
+                                    precondition-failed]]
+   [wormbase.specs.common :as wsc]))
 
 (defn read-app-config
   ([]
@@ -104,3 +109,11 @@
 (def suppressed? (partial has-status? :gene.status/suppressed))
 
 (def not-live? (comp not live?))
+
+(def default-responses
+  {bad-request {:schema {:errors ::wsc/error-response}}
+   conflict {:schema {:conflict ::wsc/error-response}}
+   precondition-failed {:schema ::wsc/error-response}})
+
+(defn response-map [m]
+  (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
