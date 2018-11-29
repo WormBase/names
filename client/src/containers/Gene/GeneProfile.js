@@ -126,12 +126,7 @@ class GeneProfile extends Component {
           ];
 
           return mockFetch.get('*', {
-            "gene/species": {
-               "species/id":"species/c-elegans",
-               "species/latin-name":"Caenorhabditis elegans",
-               "species/cgc-name-pattern":"^[a-z21]{3,4}-[1-9]{1}\\d*",
-               "species/sequence-name-pattern":"^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"
-            },
+            "gene/species": "Caenorhabditis elegans",
             "gene/cgc-name":"abi-1",
             "gene/status":"gene.status/live",
             "gene/biotype":"biotype/cds",
