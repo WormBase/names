@@ -75,8 +75,8 @@
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
                           :prov {}}
-                         "WB00002"
-                         "WB1")]
+                         "aLdfkad_13315"
+                         "sdaf_a")]
       (tu/status-is? (:status (bad-request)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
