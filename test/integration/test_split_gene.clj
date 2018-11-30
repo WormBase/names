@@ -137,19 +137,19 @@
                      (assoc :gene/biotype :biotype/cds)
                      (assoc :gene/status :gene.status/dead)
                      (assoc :gene/id gene-id))]
-      (assert (contains? sample :gene/id))
       (tu/with-gene-fixtures
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
+          (assert (d/entity (d/db conn) [:gene/id gene-id])
+                  (str "Sample Gene with id: " gene-id " not in db"))
           (let [seq-name (tu/seq-name-for-species
                           (-> sample :gene/species second))
-                [status body] (split-gene
-                               {:data {:gene/biotype :biotype/cds
-                                       :product
-                                       {:gene/biotype :biotype/transcript
-                                        :gene/sequence-name seq-name}}
-                                :prov nil}
-                               gene-id)]
+                payload {:data {:gene/biotype :biotype/cds
+                                :product
+                                {:gene/biotype :biotype/transcript
+                                 :gene/sequence-name seq-name}}
+                         :prov nil}
+                [status body] (split-gene payload gene-id)]
             (tu/status-is? (:status (conflict)) status body))))))
   (t/testing "400 for validation errors"
     (let [[status body] (split-gene {:data {:gene/biotype :biotype/godzilla}
@@ -196,8 +196,7 @@
                   prod-id (:gene/id prod)
                   prov (query-provenance conn :gene/splits (:db/id src))]
               (t/is ((set (map :gene/id (:gene/splits src))) prod-id))
-              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id)
-                    (str "PROD ID:" prod-id " in _splits?:" (pr-str (:gene/_splits prod))))
+              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (some-> prov :provenance/when inst?))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))

@@ -99,12 +99,12 @@
       (tu/with-gene-fixtures
         [sample-data]
         (fn do-update [conn]
-          (let [[status body] (update-gene gid
-                                           {:data (-> sample-data
-                                                      (assoc :gene/species species)
-                                                      (dissoc :gene/id)
-                                                      (assoc :gene/cgc-name nil))
-                                            :prov nil})]
+          (let [payload {:data (-> sample-data
+                                   (assoc :gene/species species)
+                                   (dissoc :gene/id)
+                                   (assoc :gene/cgc-name nil))
+                         :prov nil}
+                [status body] (update-gene gid payload)]
             (tu/status-is? 200 status body)
             (let [db (d/db conn)
                   identifier (some-> body :updated :gene/id)
