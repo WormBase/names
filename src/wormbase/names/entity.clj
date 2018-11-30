@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [datomic.api :as d]
+   [ring.util.http-response :refer [not-found!]]
    [wormbase.db :as wdb]))
 
 (defn identify
@@ -16,4 +17,7 @@
   (let [lookup-ref (s/conform identitfy-spec identifier)
         db (:db request)
         ent (d/entity db lookup-ref)]
-    [lookup-ref ent]))
+    (if ent
+      [lookup-ref ent]
+      (not-found! {:message "Entity lookup failed"
+                   :lookup-ref lookup-ref}))))

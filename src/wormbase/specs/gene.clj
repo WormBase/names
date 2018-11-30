@@ -10,7 +10,7 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(def general-cgc-name-regexp #"[a-z]+-{1}\d+")
+(def general-cgc-name-regexp #"[a-z0-9]+-\d+")
 
 (def general-seq-name-regexp #"[A-Z\d]+[_.]{1}\d+")
 

@@ -72,10 +72,10 @@
   {:gene/biotype (constantly biotype)
    :species/latin-name (constantly species)
    :species/id (constantly species)
-   :gene/cgc-name (constantly (s/gen :gene/cgc-name))
+   :gene/cgc-name (constantly cgc-name)
    :gene/id (constantly id)
    :gene/status (constantly status)
-   :gene/sequence-name (constantly (s/gen :gene/sequence-name))})
+   :gene/sequence-name (constantly sequence-name)})
 
 (def info (s/gen ::wsg/info overrides))
 

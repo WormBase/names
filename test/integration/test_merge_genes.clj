@@ -71,13 +71,13 @@
       (tu/status-is? status 400 body))))
 
 (t/deftest response-codes
-  (t/testing "400 for invalid gene "
+  (t/testing "400 for invalid gene identifiers"
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
                           :prov {}}
-                         "WB2"
+                         "WB00002"
                          "WB1")]
-      (tu/status-is? (:status (not-found)) status body)))
+      (tu/status-is? (:status (bad-request)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}

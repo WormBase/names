@@ -20,7 +20,6 @@
    [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
-   [wormbase.names.responses :as wnr]
    [wormbase.names.util :as wnu]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
