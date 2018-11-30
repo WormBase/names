@@ -137,8 +137,6 @@
                      (assoc :gene/biotype :biotype/cds)
                      (assoc :gene/status :gene.status/dead)
                      (assoc :gene/id gene-id))]
-      (prn sample)
-      (println "SAMPLE For split:")
       (tu/with-gene-fixtures
         sample
         (fn check-conflict-gene-to-be-split-not-live [conn]
@@ -151,8 +149,6 @@
                                 {:gene/biotype :biotype/transcript
                                  :gene/sequence-name seq-name}}
                          :prov nil}
-                _ (println "Splitting :" gene-id)
-                _ (prn payload)
                 [status body] (split-gene payload gene-id)]
             (tu/status-is? (:status (conflict)) status body))))))
   (t/testing "400 for validation errors"
@@ -200,8 +196,7 @@
                   prod-id (:gene/id prod)
                   prov (query-provenance conn :gene/splits (:db/id src))]
               (t/is ((set (map :gene/id (:gene/splits src))) prod-id))
-              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id)
-                    (str "PROD ID:" prod-id " in _splits?:" (pr-str (:gene/_splits prod))))
+              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (some-> prov :provenance/when inst?))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
