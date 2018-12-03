@@ -10,9 +10,9 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(def general-cgc-name-regexp #"[a-z\d]+-\d+")
+(def general-cgc-name-regexp #"[A-Za-z\d-]+")
 
-(def general-seq-name-regexp #"([A-Za-z\d]+)([_|\\.]{0,1}\d+)?")
+(def general-seq-name-regexp #"([A-Za-z\d\\._]+)([_|\\.]{0,1}\d+)?")
 
 (s/def ::name (stc/spec (s/and string? not-empty)))
 
