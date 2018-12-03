@@ -19,9 +19,6 @@
    [datomic.api :as d]
    [wormids.core :refer [attr-schema-unique? identifier-format]]))
 
-(defn batch? [coll]
-  (> (count coll) 1))
-
 (defn data-transacted?
   "Determine if there was any data transacted as a result of transaction.
 
@@ -41,10 +38,8 @@
   "Attach an identifier to `prov` making this a mapping suitable for tracking provenance for a batch.
 
   A `UUID` under the key `:batch/id` is added."
-  [coll prov]
-  (cond-> prov
-    true (assoc :db/id "datomic.tx")
-    (batch? coll) (assoc :batch/id (d/squuid))))
+  [prov]
+  (assoc prov :db/id "datomic.tx" :batch/id (d/squuid)))
 
 (defn add-prov-maybe [prov tx-data]
   (when tx-data
@@ -52,7 +47,7 @@
 
 (defn process-batch
   [processor-fn conn uiident coll prov batch-size]
-  (let [sp (assoc-prov coll prov)
+  (let [sp (assoc-prov prov)
         batch (partition-all batch-size coll)
         db (d/db conn)]
     (when-let [dba (reduce (partial processor-fn
@@ -68,19 +63,7 @@
                          {:db-after db}
                          batch)]
         (when dba*
-          (if (batch? coll)
-            (apply array-map (find sp :batch/id))
-            (let [db (:db-after dba*)
-                  identify (comp (fn [[e a v]]
-                                   (if-let [pvalue (uiident (d/pull db [uiident] e))]
-                                     {uiident pvalue}
-                                     {(d/ident db a) v}))
-                                 (juxt :e :a :v))
-                  asserted (into {} (map identify (:tx-data dba*)))]
-              (reduce-kv (fn [m a v]
-                           (cond-> m (attr-schema-unique? db a) (assoc a v)))
-                         {}
-                         asserted))))))))
+          (apply array-map (find sp :batch/id)))))))
 
 (defn new
   "Create new entities, assiging a new WB identifiers.

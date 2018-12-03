@@ -3,13 +3,16 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.set :as set]
+   [clojure.spec.alpha :as s]
    [clojure.walk :as w]
    [aero.core :as aero]
    [datomic.api :as d]
+   [expound.alpha :refer [expound-str]]
    [ring.util.http-response :refer [bad-request
                                     conflict
                                     ok
                                     precondition-failed]]
+   [spec-tools.core :as stc]
    [wormbase.specs.common :as wsc]))
 
 (defn read-app-config
@@ -117,3 +120,16 @@
 
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+
+(defn conform-data [request spec data & [names-validator]]
+  (let [conformed (stc/conform spec
+                               (if names-validator
+                                 (names-validator request data)
+                                 data))]
+    (if (s/invalid? conformed)
+      (let [problems (expound-str spec data)]
+        (throw (ex-info "Not valid according to spec."
+                        {:problems problems
+                         :type ::validation-error
+                         :data data})))
+      conformed)))

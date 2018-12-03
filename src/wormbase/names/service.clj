@@ -11,6 +11,7 @@
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
+   [wormbase.names.batch :as wn-batch]
    [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
@@ -96,7 +97,8 @@
    (sweet/context "" []
      (sweet/context "/api" []
        wn-person/routes
-       wn-gene/routes))))
+       wn-gene/routes
+       wn-batch/routes))))
 
 (defn init
   "Entry-point for ring server initialization."
