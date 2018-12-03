@@ -120,9 +120,6 @@
 
 (s/def ::find-request (stc/spec (s/keys :req-un [::pattern])))
 
-(s/def ::find-match (stc/spec (s/keys :req [:gene/id]
-                                      :opt [:gene/cgc-name
-                                            :gene/sequence-name])))
 (s/def ::name-attr (stc/spec (s/or :gene/cgc-name :gene/cgc-name
                                    :gene/sequence-name :gene/sequence-name)))
 
