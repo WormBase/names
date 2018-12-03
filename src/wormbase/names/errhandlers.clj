@@ -65,9 +65,11 @@
 (defn handle-unexpected-error
   ([^Exception exc data request]
    (throw exc)
-   (if-not (empty? ((juxt :test :dev) environ/env))
-     (handle-unexpected-error exc)
-     (http-response/internal-server-error data)))
+   (if-let [db-err (:db/error data)]
+     ((db-err handlers) exc data request)
+     (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
+       (handle-unexpected-error exc)
+       (http-response/internal-server-error data))))
   ([exc]
    (throw exc)))
 
@@ -109,6 +111,11 @@
     (http-response/unauthorized "Access denied")
     (http-response/forbidden)))
 
+(defn handle-db-error [^Exception exc data request]
+  (if-let [err-handler ((:db/error data) handlers)]
+    (err-handler exc data request)
+    (handle-db-conflict exc data request)))
+
 (def ^{:doc "Error handler dispatch map for the compojure.api app"}
   handlers
   {;; Spec validation errors
@@ -127,7 +134,7 @@
 
    ;; Datomic db exceptions
    :db.error/not-an-entity handle-missing
-   :db/error handle-db-conflict
+   :db/error handle-db-error
    :db.error/unique-conflict handle-db-unique-conflict
    :db.error/nil-value handle-unexpected-error
 
