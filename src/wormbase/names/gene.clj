@@ -63,16 +63,6 @@
   ([request data]
    (validate-names request data :allow-blank-cgc-name? false)))
 
-(defn conform-data [request spec data]
-  (let [conformed (stc/conform spec (validate-names request data))]
-    (if (s/invalid? conformed)
-      (let [problems (expound-str spec data)]
-        (throw (ex-info "Not valid according to spec."
-                        {:problems problems
-                         :type ::validation-error
-                         :data data})))
-      conformed)))
-
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
      [(re-seq ?pattern ?name)]
@@ -135,7 +125,7 @@
         prov (wnp/assoc-provenance request payload :event/new-gene)
         data (:data payload)
         spec ::wsg/new-unnamed
-        cdata (conform-data request spec data)
+        cdata (wnu/conform-data request spec data validate-names)
         tx-data [cdata prov]]
     @(d/transact-async conn tx-data)))
 
@@ -147,7 +137,7 @@
                  :data
                  (update :gene/status (fnil identity :gene.status/live)))
         spec ::wsg/new
-        [_ cdata] (conform-data request spec data)
+        [_ cdata] (wnu/conform-data request spec data validate-names)
         prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [['wormids.core/new template :gene/id [cdata]] prov]
         tx-res @(d/transact-async conn tx-data)
@@ -178,9 +168,10 @@
         [lur entity] (identify request identifier)]
     (when entity
       (let [spec ::wsg/update
-            data (:data payload)]
+            data (:data payload)
+            conform #(wnu/conform-data request spec % validate-names)]
         (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
-                         (conform-data request spec)
+                         (conform)
                          (second)
                          (resolve-refs-to-dbids db))
               prov (wnp/assoc-provenance request payload :event/update-gene)
@@ -448,7 +439,7 @@
                       (assoc ok
                              {:schema ::wsc/find-result})
                       (wnu/response-map))
-       :parameters {:query-params ::wsg/find-request}
+       :parameters {:query-params ::wsc/find-request}
        :x-name ::find-gene
        :handler (fn find-by-any-name [request]
                   (find-gene request))}

@@ -11,26 +11,34 @@
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.common :as wsc]
-   [wormbase.specs.provenance :as wsp]   
-   [wormids.batch :as wb]))
+   [wormbase.specs.provenance :as wsp]
+   [wormids.batch :as wb]
+   [wormbase.names.batch :as wnb]))
 
 (defn find-entities [request]
   (bad-request "TBD"))
 
-(defn batcher [impl entity-type request]
+(defn batcher [impl entity-type spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
+        cdata (map second (wnu/conform-data request spec data))
         uiident (keyword entity-type "id")]
-    (impl conn uiident data prov)))
+    (impl conn uiident cdata prov)))
 
-(def new-entities [entity-type request]
-  (let [result (batcher wb/new entity-type request)
+(defn new-entities
+  "Create a batch of new entities.
+
+  Status codes and meaning:
+  404 - Non-existent reference to entity.
+  201 - Created all entities successfully."
+  [entity-type request]
+  (let [result (batcher wb/new entity-type ::wsb/new request)
         uri (str (or (:batch/id result)
-                     ((keyword entity-type "id") result))]
-    (created uri result))))
+                     ((keyword entity-type "id") result)))]
+    (created uri {:created result})))
 
-(def update-entities [entity-type request]
-  (ok (batcher entity-type request)))
+(defn update-entities [entity-type request]
+  (ok (batcher wb/update entity-type ::wnb/update request)))
 
 (def resources
   (sweet/context "/:entity-type/batch" []
