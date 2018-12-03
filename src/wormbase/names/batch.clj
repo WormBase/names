@@ -65,16 +65,20 @@
                       (dissoc conflict)
                       (wnu/response-map))
        :handler (partial update-entities entity-type)}})
-    (sweet/context "/remove-names" []
+    (sweet/context ":attr" []
       :tags ["batch"]
-      (sweet/POST "" []
-        :path-params [attr :- ::wsb/name-attr]
-        :parameters {:body-params [:data ::wsb/remove-names]}
-        :responses wnu/default-responses
-        (let [{conn :conn payload :body-params} request
-              attr
-              result (wb/remove-names conn)]))
-      )))
+      :path-params [attr :- ::wsb/name-attr]
+      (sweet/resource
+       {:delete
+        {:sumamry "Remove names from genes."
+         :x-name ::remove-entity-names
+         :parameters {:body-params [:data ::wsb/remove-names]}
+         :responses wnu/default-responses
+         :handler (fn remove-names [request]
+                    (let [{conn :conn payload :body-params} request
+                          {data :data prov :prov} payload
+                          result (wb/remove-names conn :gene/id attr data prov)]
+                      (ok result)))}}))))
 
 
 ;;;; /api/batch/<type>/ POST -> new
