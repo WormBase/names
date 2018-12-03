@@ -1,7 +1,9 @@
 (ns wormbase.specs.common
-  (:require [clojure.spec.alpha :as s]
-            [spec-tools.core :as stc]
-            [spec-tools.spec :as sts]))
+  (:require
+   [clojure.spec.alpha :as s]
+   [clojure.string :as str]
+   [spec-tools.core :as stc]
+   [spec-tools.spec :as sts]))
 
 (s/def ::info sts/map?)
 
@@ -14,6 +16,12 @@
                                             :gene/sequence-name])))
 
 (s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
+
+(s/def ::find-term (stc/spec (s/and string? (complement str/blank?))))
+
+(s/def ::pattern ::find-term)
+
+(s/def ::find-request (stc/spec (s/keys :req-un [::pattern])))
 
 (s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
 

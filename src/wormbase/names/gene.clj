@@ -91,7 +91,7 @@
   [request]
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (let [db (:db request)
-          term (stc/conform ::wsg/find-term pattern)
+          term (stc/conform ::wsc/find-term pattern)
           q-result (d/q '[:find ?gid ?cgc-name ?sequence-name
                           :in $ % ?term
                           :where
