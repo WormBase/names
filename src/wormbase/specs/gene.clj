@@ -73,7 +73,7 @@
 
 (s/def ::created (stc/spec (s/keys :req [:gene/id])))
 
-(s/def ::update (stc/spec ::new)) ;; same as new
+(s/def ::update (stc/spec (s/spec ::new))) ;; same as new
 
 (s/def ::updated (stc/spec (s/keys :req [:gene/id])))
 

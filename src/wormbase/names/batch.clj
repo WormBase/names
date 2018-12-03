@@ -37,8 +37,10 @@
                      ((keyword entity-type "id") result)))]
     (created uri {:created result})))
 
-(defn update-entities [entity-type request]
-  (ok (batcher wb/update entity-type ::wnb/update request)))
+(defn update-entities
+  [entity-type request]
+  (let [result (batcher wb/update entity-type ::wsb/update request)]
+    (ok {:updated result})))
 
 (def resources
   (sweet/context "/:entity-type/batch" []
@@ -47,31 +49,33 @@
     (sweet/resource
      {:get
       {:summary "Find entities by any name."
+       :x-name ::find-entities
        :responses (-> wnu/default-responses
                       (assoc ok {:schema ::wsc/find-result})
                       (wnu/response-map))
        :parameters {:query-params ::wsc/find-request}
-       :x-name ::find-entities
        :handler (fn find-by-any-name [request]
                   ;; We know the entity type, can we use it to ompitise query?
                   (find-entities request))}
       :post
-      {:summary "Assign identifiers and associate names, creating new entities."
+      {:x-name ::new-entities
+       :summary "Assign identifiers and associate names, creating new entities."
        :middleware [wna/restrict-to-authenticated]
-       :x-name ::new-entities
-       :parameters {:body-params {:data ::wsb/new :prov ::wsp/provenance}}
        :responses (-> wnu/default-responses
                       (assoc created {:schema {:created ::wsb/created}})
                       (assoc bad-request {:schema ::wsc/error-response})
                       (wnu/response-map))
+       :parameters {:body-params {:data ::wsb/new :prov ::wsp/provenance}}
        :handler (partial new-entities entity-type)}
       :put
-      {:summary "Update entity records."
+      {:x-name ::update-entities
+       :summary "Update entity records."
        :middleware [wna/restrict-to-authenticated]
-       :x-name ::update-entitites
-       :responses (-> wnu/default-responses
-                      (dissoc conflict)
-                      (wnu/response-map))
+       :parameters {:body-params {:data ::wsb/new :prov ::wsp/provenance}}
+;;        :responses (-> wnu/default-responses
+;; ;;                      (dissoc conflict)
+;;                       (assoc ok {:schema {:updated ::wsb/updated}})
+;;                       (wnu/response-map))
        :handler (partial update-entities entity-type)}})
     (sweet/context ":attr" []
       :tags ["batch"]

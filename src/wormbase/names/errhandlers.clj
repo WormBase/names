@@ -64,7 +64,7 @@
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
-   (throw exc)
+;;   (throw exc)
    (if-let [db-err (:db/error data)]
      ((db-err handlers) exc data request)
      (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))

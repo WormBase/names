@@ -22,6 +22,7 @@
                                                       current-user)]
       (let [data (tu/->json data)
             path (str "/api/" entity-kind "/" sub-path)
+            _ (println (str method "ing") "to" path)
             [status body] (tu/raw-put-or-post*
                            service/app
                            path
