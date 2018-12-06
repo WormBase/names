@@ -209,6 +209,7 @@
       (not (wdb/ident-exists? db into-biotype))
       (throw (ex-info "Biotype does not exist"
                       {:type ::wdb/missing
+                       :entity [:db/ident into-biotype]
                        :problems "Biotype entity does not exist"})))
     (when (reduce not= (map :gene/species [from-gene into-gene]))
       (throw (ex-info
