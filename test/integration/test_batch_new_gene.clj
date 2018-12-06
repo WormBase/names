@@ -1,4 +1,4 @@
-(ns integration.test-batch-update-gene
+(ns integration.test-batch-new-gene
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
@@ -14,12 +14,13 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]
    [wormbase.names.batch :as wnb]
-   [wormbase.test-utils :as tu]))
+   [wormbase.test-utils :as tu]
+   [wormbase.fake-auth]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn new-genes [data]
-  (api-tc/send-request "gene" :post data :sub-path "batch"))
+  (api-tc/send-request "batch" :post data :sub-path "gene"))
 
 (def elegans-ln "Caenorhabditis elegans")
 
@@ -53,7 +54,7 @@
     (let [bdata [{:gene/cgc-name "dup-1"
                   :gene/species "Caenorhabditis donkey"}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (= (:status (not-found)) status)))))
+      (tu/status-is? (:status (not-found)) status body))))
 
 (t/deftest batch-success
   (t/testing "Batch with a random number of items is successful"

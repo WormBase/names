@@ -499,9 +499,10 @@
         :handler (fn [request]
                    (about-gene request identifier))}
        :put
-       {:summary "Add new names to an existing gene"
+       {:summary "Update an existing gene."
         :x-name ::update-gene
-        :parameters {:body-params {:data ::wsg/update :prov ::wsp/provenance}}
+        :parameters {:body-params {:data ::wsg/update
+                                   :prov ::wsp/provenance}}
         :middleware [wna/restrict-to-authenticated]
         :responses (-> wnu/default-responses
                        (dissoc conflict)
