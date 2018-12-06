@@ -28,7 +28,8 @@
          (cond
            (and (map? v) (:db/id v)) (:db/id v)
            (keyword? v) [:db/ident v]
-           (or (pos-int? v) (vector? v)) (:db/id (d/pull db '[*] v))
+           (pos-int? v) (:db/id (d/pull db '[*] v))
+           (vector? v) v
            :else v)))
 
 (defn data->entids
