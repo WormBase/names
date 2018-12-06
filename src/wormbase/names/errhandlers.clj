@@ -48,7 +48,8 @@
     (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
-  (respond-missing request (assoc-error-message data exc)))
+  (let [msg (apply format "%s '%s' does not exist" (:entity data))]
+    (respond-missing request (assoc-error-message data exc :message msg))))
 
 (defn handle-db-conflict [^Exception exc data request]
   (respond-conflict request (assoc-error-message data exc)))
@@ -64,9 +65,10 @@
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
-;;   (throw exc)
    (if-let [db-err (:db/error data)]
-     ((db-err handlers) exc data request)
+     (if-let [db-err-handler (db-err handlers)]
+       (db-err-handler exc data request)
+       (handle-unexpected-error exc))
      (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
        (handle-unexpected-error exc)
        (http-response/internal-server-error data))))
@@ -137,7 +139,8 @@
    :db/error handle-db-error
    :db.error/unique-conflict handle-db-unique-conflict
    :db.error/nil-value handle-unexpected-error
-
+   :db.error/datoms-conflict handle-db-conflict
+   
    ;; TODO: this shouldn't really be here...spec not tight enough?
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
 
