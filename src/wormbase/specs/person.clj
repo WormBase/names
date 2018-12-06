@@ -22,18 +22,12 @@
 
 (s/def :person/id ::id)
 
-(s/def ::permissions (stc/spec (s/coll-of ::permission
-                                          :kind sts/vector?
-                                          :min-count 1)))
-
 (s/def ::role (stc/spec (s/and sts/keyword? #(= (namespace %) "person.role"))))
 
 (s/def :role/id (stc/spec (s/keys :req [::role])))
 
 
 (s/def :person/roles (stc/spec (s/coll-of ::role :distinct true)))
-
-(s/def ::people (stc/spec (s/coll-of ::person :kind sts/vector? :min-count 1)))
 
 (s/def ::identified (stc/spec (s/keys :req-un [::name :person/email])))
 
@@ -44,6 +38,8 @@
                                   :opt [:person/roles
                                         :person/active?
                                         :person/name])))
+
+(s/def ::people (stc/spec (s/coll-of ::person :kind sts/vector? :min-count 1)))
 
 (s/def ::update (stc/spec (s/keys :opt [:person/active?
                                         :person/email
