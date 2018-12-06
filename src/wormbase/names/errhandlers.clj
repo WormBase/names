@@ -16,12 +16,12 @@
 (declare handlers)
 
 (defn respond-with [response-fn request data]
-  (let [format (-> request
-                   :compojure.api.request/muuntaja
-                   :default-format)]
+  (let [fmt (-> request
+                :compojure.api.request/muuntaja
+                :default-format)]
     (-> data
         (response-fn)
-        (http-response/content-type format))))
+        (http-response/content-type fmt))))
 
 (def respond-bad-request (partial respond-with http-response/bad-request))
 
