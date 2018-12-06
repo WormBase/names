@@ -119,7 +119,7 @@
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (not-found)) status body)
-            (t/is (re-seq #"does not exist" (:message body)))))))))
+            (t/is (re-seq #"does not exist" (get body :message "")))))))))
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
