@@ -51,7 +51,7 @@
 (defn undo-merge-genes
   [into-id from-id & {:keys [current-user payload]
                       :or {current-user "tester@wormbase.org"
-                           payload {:prov {}}}}]
+                           payload {:prov nil}}}]
   (binding [fake-auth/*gapi-verify-token-response*
             (fake-auth/payload {"email" current-user})]
     (let [current-user-token (get fake-auth/tokens current-user)]
@@ -74,7 +74,7 @@
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
-                          :prov {}}
+                          :prov nil}
                          "WBGene20000000"
                          "WBGene10000000")]
       (tu/status-is? 404 status body)))
@@ -104,7 +104,7 @@
                                       (-> lur entity :gene/status entid)
                                       (entid :gene.status/dead)]]))
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/cds}
-                                            :prov {}}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (conflict)) status body))))))
@@ -115,7 +115,7 @@
         data-samples
         (fn check-biotype-validation-error [conn]
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/godzilla}
-                                            :prov {}}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (not-found)) status body)
@@ -139,7 +139,7 @@
           (let [db (d/db conn)
                 [status body] (merge-genes
                                {:data {:gene/biotype :biotype/transposable-element-gene}
-                                :prov {}}
+                                :prov nil}
                                from-id
                                into-id)
                 [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
