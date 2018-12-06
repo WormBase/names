@@ -22,7 +22,6 @@
     ;; A set of fake users with different roles to test against.
     @(d/transact-async conn [{:person/email "tester@wormbase.org"
                               :person/id "WBPerson007"
-                              ;; TODO: must sign auth-token
                               :person/auth-token (wna/sign-token
                                                   (-> (wnu/read-app-config)
                                                       :auth-token)
