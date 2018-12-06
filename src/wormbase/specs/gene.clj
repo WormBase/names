@@ -104,7 +104,7 @@
 (s/def ::changes (s/coll-of ::change))
 (s/def ::provenance (s/merge ::wsp/provenance (s/keys :req-un [::changes])))
 (s/def ::history (stc/spec
-                  (s/coll-of ::provenance-history :type vector? :min-count 1)))
+                  (s/coll-of ::provenance :type vector? :min-count 1)))
 
 (s/def ::info (stc/spec (s/or :cloned ::cloned
                               :uncloned ::uncloned
