@@ -130,8 +130,8 @@
                        (dissoc :gene/cgc-name)
                        (assoc :gene/status :gene.status/live))
                    (-> gene-into
-                       (assoc :gene/status :gene.status/live)
-                       (assoc :gene/species (:gene/species gene-from))
+                       (assoc :gene/status :gene.status/live
+                              :gene/species (:gene/species gene-from))
                        (dissoc :gene/sequence-name))]]
       (tu/with-gene-fixtures
         samples
