@@ -5,6 +5,8 @@
    [wormbase.specs.provenance] ;; side effects
    [wormbase.specs.gene :as wsg]))
 
+(s/def ::size pos-int?)
+
 (s/def ::success-response (stc/spec (s/keys :req [:batch/id])))
 
 (s/def ::created ::success-response)
@@ -19,6 +21,8 @@
                                                           :provenance/when
                                                           :provenance/who]))))
 (s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
+
+(s/def ::status-changed ::success-response)
 
 (s/def ::merge-into :gene/id)
 (s/def ::merge-from :gene/id)
@@ -37,7 +41,5 @@
 
 (s/def ::change-status (stc/spec (s/coll-of ::wsg/identifier :min-count 1)))
 (s/def ::kill ::change-status)
-(s/def ::suppresss ::change-status)
+(s/def ::suppress ::change-status)
 (s/def ::resurrect ::change-status)
-
-
