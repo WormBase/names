@@ -4,7 +4,6 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [clj-uuid :as uuid]
-   [datomic.api :as d]
    [ring.util.http-response :refer [bad-request conflict not-found ok]]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
