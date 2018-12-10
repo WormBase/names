@@ -19,9 +19,7 @@ class GeneForm extends Component {
     const dataNew = {
       'gene/cgc-name': data['gene/cgc-name'],
       'gene/sequence-name': data['gene/sequence-name'],
-      'gene/species': {
-        'species/latin-name': data['gene/species'] && data['gene/species']['species/latin-name'],
-      },
+      'gene/species': data['gene/species'],
       'gene/biotype': data['gene/biotype'],
     };
     return (
@@ -30,7 +28,7 @@ class GeneForm extends Component {
           ({withFieldData, dirtinessContext, getFormData, resetData}) => {
             const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
             const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
-            const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species:species/latin-name');
+            const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species');
             const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
             const ReasonField = withFieldData(TextField, 'provenance/why');
             return (

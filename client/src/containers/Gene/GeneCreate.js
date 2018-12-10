@@ -39,11 +39,6 @@ class GeneCreate extends Component {
             return mockFetch.post('*', {
               "created": {
                 ...data,
-                "gene/species":{
-                  ...data['gene/species'],
-                  "species/cgc-name-pattern":"^[a-z21]{3,4}-[1-9]{1}\\d*",
-                  "species/sequence-name-pattern":"^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"
-                },
                 "gene/id":"WBGene00100001",
                 "gene/status":"gene.status/live"
               },
