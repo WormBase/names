@@ -15,18 +15,35 @@
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.provenance :as wsp]
-   [wormids.batch :as wb]
-   [wormbase.names.batch :as wnb]))
+   [wormids.batch :as wb]))
 
 (defn find-entities [request]
   (bad-request "TBD"))
 
-(defn batcher [impl entity-type spec request]
+(defn- conform-spec-drop-label [request spec data]
+  (map second (wnu/conform-data request spec data)))
+
+(def ^:private default-batch-size 100)
+
+(defn- batch-size [payload coll]
+  (let [bsize (:batch-size payload)
+        coll-size (count coll)
+        cbsize (/ coll-size 10)]
+    (if (nil? bsize)
+      (if (> cbsize default-batch-size)
+        default-batch-size
+        cbsize)
+      bsize)))
+
+(defn batcher [impl entity-type spec request
+               & {:keys [data-transform]
+                  :or {data-transform conform-spec-drop-label}}]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
-        cdata (map second (wnu/conform-data request spec data))
-        uiident (keyword entity-type "id")]
-    (impl conn uiident cdata prov)))
+        cdata (data-transform request spec data)
+        uiident (keyword entity-type "id")
+        bsize (batch-size payload cdata)]
+    (impl conn uiident cdata prov :batch-size bsize)))
 
 (defn new-entities
   "Create a batch of new entities.
@@ -43,7 +60,26 @@
   (let [result (batcher wb/update entity-type ::wsb/update request)]
     (ok {:updated result})))
 
+(defn change-entity-statuses [entity-type to-status spec request]
+  (let [{conn :conn payload :body-params} request
+        {data :data prov :prov} payload
+        uiident (keyword entity-type "id")
+        resp-key (name to-status)
+        result (batcher wb/update
+                        entity-type
+                        spec
+                        request
+                        :data-transform (fn assign-status
+                                          [request spec data]
+                                          (->> data
+                                               (map (partial array-map uiident))
+                                               (map #(assoc % :gene/status to-status))
+                                               (set))))]
+    (ok {resp-key result})))
+
 (s/def ::entity-type sts/string?)
+(s/def ::prov ::wsp/provenance)
+(s/def ::batch-size ::wsb/size)
 
 (def resources
   (sweet/context "/batch/:entity-type" []
@@ -68,7 +104,8 @@
                      (dissoc conflict)
                      (assoc ok {:schema {:updated ::wsb/updated}})
                      (wnu/response-map))
-      :parameters {:body-params {:prov ::wsp/provenance :data ::wsb/update}}
+      :parameters {:body-params {:data ::wsb/update
+                                 :prov ::prov}}
       :handler (fn foo [request]
                  (update-entities entity-type request))}
      :post
@@ -77,36 +114,42 @@
       :middleware [wna/restrict-to-authenticated]
       :responses (-> wnu/default-responses
                      (assoc created {:schema {:created ::wsb/created}})
-                     (assoc bad-request {:schema ::wsc/error-response})
                      (wnu/response-map))
-      :parameters {:body-params {:data ::wsb/new :prov ::wsp/provenance}}
+      :parameters {:body-params {:data ::wsb/new
+                                 :prov ::prov}}
       :handler (partial new-entities entity-type)}
-    })))
-
-;; (sweet/context ":attr" []
-;;   :tags ["batch"]
-;;   :path-params [attr :- ::wsb/name-attr]
-;;   (sweet/resource
-;;    {:delete
-;;     {:sumamry "Remove names from genes."
-;;      :x-name ::remove-entity-names
-;;      :parameters {:body-params [:data ::wsb/remove-names]}
-;;      :responses wnu/default-responses
-;;      :handler (fn remove-names [request]
-;;                 (let [{conn :conn payload :body-params} request
-;;                       {data :data prov :prov} payload
-;;                       result (wb/remove-names conn :gene/id attr data prov)]
-;;                   (ok result)))}}))
-
-
-
-;;;; /api/batch/<type>/ POST -> new
-;;;; /api/batch/<type>/ PUT -> update
-;;;; /api/batch/<type>/ DELETE -> change-status=deleted
-;;;; /api/batch/<type>/retract/ POST -> change-status=retracted
-;;;; /api/batch/<type>/suppress/ POST -> change-status=suppressed
+     :delete
+     {:summary "Kill a batch of genes."
+      :x-name ::kill-entities
+      :responses (-> wnu/default-responses
+                     (assoc ok {:schema ::wsb/status-changed}))
+      :parameters {:body-params {:data ::wsb/kill
+                                 :prov ::prov}}
+      :handler (partial change-entity-statuses
+                        entity-type
+                        :gene.status/dead
+                        ::wsb/kill)}})
+    (sweet/POST "/resurrect" request
+      :body [{:keys [:data :prov]} {:data ::wsb/resurrect
+                                    :prov ::wsp/provenance
+                                    :batch-size ::wsb/size}]
+      (change-entity-statuses entity-type
+                              :gene.status/live
+                              ::wsb/resurrect
+                              request))
+    (sweet/POST "/suppress" request
+      :body [{:keys [:data :prov]} {:data ::wsb/suppress
+                                    :prov ::wsp/provenance
+                                    :batch-size ::wsb/size}]
+      (change-entity-statuses entity-type
+                              :gene.status/suppressed
+                              ::wsb/suppressed
+                              request))))
+;; TODO:
 ;;;; /api/batch/<type>/?q= GET -> find-by-any-name-across-types
 ;;;; /api/batch/<type>/<batch-id>/ DELETE -> undo-batch-operation
 ;;;; /api/batch/<type>/<batch-id>/ GET -> batch-info
+;;;; /api/batch/<type>/merge POST -> 1+ arrays of length 2+ g1, gN... (gN into g1)
+;;;; /api/batch/<type>/split POST -> 1+ arrays of: gene-id, product-sequence-name, product-biotype
 
 (def routes (sweet/routes resources))

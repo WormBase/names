@@ -33,9 +33,10 @@
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
-    (let [bdata [{:gene/sequence-name "MATTR.1"
+    (let [bdata [{:gene/sequence-name "AAH1.1"
                   :gene/species elegans-ln
-                  :gene/biotype :biotype/cds}]
+                  :gene/biotype :biotype/cds
+                  }]
           [status body] (new-genes {:data bdata :prov basic-prov})]
       (t/is (= (:status (created)) status))
       (t/is (get-in body [:created :batch/id]) (pr-str body)))))
@@ -44,10 +45,10 @@
   (t/testing "Batch with multiple items, unique names is rejected."
     (let [bdata [{:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}
-                 {:gene/cgc-naem "dup-1"
+                 {:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (= (:status (bad-request)) status)))))
+      (t/is (= (:status (conflict)) status)))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
@@ -65,5 +66,5 @@
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
       (t/is (:status (created)) status)
-      (let [bid (get-in body [:created :batch/id])]
-        (t/is (uuid/uuid-string? bid))))))
+      (let [bid (get-in body [:created :batch/id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str body))))))
