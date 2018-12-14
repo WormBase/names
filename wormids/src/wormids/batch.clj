@@ -20,6 +20,7 @@
    [datomic.api :as d]
    [wormids.core :refer [attr-schema-unique? identifier-format]]))
 
+;; TODO: consider removal (no longer used)
 (defn data-transacted?
   "Determine if there was any data transacted as a result of transaction.
 
@@ -31,6 +32,7 @@
            (filter (partial apply not=))
            (seq)))
 
+;; TODO: consider removal (no longer used)
 (defn tx-res-when-transacted [tx-result]
   (when (data-transacted? tx-result)
     tx-result))
@@ -146,9 +148,7 @@
                 (map (fn [item]
                        ['wormids.core/cas-batch (find item uiident) item]))
                 (add-prov-maybe sp)
-                (transact-fn db)
-                ;;(tx-res-when-transacted)
-                )))
+                (transact-fn db))))
    conn
    uiident
    coll
@@ -167,9 +167,7 @@
                              value (attr item)]
                          [:db/retract eid attr value])))
                 (add-prov-maybe sp)
-                (transact-fn db)
-                ;;(tx-res-when-transacted)
-                )))
+                (transact-fn db))))
    conn
    uiident
    coll
