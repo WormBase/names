@@ -55,7 +55,7 @@
     (let [bdata [{:gene/cgc-name "dup-1"
                   :gene/species "Caenorhabditis donkey"}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (tu/status-is? (:status (not-found)) status body))))
+      (tu/status-is? (:status (conflict)) status body))))
 
 (t/deftest batch-success
   (t/testing "Batch with a random number of items is successful"

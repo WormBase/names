@@ -16,6 +16,7 @@
   via `with` and skipping `transact` calls when there is no data to transact."
   (:refer-clojure :exclude [update])
   (:require
+   [clojure.core :as cc]
    [datomic.api :as d]
    [wormids.core :refer [attr-schema-unique? identifier-format]]))
 
@@ -45,24 +46,58 @@
   (when tx-data
     (cons prov tx-data)))
 
+(defn db-error? [exc]
+  (some->> (ex-data exc)
+           (keys)
+           (filter (fn has-db-ns? [k]
+                     (#{"db" "db.error"} (namespace k))))))
+
+(defrecord BatchResult [tx-result errors])
+
+(defn attempt-batch
+  [result xs]
+  (let [result* (try
+                  (cc/update result
+                             :tx-result
+                             (fn [tx-res]
+                               (d/with (:db-after tx-res) xs)))
+                  (catch Exception exc
+                    (if (some-> exc ex-data :db/error)
+                      (cc/update result
+                                 :errors
+                                 (fnil (fn [curr-val]
+                                         (conj curr-val exc)) []))
+                      (throw exc))))]
+    (assert result* "tx-res was nil!")
+    result*))
+
 (defn process-batch
   [processor-fn conn uiident coll prov batch-size]
   (let [sp (assoc-prov prov)
         batch (partition-all batch-size coll)
-        db (d/db conn)]
-    (when-let [dba (reduce (partial processor-fn
-                                    sp
-                                    (fn [tx-res xs]
-                                      (d/with (:db-after tx-res) xs)))
-                           {:db-after db}
-                           batch)]
-      (let [dba* (reduce (partial processor-fn
-                                  sp
-                                  (fn [_ xs]
-                                    @(d/transact-async conn xs)))
-                         {:db-after db}
-                         batch)]
-        (when dba*
+        db (d/db conn)
+        init-tx-res (map->BatchResult {:tx-result {:db-after db} :errors nil})]
+    (let [result (reduce
+                  (partial processor-fn
+                           sp
+                           (fn [result xs]
+                             (when (get-in result [:tx-result :db-after])
+                               (attempt-batch result xs))))
+                  init-tx-res
+                  batch)]
+      (when-let [errors (-> result :errors seq)]
+        (throw (ex-info "Errors during attempting batch"
+                        {:errors errors
+                         :type ::db-errors})))
+      (let [b-result (reduce (partial processor-fn
+                                      sp
+                                      (fn [_ xs]
+                                        (assoc result
+                                               :tx-result
+                                               @(d/transact-async conn xs))))
+                             (map->BatchResult {:tx-result {:db-after db}})
+                             batch)]
+        (when (get-in b-result [:tx-result :db-after])
           (apply array-map (find sp :batch/id)))))))
 
 (defn new
@@ -81,8 +116,7 @@
      (fn reduce-new [sp transact-fn db xs]
        (when db
          (some->> [['wormids.core/new template uiident xs] sp]
-                  (transact-fn db)
-                  tx-res-when-transacted)))
+                  (transact-fn db))))
      conn
      uiident
      coll
@@ -113,7 +147,8 @@
                        ['wormids.core/cas-batch (find item uiident) item]))
                 (add-prov-maybe sp)
                 (transact-fn db)
-                (tx-res-when-transacted))))
+                ;;(tx-res-when-transacted)
+                )))
    conn
    uiident
    coll
@@ -133,7 +168,8 @@
                          [:db/retract eid attr value])))
                 (add-prov-maybe sp)
                 (transact-fn db)
-                (tx-res-when-transacted))))
+                ;;(tx-res-when-transacted)
+                )))
    conn
    uiident
    coll

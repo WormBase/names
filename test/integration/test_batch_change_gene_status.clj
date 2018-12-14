@@ -5,6 +5,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [clj-uuid :as uuid]
+   [datomic.api :as d]
    [ring.util.http-response :refer [bad-request conflict not-found ok]]   
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
@@ -47,24 +48,28 @@
     (let [gid (first (gen/sample gsg/id 1))
           [status body] (send-change-status-request :kill {:data [gid]
                                                            :prov nil})]
-      (tu/status-is? (:status (not-found)) status body)
-      (t/is (str/includes? (get body :message) (str ":gene/id '" gid "' does not exist"))
-            (pr-str body)))))
+      (tu/status-is? (:status (conflict)) status body)
+      (t/is (str/includes? (get body :message "") "processing errors occurred"))
+      (t/is (some (fn [msg]
+                    (and (str/includes? msg "does not exist")
+                         (str/includes? msg gid)))
+                  (:errors body))))))
 
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
     (let [fixture-candidates (tu/gene-samples 4)
           gids (map :gene/id fixture-candidates)
-          fixtures (random-sample 0.5 fixture-candidates)
-          expected-not-found (set/difference (set gids) (set (map :gene/id fixtures)))]
+          fixtures (take 2 fixture-candidates)
+          expected-not-found (set/difference (set (map :gene/id fixtures)) (set gids))]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (send-change-status-request :kill {:data gids :prov nil})
-                entity-missing (some-> body :entity second)]
-            (tu/status-is? (:status (not-found)) status body)
-            (t/is entity-missing "No entity was determined to be missing.")
-            (t/is (str/includes? (get body :message "") entity-missing))))))))
+          (println "FIXTURES:" (map :gene/id fixtures))
+          (println "GIDS:" gids)
+          (let [[status body] (send-change-status-request :kill {:data gids :prov nil})]
+            (tu/status-is? (:status (conflict)) status body)
+            (doseq [enf expected-not-found]
+              (t/is (str/includes? (get body :message "") enf)))))))))
 
 (t/deftest change-status-succesfully
   (t/testing "When a batch is expected to succeed."
@@ -79,5 +84,9 @@
             (let [[status body] (send-change-status-request to-status {:data gids :prov nil})]
               (tu/status-is? (:status (ok)) status body)
               (t/is (some-> body exp-resp-key :batch/id uuid/uuid-string?)
-                    (pr-str body)))))))))
+                    (pr-str body))
+              (doseq [gid gids]
+                (let [ent (d/entity (d/db conn) [:gene/id gid])]
+                  (t/is (= (:gene/status ent)
+                           (keyword "gene.status" (name exp-resp-key)))))))))))))
 

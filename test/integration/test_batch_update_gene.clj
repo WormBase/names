@@ -43,17 +43,21 @@
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
     (let [fixtures (tu/gene-samples 1)
-          gid (-> fixtures first :gene/id)]
+          gid (-> fixtures first :gene/id)
+          bad-species "Caenorhabditis donkey"]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
           (let [bdata [{:gene/cgc-name "dup-1"
-                        :gene/species "Caenorhabditis donkey"
+                        :gene/species bad-species
                         :gene/id gid}]
                 [status body] (update-genes {:data bdata :prov basic-prov})]
-            (tu/status-is? (:status (not-found)) status body)
-            (t/is (str/includes? (str/lower-case (:message body)) "does not exist")
-                  (pr-str body))))))))
+            (tu/status-is? (:status (conflict)) status body)
+            (t/is (some (fn [error]
+                          (and error
+                               (str/includes? (str/lower-case error) "does not exist")
+                               (str/includes? error bad-species)))
+                        (get body :errors [])))))))))
 
 (t/deftest single-item
   (let [fixtures (tu/gene-samples 1)

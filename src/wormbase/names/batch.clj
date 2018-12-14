@@ -17,6 +17,10 @@
    [wormbase.specs.provenance :as wsp]
    [wormids.batch :as wb]))
 
+(s/def ::entity-type sts/string?)
+
+(s/def ::prov ::wsp/provenance)
+
 (defn find-entities [request]
   (bad-request "TBD"))
 
@@ -46,11 +50,7 @@
     (impl conn uiident cdata prov :batch-size bsize)))
 
 (defn new-entities
-  "Create a batch of new entities.
-
-  Status codes and meaning:
-  404 - Non-existent reference to entity.
-  201 - Created all entities successfully."
+  "Create a batch of new entities."
   [entity-type request]
   (let [result (batcher wb/new entity-type ::wsb/new request)]
     (created (-> result :batch/id str) {:created result})))
@@ -76,10 +76,6 @@
                                                (map #(assoc % :gene/status to-status))
                                                (set))))]
     (ok {resp-key result})))
-
-(s/def ::entity-type sts/string?)
-(s/def ::prov ::wsp/provenance)
-(s/def ::batch-size ::wsb/size)
 
 (def resources
   (sweet/context "/batch/:entity-type" []
@@ -124,12 +120,14 @@
       :responses (-> wnu/default-responses
                      (assoc ok {:schema ::wsb/status-changed}))
       :parameters {:body-params {:data ::wsb/kill
-                                 :prov ::prov}}
+                                 :prov ::prov
+                                 :batch-size ::wsb/size}}
       :handler (partial change-entity-statuses
                         entity-type
                         :gene.status/dead
                         ::wsb/kill)}})
     (sweet/POST "/resurrect" request
+      :middleware [wna/restrict-to-authenticated]
       :body [{:keys [:data :prov]} {:data ::wsb/resurrect
                                     :prov ::wsp/provenance
                                     :batch-size ::wsb/size}]
@@ -138,6 +136,7 @@
                               ::wsb/resurrect
                               request))
     (sweet/POST "/suppress" request
+      :middleware [wna/restrict-to-authenticated]
       :body [{:keys [:data :prov]} {:data ::wsb/suppress
                                     :prov ::wsp/provenance
                                     :batch-size ::wsb/size}]
