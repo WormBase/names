@@ -3,11 +3,7 @@
    [clojure.spec.alpha :as s]
    [datomic.api :as d]
    [compojure.api.sweet :as sweet]
-   [ring.util.http-response :refer [bad-request
-                                    conflict
-                                    created
-                                    not-found not-found!
-                                    ok]]
+   [ring.util.http-response :refer [bad-request conflict created ok]]
    [spec-tools.spec :as sts]
    [wormbase.names.auth :as wna]
    [wormbase.names.util :as wnu]
@@ -97,7 +93,6 @@
       :x-name ::update-entities
       :middleware [wna/restrict-to-authenticated]
       :responses (-> wnu/default-responses
-                     (dissoc conflict)
                      (assoc ok {:schema {:updated ::wsb/updated}})
                      (wnu/response-map))
       :parameters {:body-params {:data ::wsb/update
