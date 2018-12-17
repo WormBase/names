@@ -11,7 +11,7 @@
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.provenance :as wsp]
-   [wormids.batch :as wb]))
+   [wormbase.ids.batch :as wbids-batch]))
 
 (s/def ::entity-type sts/string?)
 
@@ -48,12 +48,12 @@
 (defn new-entities
   "Create a batch of new entities."
   [entity-type request]
-  (let [result (batcher wb/new entity-type ::wsb/new request)]
+  (let [result (batcher wbids-batch/new entity-type ::wsb/new request)]
     (created (-> result :batch/id str) {:created result})))
 
 (defn update-entities
   [entity-type request]
-  (let [result (batcher wb/update entity-type ::wsb/update request)]
+  (let [result (batcher wbids-batch/update entity-type ::wsb/update request)]
     (ok {:updated result})))
 
 (defn change-entity-statuses [entity-type to-status spec request]
@@ -61,7 +61,7 @@
         {data :data prov :prov} payload
         uiident (keyword entity-type "id")
         resp-key (name to-status)
-        result (batcher wb/update
+        result (batcher wbids-batch/update
                         entity-type
                         spec
                         request

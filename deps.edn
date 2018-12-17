@@ -60,7 +60,7 @@
              ring/ring-devel {:mvn/version "1.6.3"}
              peridot {:mvn/version "0.5.0"}
              vvvvalvalval/datomock {:mvn/version "0.2.0"}}
-            :extra-paths ["wormids/src" "test"]}
+            :extra-paths ["ids/src" "test"]}
            :datomic-pro
            {:extra-deps
             {com.datomic/datomic-pro

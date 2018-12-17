@@ -24,7 +24,7 @@
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
-   [wormids.core :as wormids]))
+   [wormbase.ids.core :as wbids]))
 
 (def default-responses (merge wnu/default-responses
                               {ok {:schema {:updated ::wsg/updated}}}))
@@ -132,14 +132,14 @@
 (defn new-gene [request & {:keys [mint-new-id?]
                            :or {mint-new-id? true}}]
   (let [{payload :body-params db :db conn :conn} request
-        template (wormids/identifier-format db :gene/id)
+        template (wbids/identifier-format db :gene/id)
         data (-> payload
                  :data
                  (update :gene/status (fnil identity :gene.status/live)))
         spec ::wsg/new
         [_ cdata] (wnu/conform-data request spec data validate-names)
         prov (wnp/assoc-provenance request payload :event/new-gene)
-        tx-data [['wormids.core/new template :gene/id [cdata]] prov]
+        tx-data [['wormbase.ids.core/new template :gene/id [cdata]] prov]
         tx-res @(d/transact-async conn tx-data)
         dba (:db-after tx-res)
         new-id (wdb/extract-id tx-res :gene/id)
@@ -175,7 +175,7 @@
                          (second)
                          (resolve-refs-to-dbids db))
               prov (wnp/assoc-provenance request payload :event/update-gene)
-              txes [['wormids.core/cas-batch lur cdata] prov]
+              txes [['wormbase.ids.core/cas-batch lur cdata] prov]
               tx-result @(d/transact-async conn txes)]
           (if-let [db-after (:db-after tx-result)]
             (if-let [updated (wdb/pull db-after info-pull-expr lur)]
@@ -255,8 +255,8 @@
         prov (wnp/assoc-provenance request data :event/merge-genes)
         txes (concat
               (concat
-               [['wormids.core/cas-batch from-lur {:gene/status :gene.status/dead}]
-                ['wormids.core/cas-batch into-lur {:gene/biotype into-biotype}]
+               [['wormbase.ids.core/cas-batch from-lur {:gene/status :gene.status/dead}]
+                ['wormbase.ids.core/cas-batch into-lur {:gene/biotype into-biotype}]
                 [:db/add from-lur :gene/merges into-lur]]
                [[:db/add from-lur :gene/merges into-lur]]
                (when (uncloned-merge-target? into-g)
@@ -296,7 +296,7 @@
 (defn split-gene [request identifier]
   (let [{conn :conn db :db} request
         data (get-in request [:body-params :data] {})
-        template (wormids/identifier-format db :gene/id)
+        template (wbids/identifier-format db :gene/id)
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
@@ -318,7 +318,7 @@
           new-bt (d/entid db biotype)
           p-gene-lur [:gene/sequence-name p-seq-name]
           xs [new-data]
-          txes [['wormids.core/new template :gene/id xs]
+          txes [['wormbase.ids.core/new template :gene/id xs]
                 [:db/add lur :gene/splits p-seq-name]
                 [:db/cas lur :gene/biotype curr-bt new-bt]
                 prov]

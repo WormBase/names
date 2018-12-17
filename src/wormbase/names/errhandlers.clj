@@ -6,8 +6,9 @@
    [compojure.api.exception :as ex]
    [environ.core :as environ]
    [expound.alpha :as expound]
-   [wormbase.db :as wdb]
    [ring.util.http-response :as http-response]
+   [wormbase.db :as wdb]
+   [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene])
   (:import
    (clojure.lang ExceptionInfo)
@@ -168,7 +169,7 @@
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
 
    ;; Batch errors, may contain multiple errors types from above
-   :wormids.batch/db-errors handle-batch-errors
+   ::wbids-batch/db-errors handle-batch-errors
 
    ;; Something else
    ::ex/default handle-unexpected-error})
