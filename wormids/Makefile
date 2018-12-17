@@ -4,5 +4,8 @@ target/wormids.jar: deps.edn src/**/*
 pom.xml: deps.edn
 	@clojure -Spom
 
+release: target/wormids.jar pom.xml
+	@mvn deploy:deploy-file -Dfile=target/wormids.jar -DrepositoryId=clojars -Durl=https://clojars.org/repo -DpomFile=pom.xml
+
 clean:
 	@rm -f target/wormids.jar pom.xml
