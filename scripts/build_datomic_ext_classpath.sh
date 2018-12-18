@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z $CONSOLE_DEVICE ]; then
-    CONSOLE_DEVICE=/dev/console
+    CONSOLE_DEVICE=/dev/null
 fi
 
 CLOJURE="/usr/local/bin/clojure"
