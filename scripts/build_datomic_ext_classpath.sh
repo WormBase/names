@@ -5,6 +5,7 @@ if [ -z $CONSOLE_DEVICE ]; then
 fi
 
 CLOJURE="/usr/local/bin/clojure"
+JQ="/usr/local/bin/jq"
 
 aws_console () {
     local msg=$1;
@@ -36,17 +37,16 @@ else
 fi
 
 # install jq if needed
-which jq > /dev/null
-if [ $? -ne 0 ]; then
+if [ ! -e $JQ ]; then
     aws_console "Downloading and installing jq"
-    wget -O /usr/local/bin/jq --quiet https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-    chmod +x /usr/local/bin/jq
+    wget -O $JQ --quiet https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+    chmod +x $JQ
 fi
 
 # build the classpath for the datomic transactor using tools.deps
 ARTIFACT_INFO=$(curl -s -H 'accept: application/json' https://clojars.org/api/artifacts/wormbase/ids)
-ARTIFACT_NAME=$(echo $ARTIFACT_INFO | jq '"\(.group_name)/\(.jar_name)"' | tr -d '"')
-ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | jq '"\(.recent_versions[-1].version)"')
+ARTIFACT_NAME=$(echo $ARTIFACT_INFO | $JQ '"\(.group_name)/\(.jar_name)"' | tr -d '"')
+ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[-1].version)"')
 
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
 
