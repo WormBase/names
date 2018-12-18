@@ -46,7 +46,10 @@
  ;;   make-classpath aliases (-C) affect the classpath generation, options:
  ;;     :extra-paths - vector of additional paths to add to the classpath
  ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
- :aliases {:dev
+ :aliases {:prod
+           {:extra-deps
+            {wormbase/ids {:mvn/version "0.1.0"}}}
+           :dev
            {:extra-deps
             {org.clojure/test.check {:mvn/version  "0.9.0"}
              org.clojure/tools.trace {:mvn/version  "0.7.9"}
