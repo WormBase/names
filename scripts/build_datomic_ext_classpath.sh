@@ -18,8 +18,7 @@ install_tools_deps () {
     aws_console "Installing tools deps...."
     cd /tmp
     local tools_deps_installer_filename="linux-install-${TOOLS_DEPS_VERSION}.sh"
-    echo curl --silent -O "https://download.clojure.org/install/${tools_deps_installer_filename}"
-    exit 1
+    curl --silent -O "https://download.clojure.org/install/${tools_deps_installer_filename}"
     chmod +x "${tools_deps_installer_filename}"
     ./$tools_deps_installer_filename 2> /dev/null > /dev/null
     aws_console "installed tools.deps"
