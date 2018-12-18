@@ -13,25 +13,34 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class UndoSplitGeneDialog extends Component {
-
   submitData = (data) => {
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.delete('*', {
-          'live': 'WB1',
-          'dead': 'WB2',
+          live: 'WB1',
+          dead: 'WB2',
         });
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/split/${this.props.wbIntoId}`, {
-          method: 'DELETE',
-        });
-      },
+        return this.props.authorizedFetch(
+          `/api/gene/${this.props.wbId}/split/${this.props.wbIntoId}`,
+          {
+            method: 'DELETE',
+          }
+        );
+      }
     );
-  }
+  };
 
   render() {
-    const {wbId, wbIntoId, geneName, geneIntoName, authorizedFetch, ...otherProps} = this.props;
+    const {
+      wbId,
+      wbIntoId,
+      geneName,
+      geneIntoName,
+      authorizedFetch,
+      ...otherProps
+    } = this.props;
     return (
       <AjaxDialog
         title="Undo gene split"
@@ -39,29 +48,28 @@ class UndoSplitGeneDialog extends Component {
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Merge into {geneName}</ProgressButton>
         )}
-        {...otherProps}>
-        {
-          ({withFieldData, errorMessage}) => {
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            return (
-              <DialogContent>
-                <DialogContentText>
-                  Gene <strong>{geneIntoName}</strong> will be merged into <strong>{geneName}</strong>.
-                  Are you sure?
-                </DialogContentText>
-                <DialogContentText>
-                  <ValidationError {...errorMessage} />
-                </DialogContentText>
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for undoing the split"
-                  required
-                  fullWidth
-                />
-              </DialogContent>
-            )
-          }
-        }
+        {...otherProps}
+      >
+        {({ withFieldData, errorMessage }) => {
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          return (
+            <DialogContent>
+              <DialogContentText>
+                Gene <strong>{geneIntoName}</strong> will be merged into{' '}
+                <strong>{geneName}</strong>. Are you sure?
+              </DialogContentText>
+              <DialogContentText>
+                <ValidationError {...errorMessage} />
+              </DialogContentText>
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for undoing the split"
+                required
+                fullWidth
+              />
+            </DialogContent>
+          );
+        }}
       </AjaxDialog>
     );
   }
@@ -75,7 +83,6 @@ UndoSplitGeneDialog.propTypes = {
   authorizedFetch: PropTypes.func.isRequired,
 };
 
-const styles = (theme) => ({
-});
+const styles = (theme) => ({});
 
 export default withStyles(styles)(UndoSplitGeneDialog);

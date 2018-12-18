@@ -21,27 +21,25 @@ const NavBar = (props) => {
     },
   ];
 
-  const currentTab = tabs.filter((tab) => (
+  const currentTab = tabs.filter((tab) =>
     matchPath(props.location.pathname, {
       path: tab.value,
       exact: false,
       strict: false,
     })
-  ))[0];
+  )[0];
 
   return (
-      <Tabs
-        value={currentTab ? currentTab.value : false}
-        onChange={(event, value) => props.history.push(value)}
-        centered={true}
-        className={props.classes.root}
-      >
-        {
-          tabs.map((tab) => (
-            <Tab key={tab.name} label={tab.name} value={tab.value} />
-          ))
-        }
-      </Tabs>
+    <Tabs
+      value={currentTab ? currentTab.value : false}
+      onChange={(event, value) => props.history.push(value)}
+      centered={true}
+      className={props.classes.root}
+    >
+      {tabs.map((tab) => (
+        <Tab key={tab.name} label={tab.name} value={tab.value} />
+      ))}
+    </Tabs>
   );
 };
 

@@ -7,7 +7,6 @@ const Logout = (props) => {
   return (
     <Button
       variant="raised"
-
       onClick={() => {
         props.onLogout();
         props.history.push('/');
@@ -16,7 +15,7 @@ const Logout = (props) => {
       Logout
     </Button>
   );
-}
+};
 
 Logout.propTypes = {
   onLogout: PropTypes.func.isRequired,

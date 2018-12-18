@@ -7,7 +7,7 @@ import PersonIcon from '@material-ui/icons/Person';
 const ProfileButton = (props) => {
   return props.name ? (
     <Button
-      component={({...props}) => <Link to='/me' {...props} />}
+      component={({ ...props }) => <Link to="/me" {...props} />}
       className={props.classes.button}
     >
       <PersonIcon className={props.classes.icon} />

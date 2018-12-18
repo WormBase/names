@@ -5,18 +5,18 @@ import { Button, CircularProgress, withStyles } from '@material-ui/core';
 export const PROGRESS_BUTTON_READY = 'READY';
 export const PROGRESS_BUTTON_PENDING = 'PENDING';
 
-const ProgressButton =  ({classes, status, children, ...buttonProps}) => (
+const ProgressButton = ({ classes, status, children, ...buttonProps }) => (
   <div className={classes.wrapper}>
     <Button
       disabled={status === PROGRESS_BUTTON_PENDING}
       className={classes.button}
       {...buttonProps}
-    >{children}</Button>
-    {
-      status === PROGRESS_BUTTON_PENDING ?
-        <CircularProgress size={24} className={classes.spinner} /> :
-        null
-    }
+    >
+      {children}
+    </Button>
+    {status === PROGRESS_BUTTON_PENDING ? (
+      <CircularProgress size={24} className={classes.spinner} />
+    ) : null}
   </div>
 );
 

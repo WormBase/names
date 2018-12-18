@@ -8,13 +8,14 @@ import App from './App';
 
 //import registerServiceWorker from './registerServiceWorker';
 
-ReactDOM.render((
+ReactDOM.render(
   <BrowserRouter>
     <MuiThemeProvider theme={theme}>
       <React.StrictMode>
-        <App/>
+        <App />
       </React.StrictMode>
     </MuiThemeProvider>
-  </BrowserRouter>
-), document.getElementById('root'));
+  </BrowserRouter>,
+  document.getElementById('root')
+);
 //registerServiceWorker();

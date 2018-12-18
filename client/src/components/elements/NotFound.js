@@ -4,13 +4,15 @@ import { Typography, withStyles } from '@material-ui/core';
 
 class NotFound extends Component {
   render() {
-    const {classes} = this.props;
+    const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display2" gutterBottom>Not Found</Typography>
+        <Typography variant="display2" gutterBottom>
+          Not Found
+        </Typography>
         {this.props.children}
       </div>
-    )
+    );
   }
 }
 
@@ -29,7 +31,7 @@ const styles = (theme) => ({
     },
     '& > *': {
       marginBottom: theme.spacing.unit * 2,
-    }
+    },
   },
 });
 

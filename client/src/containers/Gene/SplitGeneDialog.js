@@ -14,25 +14,28 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class SplitGeneDialog extends Component {
-
   submitData = (data) => {
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
-        const emptyFields = ['provenance/why', 'gene/biotype', 'product'].filter(
-          (fieldId) => {
-            return !data[fieldId];
-          }
-        );
+        const emptyFields = [
+          'provenance/why',
+          'gene/biotype',
+          'product',
+        ].filter((fieldId) => {
+          return !data[fieldId];
+        });
         let errorMessage;
         switch (emptyFields.length) {
           case 0:
             break;
           case 1:
-            errorMessage = `Field ${emptyFields[0]} needs to be filled in.`
+            errorMessage = `Field ${emptyFields[0]} needs to be filled in.`;
             break;
           default:
-            errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${emptyFields.slice(-1)[0]} need to be filled in.`
+            errorMessage = `Fields ${emptyFields.slice(0, -1).join(`, `)} and ${
+              emptyFields.slice(-1)[0]
+            } need to be filled in.`;
         }
 
         if (errorMessage) {
@@ -44,77 +47,91 @@ class SplitGeneDialog extends Component {
           });
         } else {
           return mockFetch.post('*', {
-            "updated": {
-              "gene/id": this.props.wbId,
+            updated: {
+              'gene/id': this.props.wbId,
             },
-            "created": {
-              "gene/id": "WB3",
-              "gene/status": 'gene.status/live',
+            created: {
+              'gene/id': 'WB3',
+              'gene/status': 'gene.status/live',
             },
           });
         }
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/split`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-      },
+        return this.props.authorizedFetch(
+          `/api/gene/${this.props.wbId}/split`,
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+          }
+        );
+      }
     );
-  }
+  };
 
   render() {
-    const {classes, geneName, wbId, biotypeOriginal, ...otherProps} = this.props;
+    const {
+      classes,
+      geneName,
+      wbId,
+      biotypeOriginal,
+      ...otherProps
+    } = this.props;
     return (
       <AjaxDialog
         title="Split gene"
-        data={{'gene/biotype': biotypeOriginal}}
+        data={{ 'gene/biotype': biotypeOriginal }}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Split {geneName}</ProgressButton>
         )}
         {...otherProps}
       >
-        {
-          ({withFieldData, errorMessage}) => {
-            const BiotypeSelectOriginalField = withFieldData(BiotypeSelect, 'gene/biotype');
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            const SequenceNameField = withFieldData(TextField, 'product:gene/sequence-name');
-            const BiotypeSelectField = withFieldData(BiotypeSelect, 'product:gene/biotype');
-            return (
-              <DialogContent>
-                <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be split.
-                </DialogContentText>
-                <DialogContentText>
-                  <ValidationError {...errorMessage} />
-                </DialogContentText>
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for splitting the gene"
-                  required
-                  fullWidth
-                />
-                <BiotypeSelectOriginalField
-                  label={`${geneName || wbId} biotype`}
-                  helperText={`Modify the biotype of ${geneName}`}
-                  required
-                  classes={{
-                    root: classes.biotypeSelectField,
-                  }}
-                />
-                <br />
-                <DialogContentText>
-                  Please provide information of the gene to be created.
-                </DialogContentText>
-                <SequenceNameField
-                  label="Sequence name"
-                />
-                <BiotypeSelectField required />
-              </DialogContent>
-            )
-          }
-        }
+        {({ withFieldData, errorMessage }) => {
+          const BiotypeSelectOriginalField = withFieldData(
+            BiotypeSelect,
+            'gene/biotype'
+          );
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const SequenceNameField = withFieldData(
+            TextField,
+            'product:gene/sequence-name'
+          );
+          const BiotypeSelectField = withFieldData(
+            BiotypeSelect,
+            'product:gene/biotype'
+          );
+          return (
+            <DialogContent>
+              <DialogContentText>
+                Gene <strong>{geneName}</strong> will be split.
+              </DialogContentText>
+              <DialogContentText>
+                <ValidationError {...errorMessage} />
+              </DialogContentText>
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for splitting the gene"
+                required
+                fullWidth
+              />
+              <BiotypeSelectOriginalField
+                label={`${geneName || wbId} biotype`}
+                helperText={`Modify the biotype of ${geneName}`}
+                required
+                classes={{
+                  root: classes.biotypeSelectField,
+                }}
+              />
+              <br />
+              <DialogContentText>
+                Please provide information of the gene to be created.
+              </DialogContentText>
+              <SequenceNameField label="Sequence name" />
+              <BiotypeSelectField required />
+            </DialogContent>
+          );
+        }}
       </AjaxDialog>
     );
   }
@@ -130,7 +147,7 @@ SplitGeneDialog.propTypes = {
 const styles = (theme) => ({
   biotypeSelectField: {
     minWidth: 200,
-  }
+  },
 });
 
 export default withStyles(styles)(SplitGeneDialog);

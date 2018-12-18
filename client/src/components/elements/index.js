@@ -57,15 +57,17 @@ export { default as Timestamp } from './Timestamp';
 export { default as Humanize } from './Humanize';
 export { default as ValidationError } from './ValidationError';
 
-export const Dialog = withMobileDialog()(withStyles((theme) => ({
-  paper: {
-    minWidth: '50%',
-    marginTop: theme.spacing.unit * -10,
-    [theme.breakpoints.down('sm')]:{
-      marginTop: 0,
-    }
-  },
-}))(MuiDialog));
+export const Dialog = withMobileDialog()(
+  withStyles((theme) => ({
+    paper: {
+      minWidth: '50%',
+      marginTop: theme.spacing.unit * -10,
+      [theme.breakpoints.down('sm')]: {
+        marginTop: 0,
+      },
+    },
+  }))(MuiDialog)
+);
 
 export const colors = {
   blue,
@@ -94,7 +96,4 @@ export const theme = createMuiTheme({
   },
 });
 
-export {
-  MuiThemeProvider,
-  withStyles,
-}
+export { MuiThemeProvider, withStyles };

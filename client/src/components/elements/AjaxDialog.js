@@ -8,73 +8,74 @@ import {
   DialogTitle,
 } from '@material-ui/core';
 import BaseForm from './BaseForm';
-import ProgressButton, { PROGRESS_BUTTON_PENDING, PROGRESS_BUTTON_READY} from './ProgressButton';
+import ProgressButton, {
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
+} from './ProgressButton';
 import SimpleAjax from './SimpleAjax';
 
 class AjaxDialog extends Component {
   handleClose = (reset) => {
     reset();
     this.props.onClose && this.props.onClose();
-  }
+  };
 
   render() {
     return (
       <BaseForm data={this.props.data}>
-        {
-          ({withFieldData, getFormData, resetData}) => {
-            return (
-              <SimpleAjax
-                data={getFormData}
-                submitter={this.props.submitter}
-                onSubmitSuccess={this.props.onSubmitSuccess}
-                onSubmitError={this.props.onSubmitError}
-              >
-                {
-                  ({status, errorMessage, handleSubmit}) => {
-                    return (
-                      <Dialog
-                        open={this.props.open}
-                        onClose={() => this.handleClose(resetData)}
-                        aria-labelledby="form-dialog-title"
-                      >
-                        <DialogTitle id="form-dialog-title">{this.props.title}</DialogTitle>
-                        {
-                          this.props.children({
-                            // from BaseForm
-                            withFieldData,
-                            getFormData,
-                            resetData,
-                            // from SimpleAjax
-                            status,
-                            errorMessage,
-                            handleSubmit,
-                          })
-                        }
-                        <DialogActions>
-                          <Button
-                            onClick={() => this.handleClose(resetData)}
+        {({ withFieldData, getFormData, resetData }) => {
+          return (
+            <SimpleAjax
+              data={getFormData}
+              submitter={this.props.submitter}
+              onSubmitSuccess={this.props.onSubmitSuccess}
+              onSubmitError={this.props.onSubmitError}
+            >
+              {({ status, errorMessage, handleSubmit }) => {
+                return (
+                  <Dialog
+                    open={this.props.open}
+                    onClose={() => this.handleClose(resetData)}
+                    aria-labelledby="form-dialog-title"
+                  >
+                    <DialogTitle id="form-dialog-title">
+                      {this.props.title}
+                    </DialogTitle>
+                    {this.props.children({
+                      // from BaseForm
+                      withFieldData,
+                      getFormData,
+                      resetData,
+                      // from SimpleAjax
+                      status,
+                      errorMessage,
+                      handleSubmit,
+                    })}
+                    <DialogActions>
+                      <Button
+                        onClick={() => this.handleClose(resetData)}
                         //    color="primary"
-                          >
-                            Cancel
-                          </Button>
-                          {
-                            (this.props.renderSubmitButton || ((props) => <ProgressButton {...props} />))({
-                              status: status === 'SUBMITTED' ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY,
-                              color: 'primary',
-                              onClick: handleSubmit,
-                              className: this.props.classes.submitButton,
-                              children: "Submit",
-                            })
-                          }
-                        </DialogActions>
-                      </Dialog>
-                    )
-                  }
-                }
-              </SimpleAjax>
-            )
-          }
-        }
+                      >
+                        Cancel
+                      </Button>
+                      {(this.props.renderSubmitButton ||
+                        ((props) => <ProgressButton {...props} />))({
+                        status:
+                          status === 'SUBMITTED'
+                            ? PROGRESS_BUTTON_PENDING
+                            : PROGRESS_BUTTON_READY,
+                        color: 'primary',
+                        onClick: handleSubmit,
+                        className: this.props.classes.submitButton,
+                        children: 'Submit',
+                      })}
+                    </DialogActions>
+                  </Dialog>
+                );
+              }}
+            </SimpleAjax>
+          );
+        }}
       </BaseForm>
     );
   }

@@ -18,30 +18,29 @@ class KillGeneDialog extends Component {
       (mockFetch) => {
         console.log(data.reason);
         if (data.reason) {
-          return mockFetch.delete('*', {
-          });
+          return mockFetch.delete('*', {});
         } else {
           return mockFetch.delete('*', {
             body: {
               error: 'Reason for killing a gene is required',
             },
             status: 400,
-          })
+          });
         }
       },
       () => {
         return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
           method: 'DELETE',
           body: JSON.stringify({
-            ...data
-          })
+            ...data,
+          }),
         });
-      },
+      }
     );
-  }
+  };
 
   render() {
-    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
+    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Kill gene"
@@ -49,28 +48,27 @@ class KillGeneDialog extends Component {
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Kill {geneName}</ProgressButton>
         )}
-        {...otherProps}>
-        {
-          ({withFieldData, errorMessage}) => {
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            return (
-              <DialogContent>
-                <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be killed. Are you sure?
-                </DialogContentText>
-                <DialogContentText>
-                  <ValidationError {...errorMessage} />
-                </DialogContentText>
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for killing the gene"
-                  required
-                  fullWidth
-                />
-              </DialogContent>
-            )
-          }
-        }
+        {...otherProps}
+      >
+        {({ withFieldData, errorMessage }) => {
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          return (
+            <DialogContent>
+              <DialogContentText>
+                Gene <strong>{geneName}</strong> will be killed. Are you sure?
+              </DialogContentText>
+              <DialogContentText>
+                <ValidationError {...errorMessage} />
+              </DialogContentText>
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for killing the gene"
+                required
+                fullWidth
+              />
+            </DialogContent>
+          );
+        }}
       </AjaxDialog>
     );
   }

@@ -19,7 +19,7 @@ const variantIcon = {
   info: InfoIcon,
 };
 
-const styles = theme => ({
+const styles = (theme) => ({
   snackbarContent: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -63,7 +63,11 @@ function SnackbarContent(props) {
 
   return (
     <MuiSnackbarContent
-      className={classNames(classes.snackbarContent, classes[variant], className)}
+      className={classNames(
+        classes.snackbarContent,
+        classes[variant],
+        className
+      )}
       classes={{
         message: classes.messageWrapper,
       }}

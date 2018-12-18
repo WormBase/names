@@ -15,6 +15,4 @@ const styles = (theme) => ({
 
 export default withStyles(styles)(TextField);
 
-export {
-  TextField,
-};
+export { TextField };

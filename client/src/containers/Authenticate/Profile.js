@@ -7,9 +7,7 @@ const Profile = (props) => {
     <div className={props.classes.root}>
       <h2>{props.name}</h2>
       <span>{props.email}</span>
-      <div className={props.classes.logout}>
-        {props.children}
-      </div>
+      <div className={props.classes.logout}>{props.children}</div>
     </div>
   );
 };

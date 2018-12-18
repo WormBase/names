@@ -13,9 +13,8 @@ import {
 } from '../../components/elements';
 
 class GeneForm extends Component {
-
   render() {
-    const {classes, data = {}, disabled, submitted, createMode} = this.props;
+    const { classes, data = {}, disabled, submitted, createMode } = this.props;
     const dataNew = {
       'gene/cgc-name': data['gene/cgc-name'],
       'gene/sequence-name': data['gene/sequence-name'],
@@ -24,61 +23,84 @@ class GeneForm extends Component {
     };
     return (
       <BaseForm data={dataNew} disabled={disabled || submitted}>
-        {
-          ({withFieldData, dirtinessContext, getFormData, resetData}) => {
-            const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
-            const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
-            const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species');
-            const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            return (
-              <div>
-                <CgcNameField
-                  label="CGC name"
-                  helperText="Enter the CGC name of the gene"
-                />
-                <SequenceNameField
-                  label="Sequence name"
-                />
-                <SpeciesSelectField required />
-                <BiotypeSelectField
-                  required={Boolean(dataNew['gene/sequence-name'] || dataNew['gene/biotype'])} // once a cloned gene, always a cloned gene
-                  helperText={'For cloned genes, biotype is required. Otherwise, it\'s optional'}
-                />
-                {
-                  dirtinessContext(({dirty}) => (
-                    dirty ? <ReasonField
-                      label="Reason"
-                      helperText={createMode ? 'Why do you create this gene' : 'Why do you edit this gene?'}
-                    /> : null
-                  ))
+        {({ withFieldData, dirtinessContext, getFormData, resetData }) => {
+          const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
+          const SequenceNameField = withFieldData(
+            TextField,
+            'gene/sequence-name'
+          );
+          const SpeciesSelectField = withFieldData(
+            SpeciesSelect,
+            'gene/species'
+          );
+          const BiotypeSelectField = withFieldData(
+            BiotypeSelect,
+            'gene/biotype'
+          );
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          return (
+            <div>
+              <CgcNameField
+                label="CGC name"
+                helperText="Enter the CGC name of the gene"
+              />
+              <SequenceNameField label="Sequence name" />
+              <SpeciesSelectField required />
+              <BiotypeSelectField
+                required={Boolean(
+                  dataNew['gene/sequence-name'] || dataNew['gene/biotype']
+                )} // once a cloned gene, always a cloned gene
+                helperText={
+                  "For cloned genes, biotype is required. Otherwise, it's optional"
                 }
-                <br/>
-                {
-                  dirtinessContext(({dirty}) => (
-                    <div className={classes.actions}>
-                      <Button
-                        variant="raised"
-                        onClick={() => {
-                          resetData();
-                          this.props.onCancel && this.props.onCancel();
-                        }}
-                        disabled={disabled}
-                      >{createMode ? 'Cancel' : 'Reset'}</Button>
-                      <ProgressButton
-                        status={submitted ? PROGRESS_BUTTON_PENDING : PROGRESS_BUTTON_READY}
-                        variant="raised"
-                        color="secondary"
-                        onClick={() => dirty ? this.props.onSubmit(getFormData()) : this.props.onSubmit({})}
-                        disabled={disabled}
-                      >{createMode ? 'Create' : 'Update'}</ProgressButton>
-                    </div>
-                  ))
-                }
-              </div>
-            );
-          }
-        }
+              />
+              {dirtinessContext(({ dirty }) =>
+                dirty ? (
+                  <ReasonField
+                    label="Reason"
+                    helperText={
+                      createMode
+                        ? 'Why do you create this gene'
+                        : 'Why do you edit this gene?'
+                    }
+                  />
+                ) : null
+              )}
+              <br />
+              {dirtinessContext(({ dirty }) => (
+                <div className={classes.actions}>
+                  <Button
+                    variant="raised"
+                    onClick={() => {
+                      resetData();
+                      this.props.onCancel && this.props.onCancel();
+                    }}
+                    disabled={disabled}
+                  >
+                    {createMode ? 'Cancel' : 'Reset'}
+                  </Button>
+                  <ProgressButton
+                    status={
+                      submitted
+                        ? PROGRESS_BUTTON_PENDING
+                        : PROGRESS_BUTTON_READY
+                    }
+                    variant="raised"
+                    color="secondary"
+                    onClick={() =>
+                      dirty
+                        ? this.props.onSubmit(getFormData())
+                        : this.props.onSubmit({})
+                    }
+                    disabled={disabled}
+                  >
+                    {createMode ? 'Create' : 'Update'}
+                  </ProgressButton>
+                </div>
+              ))}
+            </div>
+          );
+        }}
       </BaseForm>
     );
   }
@@ -94,8 +116,7 @@ GeneForm.propTypes = {
   createMode: PropTypes.bool,
 };
 
-GeneForm.defaultProps = {
-};
+GeneForm.defaultProps = {};
 
 const styles = (theme) => ({
   root: {
