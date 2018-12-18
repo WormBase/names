@@ -49,5 +49,5 @@ ARTIFACT_NAME=$(echo $ARTIFACT_INFO | jq '"\(.group_name)/\(.jar_name)"' | tr -d
 ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | jq '"\(.recent_versions[-1].version)"')
 
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
-# clojure -Spath -Sdeps "$TRANSACTOR_DEPS"
+
 $CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS"
