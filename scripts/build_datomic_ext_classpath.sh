@@ -48,6 +48,13 @@ ARTIFACT_INFO=$(curl -s -H 'accept: application/json' https://clojars.org/api/ar
 ARTIFACT_NAME=$(echo $ARTIFACT_INFO | $JQ '"\(.group_name)/\(.jar_name)"' | tr -d '"')
 ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[-1].version)"')
 
+aws_console "ARTIFACT NAME: $ARTIFACT_NAME"
+aws_console "ARTIFACT VERSION: $ARTIFACT_VERSION"
+
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
 
-$CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS"
+DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS")
+aws_console "DEPS:"
+aws_console "$DEPS"
+
+echo $DEPS
