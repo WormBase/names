@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z $CONSOLE_DEVICE ]; then
-    CONSOLE_DEVICE=/dev/null
+    CONSOLE_DEVICE=/dev/console
 fi
 
 CLOJURE="/usr/local/bin/clojure"
@@ -18,10 +18,11 @@ install_tools_deps () {
     aws_console "Installing tools deps...."
     cd /tmp
     local tools_deps_installer_filename="linux-install-${TOOLS_DEPS_VERSION}.sh"
-    curl -s -O "https://download.clojure.org/install/${tools_deps_installer_filename}"
+    echo curl --silent -O "https://download.clojure.org/install/${tools_deps_installer_filename}"
+    exit 1
     chmod +x "${tools_deps_installer_filename}"
-    ./$tools_deps_installer_filename
-    aws_console "installed"
+    ./$tools_deps_installer_filename 2> /dev/null > /dev/null
+    aws_console "installed tools.deps"
 }
 
 # install tools.deps (clojure)
