@@ -4,6 +4,8 @@ if [ -z $CONSOLE_DEVICE ]; then
     CONSOLE_DEVICE=/dev/console
 fi
 
+CLOJURE="/usr/local/bin/clojure"
+
 aws_console () {
     local msg=$1;
     echo $1 > $CONSOLE_DEVICE
@@ -22,14 +24,9 @@ install_tools_deps () {
 }
 
 # install tools.deps (clojure)
-clojure=$(which clojure > /dev/null)
+[ ! -e $CLOJURE ] && install_tools_deps;
 
-if [ $? -ne 0 ]; then
-    install_tools_deps;
-fi
-
-clj_version=`cat $(which clojure) | awk '/Version/{print $NF}'`
-echo "CLJ VERSION: $clj_version"
+clj_version=`cat $CLOJURE | awk '/Version/{print $NF}'`
 
 if [ $clj_version = $TOOLS_DEPS_VERSION ]; then
     aws_console "Already have the latest version of tools deps, not installing."
@@ -53,4 +50,4 @@ ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | jq '"\(.recent_versions[-1].version)"')
 
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
 # clojure -Spath -Sdeps "$TRANSACTOR_DEPS"
-clojure -Spath -Sdeps "$TRANSACTOR_DEPS"
+$CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS"
