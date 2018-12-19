@@ -64,8 +64,6 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (println "FIXTURES:" (map :gene/id fixtures))
-          (println "GIDS:" gids)
           (let [[status body] (send-change-status-request :kill {:data gids :prov nil})]
             (tu/status-is? (:status (conflict)) status body)
             (doseq [enf expected-not-found]
