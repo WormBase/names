@@ -39,14 +39,7 @@
 (defn update
   [entity-kind identifier data & {:keys [current-user]
                                   :or {current-user default-user}}]
-  (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
-                                                    :current-user
-                                                    current-user)]
-    (let [uri (str "/api/" entity-kind "/" identifier)
-          put (partial tu/raw-put-or-post* service/app uri :put)
-          headers {"authorization" "Token FAKED"}
-          [status body] (put (tu/->json data) "application/json" headers)]
-      [status (tu/parse-body body)])))
+  (send-request entity-kind :put data :sub-path identifier :current-user current-user))
 
 (defn info
   [entity-kind identifier & {:keys [current-user params]

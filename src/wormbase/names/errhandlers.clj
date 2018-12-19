@@ -6,8 +6,9 @@
    [compojure.api.exception :as ex]
    [environ.core :as environ]
    [expound.alpha :as expound]
-   [wormbase.db :as wdb]
    [ring.util.http-response :as http-response]
+   [wormbase.db :as wdb]
+   [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene])
   (:import
    (clojure.lang ExceptionInfo)
@@ -16,12 +17,12 @@
 (declare handlers)
 
 (defn respond-with [response-fn request data]
-  (let [format (-> request
-                   :compojure.api.request/muuntaja
-                   :default-format)]
+  (let [fmt (-> request
+                :compojure.api.request/muuntaja
+                :default-format)]
     (-> data
         (response-fn)
-        (http-response/content-type format))))
+        (http-response/content-type fmt))))
 
 (def respond-bad-request (partial respond-with http-response/bad-request))
 
@@ -30,9 +31,26 @@
 (def respond-missing (partial respond-with http-response/not-found))
 
 (defn assoc-error-message [data exc & {:keys [message]}]
-  (if-let [msg (or message (.getMessage exc))]
-    (assoc data :message msg)
-    {:message "No reason given." :info data}))
+  (let [msg (or message (.getMessage exc) "No reason given")]
+    (assoc data :message msg)))
+
+(defmulti parse-exc-message (fn [exc]
+                              (-> exc ex-data :db/error keyword)))
+
+(defmethod parse-exc-message :db.error/nil-value [exc]
+  (format "Cannot accept nil-value %s" (ex-data exc)))
+
+(defmethod parse-exc-message :db.error/not-an-entity [exc]
+  (let [[attr value] (-> exc ex-data :entity)]
+    (format "Entity attribute %s with identifier '%s' does not exist" attr value)))
+
+(defmethod parse-exc-message :db.error/unique-conflict [exc]
+  (let [msg (.getMessage exc)
+        [k v] (->> msg
+                   (re-find #"Unique conflict: :(.*), value: (.*) already*")
+                   rest)
+        [ident v] [(keyword k) v]]
+    (format "Entity with %s identifier '%s' is already stored." (str ident) v)))
 
 (defn handle-validation-error
   [^Exception exc data request
@@ -48,26 +66,27 @@
     (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
-  (respond-missing request (assoc-error-message data exc)))
+  (let [msg (apply format "%s '%s' does not exist" (:entity data))]
+    (respond-missing request (assoc-error-message data exc :message msg))))
 
 (defn handle-db-conflict [^Exception exc data request]
   (respond-conflict request (assoc-error-message data exc)))
 
 (defn handle-db-unique-conflict [^Exception exc data request]
-  (let [msg (.getMessage exc)
-        [k v] (->> msg
-                   (re-find #"Unique conflict: :(.*), value: (.*) already*")
-                   rest)
-        [ident v] [(keyword k) v]
-        body (assoc-error-message (merge data {ident v}) exc)]
+  (let [uc-err (parse-exc-message (ex-data exc))
+        body (assoc-error-message (merge data uc-err) exc)]
     (respond-conflict request body)))
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
    (throw exc)
-   (if-not (empty? ((juxt :test :dev) environ/env))
-     (handle-unexpected-error exc)
-     (http-response/internal-server-error data)))
+   (if-let [db-err (:db/error data)]
+     (if-let [db-err-handler (db-err handlers)]
+       (db-err-handler exc data request)
+       (handle-unexpected-error exc))
+     (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
+       (handle-unexpected-error exc)
+       (http-response/internal-server-error data))))
   ([exc]
    (throw exc)))
 
@@ -109,30 +128,48 @@
     (http-response/unauthorized "Access denied")
     (http-response/forbidden)))
 
+(defn handle-db-error [^Exception exc data request]
+  (if-let [err-handler ((:db/error data) handlers)]
+    (err-handler exc data request)
+    (handle-db-conflict exc data request)))
+
+(defn handle-batch-errors [^Exception exc data request]
+  (respond-conflict request
+                    (assoc-error-message
+                     (update data
+                             :errors
+                             (fn [errors]
+                               (map parse-exc-message errors)))
+                     exc
+                     :message "Batch processing errors occurred")))
+
 (def ^{:doc "Error handler dispatch map for the compojure.api app"}
   handlers
-  {;; Spec validation errors
+  {;;;;; Spec validation errors
    ::ex/request-validation handle-request-validation
    :user/validation-error handle-validation-error
    ::wn-gene/validation-error handle-validation-error
    ::wdb/validation-error handle-validation-error
    ExceptionInfo handle-validation-error
 
-   ;; Exceptions raised within a transaction function are handled
+   ;;;;;  Exceptions raised within a transaction function are handled
    ExecutionException handle-txfn-error
-
    ;; App db errors
    ::wdb/conflict handle-db-conflict
    ::wdb/missing handle-missing
-
    ;; Datomic db exceptions
-   :db.error/not-an-entity handle-missing
-   :db/error handle-db-conflict
-   :db.error/unique-conflict handle-db-unique-conflict
+   :db/error handle-db-error
+   :db.error/datoms-conflict handle-db-conflict
    :db.error/nil-value handle-unexpected-error
+   :db.error/not-an-entity handle-missing
+   :db.error/unique-conflict handle-db-unique-conflict
 
+   
    ;; TODO: this shouldn't really be here...spec not tight enough?
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
+
+   ;; Batch errors, may contain multiple errors types from above
+   ::wbids-batch/db-errors handle-batch-errors
 
    ;; Something else
    ::ex/default handle-unexpected-error})

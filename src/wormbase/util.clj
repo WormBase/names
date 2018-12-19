@@ -4,7 +4,7 @@
    [clojure.java.io :as io]
    [clojure.walk :as w]
    [datomic.api :as d]
-   [wormids.core :as wormids])
+   [wormbase.ids.core :as wic])
   (:import
    (java.io PushbackReader)))
 
@@ -23,7 +23,7 @@
                   (and (map? m) (:db/ident m)) (:db/ident m)
                   (and (map? m)
                        (= (count m) 1)
-                       (wormids/attr-schema-unique? db (-> m first key))) (-> m first val)
+                       (wic/attr-schema-unique? db (-> m first key))) (-> m first val)
                   (map? m) (dissoc m :db/id :db/txInstant)
                   :default m))
               data))

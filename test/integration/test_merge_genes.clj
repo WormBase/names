@@ -51,7 +51,7 @@
 (defn undo-merge-genes
   [into-id from-id & {:keys [current-user payload]
                       :or {current-user "tester@wormbase.org"
-                           payload {:prov {}}}}]
+                           payload {:prov nil}}}]
   (binding [fake-auth/*gapi-verify-token-response*
             (fake-auth/payload {"email" current-user})]
     (let [current-user-token (get fake-auth/tokens current-user)]
@@ -71,17 +71,10 @@
       (tu/status-is? status 400 body))))
 
 (t/deftest response-codes
-  (t/testing "400 for invalid gene identifiers"
-    (let [[status body] (merge-genes
-                         {:data {:gene/biotype :biotype/transposable-element-gene}
-                          :prov {}}
-                         "aLdfkad_13315"
-                         "sdaf_a")]
-      (tu/status-is? (:status (bad-request)) status body)))
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
                          {:data {:gene/biotype :biotype/transposable-element-gene}
-                          :prov {}}
+                          :prov nil}
                          "WBGene20000000"
                          "WBGene10000000")]
       (tu/status-is? 404 status body)))
@@ -111,7 +104,7 @@
                                       (-> lur entity :gene/status entid)
                                       (entid :gene.status/dead)]]))
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/cds}
-                                            :prov {}}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (conflict)) status body))))))
@@ -122,11 +115,11 @@
         data-samples
         (fn check-biotype-validation-error [conn]
           (let [[status body] (merge-genes {:data {:gene/biotype :biotype/godzilla}
-                                            :prov {}}
+                                            :prov nil}
                                            from-id
                                            into-id)]
             (tu/status-is? (:status (not-found)) status body)
-            (t/is (re-seq #"does not exist" (:message body)))))))))
+            (t/is (re-seq #"does not exist" (get body :message "")))))))))
 
 (t/deftest provenance-recorded
   (t/testing "Provenence for successful merge is recorded."
@@ -137,8 +130,8 @@
                        (dissoc :gene/cgc-name)
                        (assoc :gene/status :gene.status/live))
                    (-> gene-into
-                       (assoc :gene/status :gene.status/live)
-                       (assoc :gene/species (:gene/species gene-from))
+                       (assoc :gene/status :gene.status/live
+                              :gene/species (:gene/species gene-from))
                        (dissoc :gene/sequence-name))]]
       (tu/with-gene-fixtures
         samples
@@ -146,7 +139,7 @@
           (let [db (d/db conn)
                 [status body] (merge-genes
                                {:data {:gene/biotype :biotype/transposable-element-gene}
-                                :prov {}}
+                                :prov nil}
                                from-id
                                into-id)
                 [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
