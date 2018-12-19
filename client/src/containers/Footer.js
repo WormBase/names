@@ -1,8 +1,8 @@
 import React from 'react';
-import { withStyles } from '../components/elements'
+import { withStyles } from '../components/elements';
 
 const Footer = (props) => {
-  const {classes} = props;
+  const { classes } = props;
   return (
     <div className={classes.root}>
       For help and questions, please contact us at developers@wormbase.org.
@@ -19,7 +19,7 @@ const styles = (theme) => ({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-  }
+  },
 });
 
 export default withStyles(styles)(Footer);

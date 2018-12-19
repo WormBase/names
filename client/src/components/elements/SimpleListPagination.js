@@ -13,24 +13,30 @@ class SimpleListPagination extends Component {
   }
 
   handlePageIncrement = () => {
-    this.setState((prevState) => ({
-      page: Math.min(prevState.page + 1, this.maxPage()),
-    }), this.pageChangeCallback);
-  }
+    this.setState(
+      (prevState) => ({
+        page: Math.min(prevState.page + 1, this.maxPage()),
+      }),
+      this.pageChangeCallback
+    );
+  };
 
   handlePageDecrement = () => {
-    this.setState((prevState) => ({
-      page: Math.max(0, prevState.page - 1),
-    }), this.pageChangeCallback);
-  }
+    this.setState(
+      (prevState) => ({
+        page: Math.max(0, prevState.page - 1),
+      }),
+      this.pageChangeCallback
+    );
+  };
 
   pageChangeCallback = () => {
-    const {page} = this.state;
-    const {pageSize} = this.props;
+    const { page } = this.state;
+    const { pageSize } = this.props;
     if (this.props.onPageChange) {
       this.props.onPageChange(page * pageSize, (page + 1) * pageSize);
     }
-  }
+  };
 
   componentDidMount() {
     this.pageChangeCallback();
@@ -39,7 +45,7 @@ class SimpleListPagination extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.items !== this.props.items) {
       this.setState({
-        page: 0
+        page: 0,
       });
     }
   }
@@ -47,28 +53,31 @@ class SimpleListPagination extends Component {
   maxPage = () => Math.ceil(this.props.items.length / this.props.pageSize) - 1;
 
   render() {
-    const {page} = this.state;
-    const {items, pageSize, classes} = this.props;
-    const pageItems = this.props.items.slice(page * pageSize, (page + 1) * pageSize);
+    const { page } = this.state;
+    const { items, pageSize, classes } = this.props;
+    const pageItems = this.props.items.slice(
+      page * pageSize,
+      (page + 1) * pageSize
+    );
     return (
       <div className={classes.root}>
-        {
-          this.props.children({
-            pageItems: pageItems,
-            navigation: (
-              items.length > pageSize ?
-                <div className={classes.navigation}>
-                  <Button onClick={this.handlePageDecrement} disabled={page <= 0}>
-                    <ArrowBackIcon />
-                  </Button>
-                  <Button onClick={this.handlePageIncrement} disabled={page >= this.maxPage()}>
-                    <ArrowForwardIcon />
-                  </Button>
-                </div> :
-                null
-            )
-          })
-        }
+        {this.props.children({
+          pageItems: pageItems,
+          navigation:
+            items.length > pageSize ? (
+              <div className={classes.navigation}>
+                <Button onClick={this.handlePageDecrement} disabled={page <= 0}>
+                  <ArrowBackIcon />
+                </Button>
+                <Button
+                  onClick={this.handlePageIncrement}
+                  disabled={page >= this.maxPage()}
+                >
+                  <ArrowForwardIcon />
+                </Button>
+              </div>
+            ) : null,
+        })}
       </div>
     );
   }
@@ -84,7 +93,7 @@ SimpleListPagination.propTypes = {
 SimpleListPagination.defaultProps = {
   items: [],
   pageSize: 5,
-}
+};
 
 const styles = (theme) => ({
   navigation: {

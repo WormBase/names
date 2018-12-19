@@ -24,48 +24,41 @@ class ValidationError extends React.Component {
     this.setState((prevState) => ({
       expanded: !prevState.expanded,
     }));
-  }
+  };
 
   renderActions = () => {
     return this.props.problems ? (
       <CardActions className={this.props.classes.actions}>
         <Button onClick={this.handleCollapseToggle}>
-          {
-            this.state.expanded ?
-              <KeyboardArrowUpIcon className={this.props.classes.leftIcon} /> :
-              <KeyboardArrowDownIcon className={this.props.classes.leftIcon} />
-          }
+          {this.state.expanded ? (
+            <KeyboardArrowUpIcon className={this.props.classes.leftIcon} />
+          ) : (
+            <KeyboardArrowDownIcon className={this.props.classes.leftIcon} />
+          )}
           {this.state.expanded ? 'Show less' : 'Show more'}
         </Button>
       </CardActions>
     ) : null;
-  }
+  };
 
   render() {
-    const {classes, message, problems} = this.props;
+    const { classes, message, problems } = this.props;
     const problemText = problems;
-    return (message || problems) ? (
+    return message || problems ? (
       <Card card className={classes.root}>
         <CardContent>
-          <Typography color="error">
-            {message || 'Error'}
-          </Typography>
+          <Typography color="error">{message || 'Error'}</Typography>
         </CardContent>
         {this.renderActions()}
-        <Collapse
-          in={this.state.expanded}
-        >
+        <Collapse in={this.state.expanded}>
           <CardContent className={classes.problems}>
-            <pre>
-              {problemText}
-            </pre>
+            <pre>{problemText}</pre>
           </CardContent>
         </Collapse>
       </Card>
     ) : null;
   }
 }
-
 
 ValidationError.propTypes = {
   problems: PropTypes.object,
@@ -84,8 +77,7 @@ const styles = (theme) => ({
     marginTop: theme.spacing.unit * -2,
     backgroundColor: theme.palette.background.paper,
   },
-  actions: {
-  },
+  actions: {},
   leftIcon: {
     marginRight: theme.spacing.unit,
   },

@@ -5,26 +5,21 @@ import TextField from './TextField';
 
 const SpeciesSelect = (props) => {
   const SPECIES = [
-    "Caenorhabditis elegans",
-    "Caenorhabditis briggsae",
-    "Caenorhabditis remanei",
-    "Caenorhabditis brenneri",
-    "Pristionchus pacificus",
-    "Caenorhabditis japonica",
-    "Brugia malayi",
-    "Onchocerca volvulus",
-    "Strongyloides ratti",
+    'Caenorhabditis elegans',
+    'Caenorhabditis briggsae',
+    'Caenorhabditis remanei',
+    'Caenorhabditis brenneri',
+    'Pristionchus pacificus',
+    'Caenorhabditis japonica',
+    'Brugia malayi',
+    'Onchocerca volvulus',
+    'Strongyloides ratti',
   ];
   const speciesOptions = props.required ? [...SPECIES] : [null, ...SPECIES];
 
   return (
-    <TextField
-      select
-      label="Species"
-      className={props.classes.root}
-      {...props}
-    >
-      {speciesOptions.map(species => (
+    <TextField select label="Species" className={props.classes.root} {...props}>
+      {speciesOptions.map((species) => (
         <MenuItem key={species} value={species}>
           {species}
         </MenuItem>

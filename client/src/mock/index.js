@@ -4,7 +4,8 @@ var ready = true;
 export function mockFetchOrNot(
   mockCallback,
   nativeCallback,
-  shouldMock = process.env.REACT_APP_SHOULD_MOCK && JSON.parse(process.env.REACT_APP_SHOULD_MOCK)
+  shouldMock = process.env.REACT_APP_SHOULD_MOCK &&
+    JSON.parse(process.env.REACT_APP_SHOULD_MOCK)
 ) {
   console.log('ready ' + ready);
   if (ready) {
@@ -30,7 +31,6 @@ export function mockFetchOrNot(
       setTimeout(() => {
         resolve(mockFetchOrNot(mockCallback, nativeCallback, shouldMock));
       }, 300);
-    })
+    });
   }
-
 }

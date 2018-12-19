@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Downshift from 'downshift';
 
 class AutocompleteBase extends Component {
-
   stateReducer = (state, changes) => {
     // console.log('prev state', state);
     // console.log('change', changes);
@@ -22,25 +21,25 @@ class AutocompleteBase extends Component {
       default:
         return changes;
     }
-  }
+  };
 
-  handleStateChange = changes => {
+  handleStateChange = (changes) => {
     // console.log(Object.keys(Downshift.stateChangeTypes));
     switch (changes.type) {
       default:
-        // do nothing
+      // do nothing
     }
-  }
+  };
 
   render() {
-    const {children, ...downshiftProps} = this.props;
+    const { children, ...downshiftProps } = this.props;
     return (
       <Downshift
         stateReducer={this.stateReducer}
         onStateChange={this.handleStateChange}
         {...downshiftProps}
       >
-        {({ getInputProps, inputValue, ...otherProps }) => (
+        {({ getInputProps, inputValue, ...otherProps }) =>
           children({
             ...otherProps,
             inputValue,
@@ -56,7 +55,7 @@ class AutocompleteBase extends Component {
               });
             },
           })
-        )}
+        }
       </Downshift>
     );
   }
@@ -64,7 +63,6 @@ class AutocompleteBase extends Component {
 
 AutocompleteBase.propTypes = {
   children: PropTypes.func.isRequired,
-}
-
+};
 
 export default AutocompleteBase;

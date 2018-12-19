@@ -3,5 +3,5 @@ export function createOpenOnlyTypeChecker(typeChecker) {
     if (props.open) {
       return typeChecker(props, propName, ...rest);
     }
-  }
+  };
 }

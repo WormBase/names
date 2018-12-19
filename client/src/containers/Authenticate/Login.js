@@ -3,25 +3,17 @@ import PropTypes from 'prop-types';
 import { Button, withStyles } from '../../components/elements';
 
 class Login extends Component {
-
   render() {
-    const {classes, onSignIn, errorMessage} = this.props;
+    const { classes, onSignIn, errorMessage } = this.props;
     return (
       <div className={classes.root}>
-        {
-          errorMessage ?
-            <div className={classes.errorWrapper}>
-              Problem signing in:
-              <div className={classes.errorMessage}>
-               {errorMessage}
-              </div>
-            </div> :
-            null
-        }
-        <Button
-          onClick={onSignIn}
-          variant="raised"
-        >
+        {errorMessage ? (
+          <div className={classes.errorWrapper}>
+            Problem signing in:
+            <div className={classes.errorMessage}>{errorMessage}</div>
+          </div>
+        ) : null}
+        <Button onClick={onSignIn} variant="raised">
           Login with Google
         </Button>
       </div>

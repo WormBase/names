@@ -15,32 +15,38 @@ import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
   return (
-      <TextField
-        InputProps={{
-          ...InputProps,
-          value: item ? '' : InputProps.value,
-          disabled: item,
-          inputRef: ref,
-          classes: {
-            root: classes.inputRoot,
-          },
-          startAdornment: item ? (
-            <InputAdornment position="start">
-              <Chip
-                tabIndex={-1}
-                label={`${item.label} [ID: ${item.id}]`}
-                className={classes.chip}
-                onDelete={reset}
-              />
-            </InputAdornment>
-          ) : null,
-        }}
-        {...other}
-      />
-    )
+    <TextField
+      InputProps={{
+        ...InputProps,
+        value: item ? '' : InputProps.value,
+        disabled: item,
+        inputRef: ref,
+        classes: {
+          root: classes.inputRoot,
+        },
+        startAdornment: item ? (
+          <InputAdornment position="start">
+            <Chip
+              tabIndex={-1}
+              label={`${item.label} [ID: ${item.id}]`}
+              className={classes.chip}
+              onDelete={reset}
+            />
+          </InputAdornment>
+        ) : null,
+      }}
+      {...other}
+    />
+  );
 }
 
-function renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
+function renderSuggestion({
+  suggestion,
+  index,
+  itemProps,
+  highlightedIndex,
+  selectedItem,
+}) {
   const isHighlighted = highlightedIndex === index;
   const isSelected = selectedItem === suggestion;
 
@@ -70,22 +76,32 @@ renderSuggestion.propTypes = {
 };
 
 class GeneAutocomplete extends Component {
-
   itemToString = (item) => (item ? item.id : '');
 
   render() {
-    const {classes, onChange, value, pageSize, ...otherProps} = this.props;
+    const { classes, onChange, value, pageSize, ...otherProps } = this.props;
     return (
       <AutocompleteBase
         itemToString={this.itemToString}
-        onInputValueChange={(inputValue) => onChange({
-          target: {
-            value: inputValue,
-          },
-        })}
+        onInputValueChange={(inputValue) =>
+          onChange({
+            target: {
+              value: inputValue,
+            },
+          })
+        }
         defaultInputValue={value}
       >
-        {({getInputProps, getItemProps, isOpen, inputValue, selectedItem, highlightedIndex, clearSelection, ...downshift}) => (
+        {({
+          getInputProps,
+          getItemProps,
+          isOpen,
+          inputValue,
+          selectedItem,
+          highlightedIndex,
+          clearSelection,
+          ...downshift
+        }) => (
           <div>
             <GeneAutocompleteLoader
               inputValue={inputValue}
@@ -96,7 +112,8 @@ class GeneAutocomplete extends Component {
                   // 1) suggestion loads when user isn't interacting with the field, OR
                   // 2) suggestion loads is first loaded with the initial/unmodified inputValue
                   const [nextSelectedItem] = suggestions.filter(
-                    (item) => item.label === inputValue || item.id === inputValue
+                    (item) =>
+                      item.label === inputValue || item.id === inputValue
                   );
                   if (nextSelectedItem) {
                     downshift.selectItem(nextSelectedItem);
@@ -104,7 +121,7 @@ class GeneAutocomplete extends Component {
                 }
               }}
             >
-              {({suggestions}) => (
+              {({ suggestions }) => (
                 <div className={classes.root}>
                   {renderInput({
                     fullWidth: true,
@@ -124,27 +141,25 @@ class GeneAutocomplete extends Component {
                       downshift.setItemCount(endIndex - startIndex);
                     }}
                   >
-                    {({pageItems, navigation}) => (
+                    {({ pageItems, navigation }) =>
                       isOpen ? (
                         <Paper className={classes.paper} square>
-                          {
-                            pageItems.map((suggestion, index) => (
-                              renderSuggestion({
-                                suggestion,
-                                index,
-                                itemProps: getItemProps({item: suggestion}),
-                                highlightedIndex,
-                                selectedItem,
-                              })
-                            ))
-                          }
+                          {pageItems.map((suggestion, index) =>
+                            renderSuggestion({
+                              suggestion,
+                              index,
+                              itemProps: getItemProps({ item: suggestion }),
+                              highlightedIndex,
+                              selectedItem,
+                            })
+                          )}
                           {navigation}
                         </Paper>
                       ) : null
-                    )}
+                    }
                   </SimpleListPagination>
-              </div>
-            )}
+                </div>
+              )}
             </GeneAutocompleteLoader>
           </div>
         )}
@@ -157,7 +172,7 @@ GeneAutocomplete.propTypes = {
   classes: PropTypes.object.isRequired,
   value: PropTypes.string,
   onChange: PropTypes.func,
-}
+};
 
 const styles = (theme) => ({
   root: {

@@ -15,33 +15,34 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
-
-  submitData = ({geneIdMergeInto, ...data}) => {
+  submitData = ({ geneIdMergeInto, ...data }) => {
     return mockFetchOrNot(
       (mockFetch) => {
         if (data['provenance/why']) {
-          return mockFetch.post('*', {
-          });
+          return mockFetch.post('*', {});
         } else {
           return mockFetch.post('*', {
             body: {
               message: 'Reason for merging a gene is required',
             },
             status: 400,
-          })
+          });
         }
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
-      },
+        return this.props.authorizedFetch(
+          `/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`,
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+          }
+        );
+      }
     );
-  }
+  };
 
   render() {
-    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
+    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Merge gene"
@@ -51,40 +52,46 @@ class MergeGeneDialog extends Component {
         )}
         {...otherProps}
       >
-        {
-          ({withFieldData, errorMessage}) => {
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            const GeneIdMergeIntoField = withFieldData(GeneAutocomplete, 'geneIdMergeInto');
-            const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
-            return (
-              <DialogContent>
-                <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be merged into the gene you specify below.
-                  Are you sure?
-                </DialogContentText>
-                <DialogContentText>
-                  <ValidationError {...errorMessage} />
-                </DialogContentText>
-                <GeneIdMergeIntoField
-                  label="Merge into gene"
-                  helperText={<span>Enter WBID or CGC name of the gene that <strong>{geneName}</strong> will be merged into</span>}
-                  required
-                  pageSize={3}
-                />
-                <BiotypeField
-                  helperText={`Set the biotype of the merged gene`}
-                  required
-                />
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for merging the gene"
-                  required
-                  fullWidth
-                />
-              </DialogContent>
-            )
-          }
-        }
+        {({ withFieldData, errorMessage }) => {
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const GeneIdMergeIntoField = withFieldData(
+            GeneAutocomplete,
+            'geneIdMergeInto'
+          );
+          const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
+          return (
+            <DialogContent>
+              <DialogContentText>
+                Gene <strong>{geneName}</strong> will be merged into the gene
+                you specify below. Are you sure?
+              </DialogContentText>
+              <DialogContentText>
+                <ValidationError {...errorMessage} />
+              </DialogContentText>
+              <GeneIdMergeIntoField
+                label="Merge into gene"
+                helperText={
+                  <span>
+                    Enter WBID or CGC name of the gene that{' '}
+                    <strong>{geneName}</strong> will be merged into
+                  </span>
+                }
+                required
+                pageSize={3}
+              />
+              <BiotypeField
+                helperText={`Set the biotype of the merged gene`}
+                required
+              />
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for merging the gene"
+                required
+                fullWidth
+              />
+            </DialogContent>
+          );
+        }}
       </AjaxDialog>
     );
   }
@@ -96,7 +103,6 @@ MergeGeneDialog.propTypes = {
   authorizedFetch: PropTypes.func.isRequired,
 };
 
-const styles = (theme) => ({
-});
+const styles = (theme) => ({});
 
 export default withStyles(styles)(MergeGeneDialog);

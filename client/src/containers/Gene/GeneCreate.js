@@ -22,70 +22,87 @@ class GeneCreate extends Component {
     };
   }
 
-  handleCreateGene = ({data, prov: provenance}) => {
+  handleCreateGene = ({ data, prov: provenance }) => {
     if (this.state.status === 'SUBMITTED') {
       return;
     }
 
-    this.setState({
-      status: 'SUBMITTED',
-    }, () => {
-      mockFetchOrNot(
-        (mockFetch) => {
-          const filled = ['gene/cgc-name', 'gene/species'].reduce((result, fieldId) => {
-            return result && data[fieldId];
-          }, true);
-          if (filled) {
-            return mockFetch.post('*', {
-              "created": {
-                ...data,
-                "gene/id":"WBGene00100001",
-                "gene/status":"gene.status/live"
+    this.setState(
+      {
+        status: 'SUBMITTED',
+      },
+      () => {
+        mockFetchOrNot(
+          (mockFetch) => {
+            const filled = ['gene/cgc-name', 'gene/species'].reduce(
+              (result, fieldId) => {
+                return result && data[fieldId];
               },
-            });
-          } else {
-            return mockFetch.post('*', {
-              error: 'Form is not completed.'
+              true
+            );
+            if (filled) {
+              return mockFetch.post('*', {
+                created: {
+                  ...data,
+                  'gene/id': 'WBGene00100001',
+                  'gene/status': 'gene.status/live',
+                },
+              });
+            } else {
+              return mockFetch.post('*', {
+                error: 'Form is not completed.',
+              });
+            }
+          },
+          () => {
+            return this.props.authorizedFetch(`/api/gene/`, {
+              method: 'POST',
+              body: JSON.stringify({
+                data: data,
+                prov: provenance,
+              }),
             });
           }
-        },
-        () => {
-          return this.props.authorizedFetch(`/api/gene/`, {
-            method: 'POST',
-            body: JSON.stringify({
-              data: data,
-              prov: provenance,
-            }),
-          });
-        },
-      ).then((response) => {
-        return response.json();
-      }).then((response) => {
-        if (!response.created) {
-          this.setState({
-            error: response,
-            status: 'COMPLETE',
-          });
-        } else {
-          this.setState({
-            data: response.created,
-            error: null,
-            status: 'COMPLETE',
-          }, () => {
-            this.props.history.push(`/gene/id/${response.created['gene/id']}`);
-          });
-        }
-      }).catch((e) => console.log('error', e));
-    });
-  }
+        )
+          .then((response) => {
+            return response.json();
+          })
+          .then((response) => {
+            if (!response.created) {
+              this.setState({
+                error: response,
+                status: 'COMPLETE',
+              });
+            } else {
+              this.setState(
+                {
+                  data: response.created,
+                  error: null,
+                  status: 'COMPLETE',
+                },
+                () => {
+                  this.props.history.push(
+                    `/gene/id/${response.created['gene/id']}`
+                  );
+                }
+              );
+            }
+          })
+          .catch((e) => console.log('error', e));
+      }
+    );
+  };
 
   handleClear = () => {
-    this.setState({
-      error: null,
-    }, () => {
-      this.props.history.push('/gene');
-    });
-  }
+    this.setState(
+      {
+        error: null,
+      },
+      () => {
+        this.props.history.push('/gene');
+      }
+    );
+  };
 
   render() {
     return (
@@ -93,14 +110,16 @@ class GeneCreate extends Component {
         <PageLeft>
           <Button
             variant="raised"
-            component={({...props}) => <Link to='/gene' {...props} />}
+            component={({ ...props }) => <Link to="/gene" {...props} />}
             className={this.props.classes.backToDirectoryButton}
           >
             Back to directory
           </Button>
         </PageLeft>
         <PageMain>
-          <Typography variant="headline" gutterBottom>Add gene</Typography>
+          <Typography variant="headline" gutterBottom>
+            Add gene
+          </Typography>
           <ValidationError {...this.state.error} />
           <GeneForm
             submitted={this.state.status === 'SUBMITTED'}

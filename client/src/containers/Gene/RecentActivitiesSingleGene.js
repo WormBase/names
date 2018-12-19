@@ -5,7 +5,7 @@ import GeneActivitiesTable from './GeneActivitiesTable';
 
 class RecentActivitiesSingleGene extends Component {
   render() {
-    const {classes, wbId, ...otherProps} = this.props;
+    const { classes, wbId, ...otherProps } = this.props;
     return (
       <GeneActivitiesTable
         classes={{

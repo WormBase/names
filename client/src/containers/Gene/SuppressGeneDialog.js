@@ -18,30 +18,32 @@ class SuppressGeneDialog extends Component {
       (mockFetch) => {
         console.log(data.reason);
         if (data.reason) {
-          return mockFetch.post('*', {
-          });
+          return mockFetch.post('*', {});
         } else {
           return mockFetch.post('*', {
             body: {
               error: 'Reason for suppressing a gene is required',
             },
             status: 400,
-          })
+          });
         }
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}/suppress`, {
-          method: 'POST',
-          body: JSON.stringify({
-            ...data
-          })
-        });
-      },
+        return this.props.authorizedFetch(
+          `/api/gene/${this.props.wbId}/suppress`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              ...data,
+            }),
+          }
+        );
+      }
     );
-  }
+  };
 
   render() {
-    const {wbId, geneName, authorizedFetch, ...otherProps} = this.props;
+    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Suppress gene"
@@ -49,28 +51,28 @@ class SuppressGeneDialog extends Component {
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Suppress {geneName}</ProgressButton>
         )}
-        {...otherProps}>
-        {
-          ({withFieldData, errorMessage}) => {
-            const ReasonField = withFieldData(TextField, 'provenance/why');
-            return (
-              <DialogContent>
-                <DialogContentText>
-                  Gene <strong>{geneName}</strong> will be suppressed. Are you sure?
-                </DialogContentText>
-                <DialogContentText>
-                  <ValidationError {...errorMessage} />
-                </DialogContentText>
-                <ReasonField
-                  label="Reason"
-                  helperText="Enter the reason for suppressing the gene"
-                  required
-                  fullWidth
-                />
-              </DialogContent>
-            )
-          }
-        }
+        {...otherProps}
+      >
+        {({ withFieldData, errorMessage }) => {
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+          return (
+            <DialogContent>
+              <DialogContentText>
+                Gene <strong>{geneName}</strong> will be suppressed. Are you
+                sure?
+              </DialogContentText>
+              <DialogContentText>
+                <ValidationError {...errorMessage} />
+              </DialogContentText>
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for suppressing the gene"
+                required
+                fullWidth
+              />
+            </DialogContent>
+          );
+        }}
       </AjaxDialog>
     );
   }

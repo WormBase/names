@@ -1,14 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { AppBar, Toolbar, Typography, withStyles } from '../../components/elements';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  withStyles,
+} from '../../components/elements';
 import GeneSearchBox from '../Gene/GeneSearchBox';
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
 
-
 const Header = (props) => {
-  const {classes} = props;
+  const { classes } = props;
   return (
     <div>
       <AppBar position="static" className={classes.root}>
@@ -17,17 +21,19 @@ const Header = (props) => {
             <Logo />
           </Link>
           <div className={classes.title}>
-            <Link to="/" >
-              <Typography variant="title" color="inherit" >
+            <Link to="/">
+              <Typography variant="title" color="inherit">
                 Names Service
               </Typography>
             </Link>
           </div>
-          {
-            props.isAuthenticated ? <GeneSearchBox classes={{
-              root: classes.searchBox,
-            }} /> : null
-          }
+          {props.isAuthenticated ? (
+            <GeneSearchBox
+              classes={{
+                root: classes.searchBox,
+              }}
+            />
+          ) : null}
           {props.children}
         </Toolbar>
       </AppBar>
@@ -41,8 +47,7 @@ Header.propTypes = {
 };
 
 const styles = (theme) => ({
-  root: {
-  },
+  root: {},
   toolbar: {
     minHeight: theme.spacing.unit * 4,
     [theme.breakpoints.down('sm')]: {
@@ -70,6 +75,4 @@ const styles = (theme) => ({
 
 export default withStyles(styles)(Header);
 
-export {
-  NavBar,
-};
+export { NavBar };

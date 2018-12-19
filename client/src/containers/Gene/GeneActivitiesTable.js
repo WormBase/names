@@ -36,16 +36,16 @@ class GeneActivitiesTable extends Component {
       showDialog: dialogKey,
       selectedActivityIndex: activityIndex,
     });
-  }
+  };
 
   closeDialog = () => {
     this.setState({
       showDialog: null,
       selectedActivityIndex: null,
     });
-  }
+  };
 
-  renderActions = ({activityIndex, ...activityItem}) => {
+  renderActions = ({ activityIndex, ...activityItem }) => {
     const eventType = activityItem['provenance/what'];
     console.log(eventType);
     return (
@@ -58,25 +58,25 @@ class GeneActivitiesTable extends Component {
           //   >Undo</Button> :
           //   null
         }
-        {
-          eventType === 'event/split-gene' ?
-            <Button
-              onClick={() => this.openDialog(UNDO_SPLIT, activityIndex)}
-              color="primary"
-            >Undo</Button> :
-            null
-        }
-        {
-          eventType === 'event/merge-genes' ?
-            <Button
-              onClick={() => this.openDialog(UNDO_MERGE, activityIndex)}
-              color="primary"
-            >Undo</Button> :
-            null
-        }
+        {eventType === 'event/split-gene' ? (
+          <Button
+            onClick={() => this.openDialog(UNDO_SPLIT, activityIndex)}
+            color="primary"
+          >
+            Undo
+          </Button>
+        ) : null}
+        {eventType === 'event/merge-genes' ? (
+          <Button
+            onClick={() => this.openDialog(UNDO_MERGE, activityIndex)}
+            color="primary"
+          >
+            Undo
+          </Button>
+        ) : null}
       </div>
-    )
-  }
+    );
+  };
 
   getActivityDescriptor = (activityItem, selfGeneId) => {
     const entityKeys = [
@@ -88,22 +88,28 @@ class GeneActivitiesTable extends Component {
     const selfEntityStub = {
       'gene/id': selfGeneId,
     };
-    const [entityKey] = entityKeys.filter((key) => (
-      activityItem[key] && activityItem[key]['gene/id'] === selfGeneId
-    ));
-    const [relatedEntityKey] = entityKeys.filter((key) => (
-      activityItem[key] && activityItem[key]['gene/id'] !== selfGeneId
-    ));
+    const [entityKey] = entityKeys.filter(
+      (key) => activityItem[key] && activityItem[key]['gene/id'] === selfGeneId
+    );
+    const [relatedEntityKey] = entityKeys.filter(
+      (key) => activityItem[key] && activityItem[key]['gene/id'] !== selfGeneId
+    );
 
     let eventType;
     if (entityKey) {
       if (activityItem['provenance/merged-into'] === activityItem[entityKey]) {
         eventType = 'merge_from';
-      } else if (activityItem['provenance/merged-from'] === activityItem[entityKey]) {
+      } else if (
+        activityItem['provenance/merged-from'] === activityItem[entityKey]
+      ) {
         eventType = 'merge_into';
-      } else if (activityItem['provenance/split-into'] === activityItem[entityKey]) {
+      } else if (
+        activityItem['provenance/split-into'] === activityItem[entityKey]
+      ) {
         eventType = 'split_from';
-      } else if (activityItem['provenance/split-from'] === activityItem[entityKey]) {
+      } else if (
+        activityItem['provenance/split-from'] === activityItem[entityKey]
+      ) {
         eventType = 'split_into';
       }
     } else {
@@ -113,13 +119,17 @@ class GeneActivitiesTable extends Component {
     return [
       eventType,
       activityItem[entityKey] || selfEntityStub,
-      activityItem[relatedEntityKey]
+      activityItem[relatedEntityKey],
     ];
-  }
+  };
 
   getGeneIdForEvent = (selectedActivity, eventType) => {
-    return selectedActivity &&  selectedActivity[eventType] && selectedActivity[eventType]["gene/id"];
-  }
+    return (
+      selectedActivity &&
+      selectedActivity[eventType] &&
+      selectedActivity[eventType]['gene/id']
+    );
+  };
 
   renderChanges = (changes) => {
     if (!changes || changes.length === 0) {
@@ -131,10 +141,10 @@ class GeneActivitiesTable extends Component {
         ...result[changeEntry.attr],
         [changeEntry.added ? 'added' : 'retracted']: changeEntry.value,
       };
-      return ({
+      return {
         ...result,
         [changeEntry.attr]: changeSumamry,
-      })
+      };
     }, {});
     //return JSON.stringify(changeLookup, null, 2);
     return (
@@ -143,78 +153,90 @@ class GeneActivitiesTable extends Component {
           <TableRow>
             <TableCell>Attribute changed</TableCell>
             <TableCell>Old value</TableCell>
-            <TableCell><strong>New value</strong></TableCell>
+            <TableCell>
+              <strong>New value</strong>
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {
-            Object.keys(changeLookup).map((attr, index) => {
-              return (
-                <TableRow key={index}>
-                  <TableCell className={this.props.classes.changeTableCell}>
-                    {attr}
-                  </TableCell>
-                  <TableCell className={this.props.classes.changeTableCell}>
-                    {changeLookup[attr].retracted || '-'}
-                  </TableCell>
-                  <TableCell className={this.props.classes.changeTableCell}>
-                    <strong>{changeLookup[attr].added || '-'}</strong>
-                  </TableCell>
-                </TableRow>
-              )
-            })
-          }
+          {Object.keys(changeLookup).map((attr, index) => {
+            return (
+              <TableRow key={index}>
+                <TableCell className={this.props.classes.changeTableCell}>
+                  {attr}
+                </TableCell>
+                <TableCell className={this.props.classes.changeTableCell}>
+                  {changeLookup[attr].retracted || '-'}
+                </TableCell>
+                <TableCell className={this.props.classes.changeTableCell}>
+                  <strong>{changeLookup[attr].added || '-'}</strong>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     );
-  }
+  };
 
   render() {
-    const {classes, activities, onUpdate, selfGeneId} = this.props;
-    const {selectedActivityIndex} = this.state;
-    const selectedActivity = selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
+    const { classes, activities, onUpdate, selfGeneId } = this.props;
+    const { selectedActivityIndex } = this.state;
+    const selectedActivity =
+      selectedActivityIndex !== null ? activities[selectedActivityIndex] : null;
 
     return (
       <Paper className={classes.root}>
         <Table>
           <TableBody>
-            {
-              this.props.activities.map(
-                (activityItem, activityIndex) => {
-                  const [eventLabel, entity, relatedEntity] = this.getActivityDescriptor(activityItem, this.props.selfGeneId);
-                  return (
-                    <TableRow key={activityIndex}>
-                      <TableCell className={classes.time}>
-                        <p><Timestamp time={activityItem['provenance/when']}/></p>
-                        <em>{activityItem['provenance/who']['person/name']}</em>
-                        <span className={classes.via}> via </span>
-                        <em><Humanize>{activityItem['provenance/how']}</Humanize></em>
-                      </TableCell>
-                      <TableCell className={classes.entityCell}>
-                        {
-                          entity ?
-                            <Link to={`/gene/id/${entity['gene/id']}`}>{entity['gene/id']}</Link> :
-                            null
-                        }
-                      </TableCell>
-                      <TableCell className={classes.eventCell}>
-                        <Typography gutterBottom className={classes.eventLabel}>
-                          <span><Humanize>{eventLabel}</Humanize> </span>
-                          {
-                            relatedEntity ?
-                              <Link to={`/gene/id/${relatedEntity['gene/id']}`}>{relatedEntity['gene/id']}</Link> :
-                              null
-                          }
-                        </Typography>
-                        {
-                          activityItem['provenance/why'] &&
-                          <Typography gutterBottom>
-                            <span className={classes.reason}>Reason:</span> <em>{activityItem['provenance/why']}</em>
-                          </Typography>
-                        }
-                        {this.renderChanges(activityItem.changes)}
-                      </TableCell>
-                      {/* <TableCell>
+            {this.props.activities.map((activityItem, activityIndex) => {
+              const [
+                eventLabel,
+                entity,
+                relatedEntity,
+              ] = this.getActivityDescriptor(
+                activityItem,
+                this.props.selfGeneId
+              );
+              return (
+                <TableRow key={activityIndex}>
+                  <TableCell className={classes.time}>
+                    <p>
+                      <Timestamp time={activityItem['provenance/when']} />
+                    </p>
+                    <em>{activityItem['provenance/who']['person/name']}</em>
+                    <span className={classes.via}> via </span>
+                    <em>
+                      <Humanize>{activityItem['provenance/how']}</Humanize>
+                    </em>
+                  </TableCell>
+                  <TableCell className={classes.entityCell}>
+                    {entity ? (
+                      <Link to={`/gene/id/${entity['gene/id']}`}>
+                        {entity['gene/id']}
+                      </Link>
+                    ) : null}
+                  </TableCell>
+                  <TableCell className={classes.eventCell}>
+                    <Typography gutterBottom className={classes.eventLabel}>
+                      <span>
+                        <Humanize>{eventLabel}</Humanize>{' '}
+                      </span>
+                      {relatedEntity ? (
+                        <Link to={`/gene/id/${relatedEntity['gene/id']}`}>
+                          {relatedEntity['gene/id']}
+                        </Link>
+                      ) : null}
+                    </Typography>
+                    {activityItem['provenance/why'] && (
+                      <Typography gutterBottom>
+                        <span className={classes.reason}>Reason:</span>{' '}
+                        <em>{activityItem['provenance/why']}</em>
+                      </Typography>
+                    )}
+                    {this.renderChanges(activityItem.changes)}
+                  </TableCell>
+                  {/* <TableCell>
                         {
                           this.renderActions({
                             ...activityItem,
@@ -222,11 +244,9 @@ class GeneActivitiesTable extends Component {
                           })
                         }
                       </TableCell> */}
-                    </TableRow>
-                  )
-                }
-              )
-            }
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         <div>
@@ -242,10 +262,22 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoMergeGeneDialog
-            geneName={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-into')}
-            geneFromName={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-from')}
-            wbId={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-into')}
-            wbFromId={this.getGeneIdForEvent(selectedActivity, 'provenance/merged-from')}
+            geneName={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/merged-into'
+            )}
+            geneFromName={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/merged-from'
+            )}
+            wbId={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/merged-into'
+            )}
+            wbFromId={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/merged-from'
+            )}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_MERGE}
             onClose={this.closeDialog}
@@ -255,10 +287,22 @@ class GeneActivitiesTable extends Component {
             }}
           />
           <UndoSplitGeneDialog
-            geneName={this.getGeneIdForEvent(selectedActivity, 'provenance/split-from')}
-            geneIntoName={this.getGeneIdForEvent(selectedActivity, 'provenance/split-into')}
-            wbId={this.getGeneIdForEvent(selectedActivity, 'provenance/split-from')}
-            wbIntoId={this.getGeneIdForEvent(selectedActivity, 'provenance/split-into')}
+            geneName={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/split-from'
+            )}
+            geneIntoName={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/split-into'
+            )}
+            wbId={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/split-from'
+            )}
+            wbIntoId={this.getGeneIdForEvent(
+              selectedActivity,
+              'provenance/split-into'
+            )}
             authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_SPLIT}
             onClose={this.closeDialog}
@@ -294,8 +338,7 @@ const styles = (theme) => ({
   },
   entityColumnHeader: {},
   entityCell: {},
-  eventCell: {
-  },
+  eventCell: {},
   eventLabel: {
     textTransform: 'capitalize',
     // fontStyle: 'italic',

@@ -27,24 +27,23 @@ const BiotypeSelect = (props) => {
     },
   ];
 
-  const biotypeOptions = props.required ? [...BIOTYPES] : [
-    {
-      id: null,
-      label: '',
-      sequenceOntology: '',
-    },
-    ...BIOTYPES,
-  ];
+  const biotypeOptions = props.required
+    ? [...BIOTYPES]
+    : [
+        {
+          id: null,
+          label: '',
+          sequenceOntology: '',
+        },
+        ...BIOTYPES,
+      ];
   return (
-    <TextField
-      select
-      label="Biotype"
-      className={props.classes.root}
-      {...props}
-    >
-      {biotypeOptions.map(biotype => (
+    <TextField select label="Biotype" className={props.classes.root} {...props}>
+      {biotypeOptions.map((biotype) => (
         <MenuItem key={biotype.id} value={biotype.id}>
-          { biotype.label ? `${biotype.label} [${biotype.sequenceOntology}]` : null }
+          {biotype.label
+            ? `${biotype.label} [${biotype.sequenceOntology}]`
+            : null}
         </MenuItem>
       ))}
     </TextField>

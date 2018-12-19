@@ -18,26 +18,28 @@ class RecentActivities extends Component {
   fetchData = () => {
     mockFetchOrNot(
       (mockFetch) => {
-        const mockData = [
-        ];
+        const mockData = [];
         return mockFetch.get('*', mockData);
       },
       () => {
         return fetch(`/api/recent/gene`, {
-          method: 'GET'
+          method: 'GET',
         });
       },
       true
-    ).then((response) => response.json()).then((data) => {
-      this.setState({
-        data: data.reason ? [] : data,
-        loading: false,
-      });
-    }).catch((e) => console.log('error', e));
-  }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        this.setState({
+          data: data.reason ? [] : data,
+          loading: false,
+        });
+      })
+      .catch((e) => console.log('error', e));
+  };
 
   render() {
-    const {authorizedFetch} = this.props;
+    const { authorizedFetch } = this.props;
     return (
       <div>
         <GeneActivitiesTable
@@ -46,9 +48,11 @@ class RecentActivities extends Component {
           onUpdate={this.fetchData}
         />
         <p>
-          <em style={{
-            color: '#999',
-          }}>
+          <em
+            style={{
+              color: '#999',
+            }}
+          >
             Coming soon!
           </em>
         </p>

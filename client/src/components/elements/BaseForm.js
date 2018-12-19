@@ -23,11 +23,11 @@ import { createStore } from 'redux';
 
 const defaultInitalState = {};
 
-function formReducer(state={...defaultInitalState}, action) {
+function formReducer(state = { ...defaultInitalState }, action) {
   switch (action.type) {
     case 'INITIALIZE':
       const fields = Object.keys(action.fields).reduce((result, fieldId) => {
-        const {value, error} = action.fields[fieldId];
+        const { value, error } = action.fields[fieldId];
         result[fieldId] = {
           value: value,
           initialValue: value,
@@ -39,7 +39,7 @@ function formReducer(state={...defaultInitalState}, action) {
         fields: fields,
       };
     case 'UPDATE_FIELD':
-      const {fieldId, value} = action;
+      const { fieldId, value } = action;
       return {
         fields: {
           ...state.fields,
@@ -50,18 +50,18 @@ function formReducer(state={...defaultInitalState}, action) {
         },
       };
     default:
-      return state
+      return state;
   }
 }
 
 function dirtySelect(state) {
-  return Object.keys(state.fields).filter((fieldId) => (
-    !fieldId.match(/provenance\//)
-  )).reduce((result, fieldId) => {
-    const value = (state.fields[fieldId] || {}).value || '';
-    const initialValue = (state.fields[fieldId] || {}).initialValue || '';
-    return result || (value !== initialValue);
-  }, false);
+  return Object.keys(state.fields)
+    .filter((fieldId) => !fieldId.match(/provenance\//))
+    .reduce((result, fieldId) => {
+      const value = (state.fields[fieldId] || {}).value || '';
+      const initialValue = (state.fields[fieldId] || {}).initialValue || '';
+      return result || value !== initialValue;
+    }, false);
 }
 
 class BaseForm extends Component {
@@ -96,11 +96,14 @@ class BaseForm extends Component {
   }
 
   unpackFields = (props) => {
-
     function flatten(result, tree, prefix) {
       if (typeof tree === 'object' && tree !== null) {
         Object.keys(tree).reduce((result, keySegment) => {
-          flatten(result, tree[keySegment], prefix ? `${prefix}:${keySegment}` : keySegment);
+          flatten(
+            result,
+            tree[keySegment],
+            prefix ? `${prefix}:${keySegment}` : keySegment
+          );
           return result;
         }, result);
       } else {
@@ -121,40 +124,41 @@ class BaseForm extends Component {
       }, {}),
       ...props.fields,
     };
-  }
+  };
 
   gatherFields(fieldIds) {
     const fields = this.dataStore.getState().fields;
-    return fieldIds.reduce(
-      (result, fieldId) => {
-        const value = fields[fieldId] && fields[fieldId].value;
-        const idSegments = fieldId.split(':');
-        idSegments.reduce((resultSubtree, idSegment, index) => {
-          if (index < idSegments.length - 1) {
-            resultSubtree[idSegment] = resultSubtree[idSegment] || {};
-          } else {
-            resultSubtree[idSegment] = value;
-          }
-          return resultSubtree[idSegment]
-        }, result);
-        return result;
-      },
-      {}
-    );
+    return fieldIds.reduce((result, fieldId) => {
+      const value = fields[fieldId] && fields[fieldId].value;
+      const idSegments = fieldId.split(':');
+      idSegments.reduce((resultSubtree, idSegment, index) => {
+        if (index < idSegments.length - 1) {
+          resultSubtree[idSegment] = resultSubtree[idSegment] || {};
+        } else {
+          resultSubtree[idSegment] = value;
+        }
+        return resultSubtree[idSegment];
+      }, result);
+      return result;
+    }, {});
   }
 
   getData = () => {
     const fields = this.dataStore.getState().fields;
-    const dataFieldIds = Object.keys(fields).filter((fieldId) => !fieldId.match(/provenance\//g));
-    const provenanceFieldIds = Object.keys(fields).filter((fieldId) => fieldId.match(/provenance\//g));
+    const dataFieldIds = Object.keys(fields).filter(
+      (fieldId) => !fieldId.match(/provenance\//g)
+    );
+    const provenanceFieldIds = Object.keys(fields).filter((fieldId) =>
+      fieldId.match(/provenance\//g)
+    );
     return {
       data: this.gatherFields(dataFieldIds),
       prov: this.gatherFields(provenanceFieldIds),
     };
-  }
+  };
 
   withFieldData = (WrappedComponent, fieldId) => {
-    const {disabled} = this.props;
+    const { disabled } = this.props;
     const dataStore = this.dataStore;
 
     const fieldSelect = (state) => {
@@ -164,10 +168,9 @@ class BaseForm extends Component {
       } else {
         return {};
       }
-    }
+    };
 
     class Field extends Component {
-
       constructor(props) {
         super(props);
         this.state = {
@@ -180,7 +183,10 @@ class BaseForm extends Component {
         this.unsubscribe = dataStore.subscribe(() => {
           const currentValue = fieldSelect(dataStore.getState()).value || '';
           const currentError = fieldSelect(dataStore.getState()).error || '';
-          if (this.state.value !== currentValue || this.state.error !== currentError) {
+          if (
+            this.state.value !== currentValue ||
+            this.state.error !== currentError
+          ) {
             this.setState({
               value: currentValue,
               error: currentError,
@@ -202,27 +208,24 @@ class BaseForm extends Component {
             value={this.state.value}
             error={Boolean(this.state.error)} //Boolean function not constructor
             helperText={this.state.error || this.props.helperText}
-            onChange={
-              (event) => {
-                dataStore.dispatch({
-                  type: 'UPDATE_FIELD',
-                  fieldId: fieldId,
-                  value: event.target.value,
-                });
-              }
-            }
+            onChange={(event) => {
+              dataStore.dispatch({
+                type: 'UPDATE_FIELD',
+                fieldId: fieldId,
+                value: event.target.value,
+              });
+            }}
           />
         );
       }
     }
     return Field;
-  }
+  };
 
   dirtinessContext = (renderer) => {
     const dataStore = this.dataStore;
 
     class DirtyContext extends Component {
-
       constructor(props) {
         super(props);
         // work around issue https://github.com/ReactTraining/react-router/issues/5707
@@ -232,9 +235,11 @@ class BaseForm extends Component {
       }
 
       componentDidMount() {
-          this.setState({
+        this.setState(
+          {
             dirty: dirtySelect(dataStore.getState()),
-          }, () => {
+          },
+          () => {
             this.unsubscribe = dataStore.subscribe(() => {
               const currentDirty = dirtySelect(dataStore.getState());
               if (this.state.dirty !== currentDirty) {
@@ -243,7 +248,8 @@ class BaseForm extends Component {
                 });
               }
             });
-          });
+          }
+        );
       }
 
       componentWillUnmount() {
@@ -257,29 +263,27 @@ class BaseForm extends Component {
       }
     }
     return <DirtyContext />;
-  }
+  };
 
   render() {
     return (
       <form noValidate autoComplete="off">
-        {this.dirtinessContext(({dirty}) => (
+        {this.dirtinessContext(({ dirty }) => (
           <Prompt
             when={dirty}
             message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
           />
         ))}
-        {
-          /* render props changes causes inputs to lose focus */
-          /* to get around the issue, pass getter functions instead of values */
-          this.props.children({
-            withFieldData: this.withFieldData,
-            dirtinessContext: this.dirtinessContext,
-            getFormData: this.getData,
-            resetData: () => {
-              this.initialize(this.props)
-            }
-          })
-        }
+        {/* render props changes causes inputs to lose focus */
+        /* to get around the issue, pass getter functions instead of values */
+        this.props.children({
+          withFieldData: this.withFieldData,
+          dirtinessContext: this.dirtinessContext,
+          getFormData: this.getData,
+          resetData: () => {
+            this.initialize(this.props);
+          },
+        })}
       </form>
     );
   }
