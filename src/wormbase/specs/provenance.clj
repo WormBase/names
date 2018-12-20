@@ -22,8 +22,8 @@
 
 (s/def ::provenance (stc/spec
                      (s/nilable
-                      (s/keys :req [:provenance/who]
-                              :opt [:provenance/how
+                      (s/keys :opt [:provenance/who
+                                    :provenance/how
                                     :provenance/what
                                     :provenance/when
                                     :provenance/why]))))
