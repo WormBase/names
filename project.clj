@@ -22,6 +22,8 @@
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
    :datomic-pro
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}
+   :prod
+   {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging :prod]}}
    :dev
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :dev]
                              :aliases [:datomic-pro :dev]}

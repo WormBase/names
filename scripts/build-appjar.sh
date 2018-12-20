@@ -1,7 +1,7 @@
 #!/bin/bash
 
 artefact="docker/app.jar"
-lein with-profile +datomic-pro ring uberjar
+lein with-profile +prod ring uberjar
 target="target/uberjar/app.jar"
 if [ $? -eq 0 ]; then
     mv "${target}" "${artefact}"
