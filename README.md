@@ -1,59 +1,48 @@
 # wormbase-names
 
-Facilitate the sharing of identifiers and names of a subset of
-WormBase data types.
+A web app that facilitates the sharing of identifiers and names of a
+subset of WormBase data types.
 
-ACeDB does not support concurrent writes, so a brokering "name-server"
-service has historically been required to coordinate curation activity.
+The web app comprises:
 
-This library intends to provide:
-
- - A rest API service upon which a web app can be written to replace
-   the existing "name server" hosted at the Sanger institute.
-
+ - A REST API for manipulating WormBase data types
+   - Recording new entities, updating, changing entity status and more.
+ - A Web interface, providing forms to perform operations via the REST API.
+ - A library `wormbase.ids` that is used by the REST API to perform atomic
+   identifier operations within a datomic transactor process.
  - Schema and database related functions
    The schema and related database functions are intended to evolve to
    eventually become the "central" database within the WormBase
    architecture.
-
  - A basic user interface to interact with the name-service.
-
  - Serialisation of events to a queueing system, such that those
    events can be "replayed" into various ACeDB databases.
-
  - User authentication (agianst the wormbase.org google organisation)
 
-## Datomic schema design/approach
-Schema is defined as vanilla datomic schema entities in EDN, which is
-read in upon starting the web-service, idemopotently using
-[conformity][1].
-
-Provenance (who, when, where and why) is
-modelled as attributes on transactions.
-
-The excewption being that a data-types' status (dead / live /
-supressed) is modelled on the entity, not the transaction.
-
-The latest alpha version of [clojure][2] is used to facilitate the use
-of [clojure.spec][3] to provide validation and test-data-generation for
-testing.ri
-
-## The existing WormBase "name server" - background
-The current wormbase "name service", hosted at the Sanger Institute,
-is a perl cgi webapp, backed by a MySQL database.  It exists to
-facilitate pan-institution sharing of WormBase identifiers and names
-for `Gene`, `Feature` and `Variation` entities (ACeDB does not support
-concurrent write-access).
+With every write operation, this names service provides provenance (who, when, where and why),
+which is modelled as attributes on the "transaction entity".
 
 ## Development
 
-## Setup
+### Setup
 
 ```bash
 cd /tmp
 lein upgrade
 ```
 Ensure you've installed the following software on your system:
+
+#### Docker credentials
+
+The Makefile target `ecr-login` command will, by default, store the
+authentication token un-encrypted in the file: `~/.docker/config.json`.
+
+There is a plugin that can be used to use a store to save these tokens encrypted,
+but varies depending on operating system.
+
+For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
+which uses a GPG2 key to encrypt tokens.
+
 
 [clojure 1.9][4]
 
@@ -114,29 +103,34 @@ Run with `lein ring server` or `lein ring server-headless`.
 
 ### Testing
 Use built-in testing utilities as provided by leiningen.
-Please run before committing/submitting new pull requests.
+Please run all tests before committing/submitting new pull requests.
+
+NB:
+Currently, these tests may occasionally fail with "could not generate after 100 attempts".
+These are transient failures, to due to implementation of  clojure.spec generators in the test suite,
+and can be ignored if they pass on subsequent runs.
+
+
+## Releases
 
 ```bash
-lein test
+lein release
 ```
+
+### Building the client application
+```bash
+make build-client-app
+```
+
+For a full list of tasks, type:
 
 ```bash
-lein do clean, test-refresh
+make help
 ```
-
-## Production deployment
-
-### Building the client app
-```bash
-cd client/
-yarn install --frozen-lockfile
-yarn run build
-```
-
 
 ## License
 EPL (Eclipse Public License)
-Copyright ©  WormBase 2017
+Copyright ©  WormBase 2018
 
 [1]: https://github.com/rkneufeld/conformity
 [2]: https://clojure.org/community/downloads
@@ -149,3 +143,5 @@ Copyright ©  WormBase 2017
 [9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [10]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
 [11]: https://github.com/facebook/create-react-app
+[12]: https://github.com/docker/docker-credential-helpers/releases
+[13]: https://github.com/docker/docker-credential-helpers/issues/102
