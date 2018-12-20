@@ -2,6 +2,7 @@
 
 ## [0.4.4]
  - Included wormbase.ids uberjar building.
+ - Added leiningen release tasks.
  
 ## [0.4.3]
  - Added Batch API (new, update, resurrect, kill end-points)
