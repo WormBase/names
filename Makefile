@@ -102,6 +102,7 @@ run: $(call print-help,run,"Run the application in docker (locally).")
 docker-build: clean build \
               $(call print-help,docker-build, "Create docker container")
 
+.PHONY: docker-clean
 docker-clean: $(call print-help],docker-clean,\
                "Stop and remove the docker container (if running).")
 	@docker stop ${PROJ_NAME}
@@ -110,3 +111,9 @@ docker-clean: $(call print-help],docker-clean,\
 .PHONY: clean
 clean: $(call print-help,clean,"Remove the locally built JAR file.")
 	@rm -f ./docker/${DEPLOY_JAR}
+
+.PHONY: eb-deploy
+	$(call print-help,eb-deploy,"Deploy the application using ElasticBeanstalk.")
+	@eb use wormbase-names
+	@eb deploy
+
