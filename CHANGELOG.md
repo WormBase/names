@@ -1,8 +1,11 @@
 # Change-log
 
+## [0.4.5]
+ - Correct provenence spec.
+
 ## [0.4.4]
  - Included wormbase.ids uberjar building.
- 
+
 ## [0.4.3]
  - Added Batch API (new, update, resurrect, kill end-points)
  - Multiple bug fixes and features.
