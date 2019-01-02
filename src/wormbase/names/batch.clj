@@ -110,7 +110,7 @@
                                  :prov ::prov}}
       :handler (partial new-entities entity-type)}
      :delete
-     {:summary "Kill a batch of genes."
+     {:summary "Kill entities."
       :x-name ::kill-entities
       :responses (-> wnu/default-responses
                      (assoc ok {:schema ::wsb/status-changed}))
@@ -122,6 +122,7 @@
                         :gene.status/dead
                         ::wsb/kill)}})
     (sweet/POST "/resurrect" request
+      :summary "Resurrect dead entities."
       :middleware [wna/restrict-to-authenticated]
       :body [{:keys [:data :prov]} {:data ::wsb/resurrect
                                     :prov ::wsp/provenance
@@ -131,6 +132,7 @@
                               ::wsb/resurrect
                               request))
     (sweet/POST "/suppress" request
+      :summary "Suppress entities."
       :middleware [wna/restrict-to-authenticated]
       :body [{:keys [:data :prov]} {:data ::wsb/suppress
                                     :prov ::wsp/provenance
