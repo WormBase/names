@@ -1,7 +1,11 @@
 # Change-log
 
+## [0.4.6-SNAPSHOT]
+ - Corrected batch/id spec.
+ - Corrected swagger doc summaries.
+ 
 ## [0.4.5]
- - Correct provenence spec.
+ - Corrected provenance spec.
 
 ## [0.4.4]
  - Included wormbase.ids uberjar building.
