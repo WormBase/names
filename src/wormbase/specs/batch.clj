@@ -5,6 +5,8 @@
    [wormbase.specs.provenance] ;; side effects
    [wormbase.specs.gene :as wsg]))
 
+(s/def :batch/id uuid?)
+
 (s/def ::size pos-int?)
 
 (s/def ::success-response (stc/spec (s/keys :req [:batch/id])))
