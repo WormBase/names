@@ -32,7 +32,7 @@
         prov (get payload :prov {})
         person-lur (or (person-lur-from-provenance prov)
                        [:person/email (.getEmail id-token)])
-        who (-> request :db (d/entity person-lur) :db/id)
+        who (-> request :db (d/pull '[:db/id] person-lur) :db/id)
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (wna/identify id-token)
         why (:provenance/why prov)
