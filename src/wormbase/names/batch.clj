@@ -11,7 +11,8 @@
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.provenance :as wsp]
-   [wormbase.ids.batch :as wbids-batch]))
+   [wormbase.ids.batch :as wbids-batch]
+   [clojure.string :as str]))
 
 (s/def ::entity-type sts/string?)
 
@@ -24,6 +25,12 @@
   (map second (wnu/conform-data request spec data)))
 
 (def ^:private default-batch-size 100)
+
+(defn assign-status [uiident to-status data]
+  (->> data
+       (map (partial array-map uiident))
+       (map #(assoc % :gene/status to-status))
+       (set)))
 
 (defn- batch-size [payload coll]
   (let [bsize (:batch-size payload)
@@ -48,7 +55,15 @@
 (defn new-entities
   "Create a batch of new entities."
   [entity-type request]
-  (let [result (batcher wbids-batch/new entity-type ::wsb/new request)]
+  (let [result (batcher wbids-batch/new
+                        entity-type
+                        ::wsb/new request
+                        :data-transform (fn set-live [_ _ data]
+                                          (->> data
+                                               (conform-spec-drop-label request ::wsb/new)
+                                               (assign-status
+                                                (keyword entity-type "id")
+                                                (keyword (str/join "." [entity-type "status"]) "live")))))]
     (created (-> result :batch/id str) {:created result})))
 
 (defn update-entities
@@ -65,12 +80,9 @@
                         entity-type
                         spec
                         request
-                        :data-transform (fn assign-status
-                                          [request spec data]
-                                          (->> data
-                                               (map (partial array-map uiident))
-                                               (map #(assoc % :gene/status to-status))
-                                               (set))))]
+                        :data-transform (fn txform-assign-status
+                                          [_ _ data]
+                                          (assign-status uiident to-status data)))]
     (ok {resp-key result})))
 
 (def resources
