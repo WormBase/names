@@ -1,5 +1,9 @@
 # Change-log
 
+## [0.4.7-SNAPSHOT]
+ - Schema migration for :batch/id
+ - Batch API: new entities always get a "live" status.
+
 ## [0.4.6]
  - Corrected batch/id spec.
  - Corrected swagger doc summaries.
