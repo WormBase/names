@@ -70,8 +70,7 @@
                         "e" (format id-format e)
                         "a" (d/ident db a)
                         "v" (if (nat-int? v)
-                              (or (d/ident db v)
-                                  (format id-format (:db/id (d/entity db v))))
+                              (format id-format (-> db (d/pull [:db/id] v) :db/id))
                               (trunc v 24))
                         "tx" (format tx-id-format tx)
                         "added" added}]
