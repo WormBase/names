@@ -9,6 +9,7 @@
                                     ok]]
    [clj-uuid :as uuid]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.species :as gss]
@@ -18,6 +19,18 @@
    [wormbase.fake-auth]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
+
+(defn query-batch [db bid]
+  (map (partial d/pull db '[* {:gene/status [:db/ident]}])
+       (d/q '[:find [?e ...]
+              :in $ ?bid
+              :where
+              [?tx :batch/id ?bid]
+              [?e ?a ?v ?tx]
+              [(not= ?e ?tx)]
+              [?a :db/ident ?aname]]
+            db
+            bid)))
 
 (defn new-genes [data]
   (api-tc/send-request "batch" :post data :sub-path "gene"))
@@ -65,6 +78,10 @@
                   :gene/biotype :biotype/cds
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (:status (created)) status)
+      (t/is (:status (created)) (str status))
       (let [bid (get-in body [:created :batch/id] "")]
-        (t/is (uuid/uuid-string? bid) (pr-str body))))))
+        (t/is (uuid/uuid-string? bid) (pr-str body))
+        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
+              xs (map #(get-in % [:gene/status :db/ident]) batch)]
+          (t/is (seq xs))
+          (t/is (every? (partial = :gene.status/live) xs)))))))
