@@ -1,6 +1,6 @@
 # Change-log
 
-## [0.4.6-SNAPSHOT]
+## [0.4.6]
  - Corrected batch/id spec.
  - Corrected swagger doc summaries.
  
