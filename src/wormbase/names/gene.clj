@@ -21,6 +21,7 @@
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
+   [wormbase.names.validation :refer [validate-names]]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
@@ -30,38 +31,6 @@
                               {ok {:schema {:updated ::wsg/updated}}}))
 
 (def identify (partial wne/identify ::wsg/identifier))
-
-(defn validate-names
-  ([request data & {:keys [allow-blank-cgc-name?]
-                    :or {allow-blank-cgc-name? true}}]
-   (let [db (:db request)
-         species-lur (s/conform :gene/species (:gene/species data))
-         species-ent (d/entity db species-lur)]
-    (if (empty? data)
-      (throw (ex-info "No names to validate (empty data)"
-                      {:type :user/validation-error})))
-    (if-not species-ent
-      (throw (ex-info "Invalid species specified"
-                      {:invalid-species species-lur
-                       :type :user/validation-error})))
-    (let [patterns ((juxt :species/cgc-name-pattern :species/sequence-name-pattern) species-ent)
-          regexps (map re-pattern patterns)
-          name-idents [:gene/cgc-name :gene/sequence-name]]
-      (doseq [[regexp name-ident] (partition 2 (interleave regexps name-idents))]
-        (when-let [gname (name-ident data)]
-          (when-not (re-matches regexp gname)
-            (when-not (and allow-blank-cgc-name?
-                           (empty? (get data gname))
-                           (= gname :gene/cgc-name))
-              (throw
-               (ex-info "Invalid name"
-                        {:type :user/validation-error
-                         :data {:problems
-                                {:invalid
-                                 {:name gname :ident name-ident}}}}))))))
-      data)))
-  ([request data]
-   (validate-names request data :allow-blank-cgc-name? false)))
 
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
@@ -170,7 +139,7 @@
       (let [spec ::wsg/update
             data (:data payload)
             conform #(wnu/conform-data request spec % validate-names)]
-        (let [cdata (->> (validate-names request data :allow-blank-cgc-name? true)
+        (let [cdata (->> (validate-names request data)
                          (conform)
                          (second)
                          (resolve-refs-to-dbids db))
