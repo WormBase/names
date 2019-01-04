@@ -1,6 +1,6 @@
 # Change-log
 
-## [0.4.8-SNAPSHOT]
+## [0.4.8]
  - Fixed status assignment in batch api.
  
 ## [0.4.7]
