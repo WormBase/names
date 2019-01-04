@@ -7,6 +7,7 @@ import {
   Button,
   CircularProgress,
   Divider,
+  ErrorBoundary,
   Humanize,
   NotFound,
   Page,
@@ -399,14 +400,16 @@ class GeneProfile extends Component {
                   <Humanize>{this.state.data['gene/status']}</Humanize>
                 </Typography>
               ) : null}
-              <GeneForm
-                data={this.state.data}
-                onSubmit={this.handleGeneUpdate}
-                submitted={this.state.status === 'SUBMITTED'}
-                disabled={Boolean(
-                  this.state.data['gene/status'] === 'gene.status/dead'
-                )}
-              />
+              <ErrorBoundary>
+                <GeneForm
+                  data={this.state.data}
+                  onSubmit={this.handleGeneUpdate}
+                  submitted={this.state.status === 'SUBMITTED'}
+                  disabled={Boolean(
+                    this.state.data['gene/status'] === 'gene.status/dead'
+                  )}
+                />
+              </ErrorBoundary>
             </div>
           )}
           <div className={classes.section}>
@@ -414,14 +417,16 @@ class GeneProfile extends Component {
               Change history
             </Typography>
             <div className={classes.historyTable}>
-              <RecentActivitiesSingleGene
-                wbId={wbId}
-                authorizedFetch={this.props.authorizedFetch}
-                activities={this.state.data.history}
-                onUpdate={() => {
-                  this.fetchData();
-                }}
-              />
+              <ErrorBoundary>
+                <RecentActivitiesSingleGene
+                  wbId={wbId}
+                  authorizedFetch={this.props.authorizedFetch}
+                  activities={this.state.data.history}
+                  onUpdate={() => {
+                    this.fetchData();
+                  }}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </PageMain>

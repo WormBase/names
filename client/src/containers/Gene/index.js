@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   withStyles,
   Button,
+  ErrorBoundary,
   Page,
   Typography,
 } from '../../components/elements';
@@ -31,14 +32,16 @@ const Gene = (props) => {
             <GeneSearchBox />
           </div>
         </div>
-        <div className={classes.main}>
-          {/* tables and charts */}
-          <Typography variant="title" gutterBottom>
-            Recent activities
-          </Typography>
-          <div className={classes.recentActivitiesTable}>
+      </div>
+      <div className={classes.main}>
+        {/* tables and charts */}
+        <Typography variant="title" gutterBottom>
+          Recent activities
+        </Typography>
+        <div className={classes.recentActivitiesTable}>
+          <ErrorBoundary>
             <RecentActivities authorizedFetch={authorizedFetch} />
-          </div>
+          </ErrorBoundary>
         </div>
       </div>
     </Page>
