@@ -13,6 +13,7 @@
                                     ok
                                     precondition-failed]]
    [spec-tools.core :as stc]
+   [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
 
 (defn read-app-config
@@ -85,7 +86,7 @@
     (and v (pos-int? v))
     (if-let [ident (d/ident db v)]
       (assoc m k ident)
-      (assoc m k (d/pull db '[*] v)))
+      (assoc m k (wdb/pull db '[*] v)))
     :default
     (assoc m k v)))
 
