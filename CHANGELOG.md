@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.8-SNAPSHOT]
+ - Nothing changed yet.
+ 
 ## [0.4.7]
  - Schema migration for :batch/id
  - Batch API: new entities always get a "live" status.
