@@ -1,7 +1,7 @@
 # Change-log
 
 ## [0.4.8-SNAPSHOT]
- - Nothing changed yet.
+ - Fixed status assignment in batch api.
  
 ## [0.4.7]
  - Schema migration for :batch/id

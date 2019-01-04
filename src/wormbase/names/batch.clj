@@ -26,9 +26,8 @@
 
 (def ^:private default-batch-size 100)
 
-(defn assign-status [uiident to-status data]
+(defn assign-status [to-status data]
   (->> data
-       (map (partial array-map uiident))
        (map #(assoc % :gene/status to-status))
        (set)))
 
@@ -62,7 +61,6 @@
                                           (->> data
                                                (conform-spec-drop-label request ::wsb/new)
                                                (assign-status
-                                                (keyword entity-type "id")
                                                 (keyword (str/join "." [entity-type "status"]) "live")))))]
     (created (-> result :batch/id str) {:created result})))
 
@@ -82,7 +80,7 @@
                         request
                         :data-transform (fn txform-assign-status
                                           [_ _ data]
-                                          (assign-status uiident to-status data)))]
+                                          (assign-status to-status data)))]
     (ok {resp-key result})))
 
 (def resources
