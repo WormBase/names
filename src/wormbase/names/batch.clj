@@ -6,6 +6,7 @@
    [ring.util.http-response :refer [bad-request conflict created ok]]
    [spec-tools.spec :as sts]
    [wormbase.names.auth :as wna]
+   [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
@@ -26,10 +27,9 @@
 
 (def ^:private default-batch-size 100)
 
-(defn assign-status [to-status data]
-  (->> data
-       (map #(assoc % :gene/status to-status))
-       (set)))
+(defn assign-status [entity-type to-status data]
+  (let [status-ident (keyword entity-type "status")]
+    (map #(assoc % status-ident to-status) data)))
 
 (defn- batch-size [payload coll]
   (let [bsize (:batch-size payload)
@@ -41,11 +41,12 @@
         cbsize)
       bsize)))
 
-(defn batcher [impl entity-type spec request
+(defn batcher [impl entity-type event-type spec request
                & {:keys [data-transform]
                   :or {data-transform conform-spec-drop-label}}]
   (let [{conn :conn payload :body-params} request
-        {data :data prov :prov} payload
+        {data :data} payload
+        prov (wnp/assoc-provenance request payload event-type)
         cdata (data-transform request spec data)
         uiident (keyword entity-type "id")
         bsize (batch-size payload cdata)]
@@ -53,35 +54,48 @@
 
 (defn new-entities
   "Create a batch of new entities."
-  [entity-type request]
+  [entity-type event-type request]
   (let [result (batcher wbids-batch/new
                         entity-type
-                        ::wsb/new request
+                        event-type
+                        ::wsb/new
+                        request
                         :data-transform (fn set-live [_ _ data]
-                                          (->> data
-                                               (conform-spec-drop-label request ::wsb/new)
-                                               (assign-status
-                                                (keyword (str/join "." [entity-type "status"]) "live")))))]
+                                          (let [live-status (keyword (str/join "." [entity-type "status"])
+                                                                     "live")]
+                                            (->> data
+                                                 (conform-spec-drop-label request ::wsb/new)
+                                                 (assign-status entity-type live-status)))))]
     (created (-> result :batch/id str) {:created result})))
 
 (defn update-entities
-  [entity-type request]
-  (let [result (batcher wbids-batch/update entity-type ::wsb/update request)]
+  [entity-type event-type request]
+  (let [result (batcher wbids-batch/update
+                        entity-type
+                        event-type
+                        ::wsb/update
+                        request)]
     (ok {:updated result})))
 
-(defn change-entity-statuses [entity-type to-status spec request]
+(defn change-entity-statuses [entity-type event-type to-status spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
         uiident (keyword entity-type "id")
         resp-key (name to-status)
         result (batcher wbids-batch/update
                         entity-type
+                        event-type
                         spec
                         request
                         :data-transform (fn txform-assign-status
                                           [_ _ data]
-                                          (assign-status to-status data)))]
+                                          (->> data
+                                               (map (partial array-map uiident))
+                                               (assign-status entity-type to-status))))]
     (ok {resp-key result})))
+
+(defn event-ident [op entity-type]
+  (keyword "event" (str op "-" entity-type)))
 
 (def resources
   (sweet/context "/batch/:entity-type" []
@@ -107,8 +121,9 @@
                      (wnu/response-map))
       :parameters {:body-params {:data ::wsb/update
                                  :prov ::prov}}
-      :handler (fn foo [request]
-                 (update-entities entity-type request))}
+      :handler (fn update-handler [request]
+                 (let [event-type (event-ident "update" entity-type)]
+                   (update-entities entity-type event-type request)))}
      :post
      {:summary "Assign identifiers and associate names, creating new entities."
       :x-name ::new-entities
@@ -118,7 +133,10 @@
                      (wnu/response-map))
       :parameters {:body-params {:data ::wsb/new
                                  :prov ::prov}}
-      :handler (partial new-entities entity-type)}
+      :handler (fn create-handler [request]
+                 (let [event-type (event-ident "new" entity-type)
+                       data (get-in request [:body-params])]
+                   (new-entities entity-type event-type request)))}
      :delete
      {:summary "Kill entities."
       :x-name ::kill-entities
@@ -129,6 +147,7 @@
                                  :batch-size ::wsb/size}}
       :handler (partial change-entity-statuses
                         entity-type
+                        (event-ident "kill" entity-type)
                         :gene.status/dead
                         ::wsb/kill)}})
     (sweet/POST "/resurrect" request
@@ -138,6 +157,7 @@
                                     :prov ::wsp/provenance
                                     :batch-size ::wsb/size}]
       (change-entity-statuses entity-type
+                              (event-ident "resurrect" entity-type)
                               :gene.status/live
                               ::wsb/resurrect
                               request))
@@ -148,6 +168,7 @@
                                     :prov ::wsp/provenance
                                     :batch-size ::wsb/size}]
       (change-entity-statuses entity-type
+                              (event-ident "suppress" entity-type)
                               :gene.status/suppressed
                               ::wsb/suppressed
                               request))))
