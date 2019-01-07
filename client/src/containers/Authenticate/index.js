@@ -5,7 +5,7 @@ import Profile from './Profile';
 import ProfileButton from './ProfileButton';
 
 const DEFAULT_AUTHENTICATION_STATE = {
-  isAuthenticated: false,
+  isAuthenticated: undefined,
   user: {
     name: null,
     email: null,
@@ -72,6 +72,14 @@ class Authenticate extends Component {
         } else {
           this.setState({
             ...DEFAULT_AUTHENTICATION_STATE,
+            isAuthenticated: false,
+          });
+        }
+      });
+      this.auth2.then(() => {
+        if (!this.auth2.isSignedIn.get()) {
+          // now we know for certain the user isn't signed in, instead of auth initialization taking a while
+          this.setState({
             isAuthenticated: false,
           });
         }
