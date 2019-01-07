@@ -14,13 +14,6 @@ const DEFAULT_AUTHENTICATION_STATE = {
   errorMessage: null, //JSON.stringify({a: 100}, undefined, 2),
 };
 
-const sessionStorageKey = 'AUTHENTICATION_STATE';
-
-function getStoredState() {
-  const saveStateJSON = window.sessionStorage.getItem(sessionStorageKey);
-  return saveStateJSON && JSON.parse(saveStateJSON);
-}
-
 class Authenticate extends Component {
   constructor(props) {
     super(props);
@@ -30,65 +23,21 @@ class Authenticate extends Component {
   }
 
   handleLogin = () => {
-    this.auth2
-      .signIn()
-      .then((googleUser) => {
-        const googleUserProfile = googleUser.getBasicProfile();
-        const name = googleUserProfile.getName();
-        const email = googleUserProfile.getEmail();
-        const id_token = googleUser.getAuthResponse().id_token;
-        this.setState(
-          {
-            ...DEFAULT_AUTHENTICATION_STATE,
-            user: {
-              name,
-              email,
-              id_token,
-            },
-            isAuthenticated: true,
-          },
-          () => {
-            window.sessionStorage.setItem(
-              sessionStorageKey,
-              JSON.stringify(this.state)
-            );
-          }
-        );
-      })
-      .catch((error) => {
-        this.setState(
-          {
-            ...DEFAULT_AUTHENTICATION_STATE,
-            isAuthenticated: false,
-            errorMessage: JSON.stringify(error, undefined, 2),
-          },
-          () => {
-            window.sessionStorage.setItem(
-              sessionStorageKey,
-              JSON.stringify(this.state)
-            );
-          }
-        );
-      });
-  };
-
-  handleLogout = () => {
-    this.auth2.disconnect(); // revoke scopes
-    this.auth2.signOut().then(() => {
-      window.sessionStorage.removeItem(sessionStorageKey);
+    this.auth2.signIn().catch((error) => {
       this.setState({
         ...DEFAULT_AUTHENTICATION_STATE,
+        isAuthenticated: false,
+        errorMessage: JSON.stringify(error, undefined, 2),
       });
     });
   };
 
+  handleLogout = () => {
+    this.auth2.disconnect(); // revoke scopes
+    this.auth2.signOut();
+  };
+
   componentDidMount() {
-    const saveState = getStoredState();
-    if (saveState) {
-      this.setState({
-        ...saveState,
-      });
-    }
     this.initializeSignIn();
   }
 
@@ -103,6 +52,29 @@ class Authenticate extends Component {
         cookiepolicy: 'single_host_origin',
         // Request scopes in addition to 'profile' and 'email'
         //scope: 'additional_scope'
+      });
+      this.auth2.isSignedIn.listen((isSignedIn) => {
+        if (isSignedIn) {
+          const googleUser = this.auth2.currentUser.get();
+          const googleUserProfile = googleUser.getBasicProfile();
+          const name = googleUserProfile.getName();
+          const email = googleUserProfile.getEmail();
+          const id_token = googleUser.getAuthResponse().id_token;
+          this.setState({
+            ...DEFAULT_AUTHENTICATION_STATE,
+            user: {
+              name,
+              email,
+              id_token,
+            },
+            isAuthenticated: true,
+          });
+        } else {
+          this.setState({
+            ...DEFAULT_AUTHENTICATION_STATE,
+            isAuthenticated: false,
+          });
+        }
       });
     });
   };
