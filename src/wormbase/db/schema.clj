@@ -2,6 +2,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [cognitect.transcriptor :as xr]
    [datomic.api :as d]
    [io.rkn.conformity :as c]
    [wormbase.util :refer [read-edn]])
@@ -38,6 +39,10 @@
                   vec)]
       (prn se))))
 
+
+(defn apply-updates! []
+  (doseq [rf (xr/repl-files "resources/schema/updates")]
+    (xr/run rf)))
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
 ;;       schema transactions.

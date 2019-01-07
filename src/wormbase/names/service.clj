@@ -10,6 +10,7 @@
    [muuntaja.core :as muuntaja]
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
+   [wormbase.db.schema :as wdbs]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
    [wormbase.names.coercion] ;; coercion scheme
@@ -104,4 +105,5 @@
   "Entry-point for ring server initialization."
   []
   (require '[wormbase.names.event-broadcast])
-  (mount/start))
+  (mount/start)
+  (wdbs/apply-updates!))
