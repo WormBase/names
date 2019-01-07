@@ -15,10 +15,11 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
-  submitData = ({ geneIdMergeInto, ...data }) => {
+  submitData = ({ data: rawData = {}, prov: provenance } = {}) => {
+    const { geneIdMergeInto, ...data } = rawData;
     return mockFetchOrNot(
       (mockFetch) => {
-        if (data['provenance/why']) {
+        if (provenance['provenance/why']) {
           return mockFetch.post('*', {});
         } else {
           return mockFetch.post('*', {
@@ -34,7 +35,10 @@ class MergeGeneDialog extends Component {
           `/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`,
           {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify({
+              data: data,
+              prov: provenance,
+            }),
           }
         );
       }
