@@ -28,7 +28,11 @@ class AjaxDialog extends Component {
             <SimpleAjax
               data={getFormData}
               submitter={this.props.submitter}
-              onSubmitSuccess={this.props.onSubmitSuccess}
+              onSubmitSuccess={(result) => {
+                this.props.onSubmitSuccess &&
+                  this.props.onSubmitSuccess(result);
+                resetData();
+              }}
               onSubmitError={this.props.onSubmitError}
             >
               {({ status, errorMessage, handleSubmit }) => {
