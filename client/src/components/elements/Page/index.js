@@ -43,6 +43,7 @@ export const Page = withStyles((theme) => ({
 export const PageLeft = withStyles((theme) => ({
   left: {
     width: '20%',
+    flex: '0 0 auto',
     [theme.breakpoints.down('sm')]: {
       width: `100%`,
       marginBottom: theme.spacing.unit * 4,
@@ -53,6 +54,7 @@ export const PageLeft = withStyles((theme) => ({
 export const PageMain = withStyles((theme) => ({
   main: {
     width: '80%',
+    flex: '1 0 auto',
     margin: `0px ${theme.spacing.unit * 4}px`,
     [theme.breakpoints.down('sm')]: {
       margin: 0,

@@ -6,6 +6,7 @@ import {
   Button,
   ErrorBoundary,
   Page,
+  PageMain,
   Typography,
 } from '../../components/elements';
 
@@ -18,32 +19,34 @@ const Gene = (props) => {
   const { classes, authorizedFetch } = props;
   return (
     <Page>
-      <div className={classes.root}>
-        <div className={classes.header}>
-          <Button
-            variant="raised"
-            color="secondary"
-            component={({ ...props }) => <Link to="/gene/new" {...props} />}
-          >
-            Add New Gene
-          </Button>
-          <div className={classes.or}>OR</div>
-          <div className={classes.search}>
-            <GeneSearchBox />
+      <PageMain>
+        <div className={classes.root}>
+          <div className={classes.header}>
+            <Button
+              variant="raised"
+              color="secondary"
+              component={({ ...props }) => <Link to="/gene/new" {...props} />}
+            >
+              Add New Gene
+            </Button>
+            <div className={classes.or}>OR</div>
+            <div className={classes.search}>
+              <GeneSearchBox />
+            </div>
           </div>
         </div>
-      </div>
-      <div className={classes.main}>
-        {/* tables and charts */}
-        <Typography variant="title" gutterBottom>
-          Recent activities
-        </Typography>
-        <div className={classes.recentActivitiesTable}>
-          <ErrorBoundary>
-            <RecentActivities authorizedFetch={authorizedFetch} />
-          </ErrorBoundary>
+        <div className={classes.main}>
+          {/* tables and charts */}
+          <Typography variant="title" gutterBottom>
+            Recent activities
+          </Typography>
+          <div className={classes.recentActivitiesTable}>
+            <ErrorBoundary>
+              <RecentActivities authorizedFetch={authorizedFetch} />
+            </ErrorBoundary>
+          </div>
         </div>
-      </div>
+      </PageMain>
     </Page>
   );
 };
@@ -79,12 +82,7 @@ const styles = (theme) => ({
     flexDirection: 'column',
     alignItems: 'center',
     '& > *': {
-      width: '80%',
-    },
-    [theme.breakpoints.down('sm')]: {
-      '& > *': {
-        width: '100%',
-      },
+      width: '100%',
     },
   },
   recentActivitiesTable: {
