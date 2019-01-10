@@ -204,7 +204,11 @@ class GeneActivitiesTable extends Component {
                     <p>
                       <Timestamp time={activityItem['provenance/when']} />
                     </p>
-                    <em>{activityItem['provenance/who']['person/name']}</em>
+                    <em>
+                      {activityItem['provenance/who']
+                        ? activityItem['provenance/who']['person/name']
+                        : 'Unknown'}
+                    </em>
                     <span className={classes.via}> via </span>
                     <em>
                       <Humanize>{activityItem['provenance/how']}</Humanize>
