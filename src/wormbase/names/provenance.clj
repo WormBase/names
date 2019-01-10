@@ -2,14 +2,12 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.walk :as w]
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
-   [wormbase.specs.person :as wsp]
-   [wormbase.names.util :as wnu]))
+   [wormbase.specs.person :as wsp]))
 
 (defn- person-lur-from-provenance
   "Return a datomic `lookup ref` from the provenance data."
@@ -59,51 +57,85 @@
               #(compare %1 %2))]
     (sort-by :provenance/when cmp events)))
 
+(defmulti resolve-change (fn [db change]
+                           (get change :attr :default)))
+
+(defmethod resolve-change :default
+  [db change]
+  (let [cv (:value change)]
+    (d/ident db (:value change))))
+
+(def ref-change-rules
+  '[[(ref-changes ?e ?aname ?a ?eid)
+     [?a :db/ident ?aname]
+     [(namespace ?aname) ?ns]
+     (not [(#{"provenance" "db"} ?ns)])]])
+
+(defn- convert-change
+  "Convert entity ids to their \"primary\" identifier."
+  [db eid change-data]
+  (let [change (cond ;; Inverts :eid and :value when we have a reverse ref
+                 (and (= (:value change-data) eid)
+                      (not= (:eid change-data) eid))
+                 (assoc change-data
+                        :eid (:value change-data)
+                        :value (:eid change-data))
+                 (= (:eid change-data) eid)
+                 change-data)]
+    (some-> change
+            (update :value
+                    (fn resolve-change-value [value]
+                      (or (resolve-change db change) value)))
+            (dissoc :eid))))
+
 (defn query-tx-changes-for-event
-  "Return the set of attribute and values changed for a given gene transaction."
+  "Return the set of attribute and values changed for an entity."
   [db entity-id tx]
-  (->> (d/q '[:find ?aname ?v ?added
-              :in $ ?e ?tx
-              :where
-               [?e ?a ?v ?tx ?added]
-               [?a :db/ident ?aname]]
+  (let [focus-eid (:db/id (d/pull db '[*] entity-id))]
+    (->> (d/q '[:find ?e ?aname ?v ?added
+                :in $ ?tx
+                :where
+                (not [?e ?tx])
+                [?e ?a ?v ?tx ?added]
+                [?a :db/ident ?aname]]
               (d/history db)
-            entity-id
-            tx)
-       (remove (fn remove-importer-artifact [[k _ _]]
-                 (= k :importer/historical-gene-version)))
-       (map (fn convert-entids [result-map]
-              (reduce-kv (fn [m k v]
-                           (update m k (fnil (partial d/ident db) v)))
-                         (empty result-map)
-                         result-map)))
-       (map #(zipmap [:attr :value :added] %))
-       (sort-by :attr)))
+              tx)
+         (map #(zipmap [:eid :attr :value :added] %))
+         (map (partial convert-change db focus-eid))
+         (remove (comp nil? :value))
+         (sort-by (juxt :attr :added :value)))))
+
+(defn query-tx-ids [db entity-id]
+  (d/q '[:find [?tx ...]
+         :in $ ?e
+         :where
+         [?e _ _ ?tx _]]
+       (d/history db)
+       entity-id))
 
 (defn pull-provenance [db entity-id prov-pull-expr pull-changes-fn tx]
   (-> db
-      (d/pull prov-pull-expr tx)
+      (wdb/pull prov-pull-expr tx)
       (update :changes (fnil identity (pull-changes-fn tx)))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
-  `entity-id` can be a datomic id number or a lookup-ref.
+
+  Parameters:
+  `db` - A datomic database.
+  `entity-id` - Datomic lookup-ref or :db/id number.
   `prov-pull-expr` should be a pull expression describing the attributes desired from
-                   a datomic pull operation for the entity id."
+                   a datomic pull operation for the entity id.
+
+  Returns a sequence of mappings describing the entity history.."
   [db entity-id prov-pull-expr]
   (let [pull-changes (partial query-tx-changes-for-event db entity-id)
         pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
         sort-mrf #(sort-events-by-when % :most-recent-first true)
-        tx-ids (d/q '[:find [?tx ...]
-                      :in $ ?e
-                      :where
-                      [?e _ _ ?tx _]]
-                    (d/history db)
-                    entity-id)]
-    (some->> tx-ids
-             (map pull-prov)
-             (map (partial wu/undatomicize db))
-             (remove #(= (:provenance/what %) :event/import-gene))
+        tx-ids (query-tx-ids db entity-id)
+        prov-seq (map pull-prov tx-ids)]
+    (some->> prov-seq
+             (remove #(str/includes? (-> % :provenance/what name) "import"))
              (map #(update % :provenance/how (fnil identity :agent/importer)))
              (sort-mrf)
-             seq)))
+             (seq))))

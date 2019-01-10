@@ -82,6 +82,30 @@
                          :gene/merges [[:gene/id]]
                          :gene/splits [[:gene/id]]}])
 
+
+(defmethod wnp/resolve-change :gene/id
+  [db change]
+  (when-let [found (wnu/resolve-refs db (find change :gene/id))]
+    (:gene/id found)))
+
+(defmethod wnp/resolve-change :gene/species
+  [db change]
+  (when-let [found (wnu/resolve-refs db {:gene/species (:value change)})]
+    (get-in found [:gene/species :species/latin-name])))
+
+(defn- resolve-ref-to-gene-id
+  [attr db change]
+  (let [found (wnu/resolve-refs db {attr (:value change)})]
+    (get-in found [attr :gene/id])))
+
+(defmethod wnp/resolve-change :gene/merges
+  [db change]
+  (resolve-ref-to-gene-id :gene/merges db change))
+
+(defmethod wnp/resolve-change :gene/splits
+  [db change prev-change]
+  (resolve-ref-to-gene-id :gene/splits db change))
+
 (defn about-gene [request identifier]
   (let [db (:db request)
         [lur _] (identify request identifier)]
