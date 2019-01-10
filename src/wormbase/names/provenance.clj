@@ -135,7 +135,9 @@
         tx-ids (query-tx-ids db entity-id)
         prov-seq (map pull-prov tx-ids)]
     (some->> prov-seq
-             (remove #(str/includes? (-> % :provenance/what name) "import"))
+             (remove (fn [v]
+                       (if-let [what (:provenance/what v)]
+                         (and (string? what) (str/includes? what "import")))))
              (map #(update % :provenance/how (fnil identity :agent/importer)))
              (sort-mrf)
              (seq))))
