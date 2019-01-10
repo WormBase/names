@@ -103,7 +103,7 @@
   (resolve-ref-to-gene-id :gene/merges db change))
 
 (defmethod wnp/resolve-change :gene/splits
-  [db change prev-change]
+  [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
 (defn about-gene [request identifier]
