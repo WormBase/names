@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   withStyles,
   Button,
+  Humanize,
   Paper,
   Table,
   TableBody,
@@ -16,7 +17,6 @@ import {
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 import UndoSplitGeneDialog from './UndoSplitGeneDialog';
-import { Humanize } from '../../components/elements';
 
 const RESURRECT = 'RESURRECT';
 const UNDO_MERGE = 'UNDO_MERGE';
