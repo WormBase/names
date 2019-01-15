@@ -118,7 +118,8 @@
         prov (wnp/assoc-provenance request payload :event/new-gene)
         data (:data payload)
         spec ::wsg/new-unnamed
-        cdata (wnu/conform-data request spec data validate-names)
+        names-validator (partial validate-names request)
+        cdata (wnu/conform-data spec data names-validator)
         tx-data [cdata prov]]
     @(d/transact-async conn tx-data)))
 
@@ -130,7 +131,8 @@
                  :data
                  (update :gene/status (fnil identity :gene.status/live)))
         spec ::wsg/new
-        [_ cdata] (wnu/conform-data request spec data validate-names)
+        names-validator (partial validate-names request)
+        [_ cdata] (wnu/conform-data spec data names-validator)
         prov (wnp/assoc-provenance request payload :event/new-gene)
         tx-data [['wormbase.ids.core/new template :gene/id [cdata]] prov]
         tx-res @(d/transact-async conn tx-data)
@@ -162,8 +164,9 @@
     (when entity
       (let [spec ::wsg/update
             data (:data payload)
-            conform #(wnu/conform-data request spec % validate-names)]
-        (let [cdata (->> (validate-names request data)
+            names-validator (partial validate-names request)
+            conform #(wnu/conform-data spec % names-validator)]
+        (let [cdata (->> data
                          (conform)
                          (second)
                          (resolve-refs-to-dbids db))

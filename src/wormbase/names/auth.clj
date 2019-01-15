@@ -127,7 +127,7 @@
                          :on-error access-error}))
 
 (defn restrict-access [rule]
-  (fn rsetricted [handler]
+  (fn restricted [handler]
     (baa/restrict handler {:handler rule
                            :on-error access-error})))
 

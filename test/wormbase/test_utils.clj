@@ -192,11 +192,41 @@
            (partition 2)
            (set)))
 
+
+(defn species->latin-name [lu-ref]
+  (let [[ident value] lu-ref
+        res (if (= ident :species/latin-name)
+              value
+              (->> (gss/load-seed-data)
+                   (filter #(= (ident %) value))
+                   (first)
+                   :species/latin-name))]
+    res))
+
+(defn species->ref
+  "Updates the value corresponding to `:gene/species` to be a lookup reference. "
+  [data]
+  (update data
+          :gene/species
+          (fn use-latin-name [sname]
+            (let [lur (s/conform ::wss/identifier sname)]
+              [:species/latin-name (species->latin-name lur)]))))
+
+(defn species-ref->latin-name
+  "Retrive the name of the gene species from a mapping."
+  [data]
+  (-> data :gene/species second))
+
 (defn gene-sample-to-txes
   "Convert a sample generated from a spec into a transactable form."
   [sample]
   (let [biotype (:gene/biotype sample)
-        ;; species (-> sample :gene/species vec first)
+        species (:gene/species sample)
+        species* (cond (keyword? species)
+                       [:species/latin-name (species->latin-name [:species/id species])]
+                       (string? species)
+                       [:species/latin-name species]
+                       :else species)
         assoc-if (fn [m k v]
                    (if v
                      (assoc m k v)
@@ -207,6 +237,7 @@
         (dissoc :provenance/when)
         (dissoc :provenance/how)
         (dissoc :gene/biotype)
+        (assoc-if :gene/species species*)
         (assoc-if :gene/biotype biotype))))
 
 (defn with-fixtures
@@ -315,29 +346,6 @@
        (map #(remove (comp nil? val) %))
        (map #(into {} %))
        (map #(dissoc % :history))))
-
-(defn species->latin-name [lu-ref]
-  (let [[ident value] lu-ref]
-    (if (= ident :species/latin-name)
-      value
-      (->> (gss/load-seed-data)
-           (filter #(= (ident %) value))
-           (first)
-           :species/latin-name))))
-
-(defn species->ref
-  "Updates the value corresponding to `:gene/species` to be a lookup reference. "
-  [data]
-  (update data
-          :gene/species
-          (fn use-latin-name [sname]
-            (let [lur (s/conform ::wss/identifier sname)]
-              [:species/latin-name (species->latin-name lur)]))))
-
-(defn species-ref->latin-name
-  "Retrive the name of the gene species from a mapping."
-  [data]
-  (-> data :gene/species second))
 
 (defn gene-samples [n]
   (assert (int? n))

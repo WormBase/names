@@ -10,7 +10,7 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(def general-cgc-name-regexp #"[A-Za-z\d-]+")
+(def general-cgc-name-regexp #"[A-Za-z\d-\\.]+")
 
 (def general-seq-name-regexp #"([A-Za-z\d\\._]+)([_|\\.]{0,1}\d+)?")
 
@@ -114,8 +114,10 @@
                                     :gene/cgc-name :gene/cgc-name
                                     :gene/sequence-name :gene/sequence-name)))
 
-(s/def ::name-attr (stc/spec (s/or :gene/cgc-name :gene/cgc-name
-                                   :gene/sequence-name :gene/sequence-name)))
+(s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
 
-(s/def ::remove-name-item (s/keys :req [:gene/id
-                                        (or :gene/cgc-name :gene/sequence-name)]))
+(s/def ::change-status-batch (stc/spec (s/coll-of ::identifier :min-count 1)))
+(s/def ::kill-batch ::change-status-batch)
+(s/def ::suppress-batch ::change-status-batch)
+(s/def ::resurrect-batch ::change-status-batch)
+

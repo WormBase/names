@@ -80,6 +80,7 @@
  #:db{:ident :event/kill-gene}
  #:db{:ident :event/resurrect-gene}
  #:db{:ident :event/suppress-gene}
+ #:db{:ident :event/remove-cgc-names}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version

@@ -138,9 +138,9 @@
    prov
    batch-size))
 
-(defn remove-names
+(defn retract
   [conn uiident attr coll prov & {:keys [batch-size]
-                                        :or {batch-size 100}}]
+                                  :or {batch-size 100}}]
   (process-batch
    (fn [sp transact-fn db items]
      (when (and db (seq items))
