@@ -121,10 +121,10 @@
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
 
-(defn conform-data [request spec data & [names-validator]]
+(defn conform-data [spec data & [names-validator]]
   (let [conformed (stc/conform spec
                                (if names-validator
-                                 (names-validator request data)
+                                 (names-validator data)
                                  data))]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
