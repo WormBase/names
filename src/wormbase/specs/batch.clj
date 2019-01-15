@@ -38,9 +38,6 @@
 (s/def ::split-item (s/keys :req-un [::split-into ::split-from]))
 (s/def ::split (stc/spec (s/coll-of ::split-item :min-count 1)))
 
-(s/def ::name-attr (stc/spec (s/or :gene-attr ::wsg/name-attr)))
-(s/def ::remove-names (stc/spec (s/coll-of ::wsg/remove-name-item :min-count 1)))
-
 (s/def ::change-status (stc/spec (s/coll-of ::wsg/identifier :min-count 1)))
 (s/def ::kill ::change-status)
 (s/def ::suppress ::change-status)
