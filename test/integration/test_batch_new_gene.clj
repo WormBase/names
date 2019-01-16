@@ -61,7 +61,7 @@
                  {:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (= (:status (conflict)) status)))))
+      (tu/status-is? (:status (conflict)) status body))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
