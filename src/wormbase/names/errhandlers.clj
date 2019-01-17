@@ -52,9 +52,11 @@
         [ident v] [(keyword k) v]]
     (format "Entity with %s identifier '%s' is already stored." (str ident) v)))
 
+(defmethod parse-exc-message :default [exc]
+  (throw exc))
+
 (defn handle-validation-error
-  [^Exception exc data request
-   & {:keys [message]}]
+  [^Exception exc data request & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if-let [problems (some-> data* :problems)]
