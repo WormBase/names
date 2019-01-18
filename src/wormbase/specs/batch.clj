@@ -31,6 +31,7 @@
 
 (s/def ::merge-item (s/keys :req-un [::merge-into ::merge-from]))
 (s/def ::merge (stc/spec (s/coll-of ::merge-item :min-count 1)))
+(s/def ::merged ::success-response)
 
 
 (s/def ::split-into :gene/id)

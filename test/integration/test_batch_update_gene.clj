@@ -14,8 +14,6 @@
 (defn update-genes [data]
   (api-tc/send-request "batch" :put data :sub-path "gene"))
 
-(def elegans-ln "Caenorhabditis elegans")
-
 (def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
@@ -89,5 +87,5 @@
         (fn [conn]
           (let [[status body] (update-genes {:data bdata :prov basic-prov})]
             (tu/status-is? (:status (ok)) status body)
-            (let [bid (get-in body [:updated :batch/id])]
+            (let [bid (get-in body [:updated :batch/id] "")]
               (t/is (uuid/uuid-string? bid)))))))))

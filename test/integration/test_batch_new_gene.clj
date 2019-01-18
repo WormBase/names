@@ -15,22 +15,11 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]
    [wormbase.names.batch :as wnb]
+   [wormbase.names.gene :refer [query-batch]]
    [wormbase.test-utils :as tu]
    [wormbase.fake-auth]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
-
-(defn query-batch [db bid]
-  (map (partial d/pull db '[* {:gene/status [:db/ident]}])
-       (d/q '[:find [?e ...]
-              :in $ ?bid
-              :where
-              [?tx :batch/id ?bid]
-              [?e ?a ?v ?tx]
-              [(not= ?e ?tx)]
-              [?a :db/ident ?aname]]
-            db
-            bid)))
 
 (defn new-genes [data]
   (api-tc/send-request "batch" :post data :sub-path "gene"))
@@ -61,7 +50,7 @@
                  {:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (= (:status (conflict)) status)))))
+      (tu/status-is? (:status (conflict)) status body))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."

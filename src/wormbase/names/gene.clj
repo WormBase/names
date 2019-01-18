@@ -32,6 +32,22 @@
 
 (def identify (partial wne/identify ::wsg/identifier))
 
+(defn query-batch [db bid]
+  (map (partial d/pull db '[* {:gene/status [:db/ident]
+                               :gene/species [:species/latin-name]
+                               :gene/biotype [:db/ident]
+                               :gene/merges [:gene/id]
+                               :gene/splits [:gene/id]}])
+       (d/q '[:find [?e ...]
+              :in $ ?bid
+              :where
+              [?tx :batch/id ?bid]
+              [?e ?a ?v ?tx]
+              [(not= ?e ?tx)]
+              [?a :db/ident ?aname]]
+            db
+            bid)))
+
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
      [(re-seq ?pattern ?name)]
@@ -241,24 +257,14 @@
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db payload :body-params} request
         data (:data payload)
+        prov (wnp/assoc-provenance request data :event/merge-genes)
         into-biotype (:gene/biotype data)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
                                                into-id
                                                from-id
                                                into-biotype)
-        from-seq-name (:gene/sequence-name from-g)
-        prov (wnp/assoc-provenance request data :event/merge-genes)
-        txes (concat
-              (concat
-               [['wormbase.ids.core/cas-batch from-lur {:gene/status :gene.status/dead}]
-                ['wormbase.ids.core/cas-batch into-lur {:gene/biotype into-biotype}]
-                [:db/add from-lur :gene/merges into-lur]]
-               [[:db/add from-lur :gene/merges into-lur]]
-               (when (uncloned-merge-target? into-g)
-                 [[:db/retract from-lur :gene/sequence-name from-seq-name]
-                  [:db/cas into-lur :gene/sequence-name nil from-seq-name]]))
-              [prov])
+        txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
       (let [[from-gene into-gene] (merged-info dba from-id into-id)]
@@ -267,7 +273,7 @@
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
       (internal-server-error
-       {:message "Invalid transaction - should never get here."}))))
+       {:message "Errant program logic."}))))
 
 (defn undo-merge-gene [request into-id from-id]
   (if-let [tx (d/q '[:find ?tx .

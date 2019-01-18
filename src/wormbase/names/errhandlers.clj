@@ -6,7 +6,13 @@
    [compojure.api.exception :as ex]
    [environ.core :as environ]
    [expound.alpha :as expound]
-   [ring.util.http-response :as http-response]
+   [ring.util.http-response :refer [bad-request
+                                    conflict
+                                    content-type
+                                    forbidden
+                                    internal-server-error
+                                    not-found
+                                    unauthorized]]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene])
@@ -22,13 +28,13 @@
                 :default-format)]
     (-> data
         (response-fn)
-        (http-response/content-type fmt))))
+        (content-type fmt))))
 
-(def respond-bad-request (partial respond-with http-response/bad-request))
+(def respond-bad-request (partial respond-with bad-request))
 
-(def respond-conflict (partial respond-with http-response/conflict))
+(def respond-conflict (partial respond-with conflict))
 
-(def respond-missing (partial respond-with http-response/not-found))
+(def respond-missing (partial respond-with not-found))
 
 (defn assoc-error-message [data exc & {:keys [message]}]
   (let [msg (or message (.getMessage exc) "No reason given")]
@@ -52,9 +58,11 @@
         [ident v] [(keyword k) v]]
     (format "Entity with %s identifier '%s' is already stored." (str ident) v)))
 
+(defmethod parse-exc-message :default [exc]
+  (throw exc))
+
 (defn handle-validation-error
-  [^Exception exc data request
-   & {:keys [message]}]
+  [^Exception exc data request & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if-let [problems (some-> data* :problems)]
@@ -88,7 +96,7 @@
        (handle-unexpected-error exc))
      (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
        (handle-unexpected-error exc)
-       (http-response/internal-server-error data))))
+       (internal-server-error data))))
   ([exc]
    (throw exc)))
 
@@ -127,8 +135,8 @@
 
 (defn handle-unauthenticated [^Exception exc data request]
   (if-not (authenticated? request)
-    (http-response/unauthorized "Access denied")
-    (http-response/forbidden)))
+    (unauthorized "Access denied")
+    (forbidden)))
 
 (defn handle-db-error [^Exception exc data request]
   (if-let [err-handler ((:db/error data) handlers)]
@@ -136,14 +144,17 @@
     (handle-db-conflict exc data request)))
 
 (defn handle-batch-errors [^Exception exc data request]
-  (respond-conflict request
-                    (assoc-error-message
-                     (update data
-                             :errors
-                             (fn [errors]
-                               (map parse-exc-message errors)))
-                     exc
-                     :message "Batch processing errors occurred")))
+  (try
+    (respond-conflict request
+                      (assoc-error-message
+                       (update data
+                               :errors
+                               (fn [errors]
+                                 (map parse-exc-message errors)))
+                       exc
+                       :message "Batch processing errors occurred"))
+    (catch Exception exc
+      (handle-unexpected-error exc))))
 
 (def ^{:doc "Error handler dispatch map for the compojure.api app"}
   handlers

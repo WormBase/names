@@ -28,7 +28,7 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (doseq [op [:kill :resurrect :suppress]]
-      (let [[status body] (send-change-status-request op {:data [] :prov nil})]
+      (let [[status body] (send-change-status-request op {:data [] :prov basic-prov})]
         (t/is (= (:status (bad-request)) status))))))
 
 (t/deftest dup-ids
@@ -39,7 +39,7 @@
         [g1 g2]
         (fn [conn]
           (let [data [gid gid]
-                [status body] (send-change-status-request :kill {:data data :prov nil})]
+                [status body] (send-change-status-request :kill {:data data :prov basic-prov})]
             (tu/status-is? (:status (ok)) status body)
             (t/is (-> body :dead (get :batch/id "") uuid/uuid-string?))))))))
 
@@ -47,7 +47,7 @@
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gsg/id 1))
           [status body] (send-change-status-request :kill {:data [gid]
-                                                           :prov nil})]
+                                                           :prov basic-prov})]
       (tu/status-is? (:status (conflict)) status body)
       (t/is (str/includes? (get body :message "") "processing errors occurred"))
       (t/is (some (fn [msg]
@@ -64,7 +64,7 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (send-change-status-request :kill {:data gids :prov nil})]
+          (let [[status body] (send-change-status-request :kill {:data gids :prov basic-prov})]
             (tu/status-is? (:status (conflict)) status body)
             (doseq [enf expected-not-found]
               (t/is (str/includes? (get body :message "") enf)))))))))
@@ -79,7 +79,7 @@
           (doseq [[to-status exp-resp-key] {:kill :dead
                                             :suppress :suppressed
                                             :resurrect :live}]
-            (let [[status body] (send-change-status-request to-status {:data gids :prov nil})]
+            (let [[status body] (send-change-status-request to-status {:data gids :prov basic-prov})]
               (tu/status-is? (:status (ok)) status body)
               (t/is (some-> body exp-resp-key :batch/id uuid/uuid-string?)
                     (pr-str body))

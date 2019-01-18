@@ -116,3 +116,27 @@
              (interleave coll)
              (partition 2)
              (map (partial apply merge)))))
+
+(defn merge-genes
+  "Merge two genes.
+
+  Transfer (retract and add) sequence-name from the \"from-gene\" if the \"into-gene\" is uncloned.
+  The \"from-gene\" will be marked as dead.
+
+  Return transaction data."
+  [db from-id into-id into-biotype]
+  (let [m-attr :gene/merges
+        attrs-signifying-cloned [:gene/biotype :gene/sequence-name]
+        from-gene (d/pull db [:gene/sequence-name] from-id)
+        into-gene (d/pull db attrs-signifying-cloned into-id)
+        from-seq-name (:gene/sequence-name from-gene)
+        uncloned-gene? (fn uncloned? [gene]
+                         (let [cloned-values ((apply juxt attrs-signifying-cloned) into-gene)]
+                           (every? nil? cloned-values)))]
+    (concat
+     [['wormbase.ids.core/cas-batch from-id {:gene/status :gene.status/dead}]
+      ['wormbase.ids.core/cas-batch into-id {:gene/biotype into-biotype}]
+      [:db/add from-id m-attr into-id]]
+     (when (uncloned-gene? into-gene)
+       [[:db/retract from-id :gene/sequence-name from-seq-name]
+        [:db/cas into-id :gene/sequence-name nil from-seq-name]]))))

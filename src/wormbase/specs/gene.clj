@@ -121,3 +121,13 @@
 (s/def ::suppress-batch ::change-status-batch)
 (s/def ::resurrect-batch ::change-status-batch)
 
+(s/def ::batch-merge-item (s/tuple
+                           (s/or :gene/id :gene/id)
+                           (s/or :gene/id :gene/id)
+                           (s/or :gene/biotype :gene/biotype)))
+
+(s/def ::from-gene (s/or :gene/id :gene/id))
+(s/def ::into-gene (s/or :gene/id :gene/id))
+(s/def ::into-biotype :gene/biotype)
+(s/def ::batch-merge-item (s/keys :req-un [::from-gene ::into-gene ::into-biotype]))
+(s/def ::merge-gene-batch (stc/spec (s/coll-of ::batch-merge-item :min-count 1)))
