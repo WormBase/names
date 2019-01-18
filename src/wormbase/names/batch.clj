@@ -1,23 +1,21 @@
 (ns wormbase.names.batch
   (:require
    [clojure.spec.alpha :as s]
-   [datomic.api :as d]
+   [clojure.string :as str]
    [compojure.api.sweet :as sweet]
+   [datomic.api :as d]
    [ring.util.http-response :refer [bad-request bad-request! conflict created ok]]
+   [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
+   [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.auth :as wna]
    [wormbase.names.coercion]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
-   [wormbase.specs.gene :as wsg]
    [wormbase.specs.common :as wsc]
-   [wormbase.specs.provenance :as wsp]
-   [wormbase.ids.batch :as wbids-batch]
-   [clojure.string :as str]
-   [spec-tools.core :as stc]
-   [wormbase.ids.core :as wbids]
-   [miner.strgen :as sg]))
+   [wormbase.specs.gene :as wsg]
+   [wormbase.specs.provenance :as wsp]))
 
 (s/def ::entity-type sts/string?)
 
