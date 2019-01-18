@@ -3,9 +3,10 @@
    [clojure.spec.alpha :as s]
    [datomic.api :as d]
    [compojure.api.sweet :as sweet]
-   [ring.util.http-response :refer [bad-request conflict created ok]]
+   [ring.util.http-response :refer [bad-request bad-request! conflict created ok]]
    [spec-tools.spec :as sts]
    [wormbase.names.auth :as wna]
+   [wormbase.names.coercion]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
@@ -14,7 +15,9 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.ids.batch :as wbids-batch]
    [clojure.string :as str]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]
+   [wormbase.ids.core :as wbids]
+   [miner.strgen :as sg]))
 
 (s/def ::entity-type sts/string?)
 
@@ -32,7 +35,7 @@
   (let [status-ident (keyword entity-type "status")]
     (map #(assoc % status-ident to-status) data)))
 
-(defn- batch-size [payload coll]
+(defn batch-size [payload coll]
   (let [bsize (:batch-size payload)
         coll-size (count coll)
         cbsize (/ coll-size 10)]
@@ -99,14 +102,14 @@
   [uiident attr event-type spec request]
   (let [{payload :body-params conn :conn} request
         {prov :prov data :data} payload
-        cdata (some->> data
-                       (stc/conform spec)
-                       (filter (fn remove-any-nils [[_ value]]
-                                 ((comp not nil?) value)))
-                       (map (partial apply array-map)))]
-    (if (s/invalid? cdata)
+        conformed (stc/conform spec data)]
+    (if (s/invalid? conformed)
       (bad-request {:data data})
-      (let [bsize (batch-size payload cdata)
+      (let [cdata (some->> conformed
+                           (filter (fn remove-any-nils [[_ value]]
+                                     ((comp not nil?) value)))
+                           (map (partial apply array-map)))
+            bsize (batch-size payload cdata)
             result (wbids-batch/retract
                     conn
                     uiident
@@ -115,6 +118,16 @@
                     prov
                     :batch-size bsize)]
         (ok {:retracted result})))))
+
+(defn merge-genes [event-type spec request]
+  (let [{conn :conn payload :body-params} request
+        {data :data prov :prov} payload
+        cdata (stc/conform spec data)]
+    (when (s/invalid? cdata)
+      (bad-request! {:data data
+                     :problems (s/explain-data spec data)}))
+    (let [bsize (batch-size payload data)]
+      (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
 
 (def resources
   (sweet/context "/batch" []
@@ -171,9 +184,8 @@
       (sweet/POST "/resurrect" request
         :summary "Resurrect dead entities."
         :middleware [wna/restrict-to-authenticated]
-        :body [{:keys [:data :prov]} {:data ::wsg/resurrect-batch
-                                      :prov ::wsp/provenance
-                                      :batch-size ::wsb/size}]
+        :body [data {:data ::wsg/resurrect-batch}
+               prov {:prov :wsp/provenance}]
         (change-entity-statuses :gene/id
                                 :event/resurrect-gene
                                 :gene.status/live
@@ -182,9 +194,8 @@
       (sweet/POST "/suppress" request
         :summary "Suppress entities."
         :middleware [wna/restrict-to-authenticated]
-        :body [{:keys [:data :prov]} {:data ::wsg/suppress-batch
-                                      :prov ::wsp/provenance
-                                      :batch-size ::wsb/size}]
+        :body [data {:data ::wsg/suppress-batch}
+               prov {:prov ::wsp/provenance}]
         (change-entity-statuses :gene/id
                                 :event/suppress-gene
                                 :gene.status/suppressed
@@ -193,20 +204,28 @@
       (sweet/DELETE "/cgc-name" request
         :summary "Remove CGC names from a gene."
         :middleware [wna/restrict-to-authenticated]
-        :body [{:keys [:data :prov]} {:data ::wsg/cgc-names
-                                      :prov ::wsp/provenance
-                                      :batch-size ::wsb/size}]
+        :body [data {:data ::wsg/cgc-names}
+               prov {:prov ::wsp/provenance}]
         (retract-attr-vals :gene/cgc-name
                            :gene/cgc-name
                            :event/remove-cgc-names
                            ::wsg/cgc-names
-                           request)))))
+                           request))
+      (sweet/context "/merge" []
+        (sweet/resource
+         {:post
+          {:summary "Merge multiple pairs of genes."
+           :responses (-> wnu/default-responses
+                        (assoc ok {:schema ::wsb/merged}))
+           :parameters {:body-params {:data ::wsg/merge-gene-batch
+                                      :prov ::wsp/provenance}}
+           :handler (fn [request]
+                      (merge-genes :event/merge-genes ::wsg/merge-gene-batch request))}})))))
+
 
 ;; TODO:
-;;;; /api/batch/<type>/?q= GET -> find-by-any-name-across-types
 ;;;; /api/batch/<type>/<batch-id>/ DELETE -> undo-batch-operation
-;;;; /api/batch/<type>/<batch-id>/ GET -> batch-info
-;;;; /api/batch/<type>/merge POST -> 1+ arrays of length 2+ g1, gN... (gN into g1)
+;;;; /api/batch/<type>/<batch-id>/ GET -> batch-info (including provenance)
 ;;;; /api/batch/<type>/split POST -> 1+ arrays of: gene-id, product-sequence-name, product-biotype
 
 (def routes (sweet/routes resources))

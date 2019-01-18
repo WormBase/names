@@ -57,7 +57,7 @@
     result*))
 
 (defn process-batch
-  [processor-fn conn uiident coll prov batch-size]
+  [processor-fn conn coll prov batch-size]
   (let [sp (assoc-prov prov)
         batch (partition-all batch-size coll)
         db (d/db conn)
@@ -85,6 +85,33 @@
         (when (get-in b-result [:tx-result :db-after])
           (apply array-map (find sp :batch/id)))))))
 
+(defn merge-genes
+  "Merge genes.
+
+   Merges a sequence of cloned/uncloned gene (from-id) into cloned genes.
+   Merging *into* uncloned genes is not supported.
+
+  `conn` - The datomic connnection.
+  `coll` - A collection of 3-tuples (from-id, into-id and into-biotype).
+  `prov` - the provenance to assoicate with each batch.
+
+  Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
+  [conn coll prov & {:keys [batch-size]
+                     :or {batch-size 100}}]
+  (process-batch
+   (fn [sp transact-fn db xs]
+     (when db
+       (some->> xs
+                (map (fn make-merge-txes [{:keys [from-gene into-gene into-biotype] :as data}]
+                       ['wormbase.ids.core/merge-genes from-gene into-gene into-biotype]))
+                (concat)
+                (add-prov-maybe sp)
+                (transact-fn db))))
+   conn
+   coll
+   prov
+   batch-size))
+
 (defn new
   "Create new entities, assiging a new WB identifiers.
 
@@ -103,7 +130,6 @@
          (some->> [['wormbase.ids.core/new template uiident xs] sp]
                   (transact-fn db))))
      conn
-     uiident
      coll
      prov
      batch-size)))
@@ -133,7 +159,6 @@
                 (add-prov-maybe sp)
                 (transact-fn db))))
    conn
-   uiident
    coll
    prov
    batch-size))
@@ -152,7 +177,6 @@
                 (add-prov-maybe sp)
                 (transact-fn db))))
    conn
-   uiident
    coll
    prov
    batch-size))

@@ -35,4 +35,6 @@
         fixtures
         (fn [conn]
           (let [[status body] (retract {:data cgc-names :prov basic-prov})]
-            (tu/status-is? (:status (ok)) status body)))))))
+            (tu/status-is? (:status (ok)) status body)
+            ;; TODO: check batch with (wng/query-batch db <bid>)
+            ))))))
