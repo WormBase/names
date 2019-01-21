@@ -78,49 +78,66 @@ class GeneActivitiesTable extends Component {
     );
   };
 
-  getActivityDescriptor = (activityItem, selfGeneId) => {
-    const entityKeys = [
-      'provenance/merged-from',
-      'provenance/merged-into',
-      'provenance/split-from',
-      'provenance/split-into',
-    ];
-    const selfEntityStub = {
-      'gene/id': selfGeneId,
-    };
-    const [entityKey] = entityKeys.filter(
-      (key) => activityItem[key] && activityItem[key]['gene/id'] === selfGeneId
-    );
-    const [relatedEntityKey] = entityKeys.filter(
-      (key) => activityItem[key] && activityItem[key]['gene/id'] !== selfGeneId
+  getActivityDescriptor = (activityItem = {}, selfGeneId) => {
+    const what = activityItem['provenance/what'];
+    const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
+      (result, change) => {
+        const { attr, value, added } = change || {};
+        if (attr === 'gene/merges' && added) {
+          return {
+            ...result,
+            relatedGeneId: value,
+          };
+        } else if (attr === 'gene/splits' && added) {
+          return {
+            ...result,
+            relatedGeneId: value,
+          };
+        } else if (attr === 'gene/status' && added) {
+          return {
+            ...result,
+            statusChange: value,
+          };
+        } else {
+          return {
+            ...result,
+          };
+        }
+      },
+      {}
     );
 
     let eventType;
-    if (entityKey) {
-      if (activityItem['provenance/merged-into'] === activityItem[entityKey]) {
-        eventType = 'merge_from';
-      } else if (
-        activityItem['provenance/merged-from'] === activityItem[entityKey]
-      ) {
-        eventType = 'merge_into';
-      } else if (
-        activityItem['provenance/split-into'] === activityItem[entityKey]
-      ) {
-        eventType = 'split_from';
-      } else if (
-        activityItem['provenance/split-from'] === activityItem[entityKey]
-      ) {
-        eventType = 'split_into';
-      }
+    if (what === 'event/merge-genes' && !statusChange) {
+      eventType = 'merge_from';
+    } else if (
+      what === 'event/merge-genes' &&
+      statusChange === 'gene.status/dead'
+    ) {
+      eventType = 'merge_into';
+    } else if (what === 'event/split-gene' && !statusChange) {
+      eventType = 'split_into';
+    } else if (
+      what === 'event/split-gene' &&
+      statusChange === 'gene.status/live'
+    ) {
+      eventType = 'split_from';
     } else {
-      eventType = activityItem['provenance/what'];
+      eventType = what;
     }
 
-    return [
-      eventType,
-      activityItem[entityKey] || selfEntityStub,
-      activityItem[relatedEntityKey],
-    ];
+    const descriptor = {
+      eventLabel: eventType || activityItem['provenance/what'],
+      entity: {
+        'gene/id': selfGeneId,
+      },
+      relatedEntity: relatedGeneId
+        ? {
+            'gene/id': relatedGeneId,
+          }
+        : null,
+    };
+    return descriptor;
   };
 
   getGeneIdForEvent = (selectedActivity, eventType) => {
@@ -190,11 +207,11 @@ class GeneActivitiesTable extends Component {
         <Table>
           <TableBody>
             {this.props.activities.map((activityItem, activityIndex) => {
-              const [
+              const {
                 eventLabel,
                 entity,
                 relatedEntity,
-              ] = this.getActivityDescriptor(
+              } = this.getActivityDescriptor(
                 activityItem,
                 this.props.selfGeneId
               );
