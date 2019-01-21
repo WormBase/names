@@ -49,7 +49,7 @@
  ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
  :aliases {:prod
            {:extra-deps
-            {wormbase/ids {:mvn/version "0.1.0"}}}
+            {wormbase/ids {:mvn/version "0.1.1"}}}
            :dev
            {:extra-deps
             {org.clojure/test.check {:mvn/version  "0.9.0"}
