@@ -6,7 +6,7 @@ pom.xml: deps.edn
 	@clojure -Spom
 	@sed -i 's|<groupId>ids</groupId>|<groupId>wormbase</groupId>|g' pom.xml
 
-release: clean ${JAR} pom.xml
+release: ${JAR}
 	@mvn deploy:deploy-file -Dfile=${JAR} -DrepositoryId=clojars -Durl=https://clojars.org/repo -DpomFile=pom.xml
 
 clean:
