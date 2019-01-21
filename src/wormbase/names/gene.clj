@@ -95,9 +95,10 @@
 (def info-pull-expr '[* {:gene/biotype [[:db/ident]]
                          :gene/species [[:species/latin-name]]
                          :gene/status [[:db/ident]]
-                         :gene/merges [[:gene/id]]
-                         :gene/splits [[:gene/id]]}])
-
+                         [:gene/merges :as :merged-into] [[:gene/id]]
+                         [:gene/_merges :as :merged-from] [[:gene/id]]
+                         [:gene/splits :as :split-into] [[:gene/id]]
+                         [:gene/_splits :as :split-from] [[:gene/id]]}])
 
 (defmethod wnp/resolve-change :gene/id
   [db change]
