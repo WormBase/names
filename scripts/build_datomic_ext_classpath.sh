@@ -14,7 +14,7 @@ JQ="/usr/local/bin/jq"
 CLOJURE="/usr/local/bin/clojure"
 ARTIFACT_INFO=$(curl -s -H 'accept: application/json' https://clojars.org/api/artifacts/wormbase/ids)
 ARTIFACT_NAME=$(echo $ARTIFACT_INFO | $JQ '"\(.group_name)/\(.jar_name)"' | tr -d '"')
-ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[-1].version)"')
+ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[0].version)"')
 
 aws_console "ARTIFACT NAME: $ARTIFACT_NAME"
 aws_console "ARTIFACT VERSION: $ARTIFACT_VERSION"
