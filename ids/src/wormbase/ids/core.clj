@@ -140,3 +140,31 @@
      (when (uncloned-gene? into-gene)
        [[:db/retract from-id :gene/sequence-name from-seq-name]
         [:db/cas into-id :gene/sequence-name nil from-seq-name]]))))
+
+(defn split-gene
+  "Split a gene into a new gene.
+
+  Ensures the new gene product has a biotype and sequence name.
+
+  Return transaction data."
+  [db from-id new-biotype product-biotype product-sequence-name]
+  (let [m-attr :gene/splits
+        new-id-template (identifier-format db :gene/id)
+        pull-attr-specs {:gene/biotype [:db/ident]
+                         :gene/species [:species/latin-name]}
+        from-gene (d/pull db (conj '[*] pull-attr-specs) from-id)
+        curr-bt (d/entid db (->> (find pull-attr-specs :gene/biotype)
+                                 (flatten)
+                                 (get-in from-gene)))
+        new-bt (d/entid db new-biotype)
+        new-data {:gene/sequence-name product-sequence-name
+                  :gene/biotype product-biotype
+                  :gene/species (get-in from-gene [:gene/species :species/latin-name])
+                  :gene/status :gene.status/live}
+        p-gene-lur (find new-data :gene/sequence-name)]
+  [['wormbase.ids.core/new new-id-template :gene/id [new-data]]
+   [:db/add from-id :gene/splits product-sequence-name]
+   [:db/cas from-id :gene/biotype curr-bt new-bt]]))
+
+  
+  

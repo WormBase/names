@@ -45,6 +45,8 @@
                   (cc/update result
                              :tx-result
                              (fn [tx-res]
+                               (println "TXES in attempt-batch:")
+                               (prn xs)
                                (d/with (:db-after tx-res) xs)))
                   (catch Exception exc
                     (if (some-> exc ex-data :db/error)
@@ -92,7 +94,7 @@
    Merging *into* uncloned genes is not supported.
 
   `conn` - The datomic connnection.
-  `coll` - A collection of 3-tuples (from-id, into-id and into-biotype).
+  `coll` - A collection of maps having the keys `:from-id`, `:into-id` and `:into-biotype`.
   `prov` - the provenance to assoicate with each batch.
 
   Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
@@ -107,6 +109,37 @@
                 (concat)
                 (add-prov-maybe sp)
                 (transact-fn db))))
+   conn
+   coll
+   prov
+   batch-size))
+
+(defn split-genes
+  "Split genes.
+
+  Splits a sequence of gene ids into new genes.
+
+  `conn` - The datomic connnection.
+  `coll` - A collection of mappings containing the keys `:from-gene`,
+           `:new-biotype`,`:product-biotype` and `:product-sequence-name`.
+  `prov` - the provenance to assoicate with each batch.
+
+  Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
+  [conn coll prov & {:keys [batch-size]
+                     :or {batch-size 100}}]
+  (process-batch
+   (fn [sp transact-fn batch-result xs]
+     (when batch-result
+       (some->> xs
+                (map (fn make-split-txes
+                       [{:keys [from-id
+                                new-biotype
+                                product-biotype
+                                product-sequence-name]}]
+                       ['wormbase.ids.core/split-gene from-id new-biotype product-biotype product-sequence-name]))
+               ;;(concat)
+               (add-prov-maybe sp)
+               (transact-fn batch-result))))
    conn
    coll
    prov
