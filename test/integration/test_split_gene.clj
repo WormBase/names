@@ -18,14 +18,17 @@
       :or {current-user "tester@wormbase.org"}}]
   (fake-auth/payload {"email" current-user}))
 
+(defn query-tx [conn attr gene]
+  (d/q '[:find ?tx .
+         :in $ ?attr ?gene
+         :where
+         [?gene ?attr _ ?tx]]
+       (-> conn d/db d/history)
+       attr
+       gene))
+
 (defn query-provenance [conn attr gene]
-  (let [mtx (d/q '[:find ?tx .
-                   :in $ ?attr ?gene
-                   :where
-                   [?gene ?attr _ ?tx]]
-                 (-> conn d/db d/history)
-                 attr
-                 gene)]
+  (let [mtx (query-tx conn attr gene)]
     (when mtx
       (d/pull (d/db conn)
               '[:provenance/why
@@ -172,7 +175,7 @@
          (dissoc :gene/cgc-name))
      prod-seq-name]))
 
-(t/deftest provenance-recorded
+(t/deftest success
   (t/testing "Provenence for successful split is recorded."
     (let [[gene-id data-sample prod-seq-name] (gen-sample-for-split)]
       (tu/with-gene-fixtures
@@ -190,18 +193,21 @@
                                           :current-user user-email)]
             (tu/status-is? (:status (created "/")) status body)
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
-                  src (d/pull (d/db conn) '[* {:gene/splits [[:gene/id]]}] from-lur)
+                  src (d/pull (d/db conn) '[* {:gene/status [:db/ident]
+                                               :gene/splits [[:gene/id]]}] from-lur)
                   src-id (:gene/id src)
-                  prod (d/pull (d/db conn) '[* {:gene/_splits [[:gene/id]]}] into-lur)
+                  prod (d/pull (d/db conn) '[* {:gene/status [:db/ident]
+                                                :gene/_splits [[:gene/id]]}] into-lur)
                   prod-id (:gene/id prod)
                   prov (query-provenance conn :gene/splits (:db/id src))]
+              (t/is (= (get-in src [:gene/status :db/ident]) :gene.status/live) "source is not live")
+              (t/is (= (get-in prod [:gene/status :db/ident]) :gene.status/live) "product is not live")
               (t/is ((set (map :gene/id (:gene/splits src))) prod-id))
               (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (some-> prov :provenance/when inst?))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
               (t/is (= :agent/web (some-> prov :provenance/how :db/ident))))))))))
-
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
