@@ -316,7 +316,9 @@
           prov (wnp/assoc-provenance request cdata :event/split-gene)
           species (get-in from-gene [:gene/species :species/latin-name])
           new-data (merge {:gene/species (s/conform :gene/species species)}
-                          (assoc product :db/id p-seq-name))
+                          (assoc product
+                                 :db/id p-seq-name
+                                 :gene/status :gene.status/live))
           curr-bt (d/entid db (:gene/biotype from-gene))
           new-bt (d/entid db biotype)
           p-gene-lur [:gene/sequence-name p-seq-name]
