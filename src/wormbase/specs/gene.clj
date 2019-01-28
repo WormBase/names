@@ -136,5 +136,5 @@
 (s/def ::new-biotype (s/nilable :gene/biotype))
 (s/def ::product-biotype :gene/biotype)
 (s/def ::product-sequence-name :gene/sequence-name)
-(s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-biotype ::product-sequence-name]))
+(s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]))
 (s/def ::split-gene-batch (stc/spec (s/coll-of ::batch-split-item :min-count 1)))

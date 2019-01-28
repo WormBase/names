@@ -46,12 +46,9 @@
           data [{:from-id gene-id
                  :new-biotype new-biotype
                  :product-biotype prod-biotype
-                 :product-sequence-name "SEQPRODUCT1.1"}]
-
-          _ (println "DATA FOR SPLIT:")
-          _ (prn data)]
+                 :product-sequence-name "SEQPRODUCT1.1"}]]
       (tu/with-gene-fixtures
-        fixtures** 
+        fixtures**
         (fn [conn]
           (let [[status body] (split-genes {:data data :prov basic-prov})]
             (tu/status-is? (:status (ok)) status body)))))))
@@ -59,18 +56,19 @@
 (t/deftest success
   (t/testing "A succesful specification of split operations."
     (let [gene-ids (gen/sample gsg/id 2)
-          fixtures (keep-indexed
-                    (fn [idx fixture]
-                      (assoc fixture
-                             :gene/id (nth gene-ids idx)
-                             :gene/sequence-name (tu/seq-name-for-species)
-                             :gene/status :gene.status/live
-                             :gene/biotype :biotype/cds))
-                    gene-ids)
+          fixtures (map
+                    (fn [gene-id]
+                      {:gene/id gene-id
+                       :gene/species [:species/latin-name elegans-ln]
+                       :gene/sequence-name (tu/seq-name-for-species elegans-ln)
+                       :gene/status :gene.status/live
+                       :gene/biotype :biotype/cds})
+                     gene-ids)
           from-seq-name (-> fixtures first :gene/sequence-name)
           bdata [{:from-id (:gene/id (first fixtures))
-                  :new-biotype :biotype/psuedogene
-                  :product-biotype :biotype/transcript}
+                  :new-biotype :biotype/pseudogene
+                  :product-biotype :biotype/transcript
+                  :product-sequence-name "SEQ1.1"}
                  {:from-id (:gene/id (second fixtures))
                   :new-biotype nil      ;; no change
                   :product-biotype :biotype/pseudogene
@@ -88,13 +86,22 @@
                                             [(:gene/sequence-name bi) bi])
                                           batch-info))]
               (doseq [split-spec-data bdata]
-                (let [from-gene (get batch-lookup (:from-seq-name split-spec-data))
-                      into-gene (get batch-lookup (:into-gene split-spec-data))]
-                  (t/is (= (get-in from-gene [:gene/status :db/ident]) :gene.status/dead))
-                  (t/is (= (get-in into-gene [:gene/status :db/ident]) :gene.status/live))
-                  (t/is (= (get-in into-gene [:gene/biotype :db/ident])
-                           (:new-biotype split-spec-data))))))))))))
-
-
-
-
+                (let [pull-pattern '[* {:gene/species [:species/latin-name]
+                                                         :gene/status [:db/ident]
+                                                         :gene/biotype [:db/ident]
+                                        :gene/_splits [:gene/id]
+                                        :gene/splits [:gene/id]}]
+                      pull (partial d/pull (d/db conn) pull-pattern)
+                      from-gene (pull [:gene/id (:from-id split-spec-data)])
+                      product (pull [:gene/sequence-name (:product-sequence-name split-spec-data)])
+                      expected-prod-bt (:product-biotype split-spec-data)
+                      expected-new-bt (or (:new-biotype split-spec-data)
+                                          (get-in from-gene [:gene/biotype :db/ident]))]
+                  (t/is (= (get-in from-gene [:gene/status :db/ident]) :gene.status/live))
+                  (t/is (some (fn [g]
+                                (= (:gene/id g) (:from-id split-spec-data)))
+                              (:gene/_splits product)))
+                  (t/is (= (get-in product [:gene/status :db/ident]) :gene.status/live))
+                  (t/is (= (get-in product [:gene/biotype :db/ident]) expected-prod-bt)
+                        (str "PRODUCT:\n"
+                             (pr-str product))))))))))))
