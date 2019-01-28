@@ -5,14 +5,14 @@
 
 (s/def :biotype/cds sts/keyword?)
 
-(s/def :biotype/psuedogene sts/keyword?)
+(s/def :biotype/pseudogene sts/keyword?)
 
 (s/def :biotype/transcript sts/keyword?)
 
 (s/def :biotype/transposable-element-gene sts/keyword?)
 
 (def all-biotypes #{:biotype/cds
-                    :biotype/psuedogene
+                    :biotype/pseudogene
                     :biotype/transcript
                     :biotype/transposable-element-gene})
 

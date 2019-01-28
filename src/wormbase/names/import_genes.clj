@@ -98,7 +98,7 @@
                                                     (= % "Transposon In Origin"))
                :biotype/transcript #(= % "Transcript")
                :biotype/cds #(= % "CDS")
-               :biotype/psuedogene #(= % "Pseudogene"))))
+               :biotype/pseudogene #(= % "Pseudogene"))))
 
 (defn ->biotype [v]
   (if-not (str/blank? v)

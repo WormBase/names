@@ -106,9 +106,9 @@
            Maps in this collection will be augmented with identifiers associated with `uiident`.
 
   Returns data suitable for passing to `datomic.api/transact`."
-  [db template uiident coll]
-  (let [start-n (latest-id-number db uiident)
-        stop-n (+ (count coll) start-n)]
+  [db template uiident coll & {:keys [start-n]
+                               :or {start-n (latest-id-number db uiident)}}]
+  (let [stop-n (+ (count coll) start-n)]
     (some->> (range start-n stop-n)
              (map inc)
              (map (partial format template))
@@ -140,3 +140,34 @@
      (when (uncloned-gene? into-gene)
        [[:db/retract from-id :gene/sequence-name from-seq-name]
         [:db/cas into-id :gene/sequence-name nil from-seq-name]]))))
+
+(defn split-genes
+  "Split a gene into a new gene.
+
+  Ensures the new gene product has a biotype and sequence name.
+
+  Return transaction data."
+  [db xs]
+  (let [pull-attr-specs {:gene/biotype [:db/ident]
+                         :gene/species [:species/latin-name]}
+        pull-from-gene (partial d/pull db (conj '[*] pull-attr-specs))
+        id-template (identifier-format db :gene/id)
+        new-data (map (fn [{:keys [from-id product-sequence-name product-biotype]}]
+                        (let [from-gene (pull-from-gene from-id)
+                              from-species (:gene/species from-gene)]
+                          {:db/id product-sequence-name
+                           :gene/sequence-name product-sequence-name
+                           :gene/biotype product-biotype
+                           :gene/species (find from-species :species/latin-name)
+                           :gene/status :gene.status/live}))
+                      xs)]
+    (some->> xs
+             (mapcat (fn [{:keys [from-id new-biotype product-sequence-name]}]
+                       (let [from-gene (pull-from-gene from-id)
+                             curr-bt (d/entid db (->> (find pull-attr-specs :gene/biotype)
+                                                      (flatten)
+                                                      (get-in from-gene)))
+                             new-bt (or (d/entid db new-biotype) curr-bt)]
+                         [[:db/add from-id :gene/splits product-sequence-name]
+                          [:db/add from-id :gene/biotype curr-bt new-bt]])))
+             (cons ['wormbase.ids.core/new id-template :gene/id new-data]))))

@@ -127,6 +127,16 @@
     (let [bsize (batch-size payload data)]
       (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
 
+(defn split-genes [event-type spec request]
+  (let [{conn :conn payload :body-params} request
+        {data :data prov :prov} payload
+        cdata (stc/conform spec data)]
+    (when (s/invalid? cdata)
+      (bad-request! {:data data
+                     :problems (s/explain-data spec data)}))
+    (let [bsize (batch-size payload data)]
+      (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
+
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
@@ -214,11 +224,21 @@
          {:post
           {:summary "Merge multiple pairs of genes."
            :responses (-> wnu/default-responses
-                        (assoc ok {:schema ::wsb/merged}))
+                        (assoc ok {:schema ::wsb/success-response}))
            :parameters {:body-params {:data ::wsg/merge-gene-batch
                                       :prov ::wsp/provenance}}
            :handler (fn [request]
-                      (merge-genes :event/merge-genes ::wsg/merge-gene-batch request))}})))))
+                      (merge-genes :event/merge-genes ::wsg/merge-gene-batch request))}}))
+      (sweet/context "/split" []
+        (sweet/resource
+         {:post
+          {:summary "Split multiple genes."
+           :responses (assoc wnu/default-responses ok {:schema ::wsb/success-response})
+           :parameters {:body-params {:data ::wsg/split-gene-batch
+                                      :prov ::wsp/provenance}}
+           :handler (fn [request]
+                      (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))
+      )))
 
 
 ;; TODO:

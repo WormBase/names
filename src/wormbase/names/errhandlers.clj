@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.tools.logging :as log]
+   [datomic.api :as d]
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
    [environ.core :as environ]
@@ -47,8 +48,10 @@
   (format "Cannot accept nil-value %s" (ex-data exc)))
 
 (defmethod parse-exc-message :db.error/not-an-entity [exc]
-  (let [[attr value] (-> exc ex-data :entity)]
-    (format "Entity attribute %s with identifier '%s' does not exist" attr value)))
+  (let [ent (some-> exc ex-data :entity)]
+    (if (keyword? ent)
+      (format "Ident %s does not exist" ent)
+      (apply format "Entity attribute %s with identifier '%s' does not exist" ent))))
 
 (defmethod parse-exc-message :db.error/unique-conflict [exc]
   (let [msg (.getMessage exc)

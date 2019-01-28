@@ -92,7 +92,7 @@
    Merging *into* uncloned genes is not supported.
 
   `conn` - The datomic connnection.
-  `coll` - A collection of 3-tuples (from-id, into-id and into-biotype).
+  `coll` - A collection of maps having the keys `:from-id`, `:into-id` and `:into-biotype`.
   `prov` - the provenance to assoicate with each batch.
 
   Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
@@ -112,6 +112,30 @@
    prov
    batch-size))
 
+(defn split-genes
+  "Split genes.
+
+  Splits a sequence of gene ids into new genes.
+
+  `conn` - The datomic connnection.
+  `coll` - A collection of mappings containing the keys `:from-gene`,
+           `:new-biotype`,`:product-biotype` and `:product-sequence-name`.
+  `prov` - the provenance to assoicate with each batch.
+
+  Returns a collection of data structures, each suitable for passing to `datomic.api/transact`."
+  [conn coll prov & {:keys [batch-size]
+                     :or {batch-size 100}}]
+  (process-batch
+   (fn process-split-data [sp transact-fn batch-result xs]
+     (when batch-result
+       (some->> [['wormbase.ids.core/split-genes xs]]
+                (add-prov-maybe sp)
+                (transact-fn batch-result))))
+   conn
+   coll
+   prov
+   batch-size))
+
 (defn new
   "Create new entities, assiging a new WB identifiers.
 
@@ -125,7 +149,7 @@
                              :or {batch-size 100}}]
   (let [template (identifier-format (d/db conn) uiident)]
     (process-batch
-     (fn reduce-new [sp transact-fn db xs]
+     (fn process-new-data [sp transact-fn db xs]
        (when db
          (some->> [['wormbase.ids.core/new template uiident xs] sp]
                   (transact-fn db))))
@@ -167,7 +191,7 @@
   [conn uiident attr coll prov & {:keys [batch-size]
                                   :or {batch-size 100}}]
   (process-batch
-   (fn [sp transact-fn db items]
+   (fn process-retract-data [sp transact-fn db items]
      (when (and db (seq items))
        (some->> items
                 (map (fn [item]
