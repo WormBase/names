@@ -45,8 +45,6 @@
                   (cc/update result
                              :tx-result
                              (fn [tx-res]
-                               (println "TXES in attempt-batch:")
-                               (prn xs)
                                (d/with (:db-after tx-res) xs)))
                   (catch Exception exc
                     (if (some-> exc ex-data :db/error)
@@ -128,18 +126,11 @@
   [conn coll prov & {:keys [batch-size]
                      :or {batch-size 100}}]
   (process-batch
-   (fn [sp transact-fn batch-result xs]
+   (fn process-split-data [sp transact-fn batch-result xs]
      (when batch-result
-       (some->> xs
-                (map (fn make-split-txes
-                       [{:keys [from-id
-                                new-biotype
-                                product-biotype
-                                product-sequence-name]}]
-                       ['wormbase.ids.core/split-gene from-id new-biotype product-biotype product-sequence-name]))
-               ;;(concat)
-               (add-prov-maybe sp)
-               (transact-fn batch-result))))
+       (some->> [['wormbase.ids.core/split-genes xs]]
+                (add-prov-maybe sp)
+                (transact-fn batch-result))))
    conn
    coll
    prov
@@ -158,7 +149,7 @@
                              :or {batch-size 100}}]
   (let [template (identifier-format (d/db conn) uiident)]
     (process-batch
-     (fn reduce-new [sp transact-fn db xs]
+     (fn process-new-data [sp transact-fn db xs]
        (when db
          (some->> [['wormbase.ids.core/new template uiident xs] sp]
                   (transact-fn db))))
@@ -200,7 +191,7 @@
   [conn uiident attr coll prov & {:keys [batch-size]
                                   :or {batch-size 100}}]
   (process-batch
-   (fn [sp transact-fn db items]
+   (fn process-retract-data [sp transact-fn db items]
      (when (and db (seq items))
        (some->> items
                 (map (fn [item]

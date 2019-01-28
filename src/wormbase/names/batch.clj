@@ -130,9 +130,7 @@
 (defn split-genes [event-type spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
-        cdata (stc/conform spec data)
-        _ (println "CONFORMED DATA FOR SPLIT:")
-        _ (prn cdata)]
+        cdata (stc/conform spec data)]
     (when (s/invalid? cdata)
       (bad-request! {:data data
                      :problems (s/explain-data spec data)}))
