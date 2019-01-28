@@ -11,7 +11,7 @@ const BiotypeSelect = (props) => {
       sequenceOntology: 'SO:0000316',
     },
     {
-      id: 'biotype/psuedogene',
+      id: 'biotype/pseudogene',
       label: 'Psuedogene',
       sequenceOntology: 'SO:0000336',
     },

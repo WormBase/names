@@ -62,7 +62,7 @@
                     (concat (interleave uncloned cloned)))
           bdata [{:from-gene (:gene/id (first fixtures))
                   :into-gene (:gene/id (nth fixtures 2))
-                  :into-biotype :biotype/psuedogene}
+                  :into-biotype :biotype/pseudogene}
                  {:from-gene (:gene/id (second fixtures))
                   :into-gene (:gene/id (nth fixtures 3))
                   :into-biotype :biotype/transcript}]]

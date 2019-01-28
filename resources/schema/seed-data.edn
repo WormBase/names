@@ -1,7 +1,7 @@
 [;; biotypes
  #:db{:ident :biotype/transcript}
  #:db{:ident :biotype/transposable-element-gene}
- #:db{:ident :biotype/psuedogene}
+ #:db{:ident :biotype/pseudogene}
  #:db{:ident :biotype/cds}
 
  ;; species
