@@ -15,7 +15,6 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]
    [wormbase.names.batch :as wnb]
-   [wormbase.names.gene :refer [query-batch]]
    [wormbase.test-utils :as tu]
    [wormbase.fake-auth]))
 
@@ -70,7 +69,8 @@
       (t/is (:status (created)) (str status))
       (let [bid (get-in body [:created :batch/id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
-        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
+        (t/is (= (-> body :identifiers count) (count bdata)))
+        (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs)))))))

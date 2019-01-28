@@ -133,3 +133,16 @@
                          :type ::validation-error
                          :data data})))
       conformed)))
+
+(defn query-batch [db bid pull-expr]
+  (map (partial d/pull db pull-expr)
+       (d/q '[:find [?e ...]
+              :in $ ?bid
+              :where
+              [?tx :batch/id ?bid]
+              [?e ?a ?v ?tx]
+              [(not= ?e ?tx)]
+              [?a :db/ident ?aname]]
+            db
+            bid)))
+

@@ -3,7 +3,8 @@
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
    [wormbase.specs.provenance] ;; side effects
-   [wormbase.specs.gene :as wsg]))
+   [wormbase.specs.gene :as wsg]
+   [spec-tools.spec :as sts]))
 
 (s/def :batch/id uuid?)
 
@@ -11,7 +12,11 @@
 
 (s/def ::success-response (stc/spec (s/keys :req [:batch/id])))
 
-(s/def ::created ::success-response)
+(s/def ::identifier-key sts/keyword?)
+(s/def ::identifiier-values (s/coll-of string? :min-count 1))
+(s/def ::identifiers (s/keys :req-un [::identifier-key ::identifier-values]))
+
+(s/def ::created (s/merge ::success-response (s/keys :req-un [::identifiers])))
 
 (s/def ::new (stc/spec (s/coll-of ::wsg/new :min-count 1)))
 

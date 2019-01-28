@@ -20,7 +20,9 @@
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
+   [wormbase.names.gene :as wng]
    [wormbase.names.service :as wns]
+   [wormbase.names.util :as wnu]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.species :as wss])
   (:import
@@ -259,8 +261,25 @@
                            (d/db conn))]
       (test-fn conn))))
 
+(defn with-batch-fixtures
+  [sample-transform provenance-fn data-samples test-fn]
+  (let [conn (db-testing/fixture-conn)
+        sample-data (if (map? data-samples)
+                      [data-samples]
+                      data-samples)
+        data (map sample-transform sample-data)
+        prov (when (ifn? provenance-fn)
+               (provenance-fn data))
+        tx-fixtures (if prov
+                      (conj data prov)
+                      data)]
+    @(d/transact-async conn tx-fixtures)
+    (with-redefs [wdb/connection (constantly conn)
+                  wdb/db (fn [_] (d/db conn))]
+      (test-fn conn))))
+
 (defn gene-provenance
-  [data & {:keys [how what whence why person status]
+  [data & {:keys [how what whence why person status batch-id]
            :or {how :agent/console
                 whence (jt/to-java-date (jt/instant))
                 what :event/test-fixture-assertion
@@ -273,7 +292,9 @@
          (when-not (:gene/status data)
            {:gene/status :gene.status/live})
          (when why
-           {:provenance/why why})))
+           {:provenance/why why})
+         (when batch-id
+           {:batch/id batch-id})))
 
 (def with-gene-fixtures (partial with-fixtures
                                  gene-sample-to-txes
@@ -372,3 +393,6 @@
     (-> formats
         (muuntaja/encode "application/json" data)
         (slurp))))
+
+(defn query-gene-batch [db bid]
+  (wnu/query-batch db bid wng/info-pull-expr))

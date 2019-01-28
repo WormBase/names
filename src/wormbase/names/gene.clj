@@ -32,22 +32,6 @@
 
 (def identify (partial wne/identify ::wsg/identifier))
 
-(defn query-batch [db bid]
-  (map (partial d/pull db '[* {:gene/status [:db/ident]
-                               :gene/species [:species/latin-name]
-                               :gene/biotype [:db/ident]
-                               :gene/merges [:gene/id]
-                               :gene/splits [:gene/id]}])
-       (d/q '[:find [?e ...]
-              :in $ ?bid
-              :where
-              [?tx :batch/id ?bid]
-              [?e ?a ?v ?tx]
-              [(not= ?e ?tx)]
-              [?a :db/ident ?aname]]
-            db
-            bid)))
-
 (def name-matching-rules
   '[[(matches-name ?attr ?pattern ?name ?eid ?attr)
      [(re-seq ?pattern ?name)]
