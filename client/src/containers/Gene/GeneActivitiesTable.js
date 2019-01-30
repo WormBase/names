@@ -83,26 +83,19 @@ class GeneActivitiesTable extends Component {
     const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
       (result, change) => {
         const { attr, value, added } = change || {};
-        if (attr === 'gene/merges' && added) {
-          return {
-            ...result,
-            relatedGeneId: value,
-          };
-        } else if (attr === 'gene/splits' && added) {
-          return {
-            ...result,
-            relatedGeneId: value,
-          };
-        } else if (attr === 'gene/status' && added) {
-          return {
-            ...result,
-            statusChange: value,
-          };
-        } else {
-          return {
-            ...result,
-          };
-        }
+        if (added)
+          if (attr === 'gene/splits' || attr === 'gene/merges') {
+            return {
+              ...result,
+              relatedGeneId: value,
+            };
+          } else if (attr === 'gene/status') {
+            return {
+              ...result,
+              statusChange: value,
+            };
+          }
+        return result;
       },
       {}
     );
