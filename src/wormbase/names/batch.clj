@@ -78,9 +78,8 @@
                      (-> request :conn d/db)
                      (:batch/id batch-result)
                      uiident)
-        result (assoc batch-result :identifiers {:identifier-key uiident
-                                                 :identifier-values  new-ids})]
-    (created (-> result :batch/id str) {:created result})))
+        result (assoc batch-result :ids new-ids :id-key uiident)]
+    (created (-> result :batch/id str) result)))
 
 (defn update-entities
   [uiident event-type request]
@@ -222,7 +221,7 @@
          :x-name ::new-entities
          :middleware [wna/restrict-to-authenticated]
          :responses (-> wnu/default-responses
-                        (assoc created {:schema {:created ::wsb/created}})
+                        (assoc created {:schema ::wsb/created})
                         (wnu/response-map))
          :parameters {:body-params {:data ::wsb/new
                                     :prov ::prov}}

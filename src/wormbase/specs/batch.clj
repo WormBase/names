@@ -12,11 +12,10 @@
 
 (s/def ::success-response (stc/spec (s/keys :req [:batch/id])))
 
-(s/def ::identifier-key sts/keyword?)
-(s/def ::identifiier-values (s/coll-of string? :min-count 1))
-(s/def ::identifiers (s/keys :req-un [::identifier-key ::identifier-values]))
+(s/def ::ids (s/coll-of string? :min-count 1))
+(s/def ::id-key sts/keyword?)
 
-(s/def ::created (s/merge ::success-response (s/keys :req-un [::identifiers])))
+(s/def ::created (s/merge ::success-response (s/keys :req-un [::ids ::id-key])))
 
 (s/def ::new (stc/spec (s/coll-of ::wsg/new :min-count 1)))
 
