@@ -161,28 +161,13 @@
                   (partial d/pull db wng/provenance-pull-expr)))
        (first)))
 
-(defn query-batch-sumamry [db bid]
-  (let [data (d/q '[:find ?a ?v ?added
-                    :in $ ?bid
-                    :where
-                    [?tx :batch/id ?bid]
-                    [?e ?a ?v ?tx ?added]
-                    [(not= ?e ?tx)]
-                    [?a :db/ident ?aname]]
-                  db
-                  bid)]
-    data))
-
 (defn info [request bid]
   (let [{db :db} request
         batch-id (uuid/as-uuid bid)
-        b-info (query-batch-sumamry db batch-id)
-        b-prov-info (query-provenance db batch-id)
-        ;b-info (wu/undatomicize db (wnu/query-batch db batch-id wng/info-pull-expr))
-        ]
-    (assert (uuid? batch-id))
-    (ok {:data b-info
-         :prov b-prov-info})))
+        b-prov-info (query-provenance db batch-id)]
+    (when b-prov-info
+      (assert (uuid? batch-id))
+      (ok {:prov b-prov-info}))))
 
 (def resources
   (sweet/context "/batch" []
@@ -192,7 +177,6 @@
                         ok
                         {:schema ::wsb/success-response})
       :path-params [batch-id :- :batch/id]
-      (println "BATCH ID:" batch-id)
       (info request batch-id))
     (sweet/context "/gene" []
       (sweet/resource
