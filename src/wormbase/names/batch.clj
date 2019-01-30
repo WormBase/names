@@ -15,7 +15,10 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
-   [wormbase.specs.provenance :as wsp]))
+   [wormbase.specs.provenance :as wsp]
+   [clj-uuid :as uuid]
+   [wormbase.names.gene :as wng]
+   [wormbase.util :as wu]))
 
 (s/def ::entity-type sts/string?)
 
@@ -57,17 +60,27 @@
   "Create a batch of new entities."
   [uiident event-type request]
   (let [entity-type (namespace uiident)
-        result (batcher wbids-batch/new
-                        uiident
-                        event-type
-                        ::wsb/new
-                        request
-                        :data-transform (fn set-live [_ data]
-                                          (let [live-status (keyword (str/join "." [entity-type "status"])
-                                                                     "live")]
-                                            (->> (conform-spec-drop-label ::wsb/new data)
-                                                 (assign-status entity-type live-status)))))]
-    (created (-> result :batch/id str) {:created result})))
+        batch-result (batcher wbids-batch/new
+                              uiident
+                              event-type
+                              ::wsb/new
+                              request
+                              :data-transform (fn set-live [_ data]
+                                                (let [live-status (keyword (str/join "." [entity-type "status"])
+                                                                           "live")]
+                                                  (->> data
+                                                       (conform-spec-drop-label ::wsb/new)
+                                                       (assign-status entity-type live-status)))))
+        new-ids (d/q '[:find [?identifier ...]
+                       :in $ ?bid ?ident
+                       :where
+                       [?tx :batch/id ?bid]
+                       [?e ?ident ?identifier ?tx]]
+                     (-> request :conn d/db)
+                     (:batch/id batch-result)
+                     uiident)
+        result (assoc batch-result :ids new-ids :id-key uiident)]
+    (created (-> result :batch/id str) result)))
 
 (defn update-entities
   [uiident event-type request]
@@ -137,9 +150,34 @@
     (let [bsize (batch-size payload data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
+(defn query-provenance [db bid]
+  (->> (d/q '[:find [?tx ...]
+              :in $ ?bid
+              :where
+              [?tx :batch/id ?bid]]
+            db
+            bid)
+       (map (comp (partial wu/undatomicize db)
+                  (partial d/pull db wng/provenance-pull-expr)))
+       (first)))
+
+(defn info [request bid]
+  (let [{db :db} request
+        batch-id (uuid/as-uuid bid)
+        b-prov-info (query-provenance db batch-id)]
+    (when b-prov-info
+      (assert (uuid? batch-id))
+      (ok {:prov b-prov-info}))))
+
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
+    (sweet/GET "/info/:batch-id" request
+      :responses (assoc wnu/default-responses
+                        ok
+                        {:schema ::wsb/success-response})
+      :path-params [batch-id :- :batch/id]
+      (info request batch-id))
     (sweet/context "/gene" []
       (sweet/resource
        {:get
@@ -168,7 +206,7 @@
          :x-name ::new-entities
          :middleware [wna/restrict-to-authenticated]
          :responses (-> wnu/default-responses
-                        (assoc created {:schema {:created ::wsb/created}})
+                        (assoc created {:schema ::wsb/created})
                         (wnu/response-map))
          :parameters {:body-params {:data ::wsb/new
                                     :prov ::prov}}
@@ -237,8 +275,7 @@
            :parameters {:body-params {:data ::wsg/split-gene-batch
                                       :prov ::wsp/provenance}}
            :handler (fn [request]
-                      (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))
-      )))
+                      (split-genes :event/split-genes ::wsg/split-gene-batch request))}})))))
 
 
 ;; TODO:

@@ -47,9 +47,10 @@
                                   params {}}}]
   (let [headers {"content-type" "application/json"
                  "authorization" "Token FAKED"}
+        path (str "/api/" entity-kind "/" identifier)
         [status body] (tu/get*
                        service/app
-                       (str "/api/" entity-kind "/" identifier)
+                       path
                        params
                        headers)]
     [status (tu/parse-body body)]))

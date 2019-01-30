@@ -1,7 +1,5 @@
 (ns integration.test-batch-retract-gene-cgc-names
   (:require
-   [clojure.spec.alpha :as s]
-   [clojure.string :as str]
    [clojure.test :as t]
    [clj-uuid :as uuid]
    [ring.util.http-response :refer [bad-request conflict not-found ok]]

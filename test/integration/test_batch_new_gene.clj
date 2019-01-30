@@ -15,7 +15,6 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.service :as service]
    [wormbase.names.batch :as wnb]
-   [wormbase.names.gene :refer [query-batch]]
    [wormbase.test-utils :as tu]
    [wormbase.fake-auth]))
 
@@ -41,7 +40,7 @@
                   }]
           [status body] (new-genes {:data bdata :prov basic-prov})]
       (t/is (= (:status (created)) status))
-      (t/is (get-in body [:created :batch/id]) (pr-str body)))))
+      (t/is (get body :batch/id "") (pr-str body)))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items, unique names is rejected."
@@ -68,9 +67,10 @@
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
       (t/is (:status (created)) (str status))
-      (let [bid (get-in body [:created :batch/id] "")]
+      (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
-        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
+        (t/is (= (-> body :ids count) (count bdata)))
+        (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs)))))))

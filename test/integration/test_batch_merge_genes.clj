@@ -11,7 +11,6 @@
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
-   [wormbase.names.gene :refer [query-batch]]
    [wormbase.test-utils :as tu]
    [wormbase.util :as wu]))
 
@@ -73,7 +72,7 @@
                 bid (get-in body [:batch/id] "")]
             (tu/status-is? (:status (ok)) status body)
             (t/is (uuid/uuid-string? bid))
-            (let [batch-info (query-batch (d/db conn) (uuid/as-uuid bid))
+            (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
                   batch-lookup (into {}
                                      (map (fn [bi]
                                             [(:gene/id bi) bi])
