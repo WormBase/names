@@ -68,7 +68,8 @@
                               :data-transform (fn set-live [_ data]
                                                 (let [live-status (keyword (str/join "." [entity-type "status"])
                                                                            "live")]
-                                                  (->> (conform-spec-drop-label ::wsb/new data)
+                                                  (->> data
+                                                       (conform-spec-drop-label ::wsb/new)
                                                        (assign-status entity-type live-status)))))
         new-ids (d/q '[:find [?identifier ...]
                        :in $ ?bid ?ident
