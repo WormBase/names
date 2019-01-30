@@ -61,6 +61,11 @@
  #:db{:ident :gene.status/suppressed}
  #:db{:ident :gene.status/live}
 
+ ;; variation status
+ #:db{:ident :variation.status/dead}
+ #:db{:ident :variation.status/suppressed}
+ #:db{:ident :variation.status/live}
+ 
  ;; Person's roles
  #:db{:ident :person.role/admin}
  #:db{:ident :person.role/sequence-curator}
