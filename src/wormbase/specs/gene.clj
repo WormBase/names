@@ -46,24 +46,12 @@
                                 :gene/sequence-name
                                 :gene/species]
                           :opt [:gene/cgc-name
-                                :gene/status])
-                  (s/map-of #{:gene/biotype
-                              :gene/sequence-name
-                              :gene/species
-                              :gene/cgc-name
-                              :gene/id
-                              :gene/status}
-                            any?))))
+                                :gene/status]))))
 
 (s/def ::uncloned (stc/spec
                    (stc/merge
                     (s/keys :req [:gene/species :gene/cgc-name]
-                            :opt [:gene/status])
-                    (s/map-of #{:gene/species
-                                :gene/cgc-name
-                                :gene/status
-                                :gene/id}
-                              any?))))
+                            :opt [:gene/status]))))
 
 (s/def ::new (stc/spec (s/or :cloned ::cloned
                              :uncloned ::uncloned)))
