@@ -65,6 +65,9 @@
  #:db{:ident :variation.status/dead}
  #:db{:ident :variation.status/suppressed}
  #:db{:ident :variation.status/live}
+
+ ;; variation name-pattern
+ #:variation.name{:pattern "\\w+\\d+"}
  
  ;; Person's roles
  #:db{:ident :person.role/admin}
@@ -92,4 +95,5 @@
       :valueType :db.type/long
       :cardinality :db.cardinality/one
       :doc "A temporary attribute used only for import."}]
+
 

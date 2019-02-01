@@ -7,7 +7,6 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.species :as wss]))
 
-
 (def gene-id-regexp #"WBGene\d{8}")
 
 (def general-cgc-name-regexp #"[A-Za-z\d-\\.]+")
