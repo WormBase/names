@@ -13,5 +13,3 @@
 (s/def :variation/name (stc/spec {:spec (s/and string? (partial re-matches name-regexp))}))
 
 (s/def :variation/status sts/keyword?)
-
-

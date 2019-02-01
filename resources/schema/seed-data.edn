@@ -67,7 +67,7 @@
  #:db{:ident :variation.status/live}
 
  ;; variation name-pattern
- #:variation.name{:pattern "\\w+\\d+"}
+ #:variation.config{:name-pattern "(([a-z]{3})(Df|Dp|Ti|In|T)?([1-9]+))*"}
  
  ;; Person's roles
  #:db{:ident :person.role/admin}
