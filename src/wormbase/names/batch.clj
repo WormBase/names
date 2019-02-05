@@ -1,23 +1,25 @@
 (ns wormbase.names.batch
   (:require
+   [clj-uuid :as uuid]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
+   [java-time :as jt]
    [ring.util.http-response :refer [bad-request bad-request! conflict created ok]]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
+   [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.auth :as wna]
    [wormbase.names.coercion]
+   [wormbase.names.gene :as wng]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
-   [clj-uuid :as uuid]
-   [wormbase.names.gene :as wng]
    [wormbase.util :as wu]))
 
 (s/def ::entity-type sts/string?)
@@ -157,8 +159,7 @@
               [?tx :batch/id ?bid]]
             db
             bid)
-       (map (comp (partial wu/undatomicize db)
-                  (partial d/pull db wng/provenance-pull-expr)))
+       (map (partial wdb/pull db wnp/pull-expr))
        (first)))
 
 (defn info [request bid]
@@ -168,6 +169,33 @@
     (when b-prov-info
       (assert (uuid? batch-id))
       (ok {:prov b-prov-info}))))
+
+(defn debug-txes [coll]
+  (println "tx ids:")
+  (prn coll)
+  coll)
+
+(defn recent-activities [request & {:keys [days-ago]
+                                   :or {days-ago 60}}]
+  (let [{conn :conn db :db} request
+        now (jt/instant)
+        start-t (jt/to-java-date now)
+        end-t (->> (jt/days days-ago)
+                   (jt/minus now)
+                   (jt/to-java-date))]
+    (->> (d/q '[:find [?tx ...]
+                :in $ ?log ?start ?end
+                :where
+                [(tx-ids ?log ?start ?end)]
+                [?tx :batch/id _ _]]
+              db
+              (d/log conn)
+              start-t
+              end-t)
+         (debug-txes)
+         (map (fn [tx]
+                (wdb/pull db wnp/pull-expr tx)))
+         (wnp/sort-events-by-when))))
 
 (def resources
   (sweet/context "/batch" []

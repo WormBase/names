@@ -72,10 +72,6 @@
                             [])}]
       (ok res))))
 
-(def provenance-pull-expr '[* {:provenance/what [:db/ident]
-                               :provenance/who [:person/email :person/name :person/id]
-                               :provenance/how [:db/ident]}])
-
 (def info-pull-expr '[* {:gene/biotype [[:db/ident]]
                          :gene/species [[:species/latin-name]]
                          :gene/status [[:db/ident]]
@@ -111,7 +107,7 @@
   (let [db (:db request)
         [lur _] (identify request identifier)]
     (when-let [info (wdb/pull db info-pull-expr lur)]
-      (let [prov (wnp/query-provenance db lur provenance-pull-expr)]
+      (let [prov (wnp/query-provenance db lur)]
         (-> info (assoc :history prov) ok)))))
 
 (defn new-unnamed-gene [request]

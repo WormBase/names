@@ -9,6 +9,10 @@
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]))
 
+(def pull-expr '[* {:provenance/what [:db/ident]
+                    :provenance/who [:person/name :person/email :person/id]
+                    :provenance/how [:db/ident]}])
+
 (defn- person-lur-from-provenance
   "Return a datomic `lookup ref` from the provenance data."
   [prov]
@@ -127,17 +131,19 @@
   `prov-pull-expr` should be a pull expression describing the attributes desired from
                    a datomic pull operation for the entity id.
 
-  Returns a sequence of mappings describing the entity history.."
-  [db entity-id prov-pull-expr]
-  (let [pull-changes (partial query-tx-changes-for-event db entity-id)
-        pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
-        sort-mrf #(sort-events-by-when % :most-recent-first true)
-        tx-ids (query-tx-ids db entity-id)
-        prov-seq (map pull-prov tx-ids)]
-    (some->> prov-seq
-             (remove (fn [v]
-                       (if-let [what (:provenance/what v)]
-                         (and (string? what) (str/includes? what "import")))))
-             (map #(update % :provenance/how (fnil identity :agent/importer)))
-             (sort-mrf)
-             (seq))))
+  Returns a sequence of mappings describing the entity history."
+  ([db entity-id]
+   (query-provenance db entity-id pull-expr))
+  ([db entity-id prov-pull-expr]
+   (let [pull-changes (partial query-tx-changes-for-event db entity-id)
+         pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
+         sort-mrf #(sort-events-by-when % :most-recent-first true)
+         tx-ids (query-tx-ids db entity-id)
+         prov-seq (map pull-prov tx-ids)]
+     (some->> prov-seq
+              (remove (fn [v]
+                        (if-let [what (:provenance/what v)]
+                          (and (string? what) (str/includes? what "import")))))
+              (map #(update % :provenance/how (fnil identity :agent/importer)))
+              (sort-mrf)
+              (seq)))))

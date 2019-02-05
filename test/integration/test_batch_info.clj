@@ -46,4 +46,5 @@
           (let [[status body] (info bid)]
             (tu/status-is? status (:status (ok)) body)
             (t/is (map? (:prov body)))
-            (t/is (str/includes? (-> body :prov :provenance/who) "@"))))))))
+            (t/is (str/includes? (or (some-> body :prov :provenance/who) "") "@")
+                  (pr-str body))))))))
