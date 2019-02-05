@@ -289,8 +289,6 @@
           :provenance/what what
           :provenance/when whence
           :provenance/who person}
-         (when-not (:gene/status data)
-           {:gene/status :gene.status/live})
          (when why
            {:provenance/why why})
          (when batch-id
