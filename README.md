@@ -95,10 +95,14 @@ PORT=[PORT] yarn run start
 Run with:
 
 ```bash
-export WB_DB_URI="<datomic-uri>"
+export WB_DB_URI="[datomic-uri]"
 ```
 
-Run with `lein ring server` or `lein ring server-headless`.
+(An example of `[datomic-uri]` may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI. For a persistent database, a transactor needs to be configured, in which case, the `[datomic-uri]` is based the your transactor configuration and database name.)
+
+Run with `lein ring server [port]` or `lein ring server-headless [port]`.
+
+To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json).
 
 
 ### Testing
