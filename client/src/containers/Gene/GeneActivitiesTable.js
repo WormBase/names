@@ -14,6 +14,7 @@ import {
   Timestamp,
   Typography,
 } from '../../components/elements';
+import { pastTense } from '../../utils/events';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 import UndoSplitGeneDialog from './UndoSplitGeneDialog';
@@ -234,7 +235,9 @@ class GeneActivitiesTable extends Component {
                   <TableCell className={classes.eventCell}>
                     <Typography gutterBottom className={classes.eventLabel}>
                       <span>
-                        <Humanize>{eventLabel}</Humanize>{' '}
+                        <Humanize postProcessor={pastTense}>
+                          {eventLabel}
+                        </Humanize>{' '}
                       </span>
                       {relatedEntity ? (
                         <Link to={`/gene/id/${relatedEntity['gene/id']}`}>

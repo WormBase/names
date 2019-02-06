@@ -1,13 +1,18 @@
 import PropTypes from 'prop-types';
 
-const Humanize = ({ children, placeholder = 'Unknown' }) => {
+const Humanize = ({ children, placeholder = 'Unknown', postProcessor }) => {
+  if (!children) {
+    return placeholder;
+  }
   const [name] = (children || '').split('/').slice(-1);
-  return name.replace(/(_|-)+/g, ' ') || placeholder;
+  const humanizedText = name.replace(/(_|-)+/g, ' ');
+  return postProcessor ? postProcessor(humanizedText) : humanizedText;
 };
 
 Humanize.propTypes = {
   children: PropTypes.string,
   placeholder: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
+  postProcessor: PropTypes.func,
 };
 
 export default Humanize;
