@@ -65,7 +65,7 @@
  #:db{:ident :variation.status/dead}
  #:db{:ident :variation.status/suppressed}
  #:db{:ident :variation.status/live}
- 
+
  ;; Person's roles
  #:db{:ident :person.role/admin}
  #:db{:ident :person.role/sequence-curator}
@@ -86,10 +86,13 @@
  #:db{:ident :event/resurrect-gene}
  #:db{:ident :event/suppress-gene}
  #:db{:ident :event/remove-cgc-names}
+ #:db{:ident :event/import-variation}
+ #:db{:ident :event/new-variation}
+ #:db{:ident :event/kill-variation}
+ #:db{:ident :event/update-variation}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version
       :valueType :db.type/long
       :cardinality :db.cardinality/one
       :doc "A temporary attribute used only for import."}]
-
