@@ -63,7 +63,6 @@
 
  ;; variation status
  #:db{:ident :variation.status/dead}
- #:db{:ident :variation.status/suppressed}
  #:db{:ident :variation.status/live}
 
  ;; Person's roles
