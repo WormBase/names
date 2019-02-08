@@ -39,27 +39,31 @@
                   vec)]
       (prn se))))
 
-
 (defn apply-updates! []
   (doseq [rf (xr/repl-files "resources/schema/updates")]
     (xr/run rf)))
+
+(defn import-people [conn]
+  (let [people (read-edn (io/resource "schema/wbpeople.edn"))]
+    (c/ensure-conforms conn
+                       :import/people
+                       {:people {:txes [people]}}
+                       [:people])))
+
 
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
 ;;       schema transactions.
 ;;       find a way to version the schema by passing this in.
 ;;       e.g: could be release number (WS\d+), or a timestamp-ed string
-(defn install [conn run-n]
-  (let [schema-ident (keyword (str "schema-" run-n))]
-    (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
-          schema-txes (read-edn (io/resource "schema/definitions.edn"))
-          seed-data (read-edn (io/resource "schema/seed-data.edn"))
-          people (read-edn (io/resource "schema/wbpeople.edn"))
-          init-schema [(concat db-fns schema-txes)]]
-      ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
-      ;;       relations without some data installed.
-      ;;       i.e schema alone will not draw the  between refs.
-      ;;           (arrows on digagrea)
-      (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
-      (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
-      (c/ensure-conforms conn {:people {:txes [people]}}))))
-
+(defn install [conn]
+  (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
+        schema-txes (read-edn (io/resource "schema/definitions.edn"))
+        seed-data (read-edn (io/resource "schema/seed-data.edn"))
+        init-schema [(concat db-fns schema-txes)]]
+    ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
+    ;;       relations without some data installed.
+    ;;       i.e schema alone will not draw the  between refs.
+    ;;           (arrows on digagrea)
+    (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
+    (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
+    (import-people conn)))

@@ -1,8 +1,13 @@
 (ns wormbase.names.importer
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.tools.cli :as cli]
-;   [datomic.api :as d]
+   [datomic.api :as d]
+   [environ.core :refer [env]]
+   [mount.core :as mount]
+   [wormbase.db :as wdb]
+   [wormbase.db.schema :as wdbs]
    [wormbase.names.importers.gene :as gene-importer]
    [wormbase.names.importers.variation :as var-importer]))
 
@@ -27,11 +32,18 @@
    the import process."
   [& args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)
-        tsv-paths (take 2 (rest arguments))
         db-uri (env :wb-db-uri)
-        importer-ns-name (first arguments)]
+        importer-ns-name (-> arguments rest first)
+        tsv-paths (take 2 (nnext arguments))]
+    (mount/start)
+    (wdbs/apply-updates!)
+    (wdbs/import-people wdb/conn)
     (cond
       (:help options) (exit 0 (usage summary))
+
+      (nil? (get importers importer-ns-name))
+      (exit 1 (str "Please specifiy the importer to run, one of: "
+                   (str/join "," (-> importers keys sort))))
 
       (empty? tsv-paths)
       (exit 1 "Pass the 2 .tsv files as first 2 parameters")
@@ -44,24 +56,14 @@
       (nil? (env :wb-db-uri))
       (exit 1 "set the WB_DB_URI environement variable w/datomic URI.")
 
-      (importer-ns-name importers)
-      (exit 1 "Please specifiy the importer to run, one of:"
-            (str/join "," (-> importers keys sort)))
-
       tsv-paths
-      (do (if (true? (d/create-database db-uri))
-            (let [conn (d/connect db-uri)
-                  importer (get importers importer-ns-name)]
-              (print "Installing schema... ")
-              (wdbs/install conn 1)
-              (println "done")
-              (d/release conn)
-              (println "DB installed at:" db-uri))
-            (println "Assuming schema has been installed."))
-          (let [conn (d/connect db-uri)
-                process-import (partial importer conn)]
-            (print "Importing...")
-            (apply process-import tsv-paths)
-            (println "[ok]"))))))
+      (if-let [importer (get importers importer-ns-name)]
+        (let [process-import (partial importer wdb/conn)]
+          (print "Importing...")
+          (apply process-import tsv-paths)
+          (println "[ok]")
+          (mount/stop)
+          (exit 0 "Finished"))
+        (exit 1 (str "Invalid importer specified:" importer-ns-name))))))
 
 

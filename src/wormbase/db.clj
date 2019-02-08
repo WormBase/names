@@ -19,7 +19,7 @@
   "Connects to the datomic database and transacts schema if required."
   [uri]
   (let [conn (d/connect uri)]
-    (db-schema/install conn schema-version)
+    (db-schema/install conn)
     conn))
 
 (defn checked-connect
