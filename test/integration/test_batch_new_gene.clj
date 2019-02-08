@@ -67,9 +67,10 @@
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
       (t/is (:status (created)) (str status))
+      (println "STATUS!" status)
       (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
-        (t/is (= (-> body :ids count) (count bdata)))
+        (t/is (= (count bdata) (-> body :ids count)))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)]
           (t/is (seq xs))

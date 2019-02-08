@@ -89,6 +89,7 @@
  #:db{:ident :event/new-variation}
  #:db{:ident :event/kill-variation}
  #:db{:ident :event/update-variation}
+ #:db{:ident :event/resurrect-variation}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version

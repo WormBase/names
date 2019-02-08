@@ -14,7 +14,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn info [bid]
-  (api-tc/info "batch"(str "info/" bid)))
+  (api-tc/info "batch" (str "gene/" bid)))
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
@@ -46,4 +46,5 @@
           (let [[status body] (info bid)]
             (tu/status-is? status (:status (ok)) body)
             (t/is (map? (:prov body)))
-            (t/is (str/includes? (-> body :prov :provenance/who) "@"))))))))
+            (t/is (str/includes? (-> body :prov :provenance/who) "@")
+                  (pr-str body))))))))

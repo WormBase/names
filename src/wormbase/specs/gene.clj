@@ -103,6 +103,11 @@
 
 (s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
 
+
+(s/def ::new-batch (stc/spec (s/coll-of ::new :min-count 1)))
+
+(s/def ::update-batch (stc/spec (s/coll-of ::update :min-count 1)))
+
 (s/def ::change-status-batch (stc/spec (s/coll-of ::identifier :min-count 1)))
 (s/def ::kill-batch ::change-status-batch)
 (s/def ::suppress-batch ::change-status-batch)
