@@ -6,6 +6,7 @@
    [wormbase.names.batch.gene :as wnbg]
    [wormbase.names.batch.generic :refer [info query-provenance]]
    [wormbase.names.batch.variation :as wnbv]
+   [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]))
 
@@ -17,7 +18,7 @@
                          ok
                          {:schema ::wsb/success-response})
        :path-params [batch-id :- :batch/id]
-       (info request batch-id)))))
+       (info request batch-id wnp/pull-expr)))))
 
 (def resources
   (sweet/context "/batch" []
