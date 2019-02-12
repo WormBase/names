@@ -21,7 +21,7 @@ fi
 redirect_uri="urn:ietf:wg:oauth:2.0:oob"
 scope="email%20profile%20openid"
 $OPEN "https://accounts.google.com/o/oauth2/auth?client_id=${client_id}&redirect_uri=$redirect_uri&scope=$scope&response_type=code" \
-      > /dev/null
+      2> /dev/null 3> /dev/null
 
 read -sp "Paste Google one-time-code:" code
 RESP=$(curl --silent \
