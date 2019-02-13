@@ -17,6 +17,7 @@
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
+   [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
@@ -99,6 +100,7 @@
      (sweet/context "/api" []
        wn-person/routes
        wn-gene/routes
+       wn-variation/routes
        wn-batch/routes))))
 
 (defn init

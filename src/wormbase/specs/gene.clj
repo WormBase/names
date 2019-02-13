@@ -130,3 +130,10 @@
 (s/def ::product-sequence-name :gene/sequence-name)
 (s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]))
 (s/def ::split-gene-batch (stc/spec (s/coll-of ::batch-split-item :min-count 1)))
+
+
+(s/def ::find-match (stc/spec (s/keys :req [:gene/id]
+                                      :opt [:gene/cgc-name
+                                            :gene/sequence-name])))
+(s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
+(s/def ::find-result (stc/spec (s/keys :req-un [::matches])))

@@ -86,8 +86,8 @@
   (respond-conflict request (assoc-error-message data exc)))
 
 (defn handle-db-unique-conflict [^Exception exc data request]
-  (let [uc-err (parse-exc-message (ex-data exc))
-        body (assoc-error-message (merge data uc-err) exc)]
+  (let [uc-err (parse-exc-message exc)
+        body (assoc-error-message data exc :message uc-err)]
     (respond-conflict request body)))
 
 (defn handle-unexpected-error

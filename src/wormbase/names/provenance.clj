@@ -97,11 +97,11 @@
   [db entity-id tx]
   (let [focus-eid (:db/id (d/pull db '[*] entity-id))]
     (->> (d/q '[:find ?e ?aname ?v ?added
-                :in $ ?tx
+                :in $h ?tx
                 :where
-                (not [?e ?tx])
-                [?e ?a ?v ?tx ?added]
-                [?a :db/ident ?aname]]
+                (not [$h ?e ?tx])
+                [$h ?e ?a ?v ?tx ?added]
+                [$h ?a :db/ident ?aname]]
               (d/history db)
               tx)
          (map #(zipmap [:eid :attr :value :added] %))
@@ -111,9 +111,9 @@
 
 (defn query-tx-ids [db entity-id]
   (d/q '[:find [?tx ...]
-         :in $ ?e
+         :in $h ?e
          :where
-         [?e _ _ ?tx _]]
+         [$h ?e _ _ ?tx _]]
        (d/history db)
        entity-id))
 

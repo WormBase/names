@@ -6,11 +6,12 @@
 
 (def id-regexp #"WBVar\d{8}")
 
-(def name-regexp #"(([a-z]+)(Df|Dp|Ti|T|Is)?([1-9]+))*")
+(def name-regexp #"(([a-z]+)(Df|Dp|Ti|T|Is)?([1-9]+)){1,4}")
 
 (s/def :variation/id (stc/spec {:spec (s/and string? (partial re-matches id-regexp))}))
 
-(s/def :variation/name (stc/spec {:spec (s/and string? (partial re-matches name-regexp))}))
+(s/def :variation/name (stc/spec {:spec (s/and string?
+                                               (partial re-matches name-regexp))}))
 
 (s/def :variation/status sts/keyword?)
 
@@ -18,6 +19,11 @@
                                     :variation/name :variation/name)))
 
 (s/def :variation/status sts/keyword?)
+
+(s/def ::info (stc/spec (s/keys :req [:variation/id :variation/status]
+                                :opt [:variation/name])))
+
+(s/def ::status-changed (stc/spec (s/keys :req [:variation/status])))
 
 (s/def ::new (stc/spec (s/keys :req [:variation/name])))
 
@@ -31,3 +37,8 @@
 (s/def ::kill-batch ::change-status-batch)
 (s/def ::resurrect-batch ::change-status-batch)
 
+(s/def ::find-match (stc/spec (s/keys :req [(or :variation/id :variation/name)])))
+(s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
+(s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
+
+(s/def ::created (stc/spec (s/keys :req [:variation/id])))

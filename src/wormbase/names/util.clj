@@ -102,14 +102,14 @@
 
   `status` can be datomic entity or keyword/ident."
   [status ent]
-  (some (partial = status)
-        ((juxt identity :db/ident) ent)))
+  (some #(= status (name %1))
+        (filter keyword? ((juxt identity :db/ident) ent))))
 
-(def live? (partial has-status? :gene.status/live))
+(def live? (partial has-status? "live"))
 
-(def dead? (partial has-status? :gene.status/dead))
+(def dead? (partial has-status? "dead"))
 
-(def suppressed? (partial has-status? :gene.status/suppressed))
+(def suppressed? (partial has-status? "suppressed"))
 
 (def not-live? (comp not live?))
 
