@@ -58,12 +58,11 @@
       (when entity
         (let [data (:data payload)
               names-validator (if validate-names
-                                (partial validate-names request)
-                                (constantly (identity data)))
-              conform #(wnu/conform-data data-spec % names-validator)]
-          (let [resolve-refs-to-db-ids (or ref-resolver-fn (constantly identity))
-                cdata (->> data
-                           (conform)
+                                (partial validate-names request))]
+          (let [resolve-refs-to-db-ids (or ref-resolver-fn
+                                           (fn passthru-resolver [_ data]
+                                             data))
+                cdata (->> (wnu/conform-data data-spec data names-validator)
                            (second)
                            (resolve-refs-to-db-ids db))
                 prov (wnp/assoc-provenance request payload event)

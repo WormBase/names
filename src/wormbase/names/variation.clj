@@ -133,7 +133,8 @@
        :responses (-> wnu/default-responses
                       (dissoc conflict)
                       (wnu/response-map))
-       :handler update-variation}
+       :handler (fn handle-variation-update [request]
+                  (update-variation request identifier))}
       :get
       {:summary "Summarisef a variation."
        :x-name ::about-variation
