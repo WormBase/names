@@ -39,11 +39,7 @@
                    :data
                    (update live-status-attr (fnil identity live-status-val)))
           names-validator (or validate-names (constantly (identity data)))
-          conformed (wnu/conform-data data-spec data (partial names-validator request))
-          ;; an "or" spec is conformed to [label conformed-value], otherwise to conformed-value.
-          cdata (if (vector? conformed)
-                  (second conformed)
-                  conformed)
+          [_  cdata] (wnu/conform-data data-spec data (partial names-validator request))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
           tx-res @(d/transact-async conn tx-data)
@@ -97,7 +93,7 @@
     [request identifier]
     (println "Got request and identifier:" identifier)
     (let [{conn :conn db :db payload :body-params} request
-          lur (s/conform identifier-spec identifier)
+          lur (wnu/conform-data identifier-spec identifier)
           pull-status #(d/pull % [{status-ident [:db/ident]}] lur)
           {status status-ident} (pull-status db)]
       (when (and status
