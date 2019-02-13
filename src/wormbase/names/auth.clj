@@ -67,7 +67,6 @@
 (defn sign-token [auth-token-conf token]
   (-> auth-token-conf :key (bsc/sign (str token))))
 
-
 (defrecord Identification [token person])
 
 (defn verified-stored-token [db auth-token-conf auth-token]
