@@ -91,7 +91,6 @@
       :or {precondition-failure-msg "status cannot be updated."}}]
   (fn change-status
     [request identifier]
-    (println "Got request and identifier:" identifier)
     (let [{conn :conn db :db payload :body-params} request
           lur (wnu/conform-data identifier-spec identifier)
           pull-status #(d/pull % [{status-ident [:db/ident]}] lur)
