@@ -62,7 +62,9 @@
 
 (defn query-person
   [db ^String ident auth-token]
-  (d/pull db '[*] [ident auth-token]))
+  (let [person (d/pull db '[*] [ident auth-token])]
+    (when (:db/id person)
+      person)))
 
 (defn sign-token [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
