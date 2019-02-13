@@ -65,7 +65,7 @@
   (d/pull db '[*] [ident auth-token]))
 
 (defn sign-token [auth-token-conf token]
-  (-> auth-token-conf :key (bsc/sign (str token))))
+  (bsc/sign (str token) (:key auth-token-conf)))
 
 (defrecord Identification [token person])
 
