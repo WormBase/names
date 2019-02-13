@@ -88,7 +88,7 @@
 
 (t/deftest gene-naming-conflict
   (t/testing "When a gene already exists with the requested name."
-    (let [cgc-name (first (gen/sample gsg/cgc-name 1))
+    (let [cgc-name (tu/cgc-name-for-species elegans-ln)
           sample {:gene/cgc-name cgc-name
                   :gene/species elegans-ln
                   :gene/status :gene.status/live
