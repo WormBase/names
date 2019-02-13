@@ -121,11 +121,7 @@
 (defn response-map [m]
   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
 
-(defn conform-data
-  "Conform data to `spec`.
-
-  Return a tuple of <label>, <conformed-data> when valid."
-  [spec data & [names-validator]]
+(defn conform-data [spec data & [names-validator]]
   (let [conformed (stc/conform spec
                                (if names-validator
                                  (names-validator data)
@@ -136,9 +132,7 @@
                         {:problems problems
                          :type ::validation-error
                          :data data})))
-      (if (vector? conformed)
-        conformed
-        [nil conformed]))))
+      conformed)))
 
 (defn query-batch [db bid pull-expr]
   (map (partial d/pull db pull-expr)
