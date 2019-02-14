@@ -37,7 +37,6 @@
                 [status body] (update-genes {:data bdata :prov basic-prov})]
             (t/is (= (:status (conflict)) status) (pr-str body))))))))
 
-
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
     (let [fixtures (tu/gene-samples 1)

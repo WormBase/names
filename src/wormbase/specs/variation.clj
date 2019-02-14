@@ -27,7 +27,8 @@
 
 (s/def ::new (stc/spec (s/keys :req [:variation/name])))
 
-(s/def ::update ::new)
+(s/def ::update (stc/spec (stc/merge ::new
+                                     (s/keys :req [:variation/id]))))
 
 (s/def ::new-batch (stc/spec (s/coll-of ::new :min-count 1)))
 

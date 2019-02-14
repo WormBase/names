@@ -24,10 +24,11 @@
                       (wnu/response-map))
        :parameters {:body-params {:data ::wsv/update-batch
                                   :prov ::prov}}
-       :handler (fn update-handler [request]
-                  (wnbg/update-entities :variation/id
+       :handler (fn handle-update [request]
+                  (wnbg/update-entities :variation/name
                                         :event/update-variation
                                         ::wsv/update-batch
+                                        wnu/conform-data
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new variations."
@@ -38,10 +39,10 @@
                       (wnu/response-map))
        :parameters {:body-params {:data ::wsv/new-batch
                                   :prov ::prov}}
-       :handler (fn create-handler [request]
+       :handler (fn handle-new [request]
                   (let [event-type :event/new-variation
                         data (get-in request [:body-params])]
-                    (wnbg/new-entities :variation/id
+                    (wnbg/new-entities :variation/name
                                        event-type
                                        ::wsv/new-batch
                                        wnu/conform-data
@@ -63,4 +64,5 @@
                                    :event/resurrect-variation
                                    :variation.status/live
                                    ::wsv/resurrect-variation
+                                   wnu/conform-data
                                    request))))

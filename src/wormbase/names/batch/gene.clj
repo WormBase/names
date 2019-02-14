@@ -48,7 +48,11 @@
        :parameters {:body-params {:data ::wsg/update-batch
                                   :prov ::prov}}
        :handler (fn update-handler [request]
-                  (wnbg/update-entities :gene/id :event/update-gene ::wsg/update-batch request))}
+                  (wnbg/update-entities :gene/id
+                                        :event/update-gene
+                                        ::wsg/update-batch
+                                        wnbg/map-conform-data-drop-labels
+                                        request))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
        :x-name ::batch-new-genes
@@ -61,15 +65,11 @@
        :handler (fn create-handler [request]
                   (let [event-type :event/new-gene
                         data (get-in request [:body-params])]
-                    (try
-                      (let [res (wnbg/new-entities :gene/id
-                                                   event-type
-                                                   ::wsg/new-batch
-                                                   wnbg/map-conform-data-drop-labels
-                                                   request)]
-                        res)
-                      (catch Exception e
-                        (throw e)))))}
+                    (wnbg/new-entities :gene/id
+                                       event-type
+                                       ::wsg/new-batch
+                                       wnbg/map-conform-data-drop-labels
+                                       request)))}
       :delete
       {:summary "Kill genes."
        :x-name ::batch-kill-genes
@@ -82,7 +82,8 @@
                          :gene/id
                          :event/kill-gene
                          :gene.status/dead
-                         ::wsg/kill-batch)}})
+                         ::wsg/kill-batch
+                         wnbg/map-conform-data-drop-labels)}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
       :middleware [wna/restrict-to-authenticated]
@@ -92,6 +93,7 @@
                                    :event/resurrect-gene
                                    :gene.status/live
                                    ::wsg/resurrect-batch
+                                   wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/POST "/suppress" request
       :summary "Suppress entities."
@@ -102,6 +104,7 @@
                                    :event/suppress-gene
                                    :gene.status/suppressed
                                    ::wsg/suppress-batch
+                                   wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
@@ -112,6 +115,7 @@
                               :gene/cgc-name
                               :event/remove-cgc-names
                               ::wsg/cgc-names
+                              wnu/conform-data
                               request))
     (sweet/context "/merge" []
       (sweet/resource

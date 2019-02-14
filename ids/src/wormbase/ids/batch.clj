@@ -179,13 +179,13 @@
   [conn uiident coll prov & {:keys [batch-size]
                              :or {batch-size 100}}]
   (process-batch
-   (fn [sp transact-fn db items]
-     (when db
+   (fn [sp transact-fn result items]
+     (when result
        (some->> (seq items)
                 (map (fn [item]
                        ['wormbase.ids.core/cas-batch (find item uiident) item]))
                 (add-prov-maybe sp)
-                (transact-fn db))))
+                (transact-fn result))))
    conn
    coll
    prov

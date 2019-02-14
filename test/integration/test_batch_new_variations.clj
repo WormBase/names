@@ -2,11 +2,6 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [ring.util.http-response :refer [bad-request
-                                    conflict
-                                    created
-                                    not-found not-found!
-                                    ok]]
    [clj-uuid :as uuid]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db :as wdb]
@@ -30,7 +25,7 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (let [[status body] (new-variations {:data [] :prov nil})]
-      (t/is (= (:status (bad-request)) status)))))
+      (t/is (= 400 status)))))
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
@@ -44,4 +39,4 @@
     (let [bdata [{:variation/name "abc1"}
                  {:variation/name "abc1"}]
           [status body] (new-variations {:data bdata :prov basic-prov})]
-      (tu/status-is? (:status (conflict)) status body))))
+      (tu/status-is? 409 status body))))

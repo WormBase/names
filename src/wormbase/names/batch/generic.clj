@@ -35,13 +35,15 @@
       default-batch-size
       cbsize)))
 
-(defn batcher [impl uiident event-type spec request
-               & {:keys [data-transform]
-                  :or {data-transform map-conform-data-drop-labels}}]
+(defn batcher [impl uiident event-type spec data-transform request]
   (let [{conn :conn payload :body-params} request
         {data :data} payload
+        _ (println "DATA:")
+        _ (prn data)
         prov (wnp/assoc-provenance request payload event-type)
         cdata (data-transform spec data)
+        _ (println "CDATA:")
+        _ (prn cdata)
         bsize (batch-size payload cdata)]
     (impl conn uiident cdata prov :batch-size bsize)))
 
@@ -59,17 +61,17 @@
   "Create a batch of new entities."
   [uiident event-type spec conformer request]
   (let [entity-type (namespace uiident)
+        data-transform (fn set-live [_ data]
+                         (let [live-status (keyword (str entity-type ".status") "live")]
+                           (->> data
+                                (conformer spec)
+                                (assign-status entity-type live-status))))
         batch-result (batcher wbids-batch/new
                               uiident
                               event-type
                               spec
-                              request
-                              :data-transform (fn set-live [_ data]
-                                                (let [live-status (keyword (str entity-type ".status")
-                                                                           "live")]
-                                                  (->> data
-                                                       (conformer spec)
-                                                       (assign-status entity-type live-status)))))
+                              data-transform
+                              request)
         new-ids (d/q '[:find [?identifier ...]
                        :in $ ?bid ?ident
                        :where
@@ -79,40 +81,42 @@
                      (:batch/id batch-result)
                      uiident)
         result (assoc batch-result :ids new-ids :id-key uiident)]
-    (created (-> result :batch/id str) result)))
+    (created (str "/api/batch/" (:batch/id result)) result)))
 
 (defn update-entities
-  [uiident event-type spec request]
+  [uiident event-type spec conformer request]
   (let [result (batcher wbids-batch/update
                         uiident
                         event-type
                         spec
+                        conformer
                         request)]
     (ok {:updated result})))
 
-(defn change-entity-statuses [uiident event-type to-status spec request]
+(defn change-entity-statuses [uiident event-type to-status spec conformer request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
+        entity-type (namespace uiident)
+        data-transform (fn txform-assign-status [_ data]
+                         (->> (conformer spec data)
+                              (map (partial array-map uiident))
+                              (assign-status entity-type to-status)))
         entity-type (namespace uiident)
         resp-key (name to-status)
         result (batcher wbids-batch/update
                         uiident
                         event-type
                         spec
-                        request
-                        :data-transform (fn txform-assign-status
-                                          [_ data]
-                                          (->> data
-                                               (map (partial array-map uiident))
-                                               (assign-status entity-type to-status))))]
+                        data-transform
+                        request)]
     (ok {resp-key result})))
 
 (defn retract-attr-vals
   "Retract values associated with attributes for a matching set of entities."
-  [uiident attr event-type spec request]
+  [uiident attr event-type spec conformer request]
   (let [{payload :body-params conn :conn} request
         {prov :prov data :data} payload
-        conformed (stc/conform spec data)]
+        conformed (conformer spec data)]
     (if (s/invalid? conformed)
       (bad-request {:data data})
       (let [cdata (some->> conformed
