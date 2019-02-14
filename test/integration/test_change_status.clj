@@ -183,8 +183,6 @@
 (t/deftest ressurecting-variation
   (t/testing "Resurrecting a dead variation succesfully"
     (let [[id sample] (variation-sample :current-status :variation.status/dead)]
-      (println "SAMPLE FOR RESURRECT " id)
-      (prn sample)
       (tu/with-fixtures
         (assoc sample :variation/id id)
         (fn [conn]

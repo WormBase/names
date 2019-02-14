@@ -6,7 +6,6 @@
    [clojure.test :as t]
    [clj-uuid :as uuid]
    [datomic.api :as d]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]   
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
    [wormbase.test-utils :as tu]
@@ -29,7 +28,7 @@
   (t/testing "Empty batches are rejected."
     (doseq [op [:kill :resurrect :suppress]]
       (let [[status body] (send-change-status-request op {:data [] :prov basic-prov})]
-        (t/is (= (:status (bad-request)) status))))))
+        (t/is (= 400 status))))))
 
 (t/deftest dup-ids
   (t/testing "Duplicate entity ids in payload don't cause an error."
@@ -40,7 +39,7 @@
         (fn [conn]
           (let [data [gid gid]
                 [status body] (send-change-status-request :kill {:data data :prov basic-prov})]
-            (tu/status-is? (:status (ok)) status body)
+            (tu/status-is? 200 status body)
             (t/is (-> body :dead (get :batch/id "") uuid/uuid-string?))))))))
 
 (t/deftest entity-in-db-missing
@@ -48,12 +47,13 @@
     (let [gid (first (gen/sample gsg/id 1))
           [status body] (send-change-status-request :kill {:data [gid]
                                                            :prov basic-prov})]
-      (tu/status-is? (:status (conflict)) status body)
+      (tu/status-is? 409 status body)
       (t/is (str/includes? (get body :message "") "processing errors occurred"))
       (t/is (some (fn [msg]
                     (and (str/includes? msg "does not exist")
                          (str/includes? msg gid)))
-                  (:errors body))))))
+                  (:errors body))
+            (pr-str body)))))
 
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
@@ -65,7 +65,7 @@
         fixtures
         (fn [conn]
           (let [[status body] (send-change-status-request :kill {:data gids :prov basic-prov})]
-            (tu/status-is? (:status (conflict)) status body)
+            (tu/status-is? 409 status body)
             (doseq [enf expected-not-found]
               (t/is (str/includes? (get body :message "") enf)))))))))
 
@@ -80,7 +80,7 @@
                                             :suppress :suppressed
                                             :resurrect :live}]
             (let [[status body] (send-change-status-request to-status {:data gids :prov basic-prov})]
-              (tu/status-is? (:status (ok)) status body)
+              (tu/status-is? 200 status body)
               (t/is (some-> body exp-resp-key :batch/id uuid/uuid-string?)
                     (pr-str body))
               (doseq [gid gids]
