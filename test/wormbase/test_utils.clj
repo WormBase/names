@@ -188,7 +188,7 @@
   `(t/is (= ~status ~expected-status)
          (format "Response body did not contain expected data:\n%s"
                  (if-let [suspec# (:spec ~body)]
-                   (expound-str (stc/deserialize suspec#))
+                   (stc/deserialize suspec#)
                    (pr-str ~body)))))
 
 (defn species->latin-name [lu-ref]
