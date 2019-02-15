@@ -24,7 +24,7 @@
                                                           :provenance/who]))))
 (s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
 
-(s/def ::status-changed ::success-response)
+(s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed}) ::success-response)))
 
 (s/def ::merge-into :gene/id)
 (s/def ::merge-from :gene/id)

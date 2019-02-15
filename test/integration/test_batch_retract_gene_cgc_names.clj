@@ -1,11 +1,12 @@
 (ns integration.test-batch-retract-gene-cgc-names
   (:require
+   [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [clj-uuid :as uuid]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
+   [wormbase.gen-specs.variation :as gsv]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -14,25 +15,43 @@
 
 (def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
-(defn retract [data]
+(defn retract-gene-cgc-name [data]
   (let [data* (assoc data :batch-size 1)]
     (api-tc/send-request "batch" :delete data* :sub-path "gene/cgc-name")))
 
+(defn retract-variation-name [data]
+  (let [data* (assoc data :batch-size 1)]
+    (api-tc/send-request "batch" :delete data* :sub-path "variation/name")))
+
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (retract {:data [] :prov nil})]
-      (t/is (= (:status (bad-request)) status)))))
+    (doseq [retract-fn [retract-gene-cgc-name
+                        retract-variation-name]]
+      (let [[status body] (retract-fn {:data [] :prov nil})]
+        (t/is (= 400 status))))))
 
-(t/deftest batch-success
-  (t/testing "Succesfully removing CGC names from genes."
+(t/deftest batch-retract-gene-cgc-name-success
+  (t/testing "Succesfully removing gene CGC names."
     (let [fixtures (map (fn [sample]
                           (assoc sample :gene/cgc-name (tu/cgc-name-for-sample sample)))
                         (tu/gen-sample gsg/cloned 2))
-          cgc-names (map  :gene/cgc-name fixtures)] 
+          cgc-names (map  :gene/cgc-name fixtures)]
      (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (retract {:data cgc-names :prov basic-prov})]
-            (tu/status-is? (:status (ok)) status body)
+          (let [[status body] (retract-gene-cgc-name {:data cgc-names :prov basic-prov})]
+            (tu/status-is? 200 status body)
+            ;; TODO: check batch with (wng/query-batch db <bid>)
+            ))))))
+
+(t/deftest batch-retract-variation-name-success
+  (t/testing "Succesfully removing variation names."
+    (let [fixtures (gen/sample gsv/payload 2)
+          names (map :variation/name fixtures)]
+     (tu/with-fixtures
+        fixtures
+        (fn [conn]
+          (let [[status body] (retract-variation-name {:data names :prov basic-prov})]
+            (tu/status-is? 200 status body)
             ;; TODO: check batch with (wng/query-batch db <bid>)
             ))))))

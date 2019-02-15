@@ -38,12 +38,8 @@
 (defn batcher [impl uiident event-type spec data-transform request]
   (let [{conn :conn payload :body-params} request
         {data :data} payload
-        _ (println "DATA:")
-        _ (prn data)
         prov (wnp/assoc-provenance request payload event-type)
         cdata (data-transform spec data)
-        _ (println "CDATA:")
-        _ (prn cdata)
         bsize (batch-size payload cdata)]
     (impl conn uiident cdata prov :batch-size bsize)))
 
@@ -102,7 +98,7 @@
                               (map (partial array-map uiident))
                               (assign-status entity-type to-status)))
         entity-type (namespace uiident)
-        resp-key (name to-status)
+        resp-key (-> to-status name keyword)
         result (batcher wbids-batch/update
                         uiident
                         event-type

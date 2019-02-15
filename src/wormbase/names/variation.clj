@@ -136,7 +136,7 @@
        :handler (fn handle-variation-update [request]
                   (update-variation request identifier))}
       :get
-      {:summary "Summarisef a variation."
+      {:summary "Summarise a variation."
        :x-name ::about-variation
        :responses (-> wnu/default-responses
                       (assoc ok {:schema ::wsv/info})

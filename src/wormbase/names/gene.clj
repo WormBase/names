@@ -28,8 +28,7 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.ids.core :as wbids]))
 
-(def default-responses (merge wnu/default-responses
-                              {ok {:schema {:updated ::wsg/updated}}}))
+(def delete-responses (assoc wnu/default-responses ok {:schema {:updated ::wsg/updated}}))
 
 (def identify (partial wne/identify ::wsg/identifier))
 
@@ -350,10 +349,7 @@
 ;;                  :fail-precondition? wnu/dead?
 ;;                  :precondition-failure-msg "Gene to be killed cannot be dead."))
 
-(def status-changed-responses
-  (-> wnu/default-responses
-      (assoc ok {:schema ::wsg/status-changed})
-      (wnu/response-map)))
+(def status-changed-responses (wnu/response-map ok {:schema ::wsg/status-changed}))
 
 (def coll-resources
   (sweet/context "/gene/" []
@@ -361,10 +357,7 @@
     (sweet/resource
      {:get
       {:summary "Find genes by any name."
-       :responses (-> wnu/default-responses
-                      (assoc ok
-                             {:schema ::wsg/find-result})
-                      (wnu/response-map))
+       :responses (wnu/response-map ok {:schema ::wsg/find-result})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-gene
        :handler (fn find-by-any-name [request]
@@ -374,12 +367,8 @@
        :middleware [wna/restrict-to-authenticated]
        :x-name ::new-gene
        :parameters {:body-params {:data ::wsg/new :prov ::wsp/provenance}}
-       :responses (-> wnu/default-responses
-                      (assoc created
-                             {:schema {:created ::wsg/created}})
-                      (assoc bad-request
-                             {:schema ::wsc/error-response})
-                      (wnu/response-map))
+       :responses (wnu/response-map created {:schema {:created ::wsg/created}}
+                                    bad-request {:schema ::wsc/error-response})
        :handler new-gene}})))
 
 (def item-resources
@@ -419,9 +408,7 @@
       {:get
        {:summary "Information about a given gene."
         :x-name ::summary
-        :responses (-> wnu/default-responses
-                       (assoc ok {:schema ::wsg/info})
-                       (wnu/response-map))
+        :responses (wnu/response-map ok {:schema ::wsg/info})
         :handler (fn [request]
                    (summary request identifier))}
        :put
@@ -444,7 +431,7 @@
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:data ::wsg/merge
                                      :prov ::wsp/provenance}}
-          :responses (wnu/response-map default-responses)
+          :responses (wnu/response-map delete-responses)
           :handler
           (fn [request]
             (merge-genes request identifier from-identifier))}
@@ -454,7 +441,7 @@
           :x-name ::undo-merge-gene
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:prov ::wsp/provenance}}
-          :responses (-> default-responses
+          :responses (-> delete-responses
                          (assoc ok {:schema ::wsg/undone})
                          (wnu/response-map))
           :handler (fn [request]
@@ -482,7 +469,7 @@
           :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-split-gene
           :path-params [into-identifier :- ::wsg/identifier]
-          :responses (-> default-responses
+          :responses (-> delete-responses
                          (assoc ok {:schema ::wsg/undone})
                          (wnu/response-map))
           :handler (fn [request]

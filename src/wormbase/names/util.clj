@@ -118,8 +118,11 @@
    conflict {:schema {:conflict ::wsc/error-response}}
    precondition-failed {:schema ::wsc/error-response}})
 
-(defn response-map [m]
-  (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+(defn response-map
+  ([m]
+   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+  ([k v & kvs]
+   (response-map (apply (partial assoc default-responses k v) kvs))))
 
 (defn conform-data [spec data & [names-validator]]
   (let [conformed (stc/conform spec

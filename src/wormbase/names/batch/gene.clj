@@ -42,9 +42,7 @@
       {:summary "Update gene records."
        :x-name ::batch-update-genes
        :middleware [wna/restrict-to-authenticated]
-       :responses (-> wnu/default-responses
-                      (assoc ok {:schema {:updated ::wsb/updated}})
-                      (wnu/response-map))
+       :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
        :parameters {:body-params {:data ::wsg/update-batch
                                   :prov ::prov}}
        :handler (fn update-handler [request]
@@ -57,9 +55,7 @@
       {:summary "Assign identifiers and associate names, creating new genes."
        :x-name ::batch-new-genes
        :middleware [wna/restrict-to-authenticated]
-       :responses (-> wnu/default-responses
-                      (assoc created {:schema ::wsb/created})
-                      (wnu/response-map))
+       :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wsg/new-batch
                                   :prov ::prov}}
        :handler (fn create-handler [request]
@@ -73,8 +69,7 @@
       :delete
       {:summary "Kill genes."
        :x-name ::batch-kill-genes
-       :responses (-> wnu/default-responses
-                      (assoc ok {:schema ::wsb/status-changed}))
+       :responses (wnu/response-map ok {:schema ::wsb/status-changed})
        :parameters {:body-params {:data ::wsg/kill-batch
                                   :prov ::prov
                                   :batch-size ::wsb/size}}
@@ -121,8 +116,7 @@
       (sweet/resource
        {:post
         {:summary "Merge multiple pairs of genes."
-         :responses (-> wnu/default-responses
-                        (assoc ok {:schema ::wsb/success-response}))
+         :responses (wnu/response-map ok {:schema ::wsb/success-response})
          :parameters {:body-params {:data ::wsg/merge-gene-batch
                                     :prov ::wsp/provenance}}
          :handler (fn [request]
@@ -131,14 +125,12 @@
       (sweet/resource
        {:post
         {:summary "Split multiple genes."
-         :responses (assoc wnu/default-responses ok {:schema ::wsb/success-response})
+         :responses (wnu/response-map ok {:schema ::wsb/success-response})
          :parameters {:body-params {:data ::wsg/split-gene-batch
                                     :prov ::wsp/provenance}}
          :handler (fn [request]
                     (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))
     (sweet/GET "/:batch-id" request
-      :responses (assoc wnu/default-responses
-                        ok
-                        {:schema ::wsb/success-response})
+      :responses (wnu/response-map ok {:schema ::wsb/success-response})
       :path-params [batch-id :- :batch/id]
       (wnbg/info request batch-id wnp/pull-expr))))

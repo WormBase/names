@@ -43,3 +43,6 @@
 (s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
 
 (s/def ::created (stc/spec (s/keys :req [:variation/id])))
+
+(s/def ::names (stc/spec (s/coll-of (s/or :variation/name :variation/name) :min-count 1)))
+
