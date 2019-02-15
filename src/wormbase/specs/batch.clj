@@ -17,10 +17,6 @@
 
 (s/def ::created (s/merge ::success-response (s/keys :req-un [::ids ::id-key])))
 
-(s/def ::new (stc/spec (s/coll-of ::wsg/new :min-count 1)))
-
-(s/def ::update (stc/spec (s/coll-of ::wsg/update :min-count 1)))
-
 (s/def ::updated ::success-response)
 
 (s/def ::status-change (stc/spec (s/nilable (s/keys :opt [:provenance/why
@@ -28,7 +24,7 @@
                                                           :provenance/who]))))
 (s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
 
-(s/def ::status-changed ::success-response)
+(s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed}) ::success-response)))
 
 (s/def ::merge-into :gene/id)
 (s/def ::merge-from :gene/id)

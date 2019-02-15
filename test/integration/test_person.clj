@@ -45,7 +45,7 @@
                      (assoc :person/active? true))
           identifier (:person/id sample)
           update-data {:person/roles #{:person.role/sequence-curator}}]
-      (tu/with-person-fixtures
+      (tu/with-fixtures
         [sample]
         (fn check-unauthorized [conn]
           (let [[status body] (person-update identifier
@@ -59,7 +59,7 @@
                      first
                      (assoc :person/active? true))
           identifier (:person/id sample)]
-      (tu/with-person-fixtures
+      (tu/with-fixtures
         [sample]
         (fn check-update-success [conn]
           (let [[status body] (person-update identifier
@@ -82,7 +82,7 @@
     (let [[status body] (person-info "WBPerson0")]
       (tu/status-is? 404 status body)))
   (t/testing "Getting info for a person existant in the db by email"
-    (tu/with-person-fixtures
+    (tu/with-fixtures
       []
       (fn check-person-info [conn]
         (let [[status body] (person-info "tester@wormbase.org")]
@@ -101,7 +101,7 @@
   (t/testing "Attempting to deativate an inactive person results in 400"
     (let [sample (deactivated-person-sample)
           identifier (:person/id sample)]
-      (tu/with-person-fixtures
+      (tu/with-fixtures
         sample
         (fn check-404-on-about [conn]
           (let [[status body] (deactivate-person identifier)]

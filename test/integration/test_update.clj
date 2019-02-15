@@ -9,12 +9,15 @@
    [wormbase.fake-auth] ;; for side effect
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.species :as gss]
+   [wormbase.gen-specs.variation :as gsv]
    [wormbase.names.service :as service]
    [wormbase.specs.gene :as wsg]
    [wormbase.test-utils :as tu]
    [wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
+
+(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (def update-gene (partial api-tc/update "gene"))
 
@@ -112,7 +115,7 @@
               (t/is (empty? (:gene/cgc-name body)))
               (tu/query-provenance conn identifier :event/update-gene))))))))
 
-(t/deftest provenance
+(t/deftest gene-provenance
   (t/testing (str "Provenance is recorded for successful transactions")
    (let [gid (first (gen/sample gsg/id 1))
          sample (-> (tu/gen-sample gsg/cloned 1) first tu/species->ref)
@@ -155,3 +158,52 @@
                      (pr-str (:gene/status ent))))
              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))
+
+
+(def update-variation (partial api-tc/update "variation"))
+
+(t/deftest must-meet-spec
+  (let [identifier (first (gen/sample gsv/id 1))
+        sample {:variation/name (first (gen/sample gsv/name 1))
+                :variation/status :variation.status/live}
+        sample-data (merge sample {:variation/id identifier})]
+    (tu/with-fixtures
+      sample-data
+      (fn [conn]
+        (t/testing (str "Updating name for existing variation requires "
+                        "correct data structure.")
+          (let [payload {:data {} :prov basic-prov}]
+            (let [response (update-variation identifier payload)
+                  [status body] response]
+              (tu/status-is? 400 status (pr-str response)))))))))
+
+(t/deftest changing-name-success
+  (t/testing "Changing the name of an existing variation."
+    (let [identifier (first (gen/sample gsv/id 1))
+          sample {:variation/name (first (gen/sample gsv/name 1))
+                  :variation/status :variation.status/live}
+          sample-data (merge sample {:variation/id identifier})]
+      (tu/with-fixtures
+        sample-data
+        (fn [conn]
+          (let [data {:variation/name "mynew1"}
+                payload {:data data :prov basic-prov}
+                [status body] (update-variation identifier payload)]
+            (tu/status-is? 200 status body)))))))
+
+(t/deftest changing-name-to-non-uniq
+  (t/testing "Changing the name of a variation to something that's already taken."
+    (let [v-names (gen/sample gsv/name 2)
+          samples (map (fn [vname]
+                         {:variation/name vname
+                          :variation/id (first (gen/sample gsv/id 1))
+                          :variation/status :variation.status/live})
+                       v-names)
+          subject-identifier (-> samples last :variation/id)]
+      (tu/with-fixtures
+        samples
+        (fn [conn]
+          (let [data {:variation/name (-> samples first :variation/name)}
+                payload {:data data :prov basic-prov}
+                [status body] (update-variation subject-identifier payload)]
+            (tu/status-is? 409 status body)))))))

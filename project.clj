@@ -12,7 +12,7 @@
   :source-paths ["src"]
   :resource-paths ["resources" "client/build"]
   :target-path "target/%s"
-  :main ^:skip-aot wormbase.names.import-genes
+  :main ^:skip-aot wormbase.names.importer
   :monkeypatch-clojure-test false
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :aliases {"import-genes" ["run" "-m" "org.wormbase.names.import-genes"]
