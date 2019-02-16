@@ -10,10 +10,9 @@
    [wormbase.names.batch.generic :as wnbg]
    [wormbase.names.util :as wnu]))
 
-(s/def ::prov ::wsp/provenance)
-
 (def routes
   (sweet/context "/variation" []
+    :tags ["batch" "variation"]
     (sweet/resource
      {:put
       {:summary "Update variation records."
@@ -21,7 +20,7 @@
        :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
        :parameters {:body-params {:data ::wsv/update-batch
-                                  :prov ::prov}}
+                                  :prov ::wsp/provenance}}
        :handler (fn handle-update [request]
                   (wnbg/update-entities :variation/id
                                         :event/update-variation
@@ -34,7 +33,7 @@
        :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wsv/new-batch
-                                  :prov ::prov}}
+                                  :prov ::wsp/provenance}}
        :handler (fn handle-new [request]
                   (let [event-type :event/new-variation
                         data (get-in request [:body-params])]
