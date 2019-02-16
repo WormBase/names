@@ -48,7 +48,7 @@
 
  ;; templates for identifiers
  #:template{:format "WBGene%08d", :describes :gene/id}
- #:template{:format "WBsf%12d", :describes :feature/id}
+ #:template{:format "WBsf%012d", :describes :sequence-feature/id}
  #:template{:format "WBVar%08d", :describes :variation/id}
 
  ;; agent
@@ -58,12 +58,16 @@
 
  ;; gene status
  #:db{:ident :gene.status/dead}
- #:db{:ident :gene.status/suppressed}
  #:db{:ident :gene.status/live}
+ #:db{:ident :gene.status/suppressed}
 
  ;; variation status
  #:db{:ident :variation.status/dead}
  #:db{:ident :variation.status/live}
+
+ ;; sequence-feature status
+ #:db{:ident :sequence-feature.status/dead}
+ #:db{:ident :sequence-feature.status/live}
 
  ;; Person's roles
  #:db{:ident :person.role/admin}
@@ -90,6 +94,9 @@
  #:db{:ident :event/kill-variation}
  #:db{:ident :event/update-variation}
  #:db{:ident :event/resurrect-variation}
+ #:db{:ident :event/new-sequence-feature}
+ #:db{:ident :event/kill-sequence-feature}
+ #:db{:ident :event/resurrect-sequence-feature}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version
