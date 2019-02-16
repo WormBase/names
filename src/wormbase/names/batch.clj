@@ -6,6 +6,7 @@
    [wormbase.names.batch.gene :as wnbg]
    [wormbase.names.batch.generic :refer [info query-provenance]]
    [wormbase.names.batch.variation :as wnbv]
+   [wormbase.names.batch.sequence-feature :as wnbsf]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]))
@@ -23,6 +24,7 @@
     :tags ["batch"]
     (sweet/routes wnbg/routes
                   wnbv/routes
+                  wnbsf/routes
                   info-routes)))
 
 (def routes (sweet/routes resources))
