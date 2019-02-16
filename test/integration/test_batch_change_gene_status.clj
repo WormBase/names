@@ -7,6 +7,7 @@
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.test-utils :as tu]
    [wormbase.gen-specs.gene :as gsg]))
@@ -19,10 +20,6 @@
       (api-tc/send-request "batch" :delete data* :sub-path "gene")
       (let [sub-path (str "gene/" (name op))]
         (api-tc/send-request "batch" :post data* :sub-path sub-path)))))
-
-(def elegans-ln "Caenorhabditis elegans")
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

@@ -9,6 +9,7 @@
                                     ok]]
    [clj-uuid :as uuid]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
@@ -22,10 +23,6 @@
 
 (defn new-genes [data]
   (api-tc/send-request "batch" :post data :sub-path "gene"))
-
-(def elegans-ln "Caenorhabditis elegans")
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
