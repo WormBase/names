@@ -4,6 +4,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth] ;; for side effect
@@ -16,8 +17,6 @@
    [wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (def update-gene (partial api-tc/update "gene"))
 
