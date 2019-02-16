@@ -74,7 +74,7 @@
                   init-tx-res
                   batch)]
       (let [errors (-> result :errors seq)]
-        (when-not (empty? errors)
+        (when (seq errors)
           (throw (ex-info "Errors during attempting batch"
                           {:errors errors
                            :type ::db-errors}))))
