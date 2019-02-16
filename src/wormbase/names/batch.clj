@@ -14,18 +14,15 @@
   (sweet/routes
    (sweet/context "" []
      (sweet/GET "/:batch-id" request
-       :responses (assoc wnu/default-responses
-                         ok
-                         {:schema ::wsb/success-response})
+       :responses (wnu/response-map ok {:schema ::wsb/info})
        :path-params [batch-id :- :batch/id]
        (info request batch-id wnp/pull-expr)))))
 
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
-    (sweet/routes
-     wnbg/routes
-     wnbv/routes
-     info-routes)))
+    (sweet/routes wnbg/routes
+                  wnbv/routes
+                  info-routes)))
 
 (def routes (sweet/routes resources))

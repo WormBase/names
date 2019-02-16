@@ -74,6 +74,6 @@
               [info-status info-body] (api-tc/info "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
-          (tu/status-is? (:status (ok)) info-status info-body)
-          (t/is (= (some-> info-body :prov :provenance/what keyword)
+          (tu/status-is? 200 info-status info-body)
+          (t/is (= (some-> info-body :provenance/what keyword)
                    :event/new-gene)))))))

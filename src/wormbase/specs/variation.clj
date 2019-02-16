@@ -27,12 +27,14 @@
 
 (s/def ::new (stc/spec (s/keys :req [:variation/name])))
 
-(s/def ::update (stc/spec (stc/merge ::new
-                                     (s/keys :req [:variation/id]))))
+(s/def ::update ::new)
 
 (s/def ::new-batch (stc/spec (s/coll-of ::new :min-count 1)))
 
-(s/def ::update-batch (stc/spec (s/coll-of ::update :min-count 1)))
+(s/def ::update-batch (stc/spec
+                       (s/coll-of
+                        (s/merge ::update (s/keys :req [:variation/id]))
+                        :min-count 1)))
 
 (s/def ::change-status-batch (stc/spec (s/coll-of ::identifier :min-count 1)))
 (s/def ::kill-batch ::change-status-batch)

@@ -69,14 +69,6 @@
 
 (def summary (wne/summarizer identify info-pull-expr))
 
-(def new-variation (wne/creator :variation/id ::wsv/new :event/new-variation info-pull-expr))
-
-(def update-variation (wne/updater identify
-                                   :variation/id
-                                   ::wsv/update
-                                   :event/update-variation
-                                   info-pull-expr))
-
 (def status-changer (partial wne/status-changer ::wsv/identifier :variation/status))
 
 (def kill-variation (status-changer :variation.status/dead :event/kill-variation
@@ -109,7 +101,12 @@
                       (assoc bad-request
                              {:schema ::wsc/error-response})
                       (wnu/response-map))
-       :handler new-variation}})))
+       :handler (fn handle-new [request]
+                  (let [new-variation (wne/creator :variation/id
+                                                   (partial wnu/conform-data ::wsv/new)
+                                                   :event/new-variation
+                                                   info-pull-expr)]
+                    (new-variation request)))}})))
 
 (def item-resources
   (sweet/context "/variation/:identifier" []
@@ -134,7 +131,12 @@
                       (dissoc conflict)
                       (wnu/response-map))
        :handler (fn handle-variation-update [request]
-                  (update-variation request identifier))}
+                  (let [update-variation (wne/updater identify
+                                                      :variation/id
+                                                      (partial wnu/conform-data ::wsv/update)
+                                                      :event/update-variation
+                                                      info-pull-expr)]
+                    (update-variation request identifier)))}
       :get
       {:summary "Summarise a variation."
        :x-name ::about-variation

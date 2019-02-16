@@ -12,7 +12,8 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
-   [wormbase.names.util :as wnu]))
+   [wormbase.names.util :as wnu]
+   [wormbase.specs.variation :as wsv]))
 
 (s/def ::entity-type sts/string?)
 
@@ -44,14 +45,14 @@
     (impl conn uiident cdata prov :batch-size bsize)))
 
 (defn query-provenance [db bid pull-expr]
-  (->> (d/q '[:find [?tx ...]
-              :in $ ?bid
-              :where
-              [?tx :batch/id ?bid]]
-            db
-            bid)
-       (map (partial wdb/pull db pull-expr))
-       (first)))
+  (some->> (d/q '[:find [?tx ...]
+                  :in $ ?bid
+                  :where
+                  [?tx :batch/id ?bid]]
+                db
+                bid)
+           (map (partial wdb/pull db pull-expr))
+           (first)))
 
 (defn new-entities
   "Create a batch of new entities."
@@ -134,5 +135,4 @@
         batch-id (uuid/as-uuid bid)
         b-prov-info (query-provenance db batch-id pull-expr)]
     (when b-prov-info
-      (assert (uuid? batch-id))
-      (ok {:prov b-prov-info}))))
+      (ok b-prov-info))))

@@ -125,10 +125,10 @@
    (response-map (apply (partial assoc default-responses k v) kvs))))
 
 (defn conform-data [spec data & [names-validator]]
-  (let [conformed (stc/conform spec
-                               (if names-validator
-                                 (names-validator data)
-                                 data))]
+  (let [conformed (s/conform spec
+                             (if names-validator
+                               (names-validator data)
+                               data))]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
@@ -136,6 +136,9 @@
                          :type ::validation-error
                          :data data})))
       conformed)))
+
+(defn conform-data-drop-label [spec data & [names-validator]]
+  (second (conform-data spec data names-validator)))
 
 (defn query-batch [db bid pull-expr]
   (map (partial d/pull db pull-expr)
@@ -148,4 +151,3 @@
               [?a :db/ident ?aname]]
             db
             bid)))
-

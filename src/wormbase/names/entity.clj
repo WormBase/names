@@ -27,8 +27,9 @@
                    :lookup-ref lookup-ref}))))
 
 (defn creator
-  "Return an endpoint handler for new entity creation."
-  [uiident data-spec event info-pull-expr & [validate-names]]
+ "Return an endpoint handler for new entity creation."
+  ;; [uiident data-spec event info-pull-expr & [validate-names]]
+  [uiident conform-spec-fn event info-pull-expr & [validate-names]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
@@ -39,11 +40,7 @@
                    :data
                    (update live-status-attr (fnil identity live-status-val)))
           names-validator (or validate-names (constantly (identity data)))
-          conformed (wnu/conform-data data-spec data (partial names-validator request))
-          ;; an "or" spec is conformed to [label conformed-value], otherwise to conformed-value.
-          cdata (if (vector? conformed)
-                  (second conformed)
-                  conformed)
+          cdata (conform-spec-fn data (partial names-validator request))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
           tx-res @(d/transact-async conn tx-data)
@@ -54,7 +51,7 @@
       (created (str "/" ent-ns "/") result))))
 
 (defn updater
-  [identify-fn uiident data-spec event info-pull-expr & [validate-names ref-resolver-fn]]
+  [identify-fn uiident conform-spec-fn event info-pull-expr & [validate-names ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
@@ -66,11 +63,12 @@
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn passthru-resolver [_ data]
                                              data))
-                cdata (->> (wnu/conform-data data-spec data names-validator)
-                           (second)
+                cdata (->> (conform-spec-fn data names-validator)
                            (resolve-refs-to-db-ids db))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
+                _ (println "entity updater TXES:")
+                _ (prn txes)
                 tx-result @(d/transact-async conn txes)]
             (when-let [db-after (:db-after tx-result)]
               (if-let [updated (wdb/pull db-after info-pull-expr lur)]

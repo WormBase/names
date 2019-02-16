@@ -2,15 +2,15 @@
   (:require
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
-   [wormbase.specs.provenance] ;; side effects
+   [spec-tools.spec :as sts]
    [wormbase.specs.gene :as wsg]
-   [spec-tools.spec :as sts]))
+   [wormbase.specs.provenance :as wsp]))
 
 (s/def :batch/id uuid?)
 
 (s/def ::size pos-int?)
 
-(s/def ::success-response (stc/spec (s/keys :req [:batch/id])))
+(s/def ::success-response  (s/keys :req [:batch/id]))
 
 (s/def ::ids (s/coll-of string? :min-count 1))
 (s/def ::id-key sts/keyword?)
@@ -37,3 +37,7 @@
 (s/def ::split-from :gene/id)
 (s/def ::split-item (s/keys :req-un [::split-into ::split-from]))
 (s/def ::split (stc/spec (s/coll-of ::split-item :min-count 1)))
+
+(s/def ::info (s/merge ::wsp/provenance ::success-response))
+
+

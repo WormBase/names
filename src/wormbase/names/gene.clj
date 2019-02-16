@@ -131,16 +131,6 @@
                          {:gene/species species-entid})))]
     res))
 
-(def new-gene (wne/creator :gene/id ::wsg/new :event/new-gene info-pull-expr validate-names))
-
-(def update-gene (wne/updater identify
-                              :gene/id
-                              ::wsg/update
-                              :event/update-gene
-                              info-pull-expr
-                              validate-names
-                              resolve-refs-to-dbids))
-
 (defn- validate-merge-request
   [request into-gene-id from-gene-id into-biotype]
   (let [db (:db request)
@@ -332,23 +322,6 @@
                                :fail-precondition? wnu/dead?
                                :precondition-failure-msg "Gene to be killed is already dead."))
 
-;; (defn resurrect-gene [request id]
-;;   (change-status request id :gene.status/live :event/resurrect-gene
-;;                  :fail-precondition? wnu/live?
-;;                  :precondition-failure-msg "Gene is already live."))
-
-
-;; (defn suppress-gene [request id]
-;;   (change-status request id :gene.status/suppressed :event/suppress-gene
-;;                  :fail-precondition? wnu/not-live?
-;;                  :precondition-failure-msg "Gene must have a live status."))
-
-;; (defn kill-gene [request id]
-;;   (change-status request id
-;;                  :gene.status/dead :event/kill-gene
-;;                  :fail-precondition? wnu/dead?
-;;                  :precondition-failure-msg "Gene to be killed cannot be dead."))
-
 (def status-changed-responses (wnu/response-map ok {:schema ::wsg/status-changed}))
 
 (def coll-resources
@@ -369,7 +342,13 @@
        :parameters {:body-params {:data ::wsg/new :prov ::wsp/provenance}}
        :responses (wnu/response-map created {:schema {:created ::wsg/created}}
                                     bad-request {:schema ::wsc/error-response})
-       :handler new-gene}})))
+       :handler (fn handle-new [request]
+                  (let [new-gene (wne/creator :gene/id
+                                              (partial wnu/conform-data-drop-label ::wsg/new)
+                                              :event/new-gene
+                                              info-pull-expr
+                                              validate-names)]
+                    (new-gene request)))}})))
 
 (def item-resources
   (sweet/context "/gene/:identifier" []
@@ -421,7 +400,14 @@
                        (dissoc conflict)
                        (wnu/response-map))
         :handler (fn [request]
-                   (update-gene request identifier))}})
+                   (let [update-gene (wne/updater identify
+                                                  :gene/id
+                                                  (partial wnu/conform-data-drop-label ::wsg/update)
+                                                  :event/update-gene
+                                                  info-pull-expr
+                                                  validate-names
+                                                  resolve-refs-to-dbids)]
+                     (update-gene request identifier)))}})
      (sweet/context "/merge/:from-identifier" [from-identifier]
        (sweet/resource
         {:post

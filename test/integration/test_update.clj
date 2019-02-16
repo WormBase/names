@@ -1,4 +1,4 @@
-(ns integration.test-update-gene
+(ns integration.test-update
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
@@ -159,10 +159,9 @@
              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))
 
-
 (def update-variation (partial api-tc/update "variation"))
 
-(t/deftest must-meet-spec
+(t/deftest variation-data-must-meet-spec
   (let [identifier (first (gen/sample gsv/id 1))
         sample {:variation/name (first (gen/sample gsv/name 1))
                 :variation/status :variation.status/live}
@@ -177,7 +176,7 @@
                   [status body] response]
               (tu/status-is? 400 status (pr-str response)))))))))
 
-(t/deftest changing-name-success
+(t/deftest changing-variation-name-success
   (t/testing "Changing the name of an existing variation."
     (let [identifier (first (gen/sample gsv/id 1))
           sample {:variation/name (first (gen/sample gsv/name 1))
@@ -189,9 +188,13 @@
           (let [data {:variation/name "mynew1"}
                 payload {:data data :prov basic-prov}
                 [status body] (update-variation identifier payload)]
-            (tu/status-is? 200 status body)))))))
+            (tu/status-is? 200 status body)
+            (t/is (= (:variation/name (d/pull (d/db conn)
+                                              '[:variation/name]
+                                              [:variation/id identifier]))
+                     "mynew1"))))))))
 
-(t/deftest changing-name-to-non-uniq
+(t/deftest changing-variation-name-to-non-uniq
   (t/testing "Changing the name of a variation to something that's already taken."
     (let [v-names (gen/sample gsv/name 2)
           samples (map (fn [vname]

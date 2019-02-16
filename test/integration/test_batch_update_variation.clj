@@ -17,7 +17,7 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (update-variations {:data [] :prov nil}])
+    (let [[status body] (update-variations {:data [] :prov nil})]
       (t/is (= 400 status)))))
 
 (t/deftest non-uniq-names
