@@ -10,8 +10,7 @@
                {:variation/id #(sg/string-generator wsv/id-regexp)}))
 
 (def all-statuses #{:variation.status/dead
-                    :variation.status/live
-                    :variation.status/suppressed})
+                    :variation.status/live})
 
 (def status-overrides {:variation/status (constantly (s/gen all-statuses))})
 
