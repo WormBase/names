@@ -42,7 +42,7 @@
                  :into-gene (second gene-ids)
                  :into-biotype into-biotype}]]
       (tu/with-gene-fixtures
-        fixtures** 
+        fixtures**
         (fn [conn]
           (let [[status body] (merge-genes {:data data :prov basic-prov})]
             (tu/status-is? (:status (ok)) status body)))))))
@@ -84,7 +84,3 @@
                   (t/is (= (get-in into-gene [:gene/status :db/ident]) :gene.status/live))
                   (t/is (= (get-in into-gene [:gene/biotype :db/ident])
                            (:into-biotype merge-spec-data))))))))))))
-
-
-
-

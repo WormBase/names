@@ -95,4 +95,3 @@
                 (let [ent (d/entity (d/db conn) [:variation/id id])]
                   (t/is (= (:variation/status ent)
                            (keyword "variation.status" (name exp-resp-key)))))))))))))
-

@@ -36,5 +36,3 @@
                               (select-keys f1 [:variation/name]))]
                 [status body] (update-variations {:data bdata :prov basic-prov})]
             (t/is (= 409 status) (pr-str body))))))))
-
-
