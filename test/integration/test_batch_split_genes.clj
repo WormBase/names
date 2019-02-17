@@ -8,6 +8,7 @@
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request conflict not-found ok]]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
@@ -22,8 +23,6 @@
 
 (defn split-genes [data]
   (api-tc/send-request "batch" :post (assoc data :batch-size 100) :sub-path "gene/split"))
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

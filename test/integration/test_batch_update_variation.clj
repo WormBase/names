@@ -4,6 +4,7 @@
    [clojure.test :as t]
    [datomic.api :as d]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.variation :as gsv]
    [wormbase.test-utils :as tu]))
@@ -12,8 +13,6 @@
 
 (defn update-variations [data]
   (api-tc/send-request "batch" :put data :sub-path "variation"))
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

@@ -5,6 +5,7 @@
    [clojure.test :as t]
    [datomic.api :as d]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
@@ -19,10 +20,6 @@
 (def new-variation (partial api-tc/new "variation"))
 
 (def not-nil? (complement nil?))
-
-(def elegans-ln "Caenorhabditis elegans")
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (defn check-db [db ident id]
   (let [status-ident (keyword (namespace ident) "status")

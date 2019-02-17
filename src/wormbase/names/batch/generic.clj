@@ -54,6 +54,16 @@
            (map (partial wdb/pull db pull-expr))
            (first)))
 
+(defn ids-created [db uiident batch-id]
+  (sort (d/q '[:find [?identifier ...]
+               :in $ ?bid ?ident
+               :where
+               [?tx :batch/id ?bid]
+               [?e ?ident ?identifier ?tx]]
+             db
+             batch-id
+             uiident)))
+
 (defn new-entities
   "Create a batch of new entities."
   [uiident event-type spec conformer request]
@@ -69,14 +79,7 @@
                               spec
                               data-transform
                               request)
-        new-ids (d/q '[:find [?identifier ...]
-                       :in $ ?bid ?ident
-                       :where
-                       [?tx :batch/id ?bid]
-                       [?e ?ident ?identifier ?tx]]
-                     (-> request :conn d/db)
-                     (:batch/id batch-result)
-                     uiident)
+        new-ids (ids-created (-> request :conn d/db) uiident (:batch/id batch-result))
         result (assoc batch-result :ids new-ids :id-key uiident)]
     (created (str "/api/batch/" (:batch/id result)) result)))
 
