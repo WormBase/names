@@ -58,6 +58,5 @@
                                    ::wssf/resurrect-batch
                                    wnbg/map-conform-data-drop-labels
                                    request))))
-
 (comment
   (conform-to-range ::wssf/new-batch 10))
