@@ -4,9 +4,10 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [integration.test-batch-new-gene :refer [basic-prov elegans-ln new-genes]]
+   [integration.test-batch-new-gene :refer [new-genes]]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.test-utils :as tu]))
 
