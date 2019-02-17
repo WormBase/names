@@ -67,8 +67,6 @@
                            (resolve-refs-to-db-ids db))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
-                _ (println "entity updater TXES:")
-                _ (prn txes)
                 tx-result @(d/transact-async conn txes)]
             (when-let [db-after (:db-after tx-result)]
               (if-let [updated (wdb/pull db-after info-pull-expr lur)]
