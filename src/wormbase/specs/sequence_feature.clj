@@ -3,7 +3,7 @@
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]))
 
-(def id-regexp #"WBsf\d{8}")
+(def id-regexp #"WBsf\d+")
 
 (def max-new-limit 100000)
 

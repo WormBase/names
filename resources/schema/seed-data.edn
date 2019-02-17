@@ -48,7 +48,7 @@
 
  ;; templates for identifiers
  #:template{:format "WBGene%08d", :describes :gene/id}
- #:template{:format "WBsf%012d", :describes :sequence-feature/id}
+ #:template{:format "WBsf%d", :describes :sequence-feature/id}
  #:template{:format "WBVar%08d", :describes :variation/id}
 
  ;; agent
