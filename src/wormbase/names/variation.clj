@@ -25,7 +25,6 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.variation :as wsv]))
 
-
 (def identify (partial wne/identify ::wsv/identifier))
 
 (def name-matching-rules

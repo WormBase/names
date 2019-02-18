@@ -11,7 +11,7 @@
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
-   [wormbase.names.service :as service]
+   [wormbase.names.species :as wns]
    [wormbase.specs.gene :as wsg]
    [wormbase.test-utils :as tu]
    [wormbase.api-test-client :as api-tc]))
@@ -19,6 +19,10 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (def update-gene (partial api-tc/update "gene"))
+
+(def update-variation (partial api-tc/update "variation"))
+
+(def update-species (partial api-tc/update "species"))
 
 (t/deftest must-meet-spec
   (let [identifier (first (gen/sample gsg/id 1))
@@ -158,8 +162,6 @@
              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))
 
-(def update-variation (partial api-tc/update "variation"))
-
 (t/deftest variation-data-must-meet-spec
   (let [identifier (first (gen/sample gsv/id 1))
         sample {:variation/name (first (gen/sample gsv/name 1))
@@ -209,3 +211,41 @@
                 payload {:data data :prov basic-prov}
                 [status body] (update-variation subject-identifier payload)]
             (tu/status-is? 409 status body)))))))
+
+(t/deftest non-uniq-species-causes-conflict
+  (t/testing "Attempting to update a species that has a name that's already taken fails."
+    (let [samples (map (fn add-id [sample]
+                         (assoc sample :species/id (-> sample
+                                                       :species/latin-name
+                                                       wns/latin-name->id)))
+                       (gen/sample gss/payload 2))
+          dup-name (-> samples first :species/latin-name)
+          species-id-name (-> samples second :species/id name)]
+      (tu/with-fixtures
+        samples
+        (fn [conn]
+          (let [payload {:data (-> samples
+                                   second
+                                   (assoc :species/latin-name dup-name))
+                         :prov basic-prov}
+                [status body] (update-species species-id-name payload)]
+            (tu/status-is? 409 status body)))))))
+
+(t/deftest update-species-success
+  (t/testing "Update a species that has a unique new name succeeds."
+    (let [sample (reduce-kv (fn add-id [m k v]
+                              (cond-> m
+                                (= k :species/latin-name) (assoc :species/id (wns/latin-name->id v))
+                                true (assoc k v)))
+                            {}
+                            (-> gss/payload (gen/sample 1) first))
+          species-id-name (-> sample :species/id name)]
+      (tu/with-fixtures
+        sample
+        (fn [conn]
+          (let [new-name (-> gss/new-latin-name (gen/sample 1) first)
+                payload {:data (-> (dissoc sample :species/id)
+                                   (assoc :species/latin-name new-name))
+                         :prov basic-prov}
+                [status body] (update-species species-id-name payload)]
+            (tu/status-is? 200 status body)))))))

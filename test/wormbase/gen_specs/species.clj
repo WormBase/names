@@ -2,7 +2,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [miner.strgen :as sg]
-   [wormbase.gen-specs.util :as util]))
+   [wormbase.gen-specs.util :as util]
+   [wormbase.specs.species :as wss]))
 
 (def load-seed-data (memoize util/load-seed-data))
 
@@ -32,3 +33,8 @@
 (def cgc-name (partial valid-name-for-species :species/cgc-name-pattern))
 
 (def sequence-name (partial valid-name-for-species :species/sequence-name-pattern))
+
+(def new-latin-name (s/gen :species/latin-name
+                           {:species/latin-name #(sg/string-generator wss/latin-name-regexp)}))
+
+(def payload (s/gen ::wss/new {:species/latin-name (constantly new-latin-name)}))

@@ -17,6 +17,7 @@
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
+   [wormbase.names.species :as wn-species]
    [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
@@ -98,6 +99,7 @@
     :swagger swagger-ui}
    (sweet/context "" []
      (sweet/context "/api" []
+       wn-species/routes
        wn-person/routes
        wn-gene/routes
        wn-variation/routes

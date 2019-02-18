@@ -11,13 +11,16 @@
    [wormbase.gen-specs.variation :as gsv]
    [wormbase.names.service :as service]
    [wormbase.test-utils :as tu]
-   [wormbase.gen-specs.gene :as gsg]))
+   [wormbase.gen-specs.gene :as gsg]
+   [wormbase.db :as wdb]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (def new-gene (partial api-tc/new "gene"))
 
 (def new-variation (partial api-tc/new "variation"))
+
+(def new-species (partial api-tc/new "species"))
 
 (def not-nil? (complement nil?))
 
@@ -140,3 +143,26 @@
           [status body] (new-variation {:data data :prov basic-prov})]
       (tu/status-is? 201 status body)
       (t/is (some-> body :created :variation/id) (pr-str body)))))
+
+(t/deftest species-data-must-meet-spec
+  (t/testing "Empty species data payload is a bad request."
+    (check-empty new-species))
+  (t/testing "Species should always be required when creating gene name."
+    (let [[status body] (new-species {:species/wrong-ident "Alpha alegator"})]
+      (tu/status-is? 400 status body))))
+
+(t/deftest wrong-species-data-shape
+  (t/testing "Non-conformant species data should result in HTTP Bad Request 400"
+    (let [[status body] (new-species {})]
+      (tu/status-is? 400 status body))))
+
+(t/deftest species-creation-success
+  (t/testing "Create a new species, providing provenance."
+    (let [data {:species/latin-name "Quantum squirmito"
+                :species/cgc-name-pattern "^Q[a-z]{3}-[0-9]+"
+                :species/sequence-name-pattern "^QSEQNAME_[0-9\\]+"}
+          [status body] (new-species {:data data :prov basic-prov})]
+      (tu/status-is? 201 status body)
+      (let [dba (d/db wdb/conn)]
+        (t/is (= (:species/id (d/pull dba [:species/id] (find data :species/latin-name)))
+                 :species/q-squirmito))))))

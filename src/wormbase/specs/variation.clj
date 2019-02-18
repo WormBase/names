@@ -6,7 +6,7 @@
 
 (def id-regexp #"WBVar\d{8}")
 
-(def name-regexp #"(([a-z]+)(Df|Dp|Ti|T|Is)?([1-9]+)){1,4}")
+(def name-regexp #"(([a-z]+)(Df|Dp|Ti|T|Is)?(\d+)){1,4}")
 
 (s/def :variation/id (stc/spec {:spec (s/and string? (partial re-matches id-regexp))}))
 
