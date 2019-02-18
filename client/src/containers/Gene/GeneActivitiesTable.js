@@ -14,6 +14,7 @@ import {
   Timestamp,
   Typography,
 } from '../../components/elements';
+import { pastTense, getActivityDescriptor } from '../../utils/events';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 import UndoSplitGeneDialog from './UndoSplitGeneDialog';
@@ -76,61 +77,6 @@ class GeneActivitiesTable extends Component {
         ) : null}
       </div>
     );
-  };
-
-  getActivityDescriptor = (activityItem = {}, selfGeneId) => {
-    const what = activityItem['provenance/what'];
-    const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
-      (result, change) => {
-        const { attr, value, added } = change || {};
-        if (added)
-          if (attr === 'gene/splits' || attr === 'gene/merges') {
-            return {
-              ...result,
-              relatedGeneId: value,
-            };
-          } else if (attr === 'gene/status') {
-            return {
-              ...result,
-              statusChange: value,
-            };
-          }
-        return result;
-      },
-      {}
-    );
-
-    let eventType;
-    if (what === 'event/merge-genes' && !statusChange) {
-      eventType = 'merge_from';
-    } else if (
-      what === 'event/merge-genes' &&
-      statusChange === 'gene.status/dead'
-    ) {
-      eventType = 'merge_into';
-    } else if (what === 'event/split-gene' && !statusChange) {
-      eventType = 'split_into';
-    } else if (
-      what === 'event/split-gene' &&
-      statusChange === 'gene.status/live'
-    ) {
-      eventType = 'split_from';
-    } else {
-      eventType = what;
-    }
-
-    const descriptor = {
-      eventLabel: eventType || activityItem['provenance/what'],
-      entity: {
-        'gene/id': selfGeneId,
-      },
-      relatedEntity: relatedGeneId
-        ? {
-            'gene/id': relatedGeneId,
-          }
-        : null,
-    };
-    return descriptor;
   };
 
   getGeneIdForEvent = (selectedActivity, eventType) => {
@@ -204,10 +150,7 @@ class GeneActivitiesTable extends Component {
                 eventLabel,
                 entity,
                 relatedEntity,
-              } = this.getActivityDescriptor(
-                activityItem,
-                this.props.selfGeneId
-              );
+              } = getActivityDescriptor(activityItem, this.props.selfGeneId);
               return (
                 <TableRow key={activityIndex}>
                   <TableCell className={classes.time}>
@@ -234,7 +177,9 @@ class GeneActivitiesTable extends Component {
                   <TableCell className={classes.eventCell}>
                     <Typography gutterBottom className={classes.eventLabel}>
                       <span>
-                        <Humanize>{eventLabel}</Humanize>{' '}
+                        <Humanize postProcessor={pastTense}>
+                          {eventLabel}
+                        </Humanize>{' '}
                       </span>
                       {relatedEntity ? (
                         <Link to={`/gene/id/${relatedEntity['gene/id']}`}>
