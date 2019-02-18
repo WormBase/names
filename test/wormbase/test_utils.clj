@@ -22,6 +22,7 @@
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.gene :as wng]
+   [wormbase.names.variation :as wnv]
    [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.gene :as wsg]

@@ -97,6 +97,8 @@
  #:db{:ident :event/new-sequence-feature}
  #:db{:ident :event/kill-sequence-feature}
  #:db{:ident :event/resurrect-sequence-feature}
+ #:db{:ident :event/new-species}
+ #:db{:ident :event/update-species}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version
