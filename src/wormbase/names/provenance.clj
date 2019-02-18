@@ -22,10 +22,6 @@
         (s/conform ::wsp/identifier who))
       (first (vec who)))))
 
-(def pull-expr '[* {:provenance/what [:db/ident]
-                    :provenance/who [:person/email :person/name :person/id]
-                    :provenance/how [:db/ident]}])
-
 (defn assoc-provenance
   "Associate provenance data with the request.
 
