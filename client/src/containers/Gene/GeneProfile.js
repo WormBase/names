@@ -18,6 +18,7 @@ import {
   Typography,
   ValidationError,
 } from '../../components/elements';
+import { pastTense, getActivityDescriptor } from '../../utils/events';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';
 import ResurrectGeneDialog from './ResurrectGeneDialog';
@@ -313,6 +314,10 @@ class GeneProfile extends Component {
         Back to directory
       </Button>
     );
+    const killEventDescriptor =
+      this.state.data['gene/status'] === 'gene.status/dead'
+        ? getActivityDescriptor(this.state.data.history[0])
+        : {};
 
     return this.state.status === 'NOT_FOUND' ? (
       <NotFound>
@@ -397,7 +402,30 @@ class GeneProfile extends Component {
             <div>
               {this.state.data['gene/status'] !== 'gene.status/live' ? (
                 <Typography variant="display1" gutterBottom>
-                  <Humanize>{this.state.data['gene/status']}</Humanize>
+                  <Humanize capitalize>
+                    {this.state.data['gene/status']}
+                  </Humanize>
+                  {this.state.data['gene/status'] === 'gene.status/dead' ? (
+                    <Typography variant="subheading" component={'i'}>
+                      (
+                      <Humanize postProcessor={pastTense}>
+                        {killEventDescriptor.eventLabel}
+                      </Humanize>
+                      {killEventDescriptor.relatedEntity ? (
+                        <React.Fragment>
+                          {' '}
+                          <Link
+                            to={`/gene/id/${
+                              killEventDescriptor.relatedEntity['gene/id']
+                            }`}
+                          >
+                            {killEventDescriptor.relatedEntity['gene/id']}
+                          </Link>
+                        </React.Fragment>
+                      ) : null}
+                      )
+                    </Typography>
+                  ) : null}
                 </Typography>
               ) : null}
               <ErrorBoundary>

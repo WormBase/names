@@ -121,4 +121,32 @@
       :valueType :db.type/uuid
       :unique :db.unique/value
       :index true
-      :doc "A saga identifier for tracking batches of operations."}]
+      :doc "A saga identifier for tracking batches of operations."}
+ #:db{:ident :variation/id
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
+      :unique :db.unique/identity
+      :doc "The primary identifier of the variation."}
+ #:db{:ident :variation/name
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
+      :unique :db.unique/value
+      :doc "The primary name of the variation."}
+ #:db{:ident :variation/status
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "The status of the variation."}
+ #:db{:ident :variation.name/pattern
+      :valueType :db.type/string
+      :cardinality :db.cardinality/many
+      :doc "The set of permissiable naming pattern for variations."}
+ #:db{:ident :sequence-feature/id
+      :valueType :db.type/string
+      :cardinality :db.cardinality/one
+      :unique :db.unique/identity
+      :doc "The primary identifier for a sequence feature."}
+ #:db{:ident :sequence-feature/status
+      :valueType :db.type/ref
+      :cardinality :db.cardinality/one
+      :doc "The status of the sequence feature."}]
+

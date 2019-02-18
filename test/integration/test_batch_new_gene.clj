@@ -9,6 +9,7 @@
                                     ok]]
    [clj-uuid :as uuid]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
@@ -22,10 +23,6 @@
 
 (defn new-genes [data]
   (api-tc/send-request "batch" :post data :sub-path "gene"))
-
-(def elegans-ln "Caenorhabditis elegans")
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -69,8 +66,11 @@
       (t/is (:status (created)) (str status))
       (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
-        (t/is (= (-> body :ids count) (count bdata)))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
-              xs (map #(get-in % [:gene/status :db/ident]) batch)]
+              xs (map #(get-in % [:gene/status :db/ident]) batch)
+              [info-status info-body] (api-tc/info "batch" bid)]
           (t/is (seq xs))
-          (t/is (every? (partial = :gene.status/live) xs)))))))
+          (t/is (every? (partial = :gene.status/live) xs))
+          (tu/status-is? 200 info-status info-body)
+          (t/is (= (some-> info-body :provenance/what keyword)
+                   :event/new-gene)))))))

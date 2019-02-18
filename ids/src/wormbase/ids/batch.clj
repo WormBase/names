@@ -39,6 +39,8 @@
 
 (defrecord BatchResult [tx-result errors])
 
+(defrecord BatchError [error-type exc])
+
 (defn attempt-batch
   [result xs]
   (let [result* (try
@@ -47,12 +49,13 @@
                              (fn [tx-res]
                                (d/with (:db-after tx-res) xs)))
                   (catch Exception exc
-                    (if (some-> exc ex-data :db/error)
+                    (when-let [error-type (some-> exc ex-data :db/error)]
                       (cc/update result
                                  :errors
-                                 (fnil (fn [curr-val]
-                                         (conj curr-val exc)) []))
-                      (throw exc))))]
+                                 (fn [curr-val]
+                                   (conj curr-val
+                                         (map->BatchError {:error-type error-type
+                                                           :exc exc})))))))]
     (assert result* "tx-res was nil!")
     result*))
 
@@ -70,10 +73,11 @@
                                (attempt-batch result xs))))
                   init-tx-res
                   batch)]
-      (when-let [errors (-> result :errors seq)]
-        (throw (ex-info "Errors during attempting batch"
-                        {:errors errors
-                         :type ::db-errors})))
+      (let [errors (-> result :errors seq)]
+        (when (seq errors)
+          (throw (ex-info "Errors during attempting batch"
+                          {:errors errors
+                           :type ::db-errors}))))
       (let [b-result (reduce (partial processor-fn
                                       sp
                                       (fn [_ xs]
@@ -175,13 +179,13 @@
   [conn uiident coll prov & {:keys [batch-size]
                              :or {batch-size 100}}]
   (process-batch
-   (fn [sp transact-fn db items]
-     (when db
+   (fn [sp transact-fn result items]
+     (when result
        (some->> (seq items)
                 (map (fn [item]
                        ['wormbase.ids.core/cas-batch (find item uiident) item]))
                 (add-prov-maybe sp)
-                (transact-fn db))))
+                (transact-fn result))))
    conn
    coll
    prov

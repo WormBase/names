@@ -22,6 +22,10 @@
         (s/conform ::wsp/identifier who))
       (first (vec who)))))
 
+(def pull-expr '[* {:provenance/what [:db/ident]
+                    :provenance/who [:person/email :person/name :person/id]
+                    :provenance/how [:db/ident]}])
+
 (defn assoc-provenance
   "Associate provenance data with the request.
 
@@ -97,11 +101,11 @@
   [db entity-id tx]
   (let [focus-eid (:db/id (d/pull db '[*] entity-id))]
     (->> (d/q '[:find ?e ?aname ?v ?added
-                :in $ ?tx
+                :in $h ?tx
                 :where
-                (not [?e ?tx])
-                [?e ?a ?v ?tx ?added]
-                [?a :db/ident ?aname]]
+                (not [$h ?e ?tx])
+                [$h ?e ?a ?v ?tx ?added]
+                [$h ?a :db/ident ?aname]]
               (d/history db)
               tx)
          (map #(zipmap [:eid :attr :value :added] %))
@@ -111,9 +115,9 @@
 
 (defn query-tx-ids [db entity-id]
   (d/q '[:find [?tx ...]
-         :in $ ?e
+         :in $h ?e
          :where
-         [?e _ _ ?tx _]]
+         [$h ?e _ _ ?tx _]]
        (d/history db)
        entity-id))
 
@@ -125,9 +129,11 @@
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
 
-  Parameters:
-  `db` - A datomic database.
-  `entity-id` - Datomic lookup-ref or :db/id number.
+  Passed two parameters:
+    `db` - A datomic database.
+    `entity-id` - Datomic lookup-ref or :db/id number.
+
+  and optionally a custom pull expression to retrive the results (3-arity):
   `prov-pull-expr` should be a pull expression describing the attributes desired from
                    a datomic pull operation for the entity id.
 

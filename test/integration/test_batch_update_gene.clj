@@ -6,6 +6,7 @@
    [clj-uuid :as uuid]
    [ring.util.http-response :refer [bad-request conflict not-found ok]]
    [wormbase.api-test-client :as api-tc]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.test-utils :as tu]))
 
@@ -13,8 +14,6 @@
 
 (defn update-genes [data]
   (api-tc/send-request "batch" :put data :sub-path "gene"))
-
-(def basic-prov {:provenance/who {:person/email "tester@wormbase.org"}})
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -36,7 +35,6 @@
                         :gene/cgc-name "dup-1"}]
                 [status body] (update-genes {:data bdata :prov basic-prov})]
             (t/is (= (:status (conflict)) status) (pr-str body))))))))
-
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."

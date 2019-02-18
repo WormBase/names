@@ -86,12 +86,13 @@
   (respond-conflict request (assoc-error-message data exc)))
 
 (defn handle-db-unique-conflict [^Exception exc data request]
-  (let [uc-err (parse-exc-message (ex-data exc))
-        body (assoc-error-message (merge data uc-err) exc)]
+  (let [uc-err (parse-exc-message exc)
+        body (assoc-error-message data exc :message uc-err)]
     (respond-conflict request body)))
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
+   (println "UNEXCPECTED")
    (throw exc)
    (if-let [db-err (:db/error data)]
      (if-let [db-err-handler (db-err handlers)]
@@ -148,14 +149,22 @@
 
 (defn handle-batch-errors [^Exception exc data request]
   (try
-    (respond-conflict request
-                      (assoc-error-message
-                       (update data
-                               :errors
-                               (fn [errors]
-                                 (map parse-exc-message errors)))
-                       exc
-                       :message "Batch processing errors occurred"))
+    (let [batch-errors (:errors data)
+          err-data {:errors (map
+                             (fn [batch-error]
+                               (let [err-type (:error-type batch-error)
+                                     ed (if-let [err-handler (get handlers err-type)]
+                                          (err-handler (:exc batch-error)
+                                                       (ex-data (:exc batch-error))
+                                                       request)
+                                          {:body {:error-type err-type
+                                                  :message (-> batch-error :exc parse-exc-message)}})]
+                                 (:body ed)))
+                             batch-errors)}]
+      (respond-conflict request
+                        (assoc-error-message err-data
+                                             exc
+                                             :message "processing errors occurred")))
     (catch Exception exc
       (handle-unexpected-error exc))))
 
@@ -180,8 +189,6 @@
    :db.error/not-an-entity handle-missing
    :db.error/unique-conflict handle-db-unique-conflict
 
-   
-   ;; TODO: this shouldn't really be here...spec not tight enough?
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
 
    ;; Batch errors, may contain multiple errors types from above

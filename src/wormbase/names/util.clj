@@ -102,14 +102,14 @@
 
   `status` can be datomic entity or keyword/ident."
   [status ent]
-  (some (partial = status)
-        ((juxt identity :db/ident) ent)))
+  (some #(= status (name %1))
+        (filter keyword? ((juxt identity :db/ident) ent))))
 
-(def live? (partial has-status? :gene.status/live))
+(def live? (partial has-status? "live"))
 
-(def dead? (partial has-status? :gene.status/dead))
+(def dead? (partial has-status? "dead"))
 
-(def suppressed? (partial has-status? :gene.status/suppressed))
+(def suppressed? (partial has-status? "suppressed"))
 
 (def not-live? (comp not live?))
 
@@ -118,14 +118,17 @@
    conflict {:schema {:conflict ::wsc/error-response}}
    precondition-failed {:schema ::wsc/error-response}})
 
-(defn response-map [m]
-  (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+(defn response-map
+  ([m]
+   (into {} (map (fn [[rf sm]] [(:status (rf)) sm]) m)))
+  ([k v & kvs]
+   (response-map (apply (partial assoc default-responses k v) kvs))))
 
 (defn conform-data [spec data & [names-validator]]
-  (let [conformed (stc/conform spec
-                               (if names-validator
-                                 (names-validator data)
-                                 data))]
+  (let [conformed (s/conform spec
+                             (if names-validator
+                               (names-validator data)
+                               data))]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
@@ -133,6 +136,9 @@
                          :type ::validation-error
                          :data data})))
       conformed)))
+
+(defn conform-data-drop-label [spec data & [names-validator]]
+  (second (conform-data spec data names-validator)))
 
 (defn query-batch [db bid pull-expr]
   (map (partial d/pull db pull-expr)
@@ -145,4 +151,3 @@
               [?a :db/ident ?aname]]
             db
             bid)))
-

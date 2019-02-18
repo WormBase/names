@@ -10,6 +10,7 @@
    [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [datomic.api :as d]
+   [expound.alpha :refer [expound-str]]
    [java-time :as jt]
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
@@ -21,6 +22,7 @@
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.gene :as wng]
+   [wormbase.names.variation :as wnv]
    [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.gene :as wsg]
@@ -177,23 +179,18 @@
                                    (empty paths)
                                    (for [[k v] paths]
                                      [(if (= k (keyword "/"))
-                                        "/" (str "/" (name k))) v]))))
+                                        "/"
+                                        (str "/" (name k)))
+                                      v]))))
       spec)))
 
+;; TODO: use expound support introduced in compojure.api alpha 28
 (defmacro status-is? [status expected-status body]
   `(t/is (= ~status ~expected-status)
          (format "Response body did not contain expected data:\n%s"
-                 (pr-str (if-let [suspec# (:spec ~body)]
-                           (stc/deserialize suspec#)
-                           ~body)))))
-
-(defn map->set [m]
-  (assert (map? m))
-  (some->> (apply vector m)
-           (flatten)
-           (partition 2)
-           (set)))
-
+                 (if-let [suspec# (:spec ~body)]
+                   (stc/deserialize suspec#)
+                   (pr-str ~body)))))
 
 (defn species->latin-name [lu-ref]
   (let [[ident value] lu-ref
@@ -242,24 +239,42 @@
         (assoc-if :gene/species species*)
         (assoc-if :gene/biotype biotype))))
 
+(defn provenance
+  [data & {:keys [how what whence why person status batch-id]
+           :or {how :agent/console
+                whence (jt/to-java-date (jt/instant))
+                what :event/test-fixture-assertion
+                person [:person/email "tester@wormbase.org"]}}]
+  (merge {:db/id "datomic.tx"
+          :provenance/how how
+          :provenance/what what
+          :provenance/when whence
+          :provenance/who person}
+         (when why
+           {:provenance/why why})
+         (when batch-id
+           {:batch/id batch-id})))
+
 (defn with-fixtures
-  [sample-transform provenance-fn data-samples test-fn]
-  (let [conn (db-testing/fixture-conn)
-        sample-data (if (map? data-samples)
-                      [data-samples]
-                      data-samples)]
-    (doseq [data-sample sample-data]
-      (let [data (sample-transform data-sample)
-            prov (when (ifn? provenance-fn)
-                   (provenance-fn data))
-            tx-fixtures (if prov
-                          (conj [data] prov)
-                          [data])]
-        @(d/transact-async conn tx-fixtures)))
-    (with-redefs [wdb/connection (fn [] conn)
-                  wdb/db (fn speculate [_]
-                           (d/db conn))]
-      (test-fn conn))))
+  ([data-samples test-fn]
+   (with-fixtures identity provenance data-samples test-fn))
+  ([sample-transform provenance-fn data-samples test-fn]
+   (let [conn (db-testing/fixture-conn)
+         sample-data (if (map? data-samples)
+                       [data-samples]
+                       data-samples)]
+     (doseq [data-sample sample-data]
+       (let [data (sample-transform data-sample)
+             prov (when (ifn? provenance-fn)
+                    (provenance-fn data))
+             tx-fixtures (if prov
+                           (conj [data] prov)
+                           [data])]
+         @(d/transact-async conn tx-fixtures)))
+     (with-redefs [wdb/connection (fn [] conn)
+                   wdb/db (fn speculate [_]
+                            (d/db conn))]
+       (test-fn conn)))))
 
 (defn with-batch-fixtures
   [sample-transform provenance-fn data-samples test-fn]
@@ -278,29 +293,7 @@
                   wdb/db (fn [_] (d/db conn))]
       (test-fn conn))))
 
-(defn gene-provenance
-  [data & {:keys [how what whence why person status batch-id]
-           :or {how :agent/console
-                whence (jt/to-java-date (jt/instant))
-                what :event/test-fixture-assertion
-                person [:person/email "tester@wormbase.org"]}}]
-  (merge {:db/id "datomic.tx"
-          :provenance/how how
-          :provenance/what what
-          :provenance/when whence
-          :provenance/who person}
-         (when why
-           {:provenance/why why})
-         (when batch-id
-           {:batch/id batch-id})))
-
-(def with-gene-fixtures (partial with-fixtures
-                                 gene-sample-to-txes
-                                 gene-provenance))
-
-(def with-person-fixtures (partial with-fixtures
-                                   identity
-                                   nil))
+(def with-gene-fixtures (partial with-fixtures gene-sample-to-txes provenance))
 
 (defn query-provenance [conn gene-id event]
   (when-let [tx-ids (d/q '[:find [?tx]

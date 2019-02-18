@@ -4,27 +4,27 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [integration.test-batch-new-gene :refer [basic-prov elegans-ln new-genes]]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]
+   [integration.test-batch-new-gene :refer [new-genes]]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn info [bid]
-  (api-tc/info "batch"(str "info/" bid)))
+  (api-tc/info "batch" (str "gene/" bid)))
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
     (let [[status body] (info (d/squuid))]
-      (tu/status-is? status (:status (not-found)) body))))
+      (tu/status-is? 404 status body))))
 
 (t/deftest batch-id-invalid
   (t/testing "When a batch ID is not of the correct/expected format."
     (let [[status body] (info "zxx")]
-      (tu/status-is? (:status (bad-request)) status body))))
+      (tu/status-is? 400 status body))))
 
 (t/deftest info-success
   (t/testing "Retrieving info about at batch working (provenance only atm)."
@@ -40,11 +40,11 @@
       (tu/with-batch-fixtures
         tu/gene-sample-to-txes
         (fn [data]
-          (tu/gene-provenance data :batch-id bid))
+          (tu/provenance data :batch-id bid))
         samples
         (fn [conn]
           (let [[status body] (info bid)]
-            (tu/status-is? status (:status (ok)) body)
-            (t/is (map? (:prov body)))
-            (t/is (str/includes? (or (some-> body :prov :provenance/who) "") "@")
+            (tu/status-is? 200 status body)
+            (t/is (map? body))
+            (t/is (str/includes? (get-in body [:provenance/who] "") "@")
                   (pr-str body))))))))
