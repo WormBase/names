@@ -13,5 +13,8 @@ rm -f pom.xml &&  make pom.xml
 echo 'Ensure the groupId is "wormbase" and the artifact id is "ids" in pom.xml and update the version accordingly`.
 echo `Check the current vesion with:`
 echo "curl -s -H 'accept: application/json' https://clojars.org/api/artifacts/wormbase/ids"
-```
+
+# Release to clojars
 make release
+```
+
