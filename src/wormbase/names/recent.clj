@@ -79,8 +79,7 @@
 (def routes (sweet/routes
              (sweet/context "/recent" []
                :tags ["recent"]
-               ;; TODO: authenticated?
-               ;; :middleware [wna/restrict-to-authenticated]
+               :middleware [wna/restrict-to-authenticated]
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :responses response-schema
