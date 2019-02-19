@@ -1,8 +1,12 @@
 # Change-log
 
 ## [0.4.9]
- - Nothing changed yet.
-
+ - Implemented variations API.
+ - Implemented Species API.
+ - Implemented recent API.
+ - Fixed issues with parsing of authentication tokens causing them to appear as expired.
+ - Fixed several issues with batch API.
+ 
 ## [0.4.8]
  - Fixed status assignment in batch api.
  
