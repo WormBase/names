@@ -1,7 +1,7 @@
 (ns wormbase.names.recent
   (:require
    [buddy.core.codecs :as codecs]
-   [buddy.core.codecs.base64 :as b64]   
+   [buddy.core.codecs.base64 :as b64]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
@@ -69,7 +69,7 @@
 (defn handle [request rules & [needle]]
   (let [{conn :conn db :db} request
         log (d/log conn)
-        items (activities db log rules (or needle "") *n-days-back*) 
+        items (activities db log rules (or needle "") *n-days-back*)
         latest-t (some-> items first :db/txInstant)
         etag (encode-etag latest-t)
         _ (println "Latest-t:" latest-t)]
@@ -102,6 +102,10 @@
 
 (comment
   "Examples of each invokation flavour"
+  (in-ns 'wormbase.names.recent)
+
+  Then define `conn` d/connect and db with d/db.
+
   (binding [*n-days-back** 43]
     (activities db (d/log conn) entity-rules "gene")
     (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org")
