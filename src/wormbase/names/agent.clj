@@ -9,8 +9,7 @@
 (def gapps-conf (:google-apps (wnu/read-app-config)))
 
 (defn identify [^GoogleIdToken$Payload token]
-  (let [app-conf (wnu/read-app-config)
-        client-types (:form wsa/all-agents)
+  (let [client-types (:form wsa/all-agents)
         client-id-map (zipmap
                        (map #(-> gapps-conf % :client-id)
                             (map (comp keyword name) client-types))
