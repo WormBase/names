@@ -75,7 +75,7 @@
         _ (println "Latest-t:" latest-t)]
     (-> {:activities (map (partial wu/elide-db-internals db) items)}
         (ok)
-        (header "etag" (bsc/sign latest-t *etag-key*)))))
+        (header "etag" etag))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
