@@ -35,7 +35,7 @@
 (defn info [db lur]
   (let [person (d/pull db '[*] lur)]
     (when (:db/id person)
-      (wu/undatomicize db person))))
+      (wu/elide-db-internals db person))))
 
 (defn about-person
   "Return info about a WBPerson."
@@ -82,7 +82,7 @@
         tx-result @(d/transact-async conn
                                      [[:db/cas lur :person/active? active? false] prov])]
     (if-let [dba (:db-after tx-result)]
-      (ok (wu/undatomicize dba (assoc person :person/active? false)))
+      (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
       (bad-request))))
   
 (defn wrap-id-validation [handler identifier]

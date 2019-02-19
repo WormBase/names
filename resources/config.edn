@@ -1,4 +1,5 @@
 {:auth-token #include "secrets/wb-auth-token.edn"
+ :recent {:days-back 60}
  :event-broadcast
  {:gmail #include "secrets/wb-ns-gmail.edn"
   :aws-sqs

@@ -9,6 +9,10 @@
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]))
 
+(def pull-expr '[* {:provenance/what [:db/ident]
+                    :provenance/who [:person/name :person/email :person/id]
+                    :provenance/how [:db/ident]}])
+
 (defn- person-lur-from-provenance
   "Return a datomic `lookup ref` from the provenance data."
   [prov]
@@ -17,10 +21,6 @@
       (when (s/valid? ::wsp/identifier who)
         (s/conform ::wsp/identifier who))
       (first (vec who)))))
-
-(def pull-expr '[* {:provenance/what [:db/ident]
-                    :provenance/who [:person/email :person/name :person/id]
-                    :provenance/how [:db/ident]}])
 
 (defn assoc-provenance
   "Associate provenance data with the request.
@@ -109,7 +109,9 @@
          (remove (comp nil? :value))
          (sort-by (juxt :attr :added :value)))))
 
-(defn query-tx-ids [db entity-id]
+(defn involved-in-txes
+  "Return a sequence of tx ids that involve `entity-id`."
+  [db entity-id]
   (d/q '[:find [?tx ...]
          :in $h ?e
          :where
@@ -140,7 +142,7 @@
    (let [pull-changes (partial query-tx-changes-for-event db entity-id)
          pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
          sort-mrf #(sort-events-by-when % :most-recent-first true)
-         tx-ids (query-tx-ids db entity-id)
+         tx-ids (involved-in-txes db entity-id)
          prov-seq (map pull-prov tx-ids)]
      (some->> prov-seq
               (remove (fn [v]

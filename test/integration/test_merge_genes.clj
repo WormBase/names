@@ -147,8 +147,7 @@
                       {:provenance/what [:db/ident]
                        :provenance/who [:person/email :person/name :person/id]
                        :provenance/how [:db/ident]}]
-                prov (some->> ppe
-                              (wnp/query-provenance (d/db conn) [:gene/id from-id])
+                prov (some->> (wnp/query-provenance (d/db conn) [:gene/id from-id] ppe)
                               (filter #(= (:provenance/what %) :event/merge-genes))
                               first)]
             (tu/status-is? (:status (ok)) status body)

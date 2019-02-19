@@ -15,7 +15,7 @@
         (PushbackReader.)
         (edn-read))))
 
-(defn undatomicize
+(defn elide-db-internals
   "Remove datomic internal attribute/value pairs from a seq of maps."
   [db data]
   (w/postwalk (fn presenter [m]
@@ -27,6 +27,8 @@
                   (map? m) (dissoc m :db/id :db/txInstant)
                   :default m))
               data))
+
+(def ^{:deprecated-in 0.6} undatomicize elide-db-internals)
 
 (defn elide-importer-info
   [data]

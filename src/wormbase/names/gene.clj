@@ -188,7 +188,7 @@
   (some->> (cons id more-ids)
            (map (partial vector :gene/id))
            (map (partial d/pull db info-pull-expr))
-           (wu/undatomicize db)))
+           (wu/elide-db-internals db)))
 
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db payload :body-params} request

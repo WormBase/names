@@ -17,6 +17,7 @@
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
+   [wormbase.names.recent :as wn-recent]
    [wormbase.names.species :as wn-species]
    [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
@@ -103,7 +104,8 @@
        wn-person/routes
        wn-gene/routes
        wn-variation/routes
-       wn-batch/routes))))
+       wn-batch/routes
+       wn-recent/routes))))
 
 (defn init
   "Entry-point for ring server initialization."
