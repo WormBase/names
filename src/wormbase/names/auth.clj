@@ -57,8 +57,8 @@
              (= (.getHostedDomain gtoken) "wormbase.org")
              (true? (.getEmailVerified gtoken)))
         gtoken))
-    (catch IllegalArgumentException ex
-      (log/error ex))))
+    (catch Exception exc
+      (log/error exc "Invalid token supplied"))))
 
 (defn query-person
   [db ^String ident auth-token]
