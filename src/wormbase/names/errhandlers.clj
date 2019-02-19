@@ -92,8 +92,6 @@
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
-   (println "UNEXCPECTED")
-   (throw exc)
    (if-let [db-err (:db/error data)]
      (if-let [db-err-handler (db-err handlers)]
        (db-err-handler exc data request)
