@@ -30,13 +30,14 @@
 
   Returns a map."
   [request payload what]
-  (let [person-email (-> request :identity :person :email)
+  (let [auth-identity (:identity request)
+        person-email (-> auth-identity :person :person/email)
         prov (get payload :prov {})
-        person-lur (or (person-lur-from-provenance prov)
-                       [:person/email person-email])
-        who (-> request :db (d/pull '[:db/id] person-lur) :db/id)
+        who (if-let [plur (person-lur-from-provenance prov)]
+                 (-> request :db (d/pull [:db/id] plur))
+                 (-> auth-identity :person :db/id))
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
-        how (wna/identify id-token)
+        how (wna/identify (:token-info auth-identity))
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
               :provenance/what what
