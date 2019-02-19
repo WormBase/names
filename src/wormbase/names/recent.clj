@@ -5,6 +5,7 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
+   [ring.middleware.not-modified :as rmnm]
    [ring.util.http-response :refer [header ok]]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
@@ -79,7 +80,8 @@
 (def routes (sweet/routes
              (sweet/context "/recent" []
                :tags ["recent"]
-               :middleware [wna/restrict-to-authenticated]
+               :middleware [wna/restrict-to-authenticated
+                            rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :responses response-schema
