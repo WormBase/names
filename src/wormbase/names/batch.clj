@@ -19,33 +19,6 @@
        :path-params [batch-id :- :batch/id]
        (info request batch-id wnp/pull-expr)))))
 
-(defn debug-txes [coll]
-  (println "tx ids:")
-  (prn coll)
-  coll)
-
-(defn recent-activities [request & {:keys [days-ago]
-                                   :or {days-ago 60}}]
-  (let [{conn :conn db :db} request
-        now (jt/instant)
-        start-t (jt/to-java-date now)
-        end-t (->> (jt/days days-ago)
-                   (jt/minus now)
-                   (jt/to-java-date))]
-    (->> (d/q '[:find [?tx ...]
-                :in $ ?log ?start ?end
-                :where
-                [(tx-ids ?log ?start ?end)]
-                [?tx :batch/id _ _]]
-              db
-              (d/log conn)
-              start-t
-              end-t)
-         (debug-txes)
-         (map (fn [tx]
-                (wdb/pull db wnp/pull-expr tx)))
-         (wnp/sort-events-by-when))))
-
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
