@@ -119,7 +119,6 @@
  #:db{:ident :batch/id
       :cardinality :db.cardinality/one
       :valueType :db.type/uuid
-      :unique :db.unique/value
       :index true
       :doc "A saga identifier for tracking batches of operations."}
  #:db{:ident :variation/id
