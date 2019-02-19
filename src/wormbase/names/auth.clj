@@ -12,7 +12,6 @@
    [compojure.api.meta :as capi-meta]
    [datomic.api :as d]
    [wormbase.names.agent :as wn-agent]
-   [wormbase.names.util :as util]
    [wormbase.names.util :as wnu]
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response])
@@ -27,7 +26,7 @@
 
 (def ^:private json-factory (JacksonFactory.))
 
-(def ^:private app-conf (util/read-app-config))
+(def ^:private app-conf (wnu/read-app-config))
 
 (def ^:private gapps-conf (:google-apps app-conf))
 
@@ -71,7 +70,7 @@
 (defn sign-token [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
-(defrecord Identification [token person])
+(defrecord Identification [person])
 
 (defn verified-stored-token [db auth-token-conf auth-token]
   (if-let [{stored-token :person/auth-token} (d/pull db
@@ -86,8 +85,7 @@
                                   (log/debug "Failed to unsigned stored token"
                                              {:stored-token stored-token
                                               :key (:key auth-token-conf)})))]
-      (Identification. (parse-token unsigned-token)
-                       (query-person-memoized db :person/auth-token stored-token)))))
+      (Identification. (query-person-memoized db :person/auth-token stored-token)))))
 
 (defn identify [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
@@ -105,7 +103,7 @@
                                                auth-token]])]
             (if-let [person (query-person (:db-after tx-result)
                                           :person/auth-token auth-token)]
-              (Identification. tok person)))
+              (Identification. person)))
               (log/warn (str "No matching token in db")))))))
 
 (def backend (babt/token-backend {:authfn identify}))
@@ -146,7 +144,7 @@
        (#{:admin} (:role (:identity request)))))
 
 (defn require-role! [required request]
-  (let [roles (-> request :identity :person :person/roles)]
+  (let [roles (some-> request :identity :person :person/roles)]
     (if-not (seq (set/intersection (set required) (set roles)))
       (http-response/unauthorized!
        {:text "Missing required role"

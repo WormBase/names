@@ -30,10 +30,10 @@
 
   Returns a map."
   [request payload what]
-  (let [id-token (-> request :identity :token)
+  (let [person-email (-> request :identity :person :email)
         prov (get payload :prov {})
         person-lur (or (person-lur-from-provenance prov)
-                       [:person/email (.getEmail id-token)])
+                       [:person/email person-email])
         who (-> request :db (d/pull '[:db/id] person-lur) :db/id)
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
         how (wna/identify id-token)
