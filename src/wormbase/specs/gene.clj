@@ -62,6 +62,12 @@
 
 (s/def ::update (stc/spec (s/spec ::new))) ;; same as new
 
+(s/def ::update (stc/spec (s/and (s/keys :opt [:gene/cgc-name
+                                               :gene/sequence-name
+                                               :gene/biotype
+                                               :gene/species])
+                                 seq)))
+
 (s/def ::updated (stc/spec (s/keys :req [:gene/id])))
 
 (s/def ::merge (stc/spec (s/keys :req [:gene/biotype])))

@@ -27,11 +27,9 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [bdata [{:gene/species (-> g1 :gene/species second)
-                        :gene/id (:gene/id g1)
+          (let [bdata [{:gene/id (:gene/id g1)
                         :gene/cgc-name "dup-1"}
-                       {:gene/species (-> g2 :gene/species second)
-                        :gene/id (:gene/id g2)
+                       {:gene/id (:gene/id g2)
                         :gene/cgc-name "dup-1"}]
                 [status body] (update-genes {:data bdata :prov basic-prov})]
             (t/is (= (:status (conflict)) status) (pr-str body))))))))

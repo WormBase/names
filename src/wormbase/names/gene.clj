@@ -402,7 +402,7 @@
         :handler (fn [request]
                    (let [update-gene (wne/updater identify
                                                   :gene/id
-                                                  (partial wnu/conform-data-drop-label ::wsg/update)
+                                                  (partial wnu/conform-data ::wsg/update)
                                                   :event/update-gene
                                                   info-pull-expr
                                                   validate-names

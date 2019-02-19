@@ -49,7 +49,7 @@
                   (wnbg/update-entities :gene/id
                                         :event/update-gene
                                         ::wsg/update-batch
-                                        wnbg/map-conform-data-drop-labels
+                                        wnu/conform-data
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."

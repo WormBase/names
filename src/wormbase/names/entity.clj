@@ -57,14 +57,14 @@
           ent-ns (namespace uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
-        (let [data (:data payload)
+        (let [ent-data (wdb/pull db info-pull-expr lur)
+              data (merge ent-data (:data payload))
               names-validator (if validate-names
                                 (partial validate-names request))]
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn passthru-resolver [_ data]
                                              data))
-                cdata (->> (conform-spec-fn data names-validator)
-                           (resolve-refs-to-db-ids db))
+                cdata (resolve-refs-to-db-ids db (conform-spec-fn data names-validator))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
