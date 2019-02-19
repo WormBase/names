@@ -12,8 +12,7 @@
                                     conflict conflict!
                                     created
                                     internal-server-error
-                                    not-found not-found!
-                                    precondition-failed precondition-failed!]]
+                                    not-found not-found!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
