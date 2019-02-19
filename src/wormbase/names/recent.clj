@@ -71,8 +71,7 @@
         log (d/log conn)
         items (activities db log rules (or needle "") *n-days-back*)
         latest-t (some-> items first :db/txInstant)
-        etag (encode-etag latest-t)
-        _ (println "Latest-t:" latest-t)]
+        etag (encode-etag latest-t)]
     (-> {:activities (map (partial wu/elide-db-internals db) items)}
         (ok)
         (header "etag" etag))))
