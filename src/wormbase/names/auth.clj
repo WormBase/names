@@ -66,6 +66,8 @@
     (when (:db/id person)
       person)))
 
+(def query-person-memoized (memoize query-person))
+
 (defn sign-token [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
@@ -85,7 +87,7 @@
                                              {:stored-token stored-token
                                               :key (:key auth-token-conf)})))]
       (Identification. (parse-token unsigned-token)
-                       (query-person db :person/auth-token stored-token)))))
+                       (query-person-memoized db :person/auth-token stored-token)))))
 
 (defn identify [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
