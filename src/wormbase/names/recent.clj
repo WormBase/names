@@ -73,7 +73,7 @@
         latest-t (some-> items first :db/txInstant)
         etag (encode-etag latest-t)
         _ (println "Latest-t:" latest-t)]
-    (-> {:activities (map (partial wu/undatomicize db) items)}
+    (-> {:activities (map (partial wu/elide-db-internals db) items)}
         (ok)
         (header "etag" (bsc/sign latest-t *etag-key*)))))
 

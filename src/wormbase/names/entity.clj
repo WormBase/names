@@ -98,7 +98,7 @@
                  fail-precondition?
                  (fail-precondition? status))
         (bad-request! {:message precondition-failure-msg
-                       :info (wu/undatomicize db status)}))
+                       :info (wu/elide-db-internals db status)}))
       (let [prov (wnp/assoc-provenance request payload event-type)
             tx-res @(d/transact-async
                      conn [[:db/cas
@@ -110,7 +110,7 @@
             dba (:db-after tx-res)]
         (->> dba
              pull-status
-             (wu/undatomicize dba)
+             (wu/elide-db-internals dba)
              ok)))))
 
 (defn summarizer [identify-fn pull-expr]
