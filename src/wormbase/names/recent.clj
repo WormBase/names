@@ -18,8 +18,6 @@
 
 (def ^:dynamic *n-days-back* (:days-back conf))
 
-(def ^:dynamic *etag-key* (:etag-key conf))
-
 (defn activities
   "Return recent activities for both batch and individual operations.
   The result should be map whose keys represent these two groupings.

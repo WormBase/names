@@ -1,7 +1,5 @@
 {:auth-token #include "secrets/wb-auth-token.edn"
- :recent
- {:days-back 60
-  :etag-key "f2dd2b00-33c7-11e9-8a5f-4060d0fee4fd"}
+ :recent {:days-back 60}
  :event-broadcast
  {:gmail #include "secrets/wb-ns-gmail.edn"
   :aws-sqs
