@@ -46,4 +46,10 @@
            (.set *gapi-verify-token-response* k v)))
        *gapi-verify-token-response*))))
 
+(alter-var-root
+ (var wn-auth/parse-token)
+ (fn fake-parse-token [token]
+   (fn [x]
+     (log/debug "NOTICE: faking wna/parse-token")
+     defaults)))
 

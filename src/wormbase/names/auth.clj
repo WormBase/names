@@ -70,7 +70,7 @@
 (defn sign-token [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
-(defrecord Identification [token-info  person])
+(defrecord Identification [token-info person])
 
 (defn verified-stored-token [db auth-token-conf parsed-token]
   (if-let [{stored-token :person/auth-token} (d/pull db
@@ -78,7 +78,8 @@
                                                      [:person/email (:email parsed-token)])]
 
     (when-let [unsigned-token (try
-                                (bsc/unsign stored-token (:key auth-token-conf) (select-keys auth-token-conf [:max-age]))
+                                (bsc/unsign stored-token (:key auth-token-conf)
+                                            (select-keys auth-token-conf [:max-age]))
                                 (catch Exception ex
                                   (log/debug "Failed to unsigned stored token"
                                              {:stored-token stored-token
