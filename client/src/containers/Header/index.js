@@ -50,6 +50,7 @@ const styles = (theme) => ({
   root: {},
   toolbar: {
     minHeight: theme.spacing.unit * 4,
+    alignItems: 'center',
     [theme.breakpoints.down('sm')]: {
       justifyContent: 'space-between',
       flexWrap: 'wrap',
@@ -58,18 +59,20 @@ const styles = (theme) => ({
   },
   title: {
     flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
     '& a': {
       textDecoration: 'initial',
       color: theme.palette.common.white,
     },
   },
   searchBox: {
-    top: theme.spacing.unit,
+    //    top: theme.spacing.unit,
     [theme.breakpoints.down('sm')]: {
       order: 10,
       width: '100%',
     },
-    margin: `0px ${theme.spacing.unit * 2}px`,
+    //    margin: `0px ${theme.spacing.unit * 2}px`,
   },
 });
 

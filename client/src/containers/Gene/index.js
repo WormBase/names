@@ -8,6 +8,7 @@ import {
   Page,
   PageMain,
   Typography,
+  LayoutIndexPageBanner,
 } from '../../components/elements';
 
 import GeneProfile from './GeneProfile';
@@ -21,7 +22,7 @@ const Gene = (props) => {
     <Page>
       <PageMain>
         <div className={classes.root}>
-          <div className={classes.header}>
+          <LayoutIndexPageBanner>
             <Button
               variant="raised"
               color="secondary"
@@ -29,11 +30,8 @@ const Gene = (props) => {
             >
               Add New Gene
             </Button>
-            <div className={classes.or}>OR</div>
-            <div className={classes.search}>
-              <GeneSearchBox />
-            </div>
-          </div>
+            <GeneSearchBox />
+          </LayoutIndexPageBanner>
         </div>
         <div className={classes.main}>
           {/* tables and charts */}

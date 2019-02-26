@@ -45,6 +45,7 @@ export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';
+export * from './Layout';
 export { default as NotFound } from './NotFound';
 export { Page, PageLeft, PageMain } from './Page';
 export * from './ProgressButton';

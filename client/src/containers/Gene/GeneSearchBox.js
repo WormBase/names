@@ -20,6 +20,7 @@ function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
   return (
     <TextField
+      className={classes.textField}
       InputProps={{
         ...InputProps,
         inputRef: ref,
@@ -200,6 +201,10 @@ const styles = (theme) => ({
   root: {
     width: '20em',
     position: 'relative',
+  },
+  textField: {
+    marginBottom: 0,
+    backgroundColor: 'red',
   },
   inputRoot: {
     backgroundColor: theme.palette.common.white,
