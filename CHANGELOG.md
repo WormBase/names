@@ -6,6 +6,8 @@
  - Implemented recent API.
  - Fixed issues with parsing of authentication tokens causing them to appear as expired.
  - Fixed several issues with batch API.
+ - Implemented importer for variations.
+ - Changed importer tool to work for genes and variations.
  
 ## [0.4.8]
  - Fixed status assignment in batch api.
