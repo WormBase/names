@@ -15,7 +15,7 @@
   :main ^:skip-aot wormbase.names.importer
   :monkeypatch-clojure-test false
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
-  :aliases {"import-genes" ["run" "-m" "org.wormbase.names.import-genes"]
+  :aliases {"import" ["run" "-m" "org.wormbase.names.importer"]
             "update-eb-docker-container-version" ["run" "-m" "wormbase.aws-eb-setup"]
             "aws-ecr-publish" ["do"
                                ["shell" "make" "clean"]
