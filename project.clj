@@ -56,6 +56,9 @@
    {:lein-tools-deps/config {:resolve-aliases [:test]}
     :env {:wb-db-uri "datomic:mem://test-db"}}
    :repl
-   {:plugins
+   {:dependencies
+    [[nrepl "0.6.0"]
+     [acyclic/squiggly-clojure "0.1.9-SNAPSHOT" :exclusions [org.clojure/tools.reader]]]
+    :plugins
     [[refactor-nrepl "2.4.0"]
-     [cider/cider-nrepl "0.20.0"]]}})
+     [cider/cider-nrepl "0.21.1"]]}})
