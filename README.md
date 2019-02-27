@@ -75,21 +75,21 @@ yarn run start
 Notes:
 - `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
 - **Port:**
-    - To run the server on a different port:
+	- To run the server on a different port:
 ```bash
 PORT=[PORT] yarn run start
 ```
 - **Dependencies:**
-    - Most errors about missing dependencies can be resolved with `yarn install`.
-    - It's safe to run `yarn install` when in doubt.
-    - Refer to [yarn][7] documentation when modifying dependencies. And be sure to checking in changes in `yarn.lock` (auto-generated).
+	- Most errors about missing dependencies can be resolved with `yarn install`.
+	- It's safe to run `yarn install` when in doubt.
+	- Refer to [yarn][7] documentation when modifying dependencies. And be sure to checking in changes in `yarn.lock` (auto-generated).
 - **Mock:**
-    - Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
-    - Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
-    - `shouldMock` defaults to the `REACT_APP_SHOULD_MOCK` environment variable, when it's not passed in as an argument.
+	- Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
+	- Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
+	- `shouldMock` defaults to the `REACT_APP_SHOULD_MOCK` environment variable, when it's not passed in as an argument.
 - **Directory structure**
-    - [create-react-app][11] is responsible for the directory structure of `client/` except `client/src`, and relies it staying this way.
-    - `client/src` primarily consists of `containers` (React components involving business logic) `components/elements` (React components involving only appearance and/or UI logic).
+	- [create-react-app][11] is responsible for the directory structure of `client/` except `client/src`, and relies it staying this way.
+	- `client/src` primarily consists of `containers` (React components involving business logic) `components/elements` (React components involving only appearance and/or UI logic).
 
 ### Run the application locally
 Run with:
@@ -132,9 +132,58 @@ For a full list of tasks, type:
 make help
 ```
 
+### Running imports
+
+The best way to run the imports is against a local dynamodb-local or dev datomic transactor.
+
+e.g: dynamodb-local
+export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019
+
+Conventionally, the export files have been named in the form: `DDMMYYY_<topic>`,
+and we give the datomic database a corresponding name.
+The Dynamo DB table here is `WSNames`
+
+#### Import genes
+
+This import pipeline takes two files:
+  - <current_status_tsv> : A file containing the columns: WBGeneID, Species, Status, CGC Name, Sequence Name, Biotype.
+  - <actions_tsv>: A file containing WBGeneID, WBPersonID, Timestamp, Event Type
+
+
+```bash
+lein run import gene <current_status_tsv> <actions.tsv>
+```
+At time of writing (as of WormBase release WS270), the gene import pipeline takes ~5 hours to run.
+
+#### Import variations
+
+```bash
+lein import variations <variations_tsv>
+```
+
+At time of writing (as of WormBase release WS270), the variations
+import pipeline takes ~5 mins to run.
+
+
+### Import Sequence Features
+
+We do not attempt to replay all Sequence features from an export,
+and instead just record the latest ID and status.
+
+From a fresh database install, enter the following from a REPL session
+after exporting the `WB_DB_URI` environment variable appropriately:
+
+```repl
+(require '[environ.core :refer [env]])
+(require '[datomic.api :as d])
+(def conn (d/connect (:wb-db-uri conn)))
+@(d/transact conn [{:sequence-feature/id "<latest-id>", :sequence-feature/status :sequence-feature.status/live}
+				  {:db/id "datomic.tx", :provenance/why "Initial import", :provenance/who [:person/id "YourWBPersonID"]}])
+```
+
 ## License
 EPL (Eclipse Public License)
-Copyright ©  WormBase 2018
+Copyright ©  WormBase 2018, 2019
 
 [1]: https://github.com/rkneufeld/conformity
 [2]: https://clojure.org/community/downloads
