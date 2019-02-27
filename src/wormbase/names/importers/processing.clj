@@ -46,11 +46,13 @@
        (sc/mappify (select-keys conf [:header]))
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
 
-(defn transact-batch [event-type conn tx-batch]
+(defn transact-batch
+  [event-type conn tx-batch & {:keys [transact-fn]
+                               :or {transact-fn d/transact-async}}]
   (let [tx-data (conj tx-batch {:db/id "datomic.tx"
                                 :provenance/what event-type
                                 :provenance/how :agent/importer})]
-    (d/transact-async conn tx-data)))
+    (transact-fn conn tx-data)))
 
 (defn ->when
   "Convert the provenance timestamp into a time-zone aware datetime."

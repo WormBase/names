@@ -27,6 +27,14 @@
 
 (def transact-batch (partial wnip/transact-batch :event/import-gene))
 
+(defn noisy-transact [conn data]
+  (try
+    (d/transact-async conn data)
+    (catch Exception exc
+      (println "Failed to transact, data was:")
+      (prn data)
+      (throw exc))))
+
 (defn defer [data-attr d event]
   (update-in d [data-attr] (partial merge-with concat) event))
 
@@ -209,7 +217,7 @@
         tx-data [{:gene/id (:gene/id event)
                   :importer/historical-gene-version historical-version}
                  (assoc pv :db/id "datomic.tx")]]
-    (d/transact-async conn tx-data)))
+    (noisy-transact conn tx-data)))
 
 (defn build-data-txes
   "Build the current entity representation of each gene."
@@ -245,9 +253,9 @@
 (defn process-deferred [conn]
   (let [{merges :gene/merges splits :gene/splits} @deferred]
     (doseq [g-merges (partition-all 100 (:tx-data merges))]
-      @(d/transact-async conn g-merges))
+      @(noisy-transact conn g-merges))
     (doseq [g-splits (partition-all 100 (:tx-data splits))]
-      @(d/transact-async conn g-splits))))
+      @(noisy-transact conn g-splits))))
 
 (defn batch-transact-data [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
@@ -255,7 +263,7 @@
     (doseq [batch (build-data-txes tsv-path
                                    cd-ex-conf
                                    #(not= (:gene/status %) :gene.status/dead))]
-      @(transact-batch conn batch))
+      @(transact-batch conn batch :tranasct-fn noisy-transact))
     ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
     ;; - only process the dead genees now, 1 at a time.
     ;; - hack (munge) :  remove names from dead genes if they are already aassigned in db.
@@ -266,7 +274,7 @@
                                    #(= (:gene/status %) :gene.status/dead)
                                    :munge (partial fixup-non-live-gene (d/db conn))
                                    :batch-size 1)]
-      @(transact-batch conn batch))))
+      @(transact-batch conn batch :tranasct-fn noisy-transact))))
 
 (defn process
   [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
