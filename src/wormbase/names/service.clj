@@ -110,6 +110,5 @@
 (defn init
   "Entry-point for ring server initialization."
   []
-  (require '[wormbase.names.event-broadcast])
   (mount/start)
   (wdbs/apply-updates!))
