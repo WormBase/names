@@ -8,9 +8,7 @@
    [wormbase.db :as wdb]
    [wormbase.db.schema :as schema]
    [wormbase.names.auth :as wna]
-   [wormbase.names.util :as wnu]
-   [wormbase.names.event-broadcast :as wneb]
-   [wormbase.names.event-broadcast.proto :as wnebp]))
+   [wormbase.names.util :as wnu]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -47,24 +45,12 @@
   []
   (dm/fork-conn (starting-point-conn)))
 
-(def ^{:doc "Fake event broadcaster that doesn't do anything."}
-  silent-event-brodcaster
-  (reify wnebp/TxEventBroadcaster
-    (message-persisted? [this changes]
-      true)
-    (send-message [this changes]
-      nil)))
-
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
                  (jt/to-millis-from-epoch (jt/instant)))]
     (let [conn (fixture-conn)
-          tx-reqort-queue (d/tx-report-queue conn)
-          monitor (partial wneb/start-queue-monitor
-                           conn
-                           silent-event-brodcaster)]
-      (mount/start-with {#'wdb/conn conn
-                         #'wneb/change-queue-monitor (monitor)})
+          tx-reqort-queue (d/tx-report-queue conn)]
+      (mount/start-with {#'wdb/conn conn})
       (f)
       (wdb/checked-delete uri)
       (mount/stop))))
