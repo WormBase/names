@@ -76,13 +76,14 @@
   (let [tx-report-queue (d/tx-report-queue conn)]
     (future (monitor-tx-changes tx-report-queue event-broadcaster))))
 
-(mount/defstate change-queue-monitor
-  :start (fn []
-           (log/info "Starting change queue monitor")
-           (start-queue-monitor
-            wdb/conn
-            (-> {} wneb-s3/map->TxEventBroadcaster wneb/configure)))
-  :stop (fn []
-          (log/info "Stopping change queue monitor")
-          (future-cancel change-queue-monitor)
-          (log/info "Change queue monitor stopped")))
+;; DISABLED.
+;; (mount/defstate change-queue-monitor
+;;   :start (fn []
+;;            (log/info "Starting change queue monitor")
+;;            (start-queue-monitor
+;;             wdb/conn
+;;             (-> {} wneb-s3/map->TxEventBroadcaster wneb/configure)))
+;;   :stop (fn []
+;;           (log/info "Stopping change queue monitor")
+;;           (future-cancel change-queue-monitor)
+;;           (log/info "Change queue monitor stopped")))
