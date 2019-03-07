@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.10]
+ - Fixed resolving of references and values in gene history changes.
+
 ## [0.4.9]
  - Implemented variations API.
  - Implemented Species API.
