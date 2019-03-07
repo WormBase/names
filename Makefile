@@ -118,7 +118,7 @@ docker-clean: $(call print-help,docker-clean,\
 	@docker rm ${PROJ_NAME}
 
 .PHONY: release
-release: $(call print-help,
+release: $(call print-help,\
                 "Release the application to github.")
 	@lein with-profile prod release
 
