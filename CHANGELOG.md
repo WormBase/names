@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.12]
+ - Bumped version of wormbase/ids
+
 ## [0.4.11]
  - Moved cognitect.transcriptor from dev to main dependency list to fix AWS startup error.
 
