@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.11]
+ - Moved cognitect.transcriptor from dev to main dependency list to fix AWS startup error.
+
 ## [0.4.10]
  - Fixed resolving of references and values in gene history changes.
 
