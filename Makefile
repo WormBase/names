@@ -112,8 +112,14 @@ run: $(call print-help,run,"Run the application in docker (locally).")
 		${NAME}:${VERSION}
 
 .PHONY: docker-clean
-docker-clean: $(call print-help],docker-clean,\
+docker-clean: $(call print-help,docker-clean,\
                "Stop and remove the docker container (if running).")
 	@docker stop ${PROJ_NAME}
 	@docker rm ${PROJ_NAME}
+
+.PHONY: release
+release: $(call print-help,
+                "Release the application to github.")
+	@lein with-profile prod release
+
 
