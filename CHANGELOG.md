@@ -1,14 +1,20 @@
 # Change-log
 
+## [0.4.11]
+ - Moved cognitect.transcriptor from dev to main dependency list to fix AWS startup error.
+
 ## [0.4.10]
- - Nothing changed yet.
- 
+ - Fixed resolving of references and values in gene history changes.
+
 ## [0.4.9]
  - Implemented variations API.
  - Implemented Species API.
  - Implemented recent API.
  - Fixed issues with parsing of authentication tokens causing them to appear as expired.
  - Fixed several issues with batch API.
+ - Implemented importer for variations.
+ - Changed importer tool to work for genes and variations.
+ - Fixed gene importer to ignore duplicate names on dead genes.
  
 ## [0.4.8]
  - Fixed status assignment in batch api.
