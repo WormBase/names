@@ -8,24 +8,20 @@
    [wormbase.util :refer [read-edn]])
   (:import (java.io PushbackReader)))
 
+(def exclude-definitions
+  #{"db" "db.alter" "db.install" "db.excise" "db.sys" "conformity" "fressian"})
+
 (defn definitions [db]
   (d/q '[:find [?attr ...]
-         :in $ [?include-ns ...]
+         :in $ ?excludes
          :where
          [?e :db/valueType]
          [?e :db/ident ?attr]
          [(namespace ?attr) ?ns]
-         [(= ?ns ?include-ns)]]
+         (not
+          [(contains? ?excludes ?ns)])]
        db
-       #{"agent"
-         "biotype"
-         "event"
-         "gene"
-         "gene.status"
-         "provenance"
-         "species"
-         "template"
-         "person"}))
+       exclude-definitions))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]
