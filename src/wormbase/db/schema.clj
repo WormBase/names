@@ -46,7 +46,6 @@
                        {:people {:txes [people]}}
                        [:people])))
 
-
 ;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
 ;;       schema transactions.
 ;;       find a way to version the schema by passing this in.
