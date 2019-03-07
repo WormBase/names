@@ -8,6 +8,7 @@
  - Fixed several issues with batch API.
  - Implemented importer for variations.
  - Changed importer tool to work for genes and variations.
+ - Fixed gene importer to ignore duplicate names on dead genes.
  
 ## [0.4.8]
  - Fixed status assignment in batch api.
