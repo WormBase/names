@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.15]
+ - Fixed syntax error.
+ 
 ## [0.4.14]
  - Fixed yaml config file format.
  
