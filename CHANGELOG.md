@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.14]
+ - Fixed yaml config file format.
+ 
 ## [0.4.13]
  - Fixed incorrect conversion logic for gene history.
  - Speed up gene history calculation by an order of magnitude.
