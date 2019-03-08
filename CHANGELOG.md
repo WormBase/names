@@ -1,7 +1,8 @@
 # Change-log
 
 ## [0.4.13]
- - Nothing changed yet.
+ - Fixed incorrect conversion logic for gene history.
+ - Speed up gene history calculation by an order of magnitude.
 
 ## [0.4.12]
  - Bumped version of wormbase/ids
