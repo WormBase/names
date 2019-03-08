@@ -97,8 +97,7 @@
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
   [db entity-id tx]
-  (let [focus-eid (d/entid db entity-id)
-        d2c (make-changes-transduction focus-eid)]
+  (let [focus-eid (d/entid db entity-id)]
     (->> (d/datoms db :eavt tx)
          (map (juxt :a :v :added))
          (map (partial cons focus-eid))
