@@ -63,24 +63,7 @@
     (sort-by :provenance/when cmp events)))
 
 (defmulti resolve-change (fn [db change]
-                           (let [cv (get change :attr :default)
-                                 vt (:db/valueType (d/entity db (:attr change)))]
-                             (if (= cv :default)
-                               :default
-                               vt))))
-
-(defmethod resolve-change :db.type/ref
-  [db change]
-  (let [attr-name (name (:attr change))
-        ref-kw (keyword attr-name "id")
-        ent (d/entity db (:value change))]
-    (get ent ref-kw (:db/ident ent))))
-
-(defmethod resolve-change :db.type/long
-  [db change]
-  (if (= (:eid change) (:value change))
-    (resolve-change db (assoc change :value (d/entity db (:value change))))
-    (:value change)))
+                           (get change :attr :default)))
 
 (defmethod resolve-change :default
   [db change]
