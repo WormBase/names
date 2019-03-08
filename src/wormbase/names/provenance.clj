@@ -9,9 +9,10 @@
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]))
 
-(def pull-expr '[* {:provenance/what [:db/ident]
-                    :provenance/who [:person/name :person/email :person/id]
-                    :provenance/how [:db/ident]}])
+(def pull-expr '[:provenance/when :provenance/why
+                 {:provenance/what [:db/ident]
+                  :provenance/who [:person/name :person/email :person/id]
+                  :provenance/how [:db/ident]}])
 
 (defn- person-lur-from-provenance
   "Return a datomic `lookup ref` from the provenance data."
@@ -96,16 +97,13 @@
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
   [db entity-id tx]
-  (let [focus-eid (:db/id (d/pull db '[*] entity-id))]
-    (->> (d/q '[:find ?e ?aname ?v ?added
-                :in $h ?tx
-                :where
-                (not [$h ?e ?tx])
-                [$h ?e ?a ?v ?tx ?added]
-                [$h ?a :db/ident ?aname]]
-              (d/history db)
-              tx)
-         (map #(zipmap [:eid :attr :value :added] %))
+  (let [focus-eid (d/entid db entity-id)
+        d2c (make-changes-transduction focus-eid)]
+    (->> (d/datoms db :eavt tx)
+         (map (juxt :a :v :added))
+         (map (partial cons focus-eid))
+         (map (partial zipmap [:eid :attr :value :added]))
+         (map #(update % :attr (partial d/ident db)))
          (map (partial convert-change db focus-eid))
          (remove (comp nil? :value))
          (sort-by (juxt :attr :added :value)))))
@@ -144,7 +142,7 @@
          pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
          sort-mrf #(sort-events-by-when % :most-recent-first true)
          tx-ids (involved-in-txes db entity-id)
-         prov-seq (map pull-prov tx-ids)]
+         prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq
               (remove (fn [v]
                         (if-let [what (:provenance/what v)]
