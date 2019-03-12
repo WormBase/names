@@ -11,9 +11,15 @@
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
    [ring.util.http-response :refer [bad-request created ok]]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]
+   [wormbase.names.util :as wnu]))
 
 (def admin-required (partial wna/require-role! #{:person.role/admin}))
+
+(defmethod wnp/resolve-change :person/id
+  [attr db change]
+  (when-let [found (wnu/resolve-refs db (find change :person/id))]
+    (:person/id found)))
 
 (defn create-person [request]
   (admin-required request)
