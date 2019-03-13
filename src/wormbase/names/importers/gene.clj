@@ -77,7 +77,7 @@
   (s/and string?
          (s/or :biotype/transposable-element-gene #(or
                                                     (= % "transposable_element_gene")
-                                                    (= % "Transposon In Origin"))
+                                                   (= % "Transposon In Origin"))
                :biotype/transcript #(= % "Transcript")
                :biotype/cds #(= % "CDS")
                :biotype/pseudogene #(= % "Pseudogene"))))
