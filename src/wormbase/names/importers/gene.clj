@@ -293,5 +293,5 @@
 (defn process-merges-and-splits
   [conn actions-tsv-path & {:keys [n-in-flight]
                             :or {n-in-flight 10}}]
-  (doall (map-history-actions actions-tsv-path))
+  (dorun (map-history-actions actions-tsv-path))
   (process-deferred conn))
