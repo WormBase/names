@@ -5,6 +5,7 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
+   [wormbase.db.schema :as wdbs]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]))
@@ -66,6 +67,12 @@
 (defmulti resolve-change (fn [db change]
                            (get change :attr :default)))
 
+(defmethod resolve-change :provenance/who
+  [db change]
+  (d/pull db [:person/id
+              :person/email
+              :person/name] (:value change)))
+
 (defmethod resolve-change :default
   [db change]
   (let [cv (:value change)]
@@ -94,17 +101,25 @@
                       (or (resolve-change db change) value)))
             (dissoc :eid))))
 
+(defn entire-history [db entity-id]
+  (d/q '[:find ?e ?aname ?v ?added
+         :in $h ?e
+         :where
+         [$h ?e ?a ?v _ ?added]
+         [$h ?a :db/ident ?aname]]
+       (d/history db)
+       entity-id))
+
+(def ^:private exclude-nses (conj wdbs/datomic-internal-namespaces "importer"))
+
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
   [db entity-id tx]
-  (let [focus-eid (d/entid db entity-id)
-        d2c (make-changes-transduction focus-eid)]
-    (->> (d/datoms db :eavt tx)
-         (map (juxt :a :v :added))
-         (map (partial cons focus-eid))
+  (let [eid (d/entid db entity-id)]
+    (->> (entire-history db eid)
          (map (partial zipmap [:eid :attr :value :added]))
-         (map #(update % :attr (partial d/ident db)))
-         (map (partial convert-change db focus-eid))
+         (remove #(exclude-nses (-> % :attr namespace)))
+         (map (partial convert-change db eid))
          (remove (comp nil? :value))
          (sort-by (juxt :attr :added :value)))))
 
