@@ -85,7 +85,7 @@
      (not [(#{"provenance" "db"} ?ns)])]])
 
 (defn- convert-change
-  "Convert entity ids to their \"primary\" identifier."
+  "Convert entity ids to provenance representation."
   [db eid change-data]
   (let [change (cond ;; Inverts :eid and :value when we have a reverse ref
                  (and (= (:value change-data) eid)
