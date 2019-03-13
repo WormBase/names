@@ -110,8 +110,6 @@
                             rest)]
     (-> m
         (assoc :provenance/what :event/update-gene)
-        (assoc :import-event/biotype-from bt-from)
-        (assoc :import-event/biotype-to bt-to)
         (wnip/discard-empty-valued-entries))))
 
 (defn decode-name-change-event [m target-attr event-text]
