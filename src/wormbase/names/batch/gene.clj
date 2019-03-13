@@ -15,6 +15,8 @@
 
 (s/def ::prov ::wsp/provenance)
 
+(def swagger-tags ["batch" "gene"])
+
 (defn merge-genes [event-type spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
@@ -37,6 +39,7 @@
 
 (def routes
   (sweet/context "/gene" []
+    :tags swagger-tags
     (sweet/resource
      {:put
       {:summary "Update gene records."
@@ -113,6 +116,7 @@
                               wnu/conform-data
                               request))
     (sweet/context "/merge" []
+      :tags swagger-tags
       (sweet/resource
        {:post
         {:summary "Merge multiple pairs of genes."
@@ -122,6 +126,7 @@
          :handler (fn [request]
                     (merge-genes :event/merge-genes ::wsg/merge-gene-batch request))}}))
     (sweet/context "/split" []
+      :tags swagger-tags
       (sweet/resource
        {:post
         {:summary "Split multiple genes."
