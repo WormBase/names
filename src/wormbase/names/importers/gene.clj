@@ -29,10 +29,11 @@
   (try
     (wnip/transact-batch :event/import-gene conn tx-data :tranasct-fn transact-fn)
     (catch Exception exc
-      (if-not (some-> exc ex-data :db.error/unique-conflict)
-        (throw exc)
-        (do (println "Not throwing exception for error: " exc)
-            (prn (ex-data exc)))))))
+      (println "EXCEPTION!!!!")
+      (println "EX-DATA follows:")
+      (prn (ex-data exc))
+      (println)
+      (throw exc))))
 
 (defn handle-transact-exc [exc data]
   (throw (ex-info "Failed to transact data!"
