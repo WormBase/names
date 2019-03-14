@@ -41,7 +41,7 @@
                                   :or {current-user default-user}}]
   (send-request entity-kind :put data :sub-path identifier :current-user current-user))
 
-(defn info
+(defn summary
   [entity-kind identifier & {:keys [current-user params]
                              :or {current-user "tester@wormbase.org"
                                   params {}}}]

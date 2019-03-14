@@ -68,13 +68,13 @@
                             [])}]
       (ok res))))
 
-(def info-pull-expr '[* {:gene/biotype [[:db/ident]]
-                         :gene/species [[:species/latin-name]]
-                         :gene/status [[:db/ident]]
-                         [:gene/merges :as :merged-into] [[:gene/id]]
-                         [:gene/_merges :as :merged-from] [[:gene/id]]
-                         [:gene/splits :as :split-into] [[:gene/id]]
-                         [:gene/_splits :as :split-from] [[:gene/id]]}])
+(def summary-pull-expr '[* {:gene/biotype [[:db/ident]]
+                            :gene/species [[:species/latin-name]]
+                            :gene/status [[:db/ident]]
+                            [:gene/merges :as :merged-into] [[:gene/id]]
+                            [:gene/_merges :as :merged-from] [[:gene/id]]
+                            [:gene/splits :as :split-into] [[:gene/id]]
+                            [:gene/_splits :as :split-from] [[:gene/id]]}])
 
 (defmethod wnp/resolve-change :gene/id
   [db change]
@@ -102,7 +102,7 @@
 (defn summary [request identifier]
   (let [db (:db request)
         [lur _] (identify request identifier)]
-    (when-let [info (wdb/pull db info-pull-expr lur)]
+    (when-let [info (wdb/pull db summary-pull-expr lur)]
       (let [prov (wnp/query-provenance db lur)]
         (-> info (assoc :history prov) ok)))))
 
@@ -186,7 +186,7 @@
 (defn merged-info [db id & more-ids]
   (some->> (cons id more-ids)
            (map (partial vector :gene/id))
-           (map (partial d/pull db info-pull-expr))
+           (map (partial d/pull db summary-pull-expr))
            (wu/elide-db-internals db)))
 
 (defn merge-genes [request into-id from-id]
@@ -263,7 +263,7 @@
                 prov]
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
-          p-gene (wdb/pull dba info-pull-expr p-gene-lur)
+          p-gene (wdb/pull dba summary-pull-expr p-gene-lur)
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
       (->> [p-gene-lur* lur]
@@ -345,7 +345,7 @@
                   (let [new-gene (wne/creator :gene/id
                                               (partial wnu/conform-data-drop-label ::wsg/new)
                                               :event/new-gene
-                                              info-pull-expr
+                                              summary-pull-expr
                                               validate-names)]
                     (new-gene request)))}})))
 
@@ -403,7 +403,7 @@
                                                   :gene/id
                                                   (partial wnu/conform-data ::wsg/update)
                                                   :event/update-gene
-                                                  info-pull-expr
+                                                  summary-pull-expr
                                                   validate-names
                                                   resolve-refs-to-dbids)]
                      (update-gene request identifier)))}})

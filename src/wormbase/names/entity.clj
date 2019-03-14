@@ -28,8 +28,8 @@
 
 (defn creator
  "Return an endpoint handler for new entity creation."
-  ;; [uiident data-spec event info-pull-expr & [validate-names]]
-  [uiident conform-spec-fn event info-pull-expr & [validate-names]]
+  ;; [uiident data-spec event summary-pull-expr & [validate-names]]
+  [uiident conform-spec-fn event summary-pull-expr & [validate-names]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
@@ -46,18 +46,18 @@
           tx-res @(d/transact-async conn tx-data)
           dba (:db-after tx-res)
           new-id (wdb/extract-id tx-res uiident)
-          emap (wdb/pull dba info-pull-expr [uiident new-id])
+          emap (wdb/pull dba summary-pull-expr [uiident new-id])
           result {:created emap}]
       (created (str "/" ent-ns "/") result))))
 
 (defn updater
-  [identify-fn uiident conform-spec-fn event info-pull-expr & [validate-names ref-resolver-fn]]
+  [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate-names ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
-        (let [ent-data (wdb/pull db info-pull-expr lur)
+        (let [ent-data (wdb/pull db summary-pull-expr lur)
               data (merge ent-data (:data payload))
               names-validator (if validate-names
                                 (partial validate-names request))]
@@ -69,7 +69,7 @@
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (when-let [db-after (:db-after tx-result)]
-              (if-let [updated (wdb/pull db-after info-pull-expr lur)]
+              (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
                 (ok {:updated updated})
                 (not-found
                  (format "%s '%s' does not exist" ent-ns (last lur)))))))))))

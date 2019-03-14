@@ -7,7 +7,7 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.sequence-feature :as wssf]))
 
-(def info-pull-expr '[* {:sequence-feature/status [:db/ident]}])
+(def summary-pull-expr '[* {:sequence-feature/status [:db/ident]}])
 
 (defn conform
   "Conform the nubmer of desired features in data under `:n` to a collection.

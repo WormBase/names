@@ -20,7 +20,7 @@
   (api-tc/send-request "batch" :post data :sub-path "variation"))
 
 (defn query-batch [db bid]
-  (wnu/query-batch db bid wnv/info-pull-expr))
+  (wnu/query-batch db bid wnv/summary-pull-expr))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -50,9 +50,9 @@
         (t/is (uuid/uuid-string? bid) (pr-str body))
         (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:variation/status :db/ident]) batch)
-              [info-status info-body] (api-tc/info "batch" bid)]
+              [summary-status summary-body] (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :variation.status/live) xs))
-          (tu/status-is? 200 info-status info-body)
-          (t/is (= (some-> info-body :provenance/what keyword)
+          (tu/status-is? 200 summary-status summary-body)
+          (t/is (= (some-> summary-body :provenance/what keyword)
                    :event/new-variation)))))))

@@ -133,11 +133,11 @@
                     :batch-size bsize)]
         (ok {:retracted result})))))
 
-(defn info [request bid pull-expr]
+(defn summary [request bid pull-expr]
   (let [{db :db} request
         batch-id (uuid/as-uuid bid)
-        b-prov-info (query-provenance db batch-id pull-expr)]
-    (when b-prov-info
-      (-> b-prov-info
+        b-prov-summary (query-provenance db batch-id pull-expr)]
+    (when b-prov-summary
+      (-> b-prov-summary
           (assoc :batch/id batch-id)
           (ok)))))

@@ -19,13 +19,13 @@
               :gene/id gene-id
               :gene/status :gene.status/live)]))
 
-(def summary (partial api-tc/info "gene"))
+(def summary (partial api-tc/summary "gene"))
 
 (t/deftest test-summary
   (t/testing "Summary of a live gene can be retrieved by WBGene ID."
     (let [[gene-id data-sample] (gen-sample)]
       (tu/with-gene-fixtures
         data-sample
-        (fn check-gene-info [conn]
+        (fn check-gene-summary [conn]
           (let [[status body] (summary gene-id)]
             (tu/status-is? (:status (ok)) status body)))))))

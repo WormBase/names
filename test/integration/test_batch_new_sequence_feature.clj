@@ -35,13 +35,13 @@
       (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
         (let [db (d/db wdb/conn)              
-              batch (wnu/query-batch db (uuid/as-uuid bid) wnbsf/info-pull-expr)
+              batch (wnu/query-batch db (uuid/as-uuid bid) wnbsf/summary-pull-expr)
               xs (map #(get-in % [:sequence-feature/status :db/ident]) batch)
-              [info-status info-body] (api-tc/info "batch" bid)]
+              [summary-status summary-body] (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :sequence-feature.status/live) xs))
-          (tu/status-is? 200 info-status info-body)
-          (t/is (= (some-> info-body :provenance/what keyword)
+          (tu/status-is? 200 summary-status summary-body)
+          (t/is (= (some-> summary-body :provenance/what keyword)
                    :event/new-sequence-feature)))))))
 
 

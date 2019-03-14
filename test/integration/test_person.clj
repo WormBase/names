@@ -70,7 +70,7 @@
             (let [result (d/pull (d/db conn) '[*] [:person/id identifier])]
               (t/is (= (:person/name result) "Joe Bloggs")))))))))
 
-(def person-info (partial api-tc/info "person"))
+(def person-summary (partial api-tc/summary "person"))
 
 (defn deactivated-person-sample []
   (-> (tu/person-samples 1)
@@ -78,21 +78,21 @@
       (assoc :person/active? false)))
 
 (t/deftest about
-  (t/testing "Attempting to get info a none existant person yields 404"
-    (let [[status body] (person-info "WBPerson0")]
+  (t/testing "Attempting to get summary a none existant person yields 404"
+    (let [[status body] (person-summary "WBPerson0")]
       (tu/status-is? 404 status body)))
-  (t/testing "Getting info for a person existant in the db by email"
+  (t/testing "Getting summary for a person existant in the db by email"
     (tu/with-fixtures
       []
-      (fn check-person-info [conn]
-        (let [[status body] (person-info "tester@wormbase.org")]
+      (fn check-person-summary [conn]
+        (let [[status body] (person-summary "tester@wormbase.org")]
           (tu/status-is? 200 status body)
           (t/is (= (:person/email body) "tester@wormbase.org"))
           (t/is (= (:person/id body) "WBPerson007"))))))
   (t/testing "We get 404 for a decactivated person"
     (let [sample (deactivated-person-sample)
           identifier (:person/id sample)
-          [status body] (person-info identifier)]
+          [status body] (person-summary identifier)]
       (tu/status-is? 404 status body))))
 
 (def deactivate-person (partial api-tc/delete "person"))

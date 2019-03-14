@@ -1,4 +1,4 @@
-(ns integration.test-batch-info
+(ns integration.test-batch-summary
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
@@ -13,21 +13,21 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn info [bid]
-  (api-tc/info "batch" bid))
+(defn summary [bid]
+  (api-tc/summary "batch" bid))
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
-    (let [[status body] (info (d/squuid))]
+    (let [[status body] (summary (d/squuid))]
       (tu/status-is? 404 status body))))
 
 (t/deftest batch-id-invalid
   (t/testing "When a batch ID is not of the correct/expected format."
-    (let [[status body] (info "zxx")]
+    (let [[status body] (summary "zxx")]
       (tu/status-is? 400 status body))))
 
-(t/deftest info-success
-  (t/testing "Retrieving info about at batch working (provenance only atm)."
+(t/deftest summary-success
+  (t/testing "Retrieving summary about at batch working (provenance only atm)."
     (let [gene-ids (gen/sample gsg/id 2)
           samples [{:gene/cgc-name "okay-1"
                     :gene/species elegans-ln
@@ -43,7 +43,7 @@
           (tu/provenance data :batch-id bid))
         samples
         (fn [conn]
-          (let [[status body] (info bid)]
+          (let [[status body] (summary bid)]
             (tu/status-is? 200 status body)
             (t/is (map? body))
             (t/is (str/includes? (get-in body [:provenance/who] "") "@")

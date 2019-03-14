@@ -383,4 +383,4 @@
 (def ->json wnrf/encode-content)
 
 (defn query-gene-batch [db bid]
-  (wnu/query-batch db bid wng/info-pull-expr))
+  (wnu/query-batch db bid wng/summary-pull-expr))

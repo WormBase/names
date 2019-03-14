@@ -20,8 +20,8 @@
 
 (s/def :variation/status sts/keyword?)
 
-(s/def ::info (stc/spec (s/keys :req [:variation/id :variation/status]
-                                :opt [:variation/name])))
+(s/def ::summary (stc/spec (s/keys :req [:variation/id :variation/status]
+                                   :opt [:variation/name])))
 
 (s/def ::status-changed (stc/spec (s/keys :req [:variation/status])))
 

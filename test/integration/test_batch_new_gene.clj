@@ -68,9 +68,9 @@
         (t/is (uuid/uuid-string? bid) (pr-str body))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
-              [info-status info-body] (api-tc/info "batch" bid)]
+              [summary-status summary-body] (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
-          (tu/status-is? 200 info-status info-body)
-          (t/is (= (some-> info-body :provenance/what keyword)
+          (tu/status-is? 200 summary-status summary-body)
+          (t/is (= (some-> summary-body :provenance/what keyword)
                    :event/new-gene)))))))

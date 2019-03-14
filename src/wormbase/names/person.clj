@@ -38,17 +38,17 @@
               pid (wdb/extract-id tx-res :person/id)]
           (created (str "/person/" pid) person))))))
 
-(defn info [db lur]
+(defn summary [db lur]
   (let [person (d/pull db '[*] lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
 (defn about-person
-  "Return info about a WBPerson."
+  "Return summary about a WBPerson."
   [identifier request]
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)]
-    (when-let [person (info db lur)]
+    (when-let [person (summary db lur)]
       (ok person))))
 
 (defn update-person
@@ -57,7 +57,7 @@
   (admin-required request)
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)
-        person (info db lur)]
+        person (summary db lur)]
     (if person
       (let [spec ::wsp/person
             conn (:conn request)
@@ -73,7 +73,7 @@
                              (select-keys person [:person/id]))))]
         (if (s/valid? spec data*)
           (let [tx-res @(d/transact-async conn [data*])]
-            (ok (info (:db-after tx-res) lur)))
+            (ok (summary (:db-after tx-res) lur)))
           (bad-request
            {:type :user/validation-error
             :problems (expound-str spec data*)}))))))
@@ -115,8 +115,8 @@
      :path-params [identifier :- ::wsp/identifier]
      (sweet/resource
       {:get
-       {:summary "Information about a person."
-        :x-name ::about-person
+       {:summary "Summaraise a person."
+        :x-name ::person-summary
         :handler (wrap-id-validation about-person identifier)}
        :put
        {:summary "Update information about a person."
