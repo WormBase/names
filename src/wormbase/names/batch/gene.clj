@@ -132,8 +132,4 @@
          :parameters {:body-params {:data ::wsg/split-gene-batch
                                     :prov ::wsp/provenance}}
          :handler (fn [request]
-                    (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))
-    (sweet/GET "/:batch-id" request
-      :responses (wnu/response-map ok {:schema ::wsb/success-response})
-      :path-params [batch-id :- :batch/id]
-      (wnbg/info request batch-id wnp/pull-expr))))
+                    (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))))

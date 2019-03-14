@@ -15,6 +15,7 @@
   (sweet/routes
    (sweet/context "" []
      (sweet/GET "/:batch-id" request
+       :summary "Information about a given batch operation."
        :responses (wnu/response-map ok {:schema ::wsb/info})
        :path-params [batch-id :- :batch/id]
        (info request batch-id wnp/pull-expr)))))

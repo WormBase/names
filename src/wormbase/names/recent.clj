@@ -81,20 +81,24 @@
                :middleware [wna/restrict-to-authenticated
                             rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
+                 :summary "List recent batch activity."
                  :tags ["recent" "batch"]
                  :responses response-schema
                  (handle request batch-rules))
                (sweet/GET "/person" request
-                 :tags ["person"]
+                 :summary "List recent activities made by the currently logged-in user."
+                 :tags ["recent" "person"]
                  :responses response-schema
                  (let [person-email (-> request :identity :person :person/email)]
                    (handle request person-rules person-email)))
                (sweet/GET "/gene" request
+                 :summary "List recent gene activity."
                  :tags ["recent" "gene"]
                  :responses response-schema
                  (handle request entity-rules "gene"))
                (sweet/GET "/variation" request
-                 :tags ["variation"]
+                 :summary "List recent variation activity."
+                 :tags ["recent" "variation"]
                  :responses response-schema
                  (handle request entity-rules "variation")))))
 

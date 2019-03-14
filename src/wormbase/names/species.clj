@@ -63,7 +63,7 @@
     :path-params [identifier :- ::identifier]
     (sweet/resource
      {:get
-      {:sumamry "Species details."
+      {:summary "Species details held in the system."
        :x-name ::species-summary
        :handler (fn handle-summary [request]
                   (let [sid (s/conform ::identifier identifier)
