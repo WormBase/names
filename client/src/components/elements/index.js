@@ -13,7 +13,6 @@ import {
 
 export {
   AppBar,
-  Button,
   Chip,
   CircularProgress,
   DialogActions,
@@ -43,6 +42,10 @@ export { default as AjaxDialog } from './AjaxDialog';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
+export { default as Button } from './Button';
+export { default as EntityNotFound } from './EntityNotFound';
+export { default as EntityDirectoryButton } from './EntityDirectoryButton';
+export { default as EntityProfile } from './EntityProfile';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';
 export { default as NotFound } from './NotFound';

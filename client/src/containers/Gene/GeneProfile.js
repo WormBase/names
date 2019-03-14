@@ -7,6 +7,8 @@ import {
   Button,
   CircularProgress,
   Divider,
+  EntityProfile,
+  EntityNotFound,
   ErrorBoundary,
   Humanize,
   NotFound,
@@ -293,7 +295,7 @@ class GeneProfile extends Component {
     });
   };
 
-  closeSnackbar = () => {
+  handleMessageClose = () => {
     this.setState({
       shortMessage: null,
       shortMessageVariant: 'info',
@@ -303,162 +305,145 @@ class GeneProfile extends Component {
   getDisplayName = (data) =>
     data['gene/cgc-name'] || data['gene/sequence-name'] || data['gene/id'];
 
-  render() {
-    const { classes } = this.props;
-    const wbId = this.getId();
-    const backToDirectoryButton = (
-      <Button
-        variant="raised"
-        component={({ ...props }) => <Link to="/gene" {...props} />}
-      >
-        Back to directory
-      </Button>
-    );
+  renderStatus = () => {
     const killEventDescriptor =
       this.state.data['gene/status'] === 'gene.status/dead'
         ? getActivityDescriptor(this.state.data.history[0])
         : {};
 
-    return this.state.status === 'NOT_FOUND' ? (
-      <NotFound>
-        <Typography>
-          <strong>{wbId}</strong> does not exist
-        </Typography>
-        <div className={classes.operations}>
-          {backToDirectoryButton}
-          <Button
-            variant="raised"
-            color="secondary"
-            component={({ ...props }) => <Link to="/gene/new" {...props} />}
-          >
-            Create Gene
-          </Button>
-        </div>
-      </NotFound>
-    ) : (
-      <Page>
-        <PageLeft>
-          <div className={classes.operations}>
-            {backToDirectoryButton}
-            <Divider light />
-          </div>
-          {this.state.data['gene/status'] === 'gene.status/live' ? (
-            <div className={classes.operations}>
-              <Button variant="raised" onClick={this.openMergeGeneDialog}>
-                Merge Gene
-              </Button>
-              <Button variant="raised" onClick={this.openSplitGeneDialog}>
-                Split Gene
-              </Button>
-              <Button variant="raised" onClick={this.openSuppressGeneDialog}>
-                Suppress Gene
-              </Button>
-              <Button
-                className={classes.killButton}
-                variant="raised"
-                onClick={this.openKillGeneDialog}
-              >
-                Kill Gene
-              </Button>
-            </div>
-          ) : this.state.data['gene/status'] === 'gene.status/suppressed' ? (
-            <div className={classes.operations}>
-              <Button variant="raised" onClick={this.openMergeGeneDialog}>
-                Merge Gene
-              </Button>
-              <Button variant="raised" onClick={this.openSplitGeneDialog}>
-                Split Gene
-              </Button>
-              <Button
-                className={classes.killButton}
-                variant="raised"
-                onClick={this.openKillGeneDialog}
-              >
-                Kill Gene
-              </Button>
-              <h5>Tips:</h5>
-              <p>To un-suppress the gene, kill then resurrect it.</p>
-            </div>
-          ) : this.state.data['gene/status'] === 'gene.status/dead' ? (
-            <div className={classes.operations}>
-              <Button
-                className={classes.killButton}
-                variant="raised"
-                onClick={this.openResurrectGeneDialog}
-              >
-                Resurrect Gene
-              </Button>
-            </div>
-          ) : null}
-        </PageLeft>
-        <PageMain>
-          <Typography variant="headline" gutterBottom>
-            Gene <em>{wbId}</em>
+    return this.state.data['gene/status'] !== 'gene.status/live' ? (
+      <Typography variant="display1" gutterBottom>
+        <Humanize capitalize>{this.state.data['gene/status']}</Humanize>
+        {this.state.data['gene/status'] === 'gene.status/dead' ? (
+          <Typography variant="subheading" component={'i'}>
+            (
+            <Humanize postProcessor={pastTense}>
+              {killEventDescriptor.eventLabel}
+            </Humanize>
+            {killEventDescriptor.relatedEntity ? (
+              <React.Fragment>
+                {' '}
+                <Link
+                  to={`/gene/id/${
+                    killEventDescriptor.relatedEntity['gene/id']
+                  }`}
+                >
+                  {killEventDescriptor.relatedEntity['gene/id']}
+                </Link>
+              </React.Fragment>
+            ) : null}
+            )
           </Typography>
-          <ValidationError {...this.state.errorMessage} />
-          {this.state.status === 'LOADING' ? (
-            <CircularProgress />
-          ) : (
-            <div>
-              {this.state.data['gene/status'] !== 'gene.status/live' ? (
-                <Typography variant="display1" gutterBottom>
-                  <Humanize capitalize>
-                    {this.state.data['gene/status']}
-                  </Humanize>
-                  {this.state.data['gene/status'] === 'gene.status/dead' ? (
-                    <Typography variant="subheading" component={'i'}>
-                      (
-                      <Humanize postProcessor={pastTense}>
-                        {killEventDescriptor.eventLabel}
-                      </Humanize>
-                      {killEventDescriptor.relatedEntity ? (
-                        <React.Fragment>
-                          {' '}
-                          <Link
-                            to={`/gene/id/${
-                              killEventDescriptor.relatedEntity['gene/id']
-                            }`}
-                          >
-                            {killEventDescriptor.relatedEntity['gene/id']}
-                          </Link>
-                        </React.Fragment>
-                      ) : null}
-                      )
-                    </Typography>
-                  ) : null}
-                </Typography>
-              ) : null}
-              <ErrorBoundary>
-                <GeneForm
-                  data={this.state.data}
-                  onSubmit={this.handleGeneUpdate}
-                  submitted={this.state.status === 'SUBMITTED'}
-                  disabled={Boolean(
-                    this.state.data['gene/status'] === 'gene.status/dead'
-                  )}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
-          <div className={classes.section}>
-            <Typography variant="title" gutterBottom>
-              Change history
-            </Typography>
-            <div className={classes.historyTable}>
-              <ErrorBoundary>
-                <RecentActivitiesSingleGene
-                  wbId={wbId}
-                  authorizedFetch={this.props.authorizedFetch}
-                  activities={this.state.data.history}
-                  onUpdate={() => {
-                    this.fetchData();
-                  }}
-                />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </PageMain>
+        ) : null}
+      </Typography>
+    ) : null;
+  };
 
+  renderOperations = () => {
+    return this.state.data['gene/status'] === 'gene.status/live' ? (
+      <React.Fragment>
+        <Button variant="raised" onClick={this.openMergeGeneDialog}>
+          Merge Gene
+        </Button>
+        <Button variant="raised" onClick={this.openSplitGeneDialog}>
+          Split Gene
+        </Button>
+        <Button variant="raised" onClick={this.openSuppressGeneDialog}>
+          Suppress Gene
+        </Button>
+        <Button
+          wbVariant="danger"
+          variant="raised"
+          onClick={this.openKillGeneDialog}
+        >
+          Kill Gene
+        </Button>
+      </React.Fragment>
+    ) : this.state.data['gene/status'] === 'gene.status/suppressed' ? (
+      <React.Fragment>
+        <Button variant="raised" onClick={this.openMergeGeneDialog}>
+          Merge Gene
+        </Button>
+        <Button variant="raised" onClick={this.openSplitGeneDialog}>
+          Split Gene
+        </Button>
+        <Button
+          wbVariant="danger"
+          variant="raised"
+          onClick={this.openKillGeneDialog}
+        >
+          Kill Gene
+        </Button>
+        <h5>Tips:</h5>
+        <p>To un-suppress the gene, kill then resurrect it.</p>
+      </React.Fragment>
+    ) : this.state.data['gene/status'] === 'gene.status/dead' ? (
+      <React.Fragment>
+        <Button
+          wbVariant="danger"
+          variant="raised"
+          onClick={this.openResurrectGeneDialog}
+        >
+          Resurrect Gene
+        </Button>
+      </React.Fragment>
+    ) : null;
+  };
+
+  renderOperationTip = () => {
+    return <p>To un-suppress the gene, kill then resurrect it.</p>;
+  };
+
+  renderForm = () => {
+    return (
+      <GeneForm
+        data={this.state.data}
+        onSubmit={this.handleGeneUpdate}
+        submitted={this.state.status === 'SUBMITTED'}
+        disabled={Boolean(
+          this.state.data['gene/status'] === 'gene.status/dead'
+        )}
+      />
+    );
+  };
+
+  renderChanges = () => {
+    const { authorizedFetch } = this.props;
+    const wbId = this.getId();
+    return (
+      <RecentActivitiesSingleGene
+        wbId={wbId}
+        authorizedFetch={authorizedFetch}
+        activities={this.state.data.history}
+        onUpdate={() => {
+          this.fetchData();
+        }}
+      />
+    );
+  };
+
+  render() {
+    const wbId = this.getId();
+
+    return this.state.status === 'NOT_FOUND' ? (
+      <EntityNotFound entityType="gene" wbId={wbId} />
+    ) : this.state.status === 'LOADING' ? (
+      <CircularProgress />
+    ) : (
+      <React.Fragment>
+        <EntityProfile
+          entityType="gene"
+          wbId={wbId}
+          errorMessage={this.state.errorMessage}
+          message={this.state.shortMessage}
+          messageVariant={this.state.shortMessageVariant}
+          onMessageClose={this.handleMessageClose}
+          renderStatus={this.renderStatus}
+          renderForm={this.renderForm}
+          renderOperations={this.renderOperations}
+          renderOperationTip={this.renderOperationTip}
+          renderChanges={this.renderChanges}
+        />
         <KillGeneDialog
           geneName={this.getDisplayName(this.state.data)}
           wbId={wbId}
@@ -557,24 +542,12 @@ class GeneProfile extends Component {
             );
           }}
         />
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={this.state.shortMessage}
-          onClose={this.closeSnackbar}
-        >
-          <SnackbarContent
-            variant={this.state.shortMessageVariant}
-            message={<span>{this.state.shortMessage}</span>}
-            onClose={this.closeSnackbar}
-          />
-        </Snackbar>
-      </Page>
+      </React.Fragment>
     );
   }
 }
 
 GeneProfile.propTypes = {
-  classes: PropTypes.object.isRequired,
   wbId: PropTypes.string.isRequired,
   authorizedFetch: PropTypes.func.isRequired,
   history: PropTypes.shape({
@@ -582,30 +555,4 @@ GeneProfile.propTypes = {
   }).isRequired,
 };
 
-const styles = (theme) => ({
-  operations: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: 150,
-    '& > *': {
-      marginBottom: theme.spacing.unit,
-    },
-    [theme.breakpoints.down('sm')]: {
-      width: '100%',
-      alignItems: 'stretch',
-    },
-  },
-  killButton: {
-    backgroundColor: theme.palette.error.main,
-    color: theme.palette.error.contrastText,
-    '&:hover': {
-      backgroundColor: theme.palette.error.dark,
-    },
-  },
-  section: {
-    margin: `${theme.spacing.unit * 8}px 0`,
-  },
-  historyTable: {},
-});
-
-export default withStyles(styles)(withRouter(GeneProfile));
+export default withRouter(GeneProfile);
