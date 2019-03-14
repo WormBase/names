@@ -4,6 +4,7 @@ import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import {
   Button,
+  EntityCreate,
   Page,
   PageLeft,
   PageMain,
@@ -104,31 +105,37 @@ class GeneCreate extends Component {
     );
   };
 
+  renderForm = () => {
+    return (
+      <GeneForm
+        submitted={this.state.status === 'SUBMITTED'}
+        onSubmit={this.handleCreateGene}
+        onCancel={this.handleClear}
+        createMode={true}
+      />
+    );
+  };
+
+  renderOperations = () => {
+    return (
+      <Button
+        variant="raised"
+        component={({ ...props }) => <Link to="/gene" {...props} />}
+        className={this.props.classes.backToDirectoryButton}
+      >
+        Back to directory
+      </Button>
+    );
+  };
+
   render() {
     return (
-      <Page>
-        <PageLeft>
-          <Button
-            variant="raised"
-            component={({ ...props }) => <Link to="/gene" {...props} />}
-            className={this.props.classes.backToDirectoryButton}
-          >
-            Back to directory
-          </Button>
-        </PageLeft>
-        <PageMain>
-          <Typography variant="headline" gutterBottom>
-            Add gene
-          </Typography>
-          <ValidationError {...this.state.error} />
-          <GeneForm
-            submitted={this.state.status === 'SUBMITTED'}
-            onSubmit={this.handleCreateGene}
-            onCancel={this.handleClear}
-            createMode={true}
-          />
-        </PageMain>
-      </Page>
+      <EntityCreate
+        entityType="gene"
+        errorMessage={this.state.error}
+        renderForm={this.renderForm}
+        renderOperations={this.renderOperations}
+      />
     );
   }
 }
@@ -140,13 +147,4 @@ GeneCreate.propTypes = {
   authorizedFetch: PropTypes.func.isRequired,
 };
 
-const styles = (theme) => ({
-  backToDirectoryButton: {
-    width: 150,
-    [theme.breakpoints.down('sm')]: {
-      width: '100%',
-    },
-  },
-});
-
-export default withStyles(styles)(withRouter(GeneCreate));
+export default withRouter(GeneCreate);
