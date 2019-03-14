@@ -14,7 +14,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn info [bid]
-  (api-tc/info "batch" (str "gene/" bid)))
+  (api-tc/info "batch" bid))
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
