@@ -7,6 +7,7 @@
    [compojure.api.exception :as ex]
    [environ.core :as environ]
    [expound.alpha :as expound]
+   [muuntaja.core :as mc]
    [ring.util.http-response :refer [bad-request
                                     conflict
                                     content-type
@@ -16,7 +17,8 @@
                                     unauthorized]]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
-   [wormbase.names.gene :as wn-gene])
+   [wormbase.names.gene :as wn-gene]
+   [wormbase.names.response-formats :as wnrf])
   (:import
    (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))
@@ -24,12 +26,9 @@
 (declare handlers)
 
 (defn respond-with [response-fn request data]
-  (let [fmt (-> request
-                :compojure.api.request/muuntaja
-                :default-format)]
-    (-> data
-        (response-fn)
-        (content-type fmt))))
+  (let [fmt (mc/default-format (or (:compojure.api.request/muuntaja request)
+                                   wnrf/json))]
+    (response-fn data)))
 
 (def respond-bad-request (partial respond-with bad-request))
 
@@ -73,8 +72,9 @@
                       :problems
                       (expound/expound-str spec (:value data*)))
                data*)
-        body (assoc-error-message info exc :message message)]
-    (respond-bad-request request body)))
+        body (assoc-error-message info exc :message message)
+        response (respond-bad-request request body)]
+   (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
   (when (some-> data :entity keyword?)
@@ -100,7 +100,7 @@
        (handle-unexpected-error exc)
        (internal-server-error data))))
   ([exc]
-   (throw exc)))
+   (internal-server-error "Ooops, something went really wrong!")))
 
 (defn handle-txfn-error [^Exception exc data request]
   (let [txfn-err? (instance? ExecutionException exc)

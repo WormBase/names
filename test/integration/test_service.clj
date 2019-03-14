@@ -2,10 +2,11 @@
   (:require
    [clojure.string :as str]
    [clojure.test :as t]
+   [ring.util.http-response :as http-response]
    [wormbase.db-testing :as db-testing]
-   [wormbase.names.service :as service]
    [wormbase.fake-auth]
-   [ring.util.http-response :as http-response]))
+   [wormbase.names.response-formats :as wnrf]
+   [wormbase.names.service :as service]))
 
 (t/use-fixtures :once db-testing/db-lifecycle)
 
@@ -23,9 +24,8 @@
              "application/json")
             (str "Wrong content-type?:" (pr-str (:headers response))))
       (t/is (contains? response :body))
-      (let [decode #(service/decode-content "application/json" %)
-            response-text (some-> response :body slurp)]
-        (t/is (not= nil (:message (decode response-text)))
+      (let [response-text (some-> response :body slurp)]
+        (t/is (not= nil (:message (wnrf/decode-content response-text)))
               (str response-text)))))
   (t/testing "When no routes are matched in request processing, client api is served."
     (let [response (service/app

@@ -138,4 +138,6 @@
         batch-id (uuid/as-uuid bid)
         b-prov-info (query-provenance db batch-id pull-expr)]
     (when b-prov-info
-      (ok b-prov-info))))
+      (-> b-prov-info
+          (assoc :batch/id batch-id)
+          (ok)))))

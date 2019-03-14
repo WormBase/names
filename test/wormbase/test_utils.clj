@@ -23,6 +23,7 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.gene :as wng]
    [wormbase.names.variation :as wnv]
+   [wormbase.names.response-formats :as wnrf]
    [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.gene :as wsg]
@@ -379,11 +380,7 @@
   (let [data-samples (gen/sample gsp/person n)]
     data-samples))
 
-(defn ->json [data]
-  (let [formats (deref #'wns/mformats)]
-    (-> formats
-        (muuntaja/encode "application/json" data)
-        (slurp))))
+(def ->json wnrf/encode-content)
 
 (defn query-gene-batch [db bid]
   (wnu/query-batch db bid wng/info-pull-expr))

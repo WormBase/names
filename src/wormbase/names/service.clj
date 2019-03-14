@@ -7,7 +7,6 @@
    [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
-   [muuntaja.core :as muuntaja]
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
@@ -18,6 +17,7 @@
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
    [wormbase.names.recent :as wn-recent]
+   [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
@@ -25,10 +25,6 @@
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.resource :as ring-resource]
    [ring.util.http-response :as http-response]))
-
-(def ^{:private true
-       :doc "Request/Response format configuration"} mformats
-  (muuntaja/create))
 
 (defn- wrap-not-found
   "Fallback 404 handler."
@@ -44,12 +40,6 @@
         (-> (http-response/resource-response "client_build/index.html")
             (http-response/content-type "text/html")
             (http-response/status 200))))))
-
-(defn decode-content [mime-type content]
-  (muuntaja/decode mformats mime-type content))
-
-(defn encode-content [mime-type content]
-  (slurp (muuntaja/encode mformats mime-type content)))
 
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
@@ -88,7 +78,7 @@
 
 (def ^{:doc "The main application."} app
   (sweet/api
-   {:formats mformats
+   {:formats wnrf/json
     :coercion :pure-spec
     :middleware [ring-gzip/wrap-gzip
                  wrap-static-resources
