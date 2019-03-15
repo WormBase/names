@@ -100,6 +100,7 @@
        (handle-unexpected-error exc)
        (internal-server-error data))))
   ([exc]
+   (log/fatal "Unexpected errror")
    (internal-server-error "Ooops, something went really wrong!")))
 
 (defn handle-txfn-error [^Exception exc data request]
