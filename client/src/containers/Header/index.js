@@ -2,11 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   AppBar,
+  SearchBox,
   Toolbar,
   Typography,
   withStyles,
 } from '../../components/elements';
-import GeneSearchBox from '../Gene/GeneSearchBox';
+
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
@@ -28,7 +29,7 @@ const Header = (props) => {
             </Link>
           </div>
           {props.isAuthenticated ? (
-            <GeneSearchBox
+            <SearchBox
               classes={{
                 root: classes.searchBox,
               }}

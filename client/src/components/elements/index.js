@@ -40,6 +40,9 @@ export { default as DocumentTitle } from 'react-document-title';
 
 export { default as AjaxDialog } from './AjaxDialog';
 export { default as AutocompleteBase } from './AutocompleteBase';
+export { default as AutocompleteChip } from './AutocompleteChip';
+export { default as AutocompleteLoader } from './AutocompleteLoader';
+export { default as AutocompleteSuggestion } from './AutocompleteSuggestion';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as Button } from './Button';
@@ -53,6 +56,7 @@ export { default as NotFound } from './NotFound';
 export { Page, PageLeft, PageMain } from './Page';
 export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
+export { default as SearchBox } from './SearchBox';
 export { default as SimpleListPagination } from './SimpleListPagination';
 export { default as Snackbar } from './Snackbar';
 export { default as SnackbarContent } from './SnackbarContent';
