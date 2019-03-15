@@ -49,6 +49,7 @@ export { default as Button } from './Button';
 export { default as EntityNotFound } from './EntityNotFound';
 export { default as EntityDirectoryButton } from './EntityDirectoryButton';
 export { default as EntityCreate } from './EntityCreate';
+export { default as EntityDirectory } from './EntityDirectory';
 export { default as EntityProfile } from './EntityProfile';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';

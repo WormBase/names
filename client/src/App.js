@@ -13,7 +13,7 @@ import {
 import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
-import Gene, { GeneProfile, GeneCreate } from './containers/Gene';
+import { GeneDirectory, GeneProfile, GeneCreate } from './containers/Gene';
 import './App.css';
 
 class App extends Component {
@@ -47,7 +47,7 @@ class App extends Component {
                         path="/gene"
                         component={() => (
                           <DocumentTitle title="Gene index">
-                            <Gene authorizedFetch={authorizedFetch} />
+                            <GeneDirectory authorizedFetch={authorizedFetch} />
                           </DocumentTitle>
                         )}
                       />
