@@ -3,22 +3,12 @@ import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import {
-  withStyles,
   Button,
   CircularProgress,
-  Divider,
   EntityProfile,
   EntityNotFound,
-  ErrorBoundary,
   Humanize,
-  NotFound,
-  Page,
-  PageLeft,
-  PageMain,
-  Snackbar,
-  SnackbarContent,
   Typography,
-  ValidationError,
 } from '../../components/elements';
 import { pastTense, getActivityDescriptor } from '../../utils/events';
 import GeneForm from './GeneForm';

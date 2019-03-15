@@ -15,3 +15,10 @@ export default function AutocompleteChip(props) {
   const label = `${name} [${suggestion.id}]`;
   return <Chip tabIndex={-1} label={label} {...others} />;
 }
+
+AutocompleteChip.propTypes = {
+  suggestion: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    entityType: PropTypes.string.isRequired,
+  }),
+};

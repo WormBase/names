@@ -9,11 +9,14 @@ class GeneDirectory extends React.Component {
     return <RecentActivities authorizedFetch={authorizedFetch} />;
   };
   render() {
-    const { classes } = this.props;
     return (
       <EntityDirectory entityType="gene" renderHistory={this.renderHistory} />
     );
   }
 }
+
+GeneDirectory.propTypes = {
+  authorizedFetch: PropTypes.any,
+};
 
 export default GeneDirectory;

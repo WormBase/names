@@ -1,17 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  withStyles,
-  CircularProgress,
-  Divider,
-  Typography,
-} from '@material-ui/core';
+import { withStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 
 import EntityDirectoryButton from './EntityDirectoryButton';
 import ErrorBoundary from './ErrorBoundary';
 import { Page, PageLeft, PageMain } from './Page';
-import Snackbar from './Snackbar';
-import SnackbarContent from './SnackbarContent';
 import ValidationError from './ValidationError';
 
 class EntityCreate extends Component {

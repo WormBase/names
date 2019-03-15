@@ -8,7 +8,6 @@ import {
   withStyles,
   InputAdornment,
   Paper,
-  MenuItem,
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
