@@ -303,7 +303,7 @@ class GeneProfile extends Component {
 
     return this.state.data['gene/status'] !== 'gene.status/live' ? (
       <Typography variant="display1" gutterBottom>
-        <Humanize capitalize>{this.state.data['gene/status']}</Humanize>
+        <Humanize capitalized>{this.state.data['gene/status']}</Humanize>
         {this.state.data['gene/status'] === 'gene.status/dead' ? (
           <Typography variant="subheading" component={'i'}>
             (

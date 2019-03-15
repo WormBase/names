@@ -5,7 +5,7 @@ const Humanize = ({
   children,
   placeholder = 'Unknown',
   postProcessor,
-  capitalize = false,
+  capitalized = false,
 }) => {
   if (!children) {
     return placeholder;
@@ -13,7 +13,7 @@ const Humanize = ({
   let [humanizedText] = (children || '').split('/').slice(-1);
   humanizedText = humanizedText.replace(/(_|-)+/g, ' ');
 
-  if (capitalize) {
+  if (capitalized) {
     humanizedText = capitalize(humanizedText);
   }
 
@@ -26,7 +26,7 @@ const Humanize = ({
 
 Humanize.propTypes = {
   children: PropTypes.string,
-  capitalize: PropTypes.bool,
+  capitalized: PropTypes.bool,
   placeholder: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
   postProcessor: PropTypes.func,
 };
