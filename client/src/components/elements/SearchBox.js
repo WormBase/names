@@ -75,8 +75,8 @@ class SearchBox extends Component {
                     item: selectedItem,
                     reset: downshift.clearSelection,
                     InputProps: getInputProps({
-                      placeholder: 'Search a gene...',
-                      id: 'gene-search-box',
+                      placeholder: `Search a ${entityType}...`,
+                      id: `${entityType}-search-box`,
                       onKeyDown: (event) => {
                         if (event.key === 'Enter') {
                           let id;

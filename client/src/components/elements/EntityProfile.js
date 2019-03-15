@@ -7,6 +7,7 @@ import {
   Typography,
 } from '@material-ui/core';
 
+import DocumentTitle from './DocumentTitle';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import ErrorBoundary from './ErrorBoundary';
 import { Page, PageLeft, PageMain } from './Page';
@@ -32,59 +33,61 @@ class EntityProfile extends Component {
     } = this.props;
 
     return (
-      <Page>
-        <PageLeft>
-          <div className={classes.operations}>
-            <EntityDirectoryButton entityType={entityType} />
-            <Divider light />
-            {renderOperations && renderOperations()}
-            {renderOperationTip ? (
-              <React.Fragment>
-                <h5>Tip:</h5>
-                {renderOperationTip && renderOperationTip()}
-              </React.Fragment>
-            ) : null}
-          </div>
-        </PageLeft>
-        <PageMain>
-          <Typography variant="headline" gutterBottom>
-            {entityType} <em>{wbId}</em>
-          </Typography>
-          <ValidationError {...errorMessage} />
-          {this.props.status === 'LOADING' ? (
-            <CircularProgress />
-          ) : (
-            <div>
-              {renderStatus && renderStatus()}
-              {renderForm ? (
-                <ErrorBoundary>{renderForm()}</ErrorBoundary>
+      <DocumentTitle title={`${wbId} (${entityType})`}>
+        <Page>
+          <PageLeft>
+            <div className={classes.operations}>
+              <EntityDirectoryButton entityType={entityType} />
+              <Divider light />
+              {renderOperations && renderOperations()}
+              {renderOperationTip ? (
+                <React.Fragment>
+                  <h5>Tip:</h5>
+                  {renderOperationTip && renderOperationTip()}
+                </React.Fragment>
               ) : null}
             </div>
-          )}
-          <div className={classes.section}>
-            <Typography variant="title" gutterBottom>
-              Change history
+          </PageLeft>
+          <PageMain>
+            <Typography variant="headline" gutterBottom>
+              {entityType} <em>{wbId}</em>
             </Typography>
-            {renderChanges ? (
-              <div className={classes.historyTable}>
-                <ErrorBoundary>{renderChanges()}</ErrorBoundary>
+            <ValidationError {...errorMessage} />
+            {this.props.status === 'LOADING' ? (
+              <CircularProgress />
+            ) : (
+              <div>
+                {renderStatus && renderStatus()}
+                {renderForm ? (
+                  <ErrorBoundary>{renderForm()}</ErrorBoundary>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </PageMain>
+            )}
+            <div className={classes.section}>
+              <Typography variant="title" gutterBottom>
+                Change history
+              </Typography>
+              {renderChanges ? (
+                <div className={classes.historyTable}>
+                  <ErrorBoundary>{renderChanges()}</ErrorBoundary>
+                </div>
+              ) : null}
+            </div>
+          </PageMain>
 
-        <Snackbar
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          open={message}
-          onClose={onMessageClose}
-        >
-          <SnackbarContent
-            variant={messageVariant}
-            message={<span>{message}</span>}
+          <Snackbar
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            open={message}
             onClose={onMessageClose}
-          />
-        </Snackbar>
-      </Page>
+          >
+            <SnackbarContent
+              variant={messageVariant}
+              message={<span>{message}</span>}
+              onClose={onMessageClose}
+            />
+          </Snackbar>
+        </Page>
+      </DocumentTitle>
     );
   }
 }

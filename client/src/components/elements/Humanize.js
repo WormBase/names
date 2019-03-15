@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { capitalize } from '../../utils/format';
 
 const Humanize = ({
   children,
@@ -13,8 +14,7 @@ const Humanize = ({
   humanizedText = humanizedText.replace(/(_|-)+/g, ' ');
 
   if (capitalize) {
-    humanizedText =
-      humanizedText.charAt(0).toUpperCase() + humanizedText.slice(1);
+    humanizedText = capitalize(humanizedText);
   }
 
   if (postProcessor) {

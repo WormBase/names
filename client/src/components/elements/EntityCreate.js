@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
+import DocumentTitle from './DocumentTitle';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import ErrorBoundary from './ErrorBoundary';
 import { Page, PageLeft, PageMain } from './Page';
@@ -18,20 +19,22 @@ class EntityCreate extends Component {
     } = this.props;
 
     return (
-      <Page>
-        <PageLeft>
-          <div className={classes.operations}>
-            <EntityDirectoryButton entityType={entityType} />
-          </div>
-        </PageLeft>
-        <PageMain>
-          <Typography variant="headline" gutterBottom>
-            Add {entityType}
-          </Typography>
-          <ValidationError {...errorMessage} />
-          {renderForm ? <ErrorBoundary>{renderForm()}</ErrorBoundary> : null}
-        </PageMain>
-      </Page>
+      <DocumentTitle title={`Create ${entityType}`}>
+        <Page>
+          <PageLeft>
+            <div className={classes.operations}>
+              <EntityDirectoryButton entityType={entityType} />
+            </div>
+          </PageLeft>
+          <PageMain>
+            <Typography variant="headline" gutterBottom>
+              Add {entityType}
+            </Typography>
+            <ValidationError {...errorMessage} />
+            {renderForm ? <ErrorBoundary>{renderForm()}</ErrorBoundary> : null}
+          </PageMain>
+        </Page>
+      </DocumentTitle>
     );
   }
 }

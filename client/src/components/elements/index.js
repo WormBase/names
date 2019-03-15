@@ -36,8 +36,6 @@ export {
   TableRow,
 } from '@material-ui/core';
 
-export { default as DocumentTitle } from 'react-document-title';
-
 export { default as AjaxDialog } from './AjaxDialog';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as AutocompleteChip } from './AutocompleteChip';
@@ -46,6 +44,7 @@ export { default as AutocompleteSuggestion } from './AutocompleteSuggestion';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as Button } from './Button';
+export { default as DocumentTitle } from './DocumentTitle';
 export { default as EntityNotFound } from './EntityNotFound';
 export { default as EntityDirectoryButton } from './EntityDirectoryButton';
 export { default as EntityCreate } from './EntityCreate';

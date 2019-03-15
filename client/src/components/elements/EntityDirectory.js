@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import { capitalize } from '../../utils/format';
 import Button from './Button';
+import DocumentTitle from './DocumentTitle';
 import ErrorBoundary from './ErrorBoundary';
 import Page, { PageMain } from './Page';
 import SearchBox from './SearchBox';
@@ -11,42 +13,44 @@ import SearchBox from './SearchBox';
 const EntityDirectory = (props) => {
   const { classes, entityType, renderHistory } = props;
   return (
-    <Page>
-      <PageMain>
-        <div className={classes.root}>
-          <div className={classes.header}>
-            <Button
-              variant="raised"
-              color="secondary"
-              component={({ ...props }) => (
-                <Link to={`/${entityType}/new`} {...props} />
-              )}
-            >
-              Add new {entityType}
-            </Button>
-            <div className={classes.or}>OR</div>
-            <div className={classes.search}>
-              <SearchBox />
+    <DocumentTitle title={`${capitalize(entityType)} directory`}>
+      <Page>
+        <PageMain>
+          <div className={classes.root}>
+            <div className={classes.header}>
+              <Button
+                variant="raised"
+                color="secondary"
+                component={({ ...props }) => (
+                  <Link to={`/${entityType}/new`} {...props} />
+                )}
+              >
+                Add new {entityType}
+              </Button>
+              <div className={classes.or}>OR</div>
+              <div className={classes.search}>
+                <SearchBox entityType={entityType} />
+              </div>
             </div>
           </div>
-        </div>
-        <div className={classes.main}>
-          {/* tables and charts */}
-          {renderHistory ? (
-            <section>
-              <Typography variant="title" gutterBottom>
-                Recent activities
-              </Typography>
-              <ErrorBoundary>
-                <div className={classes.recentActivitiesTable}>
-                  {renderHistory()}
-                </div>
-              </ErrorBoundary>
-            </section>
-          ) : null}
-        </div>
-      </PageMain>
-    </Page>
+          <div className={classes.main}>
+            {/* tables and charts */}
+            {renderHistory ? (
+              <section>
+                <Typography variant="title" gutterBottom>
+                  Recent activities
+                </Typography>
+                <ErrorBoundary>
+                  <div className={classes.recentActivitiesTable}>
+                    {renderHistory()}
+                  </div>
+                </ErrorBoundary>
+              </section>
+            ) : null}
+          </div>
+        </PageMain>
+      </Page>
+    </DocumentTitle>
   );
 };
 

@@ -15,10 +15,6 @@ const NavBar = (props) => {
       name: 'Variation',
       value: '/variation',
     },
-    {
-      name: 'Feature',
-      value: '/feature',
-    },
   ];
 
   const currentTab = tabs.filter((tab) =>

@@ -14,6 +14,11 @@ import Header, { NavBar } from './containers/Header';
 import Authenticate, { ProfileButton } from './containers/Authenticate';
 import Footer from './containers/Footer';
 import { GeneDirectory, GeneProfile, GeneCreate } from './containers/Gene';
+// import {
+//   Directory as VariationDirectory,
+//   Create as VariationCreate,
+//   Profile as VariationProfile,
+// } from './containers/Variation';
 import './App.css';
 
 class App extends Component {
@@ -43,68 +48,65 @@ class App extends Component {
                         component={() => <Redirect to="/gene" />}
                       />
                       <Route
-                        exact
-                        path="/gene"
-                        component={() => (
-                          <DocumentTitle title="Gene index">
-                            <GeneDirectory authorizedFetch={authorizedFetch} />
-                          </DocumentTitle>
-                        )}
-                      />
-                      <Route
-                        path="/gene"
-                        component={({ match }) => (
-                          <Switch>
-                            <Route
-                              path={`${match.url}/new`}
-                              component={() => (
-                                <DocumentTitle title={`Create a gene`}>
-                                  <GeneCreate
-                                    authorizedFetch={authorizedFetch}
-                                  />
-                                </DocumentTitle>
-                              )}
-                            />
-                            <Route
-                              path={`${match.url}/id/:id`}
-                              component={({ match }) => (
-                                <DocumentTitle
-                                  title={`Gene ${match.params.id}`}
-                                >
-                                  <GeneProfile
-                                    wbId={match.params.id}
-                                    authorizedFetch={authorizedFetch}
-                                  />
-                                </DocumentTitle>
-                              )}
-                            />
-                            <Route component={NotFound} />
-                          </Switch>
-                        )}
-                      />
-                      <Route
-                        path="/variation"
-                        component={() => (
-                          <DocumentTitle title="Variation index">
-                            <Page>Variation page (coming soon ..ish)</Page>
-                          </DocumentTitle>
-                        )}
-                      />
-                      <Route
-                        path="/feature"
-                        component={() => (
-                          <DocumentTitle title="Feature index">
-                            <Page>Feature page (coming soon ..ish)</Page>
-                          </DocumentTitle>
-                        )}
-                      />
-                      <Route
                         path="/me"
                         component={() => (
-                          <DocumentTitle title="My profile">
+                          <DocumentTitle title="Your profile">
                             {profile}
                           </DocumentTitle>
                         )}
+                      />
+                      <Route
+                        path="/:entityType"
+                        component={({ match }) => {
+                          let Directory, Create, Profile;
+                          switch (match.params.entityType) {
+                            case 'gene':
+                              [Directory, Create, Profile] = [
+                                GeneDirectory,
+                                GeneCreate,
+                                GeneProfile,
+                              ];
+                              break;
+                            // case 'variation':
+                            //   [Directory, Create, Profile] = [
+                            //     VariationDirectory,
+                            //     VariationCreate,
+                            //     VariationProfile,
+                            //   ];
+                            //   break;
+                            default:
+                              return <NotFound />;
+                          }
+                          return (
+                            <Switch>
+                              <Route
+                                path={`${match.url}`}
+                                exact={true}
+                                component={() => (
+                                  <Directory
+                                    authorizedFetch={authorizedFetch}
+                                  />
+                                )}
+                              />
+                              <Route
+                                path={`${match.url}/new`}
+                                component={() => (
+                                  <Create authorizedFetch={authorizedFetch} />
+                                )}
+                              />
+                              <Route
+                                path={`${match.url}/id/:id`}
+                                component={({ match }) => (
+                                  <Profile
+                                    wbId={match.params.id}
+                                    authorizedFetch={authorizedFetch}
+                                  />
+                                )}
+                              />
+                              <Route component={NotFound} />
+                            </Switch>
+                          );
+                        }}
                       />
                       <Route component={NotFound} />
                     </Switch>

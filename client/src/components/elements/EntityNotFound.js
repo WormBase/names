@@ -3,27 +3,30 @@ import { Link } from 'react-router-dom';
 import { withStyles, Button, Typography } from '@material-ui/core';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import NotFound from './NotFound';
+import DocumentTitle from './DocumentTitle';
 
 function EntityNotFound(props) {
   const { classes = {}, wbId, entityType } = props;
   return (
-    <NotFound>
-      <Typography>
-        <strong>{wbId}</strong> does not exist
-      </Typography>
-      <div className={classes.operations}>
-        <EntityDirectoryButton entityType={entityType} />
-        <Button
-          variant="raised"
-          color="secondary"
-          component={({ ...props }) => (
-            <Link to={`/${entityType}/new`} {...props} />
-          )}
-        >
-          Create {entityType}
-        </Button>
-      </div>
-    </NotFound>
+    <DocumentTitle title="Not found">
+      <NotFound>
+        <Typography>
+          <strong>{wbId}</strong> does not exist
+        </Typography>
+        <div className={classes.operations}>
+          <EntityDirectoryButton entityType={entityType} />
+          <Button
+            variant="raised"
+            color="secondary"
+            component={({ ...props }) => (
+              <Link to={`/${entityType}/new`} {...props} />
+            )}
+          >
+            Create {entityType}
+          </Button>
+        </div>
+      </NotFound>
+    </DocumentTitle>
   );
 }
 
