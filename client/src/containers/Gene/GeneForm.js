@@ -23,7 +23,7 @@ class GeneForm extends Component {
     };
     return (
       <BaseForm data={dataNew} disabled={disabled || submitted}>
-        {({ withFieldData, dirtinessContext, getFormData, resetData }) => {
+        {({ withFieldData, isDirty, getFormData, resetData }) => {
           const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
           const SequenceNameField = withFieldData(
             TextField,
@@ -54,20 +54,18 @@ class GeneForm extends Component {
                   "For cloned genes, biotype is required. Otherwise, it's optional"
                 }
               />
-              {dirtinessContext(({ dirty }) =>
-                dirty ? (
-                  <ReasonField
-                    label="Reason"
-                    helperText={
-                      createMode
-                        ? 'Why do you create this gene'
-                        : 'Why do you edit this gene?'
-                    }
-                  />
-                ) : null
-              )}
+              {isDirty() ? (
+                <ReasonField
+                  label="Reason"
+                  helperText={
+                    createMode
+                      ? 'Why do you create this gene'
+                      : 'Why do you edit this gene?'
+                  }
+                />
+              ) : null}
               <br />
-              {dirtinessContext(({ dirty }) => (
+              {
                 <div className={classes.actions}>
                   <Button
                     variant="raised"
@@ -88,7 +86,7 @@ class GeneForm extends Component {
                     variant="raised"
                     color="secondary"
                     onClick={() =>
-                      dirty
+                      isDirty()
                         ? this.props.onSubmit(getFormData())
                         : this.props.onSubmit({})
                     }
@@ -97,7 +95,7 @@ class GeneForm extends Component {
                     {createMode ? 'Create' : 'Update'}
                   </ProgressButton>
                 </div>
-              ))}
+              }
             </div>
           );
         }}

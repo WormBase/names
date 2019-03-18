@@ -21,12 +21,13 @@ import { createStore } from 'redux';
 
 */
 
-const defaultInitalState = {};
+const defaultInitalState = { dirty: false };
 
 function formReducer(state = { ...defaultInitalState }, action) {
+  let fields;
   switch (action.type) {
     case 'INITIALIZE':
-      const fields = Object.keys(action.fields).reduce((result, fieldId) => {
+      fields = Object.keys(action.fields).reduce((result, fieldId) => {
         const { value, error } = action.fields[fieldId];
         result[fieldId] = {
           value: value,
@@ -40,34 +41,32 @@ function formReducer(state = { ...defaultInitalState }, action) {
       };
     case 'UPDATE_FIELD':
       const { fieldId, value } = action;
-      return {
-        fields: {
-          ...state.fields,
-          [fieldId]: {
-            ...state.fields[fieldId],
-            value: value,
-          },
+      fields = {
+        ...state.fields,
+        [fieldId]: {
+          ...state.fields[fieldId],
+          value: value,
         },
+      };
+      return {
+        fields: fields,
+        dirty: Object.keys(fields)
+          .filter((fieldId) => !fieldId.match(/provenance\//))
+          .reduce((result, fieldId) => {
+            const value = (fields[fieldId] || {}).value || '';
+            const initialValue = (fields[fieldId] || {}).initialValue || '';
+            return result || value !== initialValue;
+          }, false),
       };
     default:
       return state;
   }
 }
 
-function dirtySelect(state) {
-  return Object.keys(state.fields)
-    .filter((fieldId) => !fieldId.match(/provenance\//))
-    .reduce((result, fieldId) => {
-      const value = (state.fields[fieldId] || {}).value || '';
-      const initialValue = (state.fields[fieldId] || {}).initialValue || '';
-      return result || value !== initialValue;
-    }, false);
-}
-
 class BaseForm extends Component {
   constructor(props) {
     super(props);
-    this.initialize(props);
+    this.initialize();
 
     // NOTE: BaseForm cannnot have any state, because its state change
     //      will trigger render and cause the input to lose focus
@@ -78,24 +77,24 @@ class BaseForm extends Component {
       prevProps.fields !== this.props.fields ||
       JSON.stringify(prevProps.data) !== JSON.stringify(this.props.data)
     ) {
-      this.initialize(this.props);
+      this.initialize();
     }
   }
 
-  initialize(props) {
-    const fields = this.unpackFields(props);
+  initialize() {
+    const fields = this.unpackFields(this.props);
     this.dataStore = this.dataStore || createStore(formReducer);
     this.dataStore.dispatch({
       type: 'INITIALIZE',
       fields: fields,
     });
     this.dataStore.subscribe(() => {
-      console.log(dirtySelect(this.dataStore.getState()));
       console.log(this.dataStore.getState().fields);
+      console.log(this.dataStore.getState().dirty);
     });
   }
 
-  unpackFields = (props) => {
+  unpackFields(props) {
     function flatten(result, tree, prefix) {
       if (typeof tree === 'object' && tree !== null) {
         Object.keys(tree).reduce((result, keySegment) => {
@@ -124,7 +123,7 @@ class BaseForm extends Component {
       }, {}),
       ...props.fields,
     };
-  };
+  }
 
   gatherFields(fieldIds) {
     const fields = this.dataStore.getState().fields;
@@ -156,6 +155,8 @@ class BaseForm extends Component {
       prov: this.gatherFields(provenanceFieldIds),
     };
   };
+
+  isDirty = () => this.dataStore.getState().dirty;
 
   withFieldData = (WrappedComponent, fieldId) => {
     const { disabled } = this.props;
@@ -222,67 +223,20 @@ class BaseForm extends Component {
     return Field;
   };
 
-  dirtinessContext = (renderer) => {
-    const dataStore = this.dataStore;
-
-    class DirtyContext extends Component {
-      constructor(props) {
-        super(props);
-        // work around issue https://github.com/ReactTraining/react-router/issues/5707
-        this.state = {
-          dirty: false, //dirtySelect(dataStore.getState()),
-        };
-      }
-
-      componentDidMount() {
-        this.setState(
-          {
-            dirty: dirtySelect(dataStore.getState()),
-          },
-          () => {
-            this.unsubscribe = dataStore.subscribe(() => {
-              const currentDirty = dirtySelect(dataStore.getState());
-              if (this.state.dirty !== currentDirty) {
-                this.setState({
-                  dirty: currentDirty,
-                });
-              }
-            });
-          }
-        );
-      }
-
-      componentWillUnmount() {
-        this.unsubscribe && this.unsubscribe();
-      }
-
-      render() {
-        return renderer({
-          dirty: this.state.dirty,
-        });
-      }
-    }
-    return <DirtyContext />;
-  };
-
   render() {
     return (
       <form noValidate autoComplete="off">
-        {this.dirtinessContext(({ dirty }) => (
-          <Prompt
-            when={dirty}
-            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
-        ))}
+        <Prompt
+          when={this.isDirty()}
+          message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+        />
         {/* render props changes causes inputs to lose focus */
         /* to get around the issue, pass getter functions instead of values */
         this.props.children({
           withFieldData: this.withFieldData,
-          dirtinessContext: this.dirtinessContext,
+          isDirty: this.isDirty,
           getFormData: this.getData,
-          resetData: () => {
-            this.initialize(this.props);
-          },
+          resetData: this.initialize,
         })}
       </form>
     );
