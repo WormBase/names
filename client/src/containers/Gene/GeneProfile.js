@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
 import {
+  AjaxForm,
   Button,
   CircularProgress,
   EntityProfile,
@@ -28,6 +29,7 @@ class GeneProfile extends Component {
       shortMessage: null,
       shortMessageVariant: 'info',
       data: {},
+      changes: [],
       showKillGeneDialog: false,
       showResurrectGeneDialog: false,
       showSuppressGeneDialog: false,
@@ -141,10 +143,11 @@ class GeneProfile extends Component {
                 : 'COMPLETE';
             return Promise.all([nextStatus, response.json()]);
           })
-          .then(([nextStatus, response]) => {
+          .then(([nextStatus, { history: changes, ...data }]) => {
             this.setState(
               {
-                data: response,
+                data: data,
+                changes: changes,
                 status: nextStatus,
               },
               () => {
@@ -298,7 +301,7 @@ class GeneProfile extends Component {
   renderStatus = () => {
     const killEventDescriptor =
       this.state.data['gene/status'] === 'gene.status/dead'
-        ? getActivityDescriptor(this.state.data.history[0])
+        ? getActivityDescriptor(this.state.changes[0])
         : {};
 
     return this.state.data['gene/status'] !== 'gene.status/live' ? (
@@ -386,14 +389,24 @@ class GeneProfile extends Component {
 
   renderForm = () => {
     return (
-      <GeneForm
+      <AjaxForm
         data={this.state.data}
-        onSubmit={this.handleGeneUpdate}
-        submitted={this.state.status === 'SUBMITTED'}
+        entityType={'gene'}
+        submitter={this.handleGeneUpdate}
         disabled={Boolean(
           this.state.data['gene/status'] === 'gene.status/dead'
         )}
-      />
+      >
+        {({ withFieldData }) => (
+          <GeneForm
+            withFieldData={withFieldData}
+            cloned={Boolean(
+              this.state.data['gene/sequence-name'] ||
+                this.state.data['gene/biotype']
+            )}
+          />
+        )}
+      </AjaxForm>
     );
   };
 
@@ -404,7 +417,7 @@ class GeneProfile extends Component {
       <RecentActivitiesSingleGene
         wbId={wbId}
         authorizedFetch={authorizedFetch}
-        activities={this.state.data.history}
+        activities={this.state.changes}
         onUpdate={() => {
           this.fetchData();
         }}

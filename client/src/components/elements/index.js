@@ -37,6 +37,7 @@ export {
 } from '@material-ui/core';
 
 export { default as AjaxDialog } from './AjaxDialog';
+export { default as AjaxForm } from './AjaxForm';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as AutocompleteChip } from './AutocompleteChip';
 export { default as AutocompleteLoader } from './AutocompleteLoader';

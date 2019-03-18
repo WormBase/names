@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link, withRouter } from 'react-router-dom';
 import { mockFetchOrNot } from '../../mock';
-import { Button, EntityCreate } from '../../components/elements';
+import { AjaxForm, Button, EntityCreate } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
@@ -98,12 +98,14 @@ class GeneCreate extends Component {
 
   renderForm = () => {
     return (
-      <GeneForm
-        submitted={this.state.status === 'SUBMITTED'}
-        onSubmit={this.handleCreateGene}
-        onCancel={this.handleClear}
-        createMode={true}
-      />
+      <AjaxForm
+        entityType={'gene'}
+        submitter={this.handleCreateGene}
+        //  onCancel={this.handleClear}
+        create={true}
+      >
+        {({ withFieldData }) => <GeneForm withFieldData={withFieldData} />}
+      </AjaxForm>
     );
   };
 
