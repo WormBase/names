@@ -10,7 +10,7 @@ import ProgressButton, {
 import BaseForm from './BaseForm';
 import SimpleAjax from './SimpleAjax';
 
-class AjaxForm extends Component {
+class EntityCreateForm extends Component {
   render() {
     const {
       classes,
@@ -88,7 +88,7 @@ class AjaxForm extends Component {
   }
 }
 
-AjaxForm.propTypes = {
+EntityCreateForm.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
   data: PropTypes.any,
@@ -110,4 +110,4 @@ const styles = (theme) => ({
   },
 });
 
-export default withStyles(styles)(AjaxForm);
+export default withStyles(styles)(EntityCreateForm);

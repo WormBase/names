@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Prompt } from 'react-router';
 import { createStore } from 'redux';
 
 /*
@@ -266,26 +265,20 @@ class BaseForm extends Component {
   };
 
   render() {
-    return (
-      <form noValidate autoComplete="off">
-        {this.dirtinessContext(({ dirty }) => (
-          <Prompt
-            when={dirty}
-            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
-        ))}
-        {/* render props changes causes inputs to lose focus */
-        /* to get around the issue, pass getter functions instead of values */
-        this.props.children({
-          withFieldData: this.withFieldData,
-          dirtinessContext: this.dirtinessContext,
-          getFormData: this.getData,
-          resetData: () => {
-            this.initialize(this.props);
-          },
-        })}
-      </form>
-    );
+    /* render props changes causes inputs to lose focus */
+    /* to get around the issue, pass getter functions instead of values */
+    return this.props.children({
+      withFieldData: this.withFieldData,
+      dirtinessContext: this.dirtinessContext,
+      getFormData: this.getData,
+      // getFormProps: () => ({
+      //   noValidate: true,
+      //   autoComplete: 'off',
+      // }),
+      resetData: () => {
+        this.initialize(this.props);
+      },
+    });
   }
 }
 

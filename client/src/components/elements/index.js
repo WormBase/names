@@ -37,7 +37,6 @@ export {
 } from '@material-ui/core';
 
 export { default as AjaxDialog } from './AjaxDialog';
-export { default as AjaxForm } from './AjaxForm';
 export { default as AutocompleteBase } from './AutocompleteBase';
 export { default as AutocompleteChip } from './AutocompleteChip';
 export { default as AutocompleteLoader } from './AutocompleteLoader';
@@ -49,6 +48,8 @@ export { default as DocumentTitle } from './DocumentTitle';
 export { default as EntityNotFound } from './EntityNotFound';
 export { default as EntityDirectoryButton } from './EntityDirectoryButton';
 export { default as EntityCreate } from './EntityCreate';
+export { default as EntityCreateForm } from './EntityCreateForm';
+export { default as EntityEditForm } from './EntityEditForm';
 export { default as EntityDirectory } from './EntityDirectory';
 export { default as EntityProfile } from './EntityProfile';
 export { default as ErrorBoundary } from './ErrorBoundary';
