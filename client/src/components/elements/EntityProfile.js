@@ -7,6 +7,8 @@ import {
   Typography,
 } from '@material-ui/core';
 
+import Button from './Button';
+import ProgressButton from './ProgressButton';
 import DocumentTitle from './DocumentTitle';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import ErrorBoundary from './ErrorBoundary';
@@ -30,6 +32,8 @@ class EntityProfile extends Component {
       renderOperations,
       renderOperationTip,
       renderStatus,
+      buttonResetProps,
+      buttonSubmitProps,
     } = this.props;
 
     return (
@@ -61,6 +65,18 @@ class EntityProfile extends Component {
                 {renderForm ? (
                   <ErrorBoundary>{renderForm()}</ErrorBoundary>
                 ) : null}
+                <div className={classes.actions}>
+                  <Button variant="raised" {...buttonResetProps}>
+                    Reset
+                  </Button>
+                  <ProgressButton
+                    variant="raised"
+                    color="secondary"
+                    {...buttonSubmitProps}
+                  >
+                    Update
+                  </ProgressButton>
+                </div>
               </div>
             )}
             <div className={classes.section}>
@@ -103,6 +119,8 @@ EntityProfile.propTypes = {
   renderForm: PropTypes.func,
   renderChanges: PropTypes.func,
   renderOperationTip: PropTypes.func,
+  buttonResetProps: PropTypes.func,
+  buttonSubmitProps: PropTypes.func,
 };
 
 const styles = (theme) => ({
@@ -122,6 +140,16 @@ const styles = (theme) => ({
     margin: `${theme.spacing.unit * 8}px 0`,
   },
   historyTable: {},
+  actions: {
+    marginTop: theme.spacing.unit * 2,
+    '& > *': {
+      marginRight: theme.spacing.unit,
+      width: 150,
+      [theme.breakpoints.down('xs')]: {
+        width: `calc(50% - ${theme.spacing.unit}px)`,
+      },
+    },
+  },
 });
 
 export default withStyles(styles)(EntityProfile);

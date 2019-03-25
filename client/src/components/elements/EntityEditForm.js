@@ -254,87 +254,72 @@ class EntityEditForm extends Component {
               {({ status, errorMessage, handleSubmit }) => {
                 return (
                   <div>
-                    <div>
-                      {this.props.children({
-                        dataCommitted: this.state.data,
-                        changes: changes,
-                        getDialogProps: (operation) => ({
-                          wbId: wbId,
-                          name: renderDisplayName(data),
-                          data: data,
-                          authorizedFetch: authorizedFetch,
-                          open: this.state.dialog === operation,
-                          onClose: this.closeDialog,
-                          onSubmitSuccess: (data) => {
-                            this.setState(
-                              {
-                                shortMessage: `${operation} successful!`,
-                                shortMessageVariant: 'success',
-                              },
-                              () => {
-                                this.fetchData();
-                                this.closeDialog();
-                              }
-                            );
-                          },
-                        }),
-                        getProfileProps: () => ({
-                          entityType: entityType,
-                          wbId: wbId,
-                          errorMessage: this.state.errorMessage,
-                          message: this.state.shortMessage,
-                          messageVariant: this.state.shortMessageVariant,
-                          onMessageClose: this.handleMessageClose,
-                        }),
-                        getOperationProps: (operation) => ({
-                          onClick: () => {
-                            console.log('zzz');
-                            this.setState({
-                              dialog: operation,
-                            });
-                          },
-                        }),
-                        // from BaseForm
-                        withFieldData,
-                        getFormData,
-                        dirtinessContext,
-                        // from SimpleAjax
-                        status,
-                        errorMessage,
-                        handleSubmit,
-                      })}
-                      {dirtinessContext(({ dirty }) => (
-                        <Prompt
-                          when={dirty}
-                          message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-                        />
-                      ))}
-                    </div>
-                    {dirtinessContext(({ dirty }) => (
-                      <div className={classes.actions}>
-                        <Button
-                          variant="raised"
-                          onClick={resetData}
-                          disabled={disabled}
-                        >
-                          Reset
-                        </Button>
-                        <ProgressButton
-                          status={
+                    {this.props.children({
+                      dataCommitted: this.state.data,
+                      changes: changes,
+                      getProfileProps: () => ({
+                        entityType: entityType,
+                        wbId: wbId,
+                        errorMessage: this.state.errorMessage,
+                        message: this.state.shortMessage,
+                        messageVariant: this.state.shortMessageVariant,
+                        onMessageClose: this.handleMessageClose,
+                        buttonResetProps: {
+                          onClick: resetData,
+                          disabled: disabled,
+                        },
+                        buttonSubmitProps: {
+                          status:
                             status === 'SUBMITTED'
                               ? PROGRESS_BUTTON_PENDING
-                              : PROGRESS_BUTTON_READY
-                          }
-                          variant="raised"
-                          color="secondary"
-                          onClick={() =>
-                            handleSubmit(dirty ? getFormData() : {})
-                          }
-                          disabled={status === 'SUBMITTED' || disabled}
-                        >
-                          Update
-                        </ProgressButton>
-                      </div>
+                              : PROGRESS_BUTTON_READY,
+                          onClick: () =>
+                            console.log(getFormData()) ||
+                            handleSubmit(getFormData() || {}),
+                          disabled: status === 'SUBMITTED' || disabled,
+                        },
+                      }),
+                      getOperationProps: (operation) => ({
+                        onClick: () => {
+                          this.setState({
+                            dialog: operation,
+                          });
+                        },
+                      }),
+                      getDialogProps: (operation) => ({
+                        wbId: wbId,
+                        name: renderDisplayName(data),
+                        data: data,
+                        authorizedFetch: authorizedFetch,
+                        open: this.state.dialog === operation,
+                        onClose: this.closeDialog,
+                        onSubmitSuccess: (data) => {
+                          this.setState(
+                            {
+                              shortMessage: `${operation} successful!`,
+                              shortMessageVariant: 'success',
+                            },
+                            () => {
+                              this.fetchData();
+                              this.closeDialog();
+                            }
+                          );
+                        },
+                      }),
+                      // from BaseForm
+                      withFieldData,
+                      getFormData,
+                      dirtinessContext,
+                      // from SimpleAjax
+                      status,
+                      errorMessage,
+                      handleSubmit,
+                    })}
+                    {dirtinessContext(({ dirty }) => (
+                      <Prompt
+                        when={dirty}
+                        message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+                      />
                     ))}
                   </div>
                 );
@@ -359,17 +344,6 @@ EntityEditForm.propTypes = {
   }).isRequired,
 };
 
-const styles = (theme) => ({
-  actions: {
-    marginTop: theme.spacing.unit * 2,
-    '& > *': {
-      marginRight: theme.spacing.unit,
-      width: 150,
-      [theme.breakpoints.down('xs')]: {
-        width: `calc(50% - ${theme.spacing.unit}px)`,
-      },
-    },
-  },
-});
+const styles = (theme) => ({});
 
 export default withStyles(styles)(withRouter(EntityEditForm));
