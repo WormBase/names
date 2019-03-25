@@ -15,6 +15,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { Page, PageLeft, PageMain } from './Page';
 import Snackbar from './Snackbar';
 import SnackbarContent from './SnackbarContent';
+import TextField from './TextField';
 import ValidationError from './ValidationError';
 
 class EntityProfile extends Component {
@@ -34,7 +35,11 @@ class EntityProfile extends Component {
       renderStatus,
       buttonResetProps,
       buttonSubmitProps,
+      withFieldData,
+      dirtinessContext,
     } = this.props;
+
+    const ReasonField = withFieldData(TextField, 'provenance/why');
 
     return (
       <DocumentTitle title={`${wbId} (${entityType})`}>
@@ -63,7 +68,17 @@ class EntityProfile extends Component {
               <div>
                 {renderStatus && renderStatus()}
                 {renderForm ? (
-                  <ErrorBoundary>{renderForm()}</ErrorBoundary>
+                  <ErrorBoundary>
+                    {renderForm()}
+                    {dirtinessContext(({ dirty }) =>
+                      dirty ? (
+                        <ReasonField
+                          label="Reason"
+                          helperText={`Why do you create this gene?`}
+                        />
+                      ) : null
+                    )}
+                  </ErrorBoundary>
                 ) : null}
                 <div className={classes.actions}>
                   <Button variant="raised" {...buttonResetProps}>
@@ -112,6 +127,8 @@ EntityProfile.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
   wbId: PropTypes.string.isRequired,
+  withFieldData: PropTypes.func.isRequired,
+  dirtinessContext: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
   message: PropTypes.string,
   messageVariant: PropTypes.oneOf(['info', 'warning']),

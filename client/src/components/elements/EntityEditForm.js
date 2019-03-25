@@ -279,6 +279,8 @@ class EntityEditForm extends Component {
                     onClick: () => this.handleUpdate(getFormData() || {}),
                     disabled: status === 'SUBMITTED' || disabled,
                   },
+                  withFieldData,
+                  dirtinessContext,
                 }),
                 getOperationProps: (operation) => ({
                   onClick: () => {

@@ -14,7 +14,6 @@ class GeneForm extends Component {
     const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
     const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species');
     const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
-    const ReasonField = withFieldData(TextField, 'provenance/why');
 
     return (
       <React.Fragment>
@@ -30,14 +29,6 @@ class GeneForm extends Component {
             "For cloned genes, biotype is required. Otherwise, it's optional"
           }
         />
-        {dirtinessContext(({ dirty }) =>
-          dirty ? (
-            <ReasonField
-              label="Reason"
-              helperText={`Why do you edit this gene?`}
-            />
-          ) : null
-        )}
       </React.Fragment>
     );
   }
