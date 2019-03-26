@@ -152,6 +152,15 @@ class EntityEditForm extends Component {
   };
 
   handleUpdate = ({ data = {}, prov: provenance }) => {
+    if (Object.keys(data).length === 0) {
+      this.setState({
+        status: 'COMPLETE',
+        shortMessage:
+          "You didn't modify anything in the form. No change is submitted",
+        shortMessageVariant: 'warning',
+      });
+      return;
+    }
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.put('*', {
@@ -251,6 +260,7 @@ class EntityEditForm extends Component {
         {({
           withFieldData,
           getFormData,
+          getFormDataModified,
           getFormProps,
           dirtinessContext,
           resetData,
@@ -276,7 +286,9 @@ class EntityEditForm extends Component {
                       status === 'SUBMITTED'
                         ? PROGRESS_BUTTON_PENDING
                         : PROGRESS_BUTTON_READY,
-                    onClick: () => this.handleUpdate(getFormData() || {}),
+                    onClick: () =>
+                      console.log(getFormDataModified()) ||
+                      this.handleUpdate(getFormDataModified() || {}),
                     disabled: status === 'SUBMITTED' || disabled,
                   },
                   withFieldData,

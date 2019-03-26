@@ -63,6 +63,17 @@ function dirtySelect(state) {
     }, false);
 }
 
+function getDirtyFields(fields) {
+  return Object.keys(fields).reduce((result, fieldId) => {
+    const value = (fields[fieldId] || {}).value || '';
+    const initialValue = (fields[fieldId] || {}).initialValue || '';
+    if (value !== initialValue) {
+      result[fieldId] = fields[fieldId];
+    }
+    return result;
+  }, {});
+}
+
 class BaseForm extends Component {
   constructor(props) {
     super(props);
@@ -125,8 +136,7 @@ class BaseForm extends Component {
     };
   };
 
-  gatherFields(fieldIds) {
-    const fields = this.dataStore.getState().fields;
+  gatherFields(fieldIds, fields) {
     return fieldIds.reduce((result, fieldId) => {
       const value = fields[fieldId] && fields[fieldId].value;
       const idSegments = fieldId.split(':');
@@ -142,6 +152,24 @@ class BaseForm extends Component {
     }, {});
   }
 
+  getDataModified = () => {
+    const fields = getDirtyFields(this.dataStore.getState().fields);
+    console.log(fields);
+    const dataFieldIds = Object.keys(fields).filter(
+      (fieldId) => !fieldId.match(/provenance\//g)
+    );
+    if (Object.keys(dataFieldIds).length === 0) {
+      return null;
+    }
+    const provenanceFieldIds = Object.keys(fields).filter((fieldId) =>
+      fieldId.match(/provenance\//g)
+    );
+    return {
+      data: this.gatherFields(dataFieldIds, fields),
+      prov: this.gatherFields(provenanceFieldIds, fields),
+    };
+  };
+
   getData = () => {
     const fields = this.dataStore.getState().fields;
     const dataFieldIds = Object.keys(fields).filter(
@@ -151,8 +179,8 @@ class BaseForm extends Component {
       fieldId.match(/provenance\//g)
     );
     return {
-      data: this.gatherFields(dataFieldIds),
-      prov: this.gatherFields(provenanceFieldIds),
+      data: this.gatherFields(dataFieldIds, fields),
+      prov: this.gatherFields(provenanceFieldIds, fields),
     };
   };
 
@@ -271,6 +299,7 @@ class BaseForm extends Component {
       withFieldData: this.withFieldData,
       dirtinessContext: this.dirtinessContext,
       getFormData: this.getData,
+      getFormDataModified: this.getDataModified,
       // getFormProps: () => ({
       //   noValidate: true,
       //   autoComplete: 'off',
