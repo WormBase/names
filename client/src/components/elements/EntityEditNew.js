@@ -138,6 +138,9 @@ class EntityEditNew extends Component {
               withFieldData,
               dirtinessContext,
             }),
+            getFormProps: () => ({
+              withFieldData,
+            }),
             // from BaseForm
             withFieldData,
             dirtinessContext,

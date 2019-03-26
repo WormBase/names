@@ -6,36 +6,20 @@ import { EntityEditNew, Button, EntityCreate } from '../../components/elements';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
-  renderOperations = () => {
-    return (
-      <Button
-        variant="raised"
-        component={({ ...props }) => <Link to="/gene" {...props} />}
-        className={this.props.classes.backToDirectoryButton}
-      >
-        Back to directory
-      </Button>
-    );
-  };
-
   render() {
     const { authorizedFetch } = this.props;
     return (
       <EntityEditNew entityType={'gene'} authorizedFetch={authorizedFetch}>
-        {({ withFieldData, dirtinessContext, getProfileProps }) => {
+        {({ getFormProps, getProfileProps }) => {
           return (
             <EntityCreate
               {...getProfileProps()}
               entityType="gene"
               renderForm={() => (
                 <React.Fragment>
-                  <GeneForm
-                    withFieldData={withFieldData}
-                    dirtinessContext={dirtinessContext}
-                  />
+                  <GeneForm {...getFormProps()} />
                 </React.Fragment>
               )}
-              renderOperations={this.renderOperations}
             />
           );
         }}

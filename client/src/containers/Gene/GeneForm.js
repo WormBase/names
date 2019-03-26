@@ -9,7 +9,7 @@ import {
 
 class GeneForm extends Component {
   render() {
-    const { withFieldData, cloned = false, dirtinessContext } = this.props;
+    const { withFieldData, cloned = false } = this.props;
     const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
     const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
     const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species');
@@ -36,7 +36,6 @@ class GeneForm extends Component {
 
 GeneForm.propTypes = {
   withFieldData: PropTypes.func.isRequired,
-  dirtinessContext: PropTypes.func.isRequired,
   cloned: PropTypes.bool,
 };
 

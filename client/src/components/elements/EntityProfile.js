@@ -12,6 +12,7 @@ import ProgressButton from './ProgressButton';
 import DocumentTitle from './DocumentTitle';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import ErrorBoundary from './ErrorBoundary';
+import Humanize from './Humanize';
 import { Page, PageLeft, PageMain } from './Page';
 import Snackbar from './Snackbar';
 import SnackbarContent from './SnackbarContent';
@@ -19,11 +20,21 @@ import TextField from './TextField';
 import ValidationError from './ValidationError';
 
 class EntityProfile extends Component {
+  renderStatus({ data, entityType }) {
+    return data[`${entityType}/status`] !== `${entityType}.status/live` ? (
+      <Typography variant="display1" gutterBottom>
+        <Humanize capitalized>{data[`${entityType}/status`]}</Humanize>
+      </Typography>
+    ) : null;
+  }
+
   render() {
     const {
       classes = {},
       wbId,
       entityType,
+      dataCommitted: data = {},
+      changes = [],
       errorMessage = null,
       message = null,
       messageVariant = 'info',
@@ -32,12 +43,18 @@ class EntityProfile extends Component {
       renderChanges,
       renderOperations,
       renderOperationTip,
-      renderStatus,
+      renderStatus = this.renderStatus,
       buttonResetProps,
       buttonSubmitProps,
       withFieldData,
       dirtinessContext,
     } = this.props;
+
+    const renderProps = {
+      entityType,
+      data,
+      changes,
+    };
 
     const ReasonField = withFieldData(TextField, 'provenance/why');
 
@@ -48,13 +65,19 @@ class EntityProfile extends Component {
             <div className={classes.operations}>
               <EntityDirectoryButton entityType={entityType} />
               <Divider light />
-              {renderOperations && renderOperations()}
-              {renderOperationTip ? (
-                <React.Fragment>
-                  <h5>Tip:</h5>
-                  {renderOperationTip && renderOperationTip()}
-                </React.Fragment>
-              ) : null}
+              {renderOperations && renderOperations(renderProps)}
+              {renderOperationTip
+                ? renderOperationTip &&
+                  renderOperationTip({
+                    ...renderProps,
+                    Wrapper: ({ children }) => (
+                      <React.Fragment>
+                        <h5>Tip:</h5>
+                        {children}
+                      </React.Fragment>
+                    ),
+                  })
+                : null}
             </div>
           </PageLeft>
           <PageMain>
@@ -66,10 +89,10 @@ class EntityProfile extends Component {
               <CircularProgress />
             ) : (
               <div>
-                {renderStatus && renderStatus()}
+                {renderStatus(renderProps)}
                 {renderForm ? (
                   <ErrorBoundary>
-                    {renderForm()}
+                    {renderForm(renderProps)}
                     {dirtinessContext(({ dirty }) =>
                       dirty ? (
                         <ReasonField
@@ -100,7 +123,7 @@ class EntityProfile extends Component {
               </Typography>
               {renderChanges ? (
                 <div className={classes.historyTable}>
-                  <ErrorBoundary>{renderChanges()}</ErrorBoundary>
+                  <ErrorBoundary>{renderChanges(renderProps)}</ErrorBoundary>
                 </div>
               ) : null}
             </div>

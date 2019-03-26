@@ -273,6 +273,8 @@ class EntityEditForm extends Component {
                 getProfileProps: () => ({
                   entityType: entityType,
                   wbId: wbId,
+                  dataCommitted: this.state.data,
+                  changes: changes,
                   errorMessage: this.state.errorMessage,
                   message: this.state.shortMessage,
                   messageVariant: this.state.shortMessageVariant,
@@ -293,6 +295,9 @@ class EntityEditForm extends Component {
                   },
                   withFieldData,
                   dirtinessContext,
+                }),
+                getFormProps: () => ({
+                  withFieldData,
                 }),
                 getOperationProps: (operation) => ({
                   onClick: () => {
