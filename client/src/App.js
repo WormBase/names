@@ -11,7 +11,13 @@ import {
   NotFound,
 } from './components/elements';
 import Header, { NavBar } from './containers/Header';
-import Authenticate, { ProfileButton } from './containers/Authenticate';
+import Authenticate, {
+  AuthorizationContext,
+  ProfileButton,
+  Login,
+  Logout,
+  Profile,
+} from './containers/Authenticate';
 import Footer from './containers/Footer';
 import { GeneDirectory, GeneProfile, GeneCreate } from './containers/Gene';
 // import {
@@ -25,100 +31,111 @@ class App extends Component {
   render() {
     return (
       <Authenticate>
-        {({ isAuthenticated, user, login, profile, authorizedFetch }) => (
-          <div className={this.props.classes.root}>
-            <Header isAuthenticated={isAuthenticated}>
-              <ProfileButton name={user.name} />
-            </Header>
-            {isAuthenticated === undefined ? (
-              <div className={this.props.classes.content}>
-                <Page>
-                  <CircularProgress />
-                </Page>
-              </div>
-            ) : isAuthenticated ? (
-              [
-                <NavBar key="nav-bar" />,
-                <div key="content" className={this.props.classes.content}>
-                  <ErrorBoundary>
-                    <Switch>
-                      <Route
-                        exact
-                        path="/"
-                        component={() => <Redirect to="/gene" />}
-                      />
-                      <Route
-                        path="/me"
-                        component={() => (
-                          <DocumentTitle title="Your profile">
-                            {profile}
-                          </DocumentTitle>
-                        )}
-                      />
-                      <Route
-                        path="/:entityType"
-                        component={({ match }) => {
-                          let Directory, Create, Profile;
-                          switch (match.params.entityType) {
-                            case 'gene':
-                              [Directory, Create, Profile] = [
-                                GeneDirectory,
-                                GeneCreate,
-                                GeneProfile,
-                              ];
-                              break;
-                            // case 'variation':
-                            //   [Directory, Create, Profile] = [
-                            //     VariationDirectory,
-                            //     VariationCreate,
-                            //     VariationProfile,
-                            //   ];
-                            //   break;
-                            default:
-                              return <NotFound />;
-                          }
-                          return (
-                            <Switch>
-                              <Route
-                                path={`${match.url}`}
-                                exact={true}
-                                component={() => (
-                                  <Directory
-                                    authorizedFetch={authorizedFetch}
-                                  />
-                                )}
-                              />
-                              <Route
-                                path={`${match.url}/new`}
-                                component={() => (
-                                  <Create authorizedFetch={authorizedFetch} />
-                                )}
-                              />
-                              <Route
-                                path={`${match.url}/id/:id`}
-                                component={({ match }) => (
-                                  <Profile
-                                    wbId={match.params.id}
-                                    authorizedFetch={authorizedFetch}
-                                  />
-                                )}
-                              />
-                              <Route component={NotFound} />
-                            </Switch>
-                          );
-                        }}
-                      />
-                      <Route component={NotFound} />
-                    </Switch>
-                  </ErrorBoundary>
-                </div>,
-              ]
-            ) : (
-              login
-            )}
-            <Footer />
-          </div>
-        )}
+        <AuthorizationContext.Consumer>
+          {({
+            isAuthenticated,
+            errorMessage,
+            user,
+            handleLogin,
+            handleLogout,
+            authorizedFetch,
+          }) => (
+            <div className={this.props.classes.root}>
+              <Header isAuthenticated={isAuthenticated}>
+                <ProfileButton name={user.name} />
+              </Header>
+              {isAuthenticated === undefined ? (
+                <div className={this.props.classes.content}>
+                  <Page>
+                    <CircularProgress />
+                  </Page>
+                </div>
+              ) : isAuthenticated ? (
+                [
+                  <NavBar key="nav-bar" />,
+                  <div key="content" className={this.props.classes.content}>
+                    <ErrorBoundary>
+                      <Switch>
+                        <Route
+                          exact
+                          path="/"
+                          component={() => <Redirect to="/gene" />}
+                        />
+                        <Route
+                          path="/me"
+                          component={() => (
+                            <DocumentTitle title="Your profile">
+                              <Profile {...user}>
+                                <Logout onLogout={handleLogout} />
+                              </Profile>
+                            </DocumentTitle>
+                          )}
+                        />
+                        <Route
+                          path="/:entityType"
+                          component={({ match }) => {
+                            let Directory, Create, Profile;
+                            switch (match.params.entityType) {
+                              case 'gene':
+                                [Directory, Create, Profile] = [
+                                  GeneDirectory,
+                                  GeneCreate,
+                                  GeneProfile,
+                                ];
+                                break;
+                              // case 'variation':
+                              //   [Directory, Create, Profile] = [
+                              //     VariationDirectory,
+                              //     VariationCreate,
+                              //     VariationProfile,
+                              //   ];
+                              //   break;
+                              default:
+                                return <NotFound />;
+                            }
+                            return (
+                              <Switch>
+                                <Route
+                                  path={`${match.url}`}
+                                  exact={true}
+                                  component={() => (
+                                    <Directory
+                                      authorizedFetch={authorizedFetch}
+                                    />
+                                  )}
+                                />
+                                <Route
+                                  path={`${match.url}/new`}
+                                  component={() => (
+                                    <Create authorizedFetch={authorizedFetch} />
+                                  )}
+                                />
+                                <Route
+                                  path={`${match.url}/id/:id`}
+                                  component={({ match }) => (
+                                    <Profile
+                                      wbId={match.params.id}
+                                      authorizedFetch={authorizedFetch}
+                                    />
+                                  )}
+                                />
+                                <Route component={NotFound} />
+                              </Switch>
+                            );
+                          }}
+                        />
+                        <Route component={NotFound} />
+                      </Switch>
+                    </ErrorBoundary>
+                  </div>,
+                ]
+              ) : (
+                <Login onSignIn={handleLogin} errorMessage={errorMessage} />
+              )}
+              <Footer />
+            </div>
+          )}
+        </AuthorizationContext.Consumer>
       </Authenticate>
     );
   }
