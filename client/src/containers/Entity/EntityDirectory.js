@@ -4,11 +4,14 @@ import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { capitalize } from '../../utils/format';
-import Button from './Button';
-import DocumentTitle from './DocumentTitle';
-import ErrorBoundary from './ErrorBoundary';
-import Page, { PageMain } from './Page';
-import SearchBox from './SearchBox';
+import {
+  Button,
+  DocumentTitle,
+  ErrorBoundary,
+  Page,
+  PageMain,
+  SearchBox,
+} from '../../components/elements';
 
 const EntityDirectory = (props) => {
   const { classes, entityType, renderHistory } = props;

@@ -7,17 +7,24 @@ import {
   Typography,
 } from '@material-ui/core';
 
-import Button from './Button';
-import ProgressButton from './ProgressButton';
-import DocumentTitle from './DocumentTitle';
+import {
+  BaseForm,
+  Button,
+  DocumentTitle,
+  ErrorBoundary,
+  Humanize,
+  Page,
+  PageLeft,
+  PageMain,
+  ProgressButton,
+  SimpleAjax,
+  Snackbar,
+  SnackbarContent,
+  TextField,
+  ValidationError,
+} from '../../components/elements';
+
 import EntityDirectoryButton from './EntityDirectoryButton';
-import ErrorBoundary from './ErrorBoundary';
-import Humanize from './Humanize';
-import { Page, PageLeft, PageMain } from './Page';
-import Snackbar from './Snackbar';
-import SnackbarContent from './SnackbarContent';
-import TextField from './TextField';
-import ValidationError from './ValidationError';
 
 class EntityProfile extends Component {
   renderStatus({ data, entityType }) {

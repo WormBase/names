@@ -2,14 +2,23 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Button from './Button';
-import ProgressButton from './ProgressButton';
-import DocumentTitle from './DocumentTitle';
+
 import EntityDirectoryButton from './EntityDirectoryButton';
-import ErrorBoundary from './ErrorBoundary';
-import { Page, PageLeft, PageMain } from './Page';
-import TextField from './TextField';
-import ValidationError from './ValidationError';
+import {
+  BaseForm,
+  Button,
+  DocumentTitle,
+  ErrorBoundary,
+  Page,
+  PageLeft,
+  PageMain,
+  ProgressButton,
+  PROGRESS_BUTTON_PENDING,
+  PROGRESS_BUTTON_READY,
+  SimpleAjax,
+  TextField,
+  ValidationError,
+} from '../../components/elements';
 
 class EntityCreate extends Component {
   render() {

@@ -1,14 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  EntityEdit,
-  EntityProfile,
-  EntityNotFound,
-  Humanize,
-  Typography,
-} from '../../components/elements';
+import { Button, Humanize, Typography } from '../../components/elements';
+import { EntityEdit, EntityProfile, EntityNotFound } from '../Entity';
 import { pastTense, getActivityDescriptor } from '../../utils/events';
 import GeneForm from './GeneForm';
 import KillGeneDialog from './KillGeneDialog';

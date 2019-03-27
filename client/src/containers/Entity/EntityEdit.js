@@ -4,17 +4,19 @@ import { withRouter } from 'react-router-dom';
 import { Prompt } from 'react-router';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Button from './Button';
-import TextField from './TextField';
-import ProgressButton, {
+import {
+  BaseForm,
+  Button,
+  ProgressButton,
   PROGRESS_BUTTON_PENDING,
   PROGRESS_BUTTON_READY,
-} from './ProgressButton';
+  SimpleAjax,
+  TextField,
+} from '../../components/elements';
+
 import EntityNotFound from './EntityNotFound';
-import BaseForm from './BaseForm';
-import SimpleAjax from './SimpleAjax';
-import { mockFetchOrNot } from '../../mock';
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
+import { mockFetchOrNot } from '../../mock';
 
 class EntityEditForm extends Component {
   constructor(props) {

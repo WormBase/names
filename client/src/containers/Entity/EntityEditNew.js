@@ -4,14 +4,15 @@ import { withRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { mockFetchOrNot } from '../../mock';
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
-import Button from './Button';
-import TextField from './TextField';
-import ProgressButton, {
+import {
+  BaseForm,
+  Button,
+  ProgressButton,
   PROGRESS_BUTTON_PENDING,
   PROGRESS_BUTTON_READY,
-} from './ProgressButton';
-import BaseForm from './BaseForm';
-import SimpleAjax from './SimpleAjax';
+  SimpleAjax,
+  TextField,
+} from '../../components/elements';
 
 class EntityEditNew extends Component {
   constructor(props) {

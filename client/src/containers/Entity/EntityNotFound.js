@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { withStyles, Button, Typography } from '@material-ui/core';
+
+import { DocumentTitle, NotFound } from '../../components/elements';
 import EntityDirectoryButton from './EntityDirectoryButton';
-import NotFound from './NotFound';
-import DocumentTitle from './DocumentTitle';
 
 function EntityNotFound(props) {
   const { classes = {}, wbId, entityType } = props;

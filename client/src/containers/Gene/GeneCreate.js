@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { EntityEditNew, EntityCreate } from '../../components/elements';
+import { EntityEditNew, EntityCreate } from '../Entity';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {

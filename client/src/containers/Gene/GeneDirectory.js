@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { EntityDirectory } from '../../components/elements';
+import { EntityDirectory } from '../Entity';
 import RecentActivities from './RecentActivities';
 
 class GeneDirectory extends React.Component {
