@@ -26,6 +26,11 @@
       (not-found! {:message "Entity lookup failed"
                    :lookup-ref lookup-ref}))))
 
+(defn prepare-data-for-transact
+  "Strip any data keys that are not valid datomic idents."
+  [db data]
+  (select-keys data (filter (partial d/entid db) (keys data))))
+
 (defn creator
  "Return an endpoint handler for new entity creation."
   ;; [uiident data-spec event summary-pull-expr & [validate-names]]
@@ -40,7 +45,7 @@
                    :data
                    (update live-status-attr (fnil identity live-status-val)))
           names-validator (or validate-names (constantly (identity data)))
-          cdata (conform-spec-fn data (partial names-validator request))
+          cdata (prepare-data-for-transact db (conform-spec-fn data (partial names-validator request)))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
           tx-res @(d/transact-async conn tx-data)
@@ -64,7 +69,7 @@
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn passthru-resolver [_ data]
                                              data))
-                cdata (resolve-refs-to-db-ids db (conform-spec-fn data names-validator))
+                cdata (prepare-data-for-transact db (resolve-refs-to-db-ids db (conform-spec-fn data names-validator)))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
