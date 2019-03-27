@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   Button,
-  EntityEditForm,
+  EntityEdit,
   EntityProfile,
   EntityNotFound,
   Humanize,
@@ -63,12 +63,10 @@ class GeneProfile extends Component {
   };
 
   renderChanges = ({ data = {}, changes = [] }) => {
-    const { authorizedFetch } = this.props;
     console.log(data);
     return (
       <RecentActivitiesSingleGene
         wbId={data['gene/id']}
-        authorizedFetch={authorizedFetch}
         activities={changes}
         onUpdate={() => {
           this.fetchData();
@@ -78,13 +76,12 @@ class GeneProfile extends Component {
   };
 
   render() {
-    const { authorizedFetch, wbId } = this.props;
+    const { wbId } = this.props;
     return (
-      <EntityEditForm
+      <EntityEdit
         wbId={wbId}
         entityType={'gene'}
         renderDisplayName={this.getDisplayName}
-        authorizedFetch={authorizedFetch}
       >
         {({
           getProfileProps,
@@ -170,14 +167,13 @@ class GeneProfile extends Component {
             renderChanges={this.renderChanges}
           />
         )}
-      </EntityEditForm>
+      </EntityEdit>
     );
   }
 }
 
 GeneProfile.propTypes = {
   wbId: PropTypes.string.isRequired,
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 export default GeneProfile;

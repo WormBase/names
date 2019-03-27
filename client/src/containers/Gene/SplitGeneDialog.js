@@ -14,7 +14,7 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class SplitGeneDialog extends Component {
-  submitData = (data) => {
+  submitData = (data, authorizedFetch) => {
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
@@ -58,13 +58,10 @@ class SplitGeneDialog extends Component {
         }
       },
       () => {
-        return this.props.authorizedFetch(
-          `/api/gene/${this.props.wbId}/split`,
-          {
-            method: 'POST',
-            body: JSON.stringify(data),
-          }
-        );
+        return authorizedFetch(`/api/gene/${this.props.wbId}/split`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
       }
     );
   };

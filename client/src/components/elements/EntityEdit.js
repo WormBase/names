@@ -14,6 +14,7 @@ import EntityNotFound from './EntityNotFound';
 import BaseForm from './BaseForm';
 import SimpleAjax from './SimpleAjax';
 import { mockFetchOrNot } from '../../mock';
+import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 
 class EntityEditForm extends Component {
   constructor(props) {
@@ -151,70 +152,72 @@ class EntityEditForm extends Component {
     );
   };
 
-  handleUpdate = ({ data = {}, prov: provenance }) => {
-    if (Object.keys(data).length === 0) {
-      this.setState({
-        status: 'COMPLETE',
-        shortMessage:
-          "You didn't modify anything in the form. No change is submitted",
-        shortMessageVariant: 'warning',
-      });
-      return;
-    }
-    return mockFetchOrNot(
-      (mockFetch) => {
-        return mockFetch.put('*', {
-          updated: {
-            ...data,
-          },
+  getUpdateHandler = (getFormDataModified, authorizedFetch) => {
+    return () => {
+      const { data = {}, prov: provenance } = getFormDataModified() || {};
+      if (Object.keys(data).length === 0) {
+        this.setState({
+          status: 'COMPLETE',
+          shortMessage:
+            "You didn't modify anything in the form. No change is submitted",
+          shortMessageVariant: 'warning',
         });
-      },
-      () => {
-        const dataSubmit = Object.keys(data).reduce((result, key) => {
-          if (
-            key !== 'split-from' &&
-            key !== 'split-into' &&
-            key !== 'merged-from' &&
-            key !== 'merged-into'
-          ) {
-            result[key] = data[key];
-          }
-          return result;
-        }, {});
-        return this.props
-          .authorizedFetch(`/api/gene/${this.getId()}`, {
+        return;
+      }
+      return mockFetchOrNot(
+        (mockFetch) => {
+          return mockFetch.put('*', {
+            updated: {
+              ...data,
+            },
+          });
+        },
+        () => {
+          const dataSubmit = Object.keys(data).reduce((result, key) => {
+            if (
+              key !== 'split-from' &&
+              key !== 'split-into' &&
+              key !== 'merged-from' &&
+              key !== 'merged-into'
+            ) {
+              result[key] = data[key];
+            }
+            return result;
+          }, {});
+          return authorizedFetch(`/api/gene/${this.getId()}`, {
             method: 'PUT',
             body: JSON.stringify({
               data: dataSubmit,
               prov: provenance,
             }),
           })
-          .then((response) => Promise.all([response.ok, response.json()]))
-          .then(([ok, response]) => {
-            this.setState(() => {
-              const stateChanges = {
-                status: 'COMPLETE',
-              };
-              if (!ok || response.problems) {
-                return {
-                  ...stateChanges,
-                  errorMessage: response,
+            .then((response) => Promise.all([response.ok, response.json()]))
+            .then(([ok, response]) => {
+              this.setState(() => {
+                const stateChanges = {
+                  status: 'COMPLETE',
                 };
-              } else {
-                this.fetchData();
-                return {
-                  ...stateChanges,
-                  errorMessage: null,
-                  data: response.updated,
-                  shortMessage: 'Update successful!',
-                  shortMessageVariant: 'success',
-                };
-              }
-            });
-          })
-          .catch((e) => console.log('error', e));
-      }
-    );
+                if (!ok || response.problems) {
+                  return {
+                    ...stateChanges,
+                    errorMessage: response,
+                  };
+                } else {
+                  this.fetchData();
+                  return {
+                    ...stateChanges,
+                    errorMessage: null,
+                    data: response.updated,
+                    shortMessage: 'Update successful!',
+                    shortMessageVariant: 'success',
+                  };
+                }
+              });
+            })
+            .catch((e) => console.log('error', e));
+        }
+      );
+    };
   };
 
   closeDialog = () => {
@@ -241,7 +244,6 @@ class EntityEditForm extends Component {
       wbId: id,
       entityType,
       renderDisplayName,
-      authorizedFetch,
       ...others
     } = this.props;
 
@@ -256,98 +258,101 @@ class EntityEditForm extends Component {
     ) : this.state.status === 'LOADING' ? (
       <CircularProgress />
     ) : (
-      <BaseForm data={this.state.data} disabled={disabled}>
-        {({
-          withFieldData,
-          getFormData,
-          getFormDataModified,
-          getFormProps,
-          dirtinessContext,
-          resetData,
-        }) => {
-          return (
-            <div>
-              {this.props.children({
-                dataCommitted: this.state.data,
-                changes: changes,
-                getProfileProps: () => ({
-                  entityType: entityType,
-                  wbId: wbId,
-                  dataCommitted: this.state.data,
-                  changes: changes,
-                  errorMessage: this.state.errorMessage,
-                  message: this.state.shortMessage,
-                  messageVariant: this.state.shortMessageVariant,
-                  onMessageClose: this.handleMessageClose,
-                  buttonResetProps: {
-                    onClick: resetData,
-                    disabled: disabled,
-                  },
-                  buttonSubmitProps: {
-                    status:
-                      status === 'SUBMITTED'
-                        ? PROGRESS_BUTTON_PENDING
-                        : PROGRESS_BUTTON_READY,
-                    onClick: () =>
-                      console.log(getFormDataModified()) ||
-                      this.handleUpdate(getFormDataModified() || {}),
-                    disabled: status === 'SUBMITTED' || disabled,
-                  },
-                  withFieldData,
-                  dirtinessContext,
-                }),
-                getFormProps: () => ({
-                  withFieldData,
-                }),
-                getOperationProps: (operation) => ({
-                  onClick: () => {
-                    this.setState({
-                      dialog: operation,
-                    });
-                  },
-                }),
-                getDialogProps: (operation) => ({
-                  wbId: wbId,
-                  name: renderDisplayName(data),
-                  data: data,
-                  authorizedFetch: authorizedFetch,
-                  open: this.state.dialog === operation,
-                  onClose: this.closeDialog,
-                  onSubmitSuccess: (data) => {
-                    this.setState(
-                      {
-                        shortMessage: `${operation} successful!`,
-                        shortMessageVariant: 'success',
+      <AuthorizationContext.Consumer>
+        {({ authorizedFetch }) => (
+          <BaseForm data={this.state.data} disabled={disabled}>
+            {({
+              withFieldData,
+              getFormData,
+              getFormDataModified,
+              getFormProps,
+              dirtinessContext,
+              resetData,
+            }) => {
+              return (
+                <div>
+                  {this.props.children({
+                    dataCommitted: this.state.data,
+                    changes: changes,
+                    getProfileProps: () => ({
+                      entityType: entityType,
+                      wbId: wbId,
+                      dataCommitted: this.state.data,
+                      changes: changes,
+                      errorMessage: this.state.errorMessage,
+                      message: this.state.shortMessage,
+                      messageVariant: this.state.shortMessageVariant,
+                      onMessageClose: this.handleMessageClose,
+                      buttonResetProps: {
+                        onClick: resetData,
+                        disabled: disabled,
                       },
-                      () => {
-                        this.fetchData();
-                        this.closeDialog();
-                      }
-                    );
-                  },
-                }),
-                // from BaseForm
-                withFieldData,
-                getFormData,
-                dirtinessContext,
-              })}
-              {dirtinessContext(({ dirty }) => (
-                <Prompt
-                  when={dirty}
-                  message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-                />
-              ))}
-            </div>
-          );
-        }}
-      </BaseForm>
+                      buttonSubmitProps: {
+                        status:
+                          status === 'SUBMITTED'
+                            ? PROGRESS_BUTTON_PENDING
+                            : PROGRESS_BUTTON_READY,
+                        onClick: this.getUpdateHandler(
+                          getFormDataModified,
+                          authorizedFetch
+                        ),
+                        disabled: status === 'SUBMITTED' || disabled,
+                      },
+                      withFieldData,
+                      dirtinessContext,
+                    }),
+                    getFormProps: () => ({
+                      withFieldData,
+                    }),
+                    getOperationProps: (operation) => ({
+                      onClick: () => {
+                        this.setState({
+                          dialog: operation,
+                        });
+                      },
+                    }),
+                    getDialogProps: (operation) => ({
+                      wbId: wbId,
+                      name: renderDisplayName(data),
+                      data: data,
+                      open: this.state.dialog === operation,
+                      onClose: this.closeDialog,
+                      onSubmitSuccess: (data) => {
+                        this.setState(
+                          {
+                            shortMessage: `${operation} successful!`,
+                            shortMessageVariant: 'success',
+                          },
+                          () => {
+                            this.fetchData();
+                            this.closeDialog();
+                          }
+                        );
+                      },
+                    }),
+                    // from BaseForm
+                    withFieldData,
+                    getFormData,
+                    dirtinessContext,
+                  })}
+                  {dirtinessContext(({ dirty }) => (
+                    <Prompt
+                      when={dirty}
+                      message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
+                    />
+                  ))}
+                </div>
+              );
+            }}
+          </BaseForm>
+        )}
+      </AuthorizationContext.Consumer>
     );
   }
 }
 
 EntityEditForm.propTypes = {
   classes: PropTypes.object.isRequired,
-  authorizedFetch: PropTypes.func.isRequired,
   wbId: PropTypes.string.isRequired,
   entityType: PropTypes.string.isRequired,
   data: PropTypes.any,

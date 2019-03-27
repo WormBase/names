@@ -212,7 +212,6 @@ class GeneActivitiesTable extends Component {
           <ResurrectGeneDialog
             geneName={selfGeneId}
             wbId={selfGeneId}
-            authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === RESURRECT}
             onClose={this.closeDialog}
             onSubmitSuccess={(data) => {
@@ -237,7 +236,6 @@ class GeneActivitiesTable extends Component {
               selectedActivity,
               'provenance/merged-from'
             )}
-            authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_MERGE}
             onClose={this.closeDialog}
             onSubmitSuccess={(data) => {
@@ -262,7 +260,6 @@ class GeneActivitiesTable extends Component {
               selectedActivity,
               'provenance/split-into'
             )}
-            authorizedFetch={this.props.authorizedFetch}
             open={this.state.showDialog === UNDO_SPLIT}
             onClose={this.closeDialog}
             onSubmitSuccess={(data) => {
@@ -280,7 +277,6 @@ GeneActivitiesTable.propTypes = {
   classes: PropTypes.object.isRequired,
   activities: PropTypes.array,
   onUpdate: PropTypes.func,
-  authorizedFetch: PropTypes.func.isRequired,
   selfGeneId: PropTypes.string,
 };
 

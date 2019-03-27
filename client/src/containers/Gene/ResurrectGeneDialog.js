@@ -13,7 +13,7 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class ResurrectGeneDialog extends Component {
-  submitData = (data) => {
+  submitData = (data, authorizedFetch) => {
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.post('*', {
@@ -23,21 +23,18 @@ class ResurrectGeneDialog extends Component {
         });
       },
       () => {
-        return this.props.authorizedFetch(
-          `/api/gene/${this.props.wbId}/resurrect`,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              ...data,
-            }),
-          }
-        );
+        return authorizedFetch(`/api/gene/${this.props.wbId}/resurrect`, {
+          method: 'POST',
+          body: JSON.stringify({
+            ...data,
+          }),
+        });
       }
     );
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, geneName, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Resurrect gene"
@@ -75,7 +72,6 @@ class ResurrectGeneDialog extends Component {
 ResurrectGeneDialog.propTypes = {
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({

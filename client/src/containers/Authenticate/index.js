@@ -3,23 +3,9 @@ import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
 import ProfileButton from './ProfileButton';
-
-const DEFAULT_AUTHENTICATION_STATE = {
-  isAuthenticated: undefined,
-  user: {
-    name: null,
-    email: null,
-    id_token: null,
-  },
-  errorMessage: null, //JSON.stringify({a: 100}, undefined, 2),
-};
-
-export const AuthorizationContext = React.createContext({
-  ...DEFAULT_AUTHENTICATION_STATE,
-  handleLogin: () => {},
-  handleLogout: () => {},
-  authorizedFetch: () => {},
-});
+import AuthorizationContext, {
+  DEFAULT_AUTHENTICATION_STATE,
+} from './AuthorizationContext';
 
 class Authenticate extends Component {
   constructor(props) {
@@ -134,4 +120,4 @@ Authenticate.propTypes = {};
 
 export default Authenticate;
 
-export { ProfileButton, Login, Logout, Profile };
+export { ProfileButton, Login, Logout, Profile, AuthorizationContext };

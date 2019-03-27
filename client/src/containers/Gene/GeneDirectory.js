@@ -5,8 +5,7 @@ import RecentActivities from './RecentActivities';
 
 class GeneDirectory extends React.Component {
   renderHistory = () => {
-    const { authorizedFetch } = this.props;
-    return <RecentActivities authorizedFetch={authorizedFetch} />;
+    return <RecentActivities />;
   };
   render() {
     return (
@@ -15,8 +14,6 @@ class GeneDirectory extends React.Component {
   }
 }
 
-GeneDirectory.propTypes = {
-  authorizedFetch: PropTypes.any,
-};
+GeneDirectory.propTypes = {};
 
 export default GeneDirectory;

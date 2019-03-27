@@ -13,7 +13,7 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class KillGeneDialog extends Component {
-  submitData = (data) => {
+  submitData = (data, authorizedFetch) => {
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
@@ -29,7 +29,7 @@ class KillGeneDialog extends Component {
         }
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+        return authorizedFetch(`/api/gene/${this.props.wbId}`, {
           method: 'DELETE',
           body: JSON.stringify({
             ...data,
@@ -40,7 +40,7 @@ class KillGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, geneName, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Kill gene"
@@ -77,7 +77,6 @@ class KillGeneDialog extends Component {
 KillGeneDialog.propTypes = {
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({

@@ -38,7 +38,6 @@ class App extends Component {
             user,
             handleLogin,
             handleLogout,
-            authorizedFetch,
           }) => (
             <div className={this.props.classes.root}>
               <Header isAuthenticated={isAuthenticated}>
@@ -98,25 +97,16 @@ class App extends Component {
                                 <Route
                                   path={`${match.url}`}
                                   exact={true}
-                                  component={() => (
-                                    <Directory
-                                      authorizedFetch={authorizedFetch}
-                                    />
-                                  )}
+                                  component={() => <Directory />}
                                 />
                                 <Route
                                   path={`${match.url}/new`}
-                                  component={() => (
-                                    <Create authorizedFetch={authorizedFetch} />
-                                  )}
+                                  component={() => <Create />}
                                 />
                                 <Route
                                   path={`${match.url}/id/:id`}
                                   component={({ match }) => (
-                                    <Profile
-                                      wbId={match.params.id}
-                                      authorizedFetch={authorizedFetch}
-                                    />
+                                    <Profile wbId={match.params.id} />
                                   )}
                                 />
                                 <Route component={NotFound} />

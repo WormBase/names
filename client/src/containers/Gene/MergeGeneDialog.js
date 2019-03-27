@@ -15,7 +15,10 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
-  submitData = ({ data: rawData = {}, prov: provenance } = {}) => {
+  submitData = (
+    { data: rawData = {}, prov: provenance } = {},
+    authorizedFetch
+  ) => {
     const { geneIdMergeInto, ...data } = rawData;
     return mockFetchOrNot(
       (mockFetch) => {
@@ -31,7 +34,7 @@ class MergeGeneDialog extends Component {
         }
       },
       () => {
-        return this.props.authorizedFetch(
+        return authorizedFetch(
           `/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`,
           {
             method: 'POST',
@@ -46,7 +49,7 @@ class MergeGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, geneName, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Merge gene"
@@ -104,7 +107,6 @@ class MergeGeneDialog extends Component {
 MergeGeneDialog.propTypes = {
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({});
