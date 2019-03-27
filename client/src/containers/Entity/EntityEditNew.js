@@ -129,7 +129,7 @@ class EntityEditNew extends Component {
           <BaseForm data={data}>
             {({ withFieldData, getFormData, dirtinessContext, resetData }) => {
               return this.props.children({
-                getProfileProps: () => ({
+                profileContext: {
                   entityType: entityType,
                   errorMessage: error,
                   buttonResetProps: {
@@ -149,10 +149,10 @@ class EntityEditNew extends Component {
                   },
                   withFieldData,
                   dirtinessContext,
-                }),
-                getFormProps: () => ({
+                },
+                formContext: {
                   withFieldData,
-                }),
+                },
                 // from BaseForm
                 withFieldData,
                 dirtinessContext,
@@ -169,7 +169,6 @@ class EntityEditNew extends Component {
 EntityEditNew.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
-  authorizedFetch: PropTypes.func.isRequired,
   data: PropTypes.any,
   submitter: PropTypes.func.isRequired,
   disabled: PropTypes.bool,

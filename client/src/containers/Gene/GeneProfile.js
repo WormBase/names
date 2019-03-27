@@ -72,96 +72,86 @@ class GeneProfile extends Component {
   render() {
     const { wbId } = this.props;
     return (
-      <EntityEdit
+      <EntityProfile
         wbId={wbId}
         entityType={'gene'}
         renderDisplayName={this.getDisplayName}
-      >
-        {({
-          getProfileProps,
-          getFormProps,
-          getDialogProps,
+        renderStatus={this.renderStatus}
+        renderOperations={({
+          data,
+          changes,
           getOperationProps,
-        }) => (
-          <EntityProfile
-            {...getProfileProps()}
-            renderStatus={this.renderStatus}
-            renderOperations={({ data, changes }) => {
-              const live = data['gene/status'] === 'gene.status/live';
-              const dead = data['gene/status'] === 'gene.status/dead';
-              return (
-                <React.Fragment>
-                  {!dead && (
-                    <Button
-                      {...getOperationProps(OPERATION_MERGE)}
-                      variant="raised"
-                    >
-                      Merge Gene
-                    </Button>
-                  )}
-                  {!dead && (
-                    <Button
-                      {...getOperationProps(OPERATION_SPLIT)}
-                      variant="raised"
-                    >
-                      Split Gene
-                    </Button>
-                  )}
-                  {live && (
-                    <Button
-                      {...getOperationProps(OPERATION_SUPPRESS)}
-                      variant="raised"
-                    >
-                      Suppress Gene
-                    </Button>
-                  )}
-                  {!dead && (
-                    <Button
-                      {...getOperationProps(OPERATION_KILL)}
-                      wbVariant="danger"
-                      variant="raised"
-                    >
-                      Kill Gene
-                    </Button>
-                  )}
-                  {dead && (
-                    <Button
-                      {...getOperationProps(OPERATION_RESURRECT)}
-                      wbVariant="danger"
-                      variant="raised"
-                    >
-                      Resurrect Gene
-                    </Button>
-                  )}
-                </React.Fragment>
-              );
-            }}
-            renderForm={({ data, changes }) => (
-              <React.Fragment>
-                <GeneForm
-                  {...getFormProps()}
-                  cloned={Boolean(
-                    data['gene/sequence-name'] || data['gene/biotype']
-                  )}
-                />
-                <KillGeneDialog {...getDialogProps(OPERATION_KILL)} />
-                <ResurrectGeneDialog {...getDialogProps(OPERATION_RESURRECT)} />
-                <SuppressGeneDialog {...getDialogProps(OPERATION_SUPPRESS)} />
-                <MergeGeneDialog {...getDialogProps(OPERATION_MERGE)} />
-                <SplitGeneDialog {...getDialogProps(OPERATION_SPLIT)} />
-              </React.Fragment>
-            )}
-            renderOperationTip={({ data, Wrapper }) =>
-              data['gene/status'] === 'gene.status/suppressed' ? (
-                <Wrapper>
-                  <p>To un-suppress the gene, kill then resurrect it.</p>
-                </Wrapper>
-              ) : null
-            }
-            renderChanges={this.renderChanges}
+          getDialogProps,
+        }) => {
+          const live = data['gene/status'] === 'gene.status/live';
+          const dead = data['gene/status'] === 'gene.status/dead';
+          return (
+            <React.Fragment>
+              {!dead && (
+                <Button
+                  {...getOperationProps(OPERATION_MERGE)}
+                  variant="raised"
+                >
+                  Merge Gene
+                </Button>
+              )}
+              {!dead && (
+                <Button
+                  {...getOperationProps(OPERATION_SPLIT)}
+                  variant="raised"
+                >
+                  Split Gene
+                </Button>
+              )}
+              {live && (
+                <Button
+                  {...getOperationProps(OPERATION_SUPPRESS)}
+                  variant="raised"
+                >
+                  Suppress Gene
+                </Button>
+              )}
+              {!dead && (
+                <Button
+                  {...getOperationProps(OPERATION_KILL)}
+                  wbVariant="danger"
+                  variant="raised"
+                >
+                  Kill Gene
+                </Button>
+              )}
+              {dead && (
+                <Button
+                  {...getOperationProps(OPERATION_RESURRECT)}
+                  wbVariant="danger"
+                  variant="raised"
+                >
+                  Resurrect Gene
+                </Button>
+              )}
+              <KillGeneDialog {...getDialogProps(OPERATION_KILL)} />
+              <ResurrectGeneDialog {...getDialogProps(OPERATION_RESURRECT)} />
+              <SuppressGeneDialog {...getDialogProps(OPERATION_SUPPRESS)} />
+              <MergeGeneDialog {...getDialogProps(OPERATION_MERGE)} />
+              <SplitGeneDialog {...getDialogProps(OPERATION_SPLIT)} />
+            </React.Fragment>
+          );
+        }}
+        renderForm={({ data, changes, ...props }) => (
+          <GeneForm
+            {...props}
+            cloned={Boolean(data['gene/sequence-name'] || data['gene/biotype'])}
           />
         )}
-      </EntityEdit>
+        renderOperationTip={({ data, Wrapper }) =>
+          data['gene/status'] === 'gene.status/suppressed' ? (
+            <Wrapper>
+              <p>To un-suppress the gene, kill then resurrect it.</p>
+            </Wrapper>
+          ) : null
+        }
+        renderChanges={this.renderChanges}
+      />
     );
   }
 }

@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
 import EntityDirectoryButton from './EntityDirectoryButton';
+import EntityEditNew from './EntityEditNew';
 import {
   BaseForm,
   Button,
@@ -22,60 +23,65 @@ import {
 
 class EntityCreate extends Component {
   render() {
-    const {
-      classes = {},
-      entityType,
-      errorMessage = null,
-      withFieldData,
-      dirtinessContext,
-      renderForm,
-      buttonResetProps,
-      buttonSubmitProps,
-    } = this.props;
-
-    const ReasonField = withFieldData(TextField, 'provenance/why');
+    const { classes = {}, entityType, renderForm } = this.props;
 
     return (
-      <DocumentTitle title={`Create ${entityType}`}>
-        <Page>
-          <PageLeft>
-            <div className={classes.operations}>
-              <EntityDirectoryButton entityType={entityType} />
-            </div>
-          </PageLeft>
-          <PageMain>
-            <Typography variant="headline" gutterBottom>
-              Add {entityType}
-            </Typography>
-            <ValidationError {...errorMessage} />
-            {renderForm ? (
-              <ErrorBoundary>
-                {renderForm()}
-                {dirtinessContext(({ dirty }) =>
-                  dirty ? (
-                    <ReasonField
-                      label="Reason"
-                      helperText={`Why do you create this gene?`}
-                    />
-                  ) : null
-                )}
-              </ErrorBoundary>
-            ) : null}
-            <div className={classes.actions}>
-              <Button variant="raised" {...buttonResetProps}>
-                Reset
-              </Button>
-              <ProgressButton
-                variant="raised"
-                color="secondary"
-                {...buttonSubmitProps}
-              >
-                Create
-              </ProgressButton>
-            </div>
-          </PageMain>
-        </Page>
-      </DocumentTitle>
+      <EntityEditNew entityType={'gene'}>
+        {({ profileContext, formContext }) => {
+          const {
+            errorMessage = null,
+            withFieldData,
+            dirtinessContext,
+            buttonResetProps,
+            buttonSubmitProps,
+          } = profileContext;
+
+          const ReasonField = withFieldData(TextField, 'provenance/why');
+
+          return (
+            <DocumentTitle title={`Create ${entityType}`}>
+              <Page>
+                <PageLeft>
+                  <div className={classes.operations}>
+                    <EntityDirectoryButton entityType={entityType} />
+                  </div>
+                </PageLeft>
+                <PageMain>
+                  <Typography variant="headline" gutterBottom>
+                    Add {entityType}
+                  </Typography>
+                  <ValidationError {...errorMessage} />
+                  {renderForm ? (
+                    <ErrorBoundary>
+                      {renderForm({ props: formContext })}
+                      {dirtinessContext(({ dirty }) =>
+                        dirty ? (
+                          <ReasonField
+                            label="Reason"
+                            helperText={`Why do you create this gene?`}
+                          />
+                        ) : null
+                      )}
+                    </ErrorBoundary>
+                  ) : null}
+                  <div className={classes.actions}>
+                    <Button variant="raised" {...buttonResetProps}>
+                      Reset
+                    </Button>
+                    <ProgressButton
+                      variant="raised"
+                      color="secondary"
+                      {...buttonSubmitProps}
+                    >
+                      Create
+                    </ProgressButton>
+                  </div>
+                </PageMain>
+              </Page>
+            </DocumentTitle>
+          );
+        }}
+      </EntityEditNew>
     );
   }
 }
@@ -83,12 +89,7 @@ class EntityCreate extends Component {
 EntityCreate.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
-  withFieldData: PropTypes.func.isRequired,
-  dirtinessContext: PropTypes.func.isRequired,
-  errorMessage: PropTypes.string,
   renderForm: PropTypes.func,
-  buttonResetProps: PropTypes.func,
-  buttonSubmitProps: PropTypes.func,
 };
 
 const styles = (theme) => ({

@@ -139,12 +139,13 @@ class EntityEditForm extends Component {
                 status: nextStatus,
               },
               () => {
-                const permanentUrl = `/gene/id/${this.getId()}`;
+                const { entityType } = this.props;
+                const permanentUrl = `/${entityType}/id/${this.getId(data)}`;
                 if (
                   nextStatus === 'COMPLETE' &&
                   this.props.history.location.pathname !== permanentUrl
                 ) {
-                  this.props.history.replace(`/gene/id/${this.getId()}`);
+                  this.props.history.replace(permanentUrl);
                 }
               }
             );
@@ -276,7 +277,7 @@ class EntityEditForm extends Component {
                   {this.props.children({
                     dataCommitted: this.state.data,
                     changes: changes,
-                    getProfileProps: () => ({
+                    profileContext: {
                       entityType: entityType,
                       wbId: wbId,
                       dataCommitted: this.state.data,
@@ -302,10 +303,10 @@ class EntityEditForm extends Component {
                       },
                       withFieldData,
                       dirtinessContext,
-                    }),
-                    getFormProps: () => ({
+                    },
+                    formContext: {
                       withFieldData,
-                    }),
+                    },
                     getOperationProps: (operation) => ({
                       onClick: () => {
                         this.setState({
