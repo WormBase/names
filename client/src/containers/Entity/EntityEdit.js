@@ -242,19 +242,13 @@ class EntityEditForm extends Component {
   };
 
   render() {
-    const {
-      classes,
-      wbId: id,
-      entityType,
-      renderDisplayName,
-      ...others
-    } = this.props;
+    const { classes, entityType, renderDisplayName, ...others } = this.props;
 
     const { data = {}, changes = [], status } = this.state;
 
     const disabled =
       data[`${entityType}/status`] === `${entityType}.status/dead`;
-    const wbId = data[`${entityType}/id`];
+    const wbId = this.getId(data);
 
     return this.state.status === 'NOT_FOUND' ? (
       <EntityNotFound entityType="gene" wbId={wbId} />
