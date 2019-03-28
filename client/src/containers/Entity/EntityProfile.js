@@ -29,6 +29,7 @@ import EntityDirectoryButton from './EntityDirectoryButton';
 import EntityEdit from './EntityEdit';
 import EntityDialogKill from './EntityDialogKill';
 import EntityDialogResurrect from './EntityDialogResurrect';
+import EntityHistory from './EntityHistory';
 
 const OPERATION_KILL = 'kill';
 const OPERATION_RESURRECT = 'resurrect';
@@ -77,6 +78,13 @@ class EntityProfile extends Component {
     );
   };
 
+  renderChanges = ({ data = {}, changes = [] }) => {
+    const { wbId, entityType } = this.props;
+    return (
+      <EntityHistory wbId={wbId} activities={changes} entityType={entityType} />
+    );
+  };
+
   render() {
     const {
       classes = {},
@@ -84,7 +92,7 @@ class EntityProfile extends Component {
       entityType,
       renderDisplayName = this.renderDisplayName,
       renderForm = this.renderForm,
-      renderChanges,
+      renderChanges = this.renderChanges,
       renderOperations = this.renderOperations,
       renderOperationTip,
       renderStatus = this.renderStatus,

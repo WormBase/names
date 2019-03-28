@@ -8,13 +8,13 @@ import {
   EntityNotFound,
   EntityDialogKill,
   EntityDialogResurrect,
+  EntityHistory,
 } from '../Entity';
 import { pastTense, getActivityDescriptor } from '../../utils/events';
 import GeneForm from './GeneForm';
 import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
-import RecentActivitiesSingleGene from './RecentActivitiesSingleGene';
 
 const OPERATION_KILL = 'kill';
 const OPERATION_RESURRECT = 'resurrect';
@@ -61,15 +61,9 @@ class GeneProfile extends Component {
   };
 
   renderChanges = ({ data = {}, changes = [] }) => {
-    console.log(data);
+    const { wbId, entityType } = this.props;
     return (
-      <RecentActivitiesSingleGene
-        wbId={data['gene/id']}
-        activities={changes}
-        onUpdate={() => {
-          this.fetchData();
-        }}
-      />
+      <EntityHistory wbId={wbId} activities={changes} entityType={entityType} />
     );
   };
 

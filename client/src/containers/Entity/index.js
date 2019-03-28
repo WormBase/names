@@ -8,3 +8,5 @@ export { default as EntityProfile } from './EntityProfile';
 
 export { default as EntityDialogKill } from './EntityDialogKill';
 export { default as EntityDialogResurrect } from './EntityDialogResurrect';
+
+export { default as EntityHistory } from './EntityHistory';
