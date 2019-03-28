@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route, Redirect, Switch } from 'react-router-dom';
+import { Route, Redirect, Switch, matchPath } from 'react-router-dom';
 import 'typeface-roboto';
 import {
   withStyles,
@@ -71,10 +71,14 @@ class App extends Component {
                           )}
                         />
                         <Route
-                          path="/:entityType"
+                          path={['/gene', '/variation']}
                           component={({ match }) => {
+                            const entityType = matchPath(match.url, {
+                              path: '/:entityType',
+                            }).params.entityType;
+
                             let Directory, Create, Profile;
-                            switch (match.params.entityType) {
+                            switch (entityType) {
                               case 'gene':
                                 [Directory, Create, Profile] = [
                                   GeneDirectory,
@@ -82,13 +86,6 @@ class App extends Component {
                                   GeneProfile,
                                 ];
                                 break;
-                              // case 'variation':
-                              //   [Directory, Create, Profile] = [
-                              //     VariationDirectory,
-                              //     VariationCreate,
-                              //     VariationProfile,
-                              //   ];
-                              //   break;
                               default:
                                 return <NotFound />;
                             }
