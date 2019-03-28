@@ -311,6 +311,7 @@ class EntityEditForm extends Component {
                       },
                     }),
                     getDialogProps: (operation) => ({
+                      entityType: entityType,
                       wbId: wbId,
                       name: renderDisplayName(data),
                       data: data,

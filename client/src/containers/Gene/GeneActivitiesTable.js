@@ -15,7 +15,7 @@ import {
   Typography,
 } from '../../components/elements';
 import { pastTense, getActivityDescriptor } from '../../utils/events';
-import ResurrectGeneDialog from './ResurrectGeneDialog';
+import { EntityDialogResurrect } from '../Entity';
 import UndoMergeGeneDialog from './UndoMergeGeneDialog';
 import UndoSplitGeneDialog from './UndoSplitGeneDialog';
 
@@ -209,64 +209,66 @@ class GeneActivitiesTable extends Component {
           </TableBody>
         </Table>
         <div>
-          <ResurrectGeneDialog
-            geneName={selfGeneId}
-            wbId={selfGeneId}
-            open={this.state.showDialog === RESURRECT}
-            onClose={this.closeDialog}
-            onSubmitSuccess={(data) => {
-              this.closeDialog();
-              onUpdate && onUpdate();
-            }}
-          />
-          <UndoMergeGeneDialog
-            geneName={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/merged-into'
-            )}
-            geneFromName={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/merged-from'
-            )}
-            wbId={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/merged-into'
-            )}
-            wbFromId={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/merged-from'
-            )}
-            open={this.state.showDialog === UNDO_MERGE}
-            onClose={this.closeDialog}
-            onSubmitSuccess={(data) => {
-              this.closeDialog();
-              onUpdate && onUpdate();
-            }}
-          />
-          <UndoSplitGeneDialog
-            geneName={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/split-from'
-            )}
-            geneIntoName={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/split-into'
-            )}
-            wbId={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/split-from'
-            )}
-            wbIntoId={this.getGeneIdForEvent(
-              selectedActivity,
-              'provenance/split-into'
-            )}
-            open={this.state.showDialog === UNDO_SPLIT}
-            onClose={this.closeDialog}
-            onSubmitSuccess={(data) => {
-              this.closeDialog();
-              onUpdate && onUpdate();
-            }}
-          />
+          {/*
+            <ResurrectGeneDialog
+              geneName={selfGeneId}
+              wbId={selfGeneId}
+              open={this.state.showDialog === RESURRECT}
+              onClose={this.closeDialog}
+              onSubmitSuccess={(data) => {
+                this.closeDialog();
+                onUpdate && onUpdate();
+              }}
+            />
+            <UndoMergeGeneDialog
+              geneName={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/merged-into'
+              )}
+              geneFromName={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/merged-from'
+              )}
+              wbId={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/merged-into'
+              )}
+              wbFromId={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/merged-from'
+              )}
+              open={this.state.showDialog === UNDO_MERGE}
+              onClose={this.closeDialog}
+              onSubmitSuccess={(data) => {
+                this.closeDialog();
+                onUpdate && onUpdate();
+              }}
+            />
+            <UndoSplitGeneDialog
+              geneName={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/split-from'
+              )}
+              geneIntoName={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/split-into'
+              )}
+              wbId={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/split-from'
+              )}
+              wbIntoId={this.getGeneIdForEvent(
+                selectedActivity,
+                'provenance/split-into'
+              )}
+              open={this.state.showDialog === UNDO_SPLIT}
+              onClose={this.closeDialog}
+              onSubmitSuccess={(data) => {
+                this.closeDialog();
+                onUpdate && onUpdate();
+              }}
+            />
+            */}
         </div>
       </Paper>
     );

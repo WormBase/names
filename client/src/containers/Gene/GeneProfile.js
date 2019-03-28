@@ -2,11 +2,15 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Button, Humanize, Typography } from '../../components/elements';
-import { EntityEdit, EntityProfile, EntityNotFound } from '../Entity';
+import {
+  EntityEdit,
+  EntityProfile,
+  EntityNotFound,
+  EntityDialogKill,
+  EntityDialogResurrect,
+} from '../Entity';
 import { pastTense, getActivityDescriptor } from '../../utils/events';
 import GeneForm from './GeneForm';
-import KillGeneDialog from './KillGeneDialog';
-import ResurrectGeneDialog from './ResurrectGeneDialog';
 import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
@@ -70,11 +74,11 @@ class GeneProfile extends Component {
   };
 
   render() {
-    const { wbId } = this.props;
+    const { wbId, entityType } = this.props;
     return (
       <EntityProfile
         wbId={wbId}
-        entityType={'gene'}
+        entityType={entityType}
         renderDisplayName={this.getDisplayName}
         renderStatus={this.renderStatus}
         renderOperations={({
@@ -129,8 +133,8 @@ class GeneProfile extends Component {
                   Resurrect Gene
                 </Button>
               )}
-              <KillGeneDialog {...getDialogProps(OPERATION_KILL)} />
-              <ResurrectGeneDialog {...getDialogProps(OPERATION_RESURRECT)} />
+              <EntityDialogKill {...getDialogProps(OPERATION_KILL)} />
+              <EntityDialogResurrect {...getDialogProps(OPERATION_RESURRECT)} />
               <SuppressGeneDialog {...getDialogProps(OPERATION_SUPPRESS)} />
               <MergeGeneDialog {...getDialogProps(OPERATION_MERGE)} />
               <SplitGeneDialog {...getDialogProps(OPERATION_SPLIT)} />
@@ -158,6 +162,7 @@ class GeneProfile extends Component {
 
 GeneProfile.propTypes = {
   wbId: PropTypes.string.isRequired,
+  entityType: PropTypes.string.isRequired,
 };
 
 export default GeneProfile;

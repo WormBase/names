@@ -7,8 +7,6 @@ import {
   Typography,
 } from '@material-ui/core';
 
-import EntityForm from './EntityForm';
-
 import {
   BaseForm,
   Button,
@@ -26,8 +24,14 @@ import {
   ValidationError,
 } from '../../components/elements';
 
+import EntityForm from './EntityForm';
 import EntityDirectoryButton from './EntityDirectoryButton';
 import EntityEdit from './EntityEdit';
+import EntityDialogKill from './EntityDialogKill';
+import EntityDialogResurrect from './EntityDialogResurrect';
+
+const OPERATION_KILL = 'kill';
+const OPERATION_RESURRECT = 'resurrect';
 
 class EntityProfile extends Component {
   renderStatus({ data, entityType }) {
@@ -38,17 +42,50 @@ class EntityProfile extends Component {
     ) : null;
   }
 
+  renderDisplayName = (data = {}) => {
+    const { entityType } = this.props;
+    return data[`${entityType}/name`] || data[`${entityType}/id`];
+  };
+
   renderForm = (formProps) => <EntityForm {...formProps} />;
+
+  renderOperations = ({ data, changes, getOperationProps, getDialogProps }) => {
+    const { entityType } = this.props;
+    const live = data[`${entityType}/status`] === `${entityType}.status/live`;
+    return (
+      <React.Fragment>
+        {live ? (
+          <Button
+            {...getOperationProps(OPERATION_KILL)}
+            wbVariant="danger"
+            variant="raised"
+          >
+            Kill {entityType}
+          </Button>
+        ) : (
+          <Button
+            {...getOperationProps(OPERATION_RESURRECT)}
+            wbVariant="danger"
+            variant="raised"
+          >
+            Resurrect {entityType}
+          </Button>
+        )}
+        <EntityDialogKill {...getDialogProps(OPERATION_KILL)} />
+        <EntityDialogResurrect {...getDialogProps(OPERATION_RESURRECT)} />
+      </React.Fragment>
+    );
+  };
 
   render() {
     const {
       classes = {},
       wbId,
       entityType,
-      renderDisplayName,
+      renderDisplayName = this.renderDisplayName,
       renderForm = this.renderForm,
       renderChanges,
-      renderOperations,
+      renderOperations = this.renderOperations,
       renderOperationTip,
       renderStatus = this.renderStatus,
     } = this.props;

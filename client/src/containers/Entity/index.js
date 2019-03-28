@@ -5,3 +5,6 @@ export { default as EntityEdit } from './EntityEdit';
 export { default as EntityEditNew } from './EntityEditNew';
 export { default as EntityDirectory } from './EntityDirectory';
 export { default as EntityProfile } from './EntityProfile';
+
+export { default as EntityDialogKill } from './EntityDialogKill';
+export { default as EntityDialogResurrect } from './EntityDialogResurrect';
