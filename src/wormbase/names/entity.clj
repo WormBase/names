@@ -69,7 +69,10 @@
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn passthru-resolver [_ data]
                                              data))
-                cdata (prepare-data-for-transact db (resolve-refs-to-db-ids db (conform-spec-fn data names-validator)))
+                cdata (->> (conform-spec-fn data names-validator)
+                           (resolve-refs-to-db-ids db)
+                           (into {})
+                           (prepare-data-for-transact db))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
