@@ -58,7 +58,8 @@
         into-lur [:gene/id (geneace-text-ref event-text)]
         prov (-> event
                  (wnu/select-keys-with-ns "provenance")
-                 (assoc :provenance/what event-type))]
+                 (assoc :provenance/what event-type
+                        :provenance/how :agent/importer))]
     (swap! deferred
            defer-tx
            [[:db/add from-lur data-attr into-lur]
@@ -217,7 +218,9 @@
   (let [pv (wnu/select-keys-with-ns event "provenance")
         tx-data [{:gene/id (:gene/id event)
                   :importer/historical-gene-version historical-version}
-                 (assoc pv :db/id "datomic.tx")]
+                 (assoc pv
+                        :db/id "datomic.tx"
+                        :provenance/how :agent/importer)]
         [data prov] tx-data]
     (chuck-on-nils data)
     (chuck-on-nils prov)
