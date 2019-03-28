@@ -20,6 +20,11 @@ import Authenticate, {
 } from './containers/Authenticate';
 import Footer from './containers/Footer';
 import { GeneDirectory, GeneProfile, GeneCreate } from './containers/Gene';
+import {
+  EntityDirectory,
+  EntityProfile,
+  EntityCreate,
+} from './containers/Entity';
 // import {
 //   Directory as VariationDirectory,
 //   Create as VariationCreate,
@@ -87,23 +92,34 @@ class App extends Component {
                                 ];
                                 break;
                               default:
-                                return <NotFound />;
+                                [Directory, Create, Profile] = [
+                                  EntityDirectory,
+                                  EntityCreate,
+                                  EntityProfile,
+                                ];
                             }
                             return (
                               <Switch>
                                 <Route
                                   path={`${match.url}`}
                                   exact={true}
-                                  component={() => <Directory />}
+                                  component={() => (
+                                    <Directory entityType={entityType} />
+                                  )}
                                 />
                                 <Route
                                   path={`${match.url}/new`}
-                                  component={() => <Create />}
+                                  component={() => (
+                                    <Create entityType={entityType} />
+                                  )}
                                 />
                                 <Route
                                   path={`${match.url}/id/:id`}
                                   component={({ match }) => (
-                                    <Profile wbId={match.params.id} />
+                                    <Profile
+                                      wbId={match.params.id}
+                                      entityType={entityType}
+                                    />
                                   )}
                                 />
                                 <Route component={NotFound} />

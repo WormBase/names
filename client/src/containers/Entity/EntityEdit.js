@@ -37,6 +37,7 @@ class EntityEditForm extends Component {
   }
 
   fetchData = () => {
+    const { entityType } = this.props;
     this.setState(
       (prevState) => ({
         status: prevState.status === 'BEGIN' ? 'LOADING' : 'SUBMITTED',
@@ -123,7 +124,7 @@ class EntityEditForm extends Component {
             });
           },
           () => {
-            return fetch(`/api/gene/${this.getId()}`, {});
+            return fetch(`/api/${entityType}/${this.getId()}`, {});
           }
         )
           .then((response) => {
@@ -139,7 +140,6 @@ class EntityEditForm extends Component {
                 status: nextStatus,
               },
               () => {
-                const { entityType } = this.props;
                 const permanentUrl = `/${entityType}/id/${this.getId(data)}`;
                 if (
                   nextStatus === 'COMPLETE' &&
@@ -156,6 +156,7 @@ class EntityEditForm extends Component {
   };
 
   getUpdateHandler = (getFormDataModified, authorizedFetch) => {
+    const { entityType } = this.props;
     return () => {
       const { data = {}, prov: provenance } = getFormDataModified() || {};
       if (Object.keys(data).length === 0) {
@@ -187,7 +188,7 @@ class EntityEditForm extends Component {
             }
             return result;
           }, {});
-          return authorizedFetch(`/api/gene/${this.getId()}`, {
+          return authorizedFetch(`/api/${entityType}/${this.getId()}`, {
             method: 'PUT',
             body: JSON.stringify({
               data: dataSubmit,
@@ -299,6 +300,7 @@ class EntityEditForm extends Component {
                       dirtinessContext,
                     },
                     formContext: {
+                      entityType: entityType,
                       withFieldData,
                     },
                     getOperationProps: (operation) => ({

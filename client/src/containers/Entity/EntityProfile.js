@@ -7,6 +7,8 @@ import {
   Typography,
 } from '@material-ui/core';
 
+import EntityForm from './EntityForm';
+
 import {
   BaseForm,
   Button,
@@ -36,13 +38,15 @@ class EntityProfile extends Component {
     ) : null;
   }
 
+  renderForm = (formProps) => <EntityForm {...formProps} />;
+
   render() {
     const {
       classes = {},
       wbId,
       entityType,
       renderDisplayName,
-      renderForm,
+      renderForm = this.renderForm,
       renderChanges,
       renderOperations,
       renderOperationTip,

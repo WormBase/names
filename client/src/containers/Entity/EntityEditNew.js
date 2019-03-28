@@ -151,6 +151,7 @@ class EntityEditNew extends Component {
                   dirtinessContext,
                 },
                 formContext: {
+                  entityType: entityType,
                   withFieldData,
                 },
                 // from BaseForm

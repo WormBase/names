@@ -8,7 +8,7 @@ class GeneCreate extends Component {
     return (
       <EntityCreate
         entityType="gene"
-        renderForm={({ props }) => <GeneForm {...props} />}
+        renderForm={(props) => <GeneForm {...props} />}
       />
     );
   }

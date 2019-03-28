@@ -5,6 +5,7 @@ import Typography from '@material-ui/core/Typography';
 
 import EntityDirectoryButton from './EntityDirectoryButton';
 import EntityEditNew from './EntityEditNew';
+import EntityForm from './EntityForm';
 import {
   BaseForm,
   Button,
@@ -22,11 +23,17 @@ import {
 } from '../../components/elements';
 
 class EntityCreate extends Component {
+  renderForm = (formProps) => <EntityForm {...formProps} />;
+
   render() {
-    const { classes = {}, entityType, renderForm } = this.props;
+    const {
+      classes = {},
+      entityType,
+      renderForm = this.renderForm,
+    } = this.props;
 
     return (
-      <EntityEditNew entityType={'gene'}>
+      <EntityEditNew entityType={entityType}>
         {({ profileContext, formContext }) => {
           const {
             errorMessage = null,
@@ -53,7 +60,7 @@ class EntityCreate extends Component {
                   <ValidationError {...errorMessage} />
                   {renderForm ? (
                     <ErrorBoundary>
-                      {renderForm({ props: formContext })}
+                      {renderForm(formContext)}
                       {dirtinessContext(({ dirty }) =>
                         dirty ? (
                           <ReasonField
