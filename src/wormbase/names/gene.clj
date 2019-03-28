@@ -117,7 +117,7 @@
     @(d/transact-async conn tx-data)))
 
 (defn resolve-refs-to-dbids
-  "Resolve references in a data payload to database ids for compare on swap operations."
+  "Resolve references in a data payload to database ids for compare-and-swap operations."
   [db data]
   (let [species-lur (-> data :gene/species vec)
         species-entid (d/entid db species-lur)
