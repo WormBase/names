@@ -9,7 +9,7 @@ import {
   withStyles,
 } from '../../components/elements';
 
-import { Route, Link, matchPath } from 'react-router-dom';
+import { Route, Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
 import { existsEntitiyType } from '../../utils/entityTypes';

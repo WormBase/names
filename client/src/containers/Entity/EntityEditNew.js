@@ -6,12 +6,8 @@ import { mockFetchOrNot } from '../../mock';
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 import {
   BaseForm,
-  Button,
-  ProgressButton,
   PROGRESS_BUTTON_PENDING,
   PROGRESS_BUTTON_READY,
-  SimpleAjax,
-  TextField,
 } from '../../components/elements';
 
 class EntityEditNew extends Component {
@@ -112,15 +108,7 @@ class EntityEditNew extends Component {
   };
 
   render() {
-    const {
-      classes,
-      entityType,
-      data,
-      submitter,
-      create = false,
-      disabled = false,
-      ...others
-    } = this.props;
+    const { entityType, data, disabled = false } = this.props;
 
     const { status, error } = this.state;
     return (
@@ -171,9 +159,7 @@ EntityEditNew.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
   data: PropTypes.any,
-  submitter: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
-  create: PropTypes.bool,
 };
 
 const styles = (theme) => ({});

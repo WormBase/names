@@ -3,9 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Button, Humanize, Typography } from '../../components/elements';
 import {
-  EntityEdit,
   EntityProfile,
-  EntityNotFound,
   EntityDialogKill,
   EntityDialogResurrect,
   EntityHistory,

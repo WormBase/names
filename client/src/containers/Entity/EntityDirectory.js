@@ -14,7 +14,11 @@ import {
 } from '../../components/elements';
 
 const EntityDirectory = (props) => {
-  const { classes, entityType, renderHistory } = props;
+  const {
+    classes,
+    entityType,
+    renderHistory = () => <i>Coming soon...</i>,
+  } = props;
   return (
     <DocumentTitle title={`${capitalize(entityType)} directory`}>
       <Page>
@@ -38,7 +42,7 @@ const EntityDirectory = (props) => {
           </div>
           <div className={classes.main}>
             {/* tables and charts */}
-            {renderHistory ? (
+            {
               <section>
                 <Typography variant="title" gutterBottom>
                   Recent activities
@@ -49,7 +53,7 @@ const EntityDirectory = (props) => {
                   </div>
                 </ErrorBoundary>
               </section>
-            ) : null}
+            }
           </div>
         </PageMain>
       </Page>

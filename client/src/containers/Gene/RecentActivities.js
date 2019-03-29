@@ -59,6 +59,8 @@ class RecentActivities extends Component {
   }
 }
 
-RecentActivities.propTypes = {};
+RecentActivities.propTypes = {
+  entityType: PropTypes.string.isRequired,
+};
 
 export default RecentActivities;

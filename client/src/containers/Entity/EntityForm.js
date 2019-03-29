@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { BaseForm, TextField, SpeciesSelect } from '../../components/elements';
+import { TextField } from '../../components/elements';
 
 class EntityForm extends Component {
   render() {

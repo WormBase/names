@@ -6,12 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {
   BaseForm,
-  Button,
-  ProgressButton,
   PROGRESS_BUTTON_PENDING,
   PROGRESS_BUTTON_READY,
-  SimpleAjax,
-  TextField,
 } from '../../components/elements';
 
 import EntityNotFound from './EntityNotFound';
@@ -243,7 +239,7 @@ class EntityEditForm extends Component {
   };
 
   render() {
-    const { classes, entityType, renderDisplayName, ...others } = this.props;
+    const { entityType, renderDisplayName } = this.props;
 
     const { data = {}, changes = [], status } = this.state;
 

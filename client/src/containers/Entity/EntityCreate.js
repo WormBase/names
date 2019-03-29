@@ -7,7 +7,6 @@ import EntityDirectoryButton from './EntityDirectoryButton';
 import EntityEditNew from './EntityEditNew';
 import EntityForm from './EntityForm';
 import {
-  BaseForm,
   Button,
   DocumentTitle,
   ErrorBoundary,
@@ -15,9 +14,6 @@ import {
   PageLeft,
   PageMain,
   ProgressButton,
-  PROGRESS_BUTTON_PENDING,
-  PROGRESS_BUTTON_READY,
-  SimpleAjax,
   TextField,
   ValidationError,
 } from '../../components/elements';

@@ -1,19 +1,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { EntityDirectory } from '../Entity';
-import RecentActivities from './RecentActivities';
+// import RecentActivities from './RecentActivities';
 
 class GeneDirectory extends React.Component {
-  renderHistory = () => {
-    return <RecentActivities />;
-  };
+  // renderHistory = () => {
+  //   const { entityType } = this.props;
+  //   return <RecentActivities entityType={entityType} />;
+  // };
   render() {
+    const { entityType } = this.props;
     return (
-      <EntityDirectory entityType="gene" renderHistory={this.renderHistory} />
+      <EntityDirectory
+        entityType={entityType}
+        renderHistory={this.renderHistory}
+      />
     );
   }
 }
 
-GeneDirectory.propTypes = {};
+GeneDirectory.propTypes = {
+  entityType: PropTypes.string.isRequired,
+};
 
 export default GeneDirectory;

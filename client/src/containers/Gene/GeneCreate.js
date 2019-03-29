@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { EntityEditNew, EntityCreate } from '../Entity';
+
+import { EntityCreate } from '../Entity';
 import GeneForm from './GeneForm';
 
 class GeneCreate extends Component {
   render() {
+    const { ...others } = this.props;
     return (
       <EntityCreate
-        entityType="gene"
+        {...others}
         renderForm={(props) => <GeneForm {...props} />}
       />
     );

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   withStyles,
-  Button,
   Humanize,
   Paper,
   Table,
@@ -71,12 +70,11 @@ class EntityHistory extends Component {
       <Paper className={classes.root}>
         <Table>
           <TableBody>
-            {this.props.activities.map((activityItem, activityIndex) => {
-              const {
-                eventLabel,
-                entity,
-                relatedEntity,
-              } = getActivityDescriptor(activityItem, wbId);
+            {activities.map((activityItem, activityIndex) => {
+              const { eventLabel, relatedEntity } = getActivityDescriptor(
+                activityItem,
+                wbId
+              );
               console.log(relatedEntity);
               return (
                 <TableRow key={activityIndex}>
