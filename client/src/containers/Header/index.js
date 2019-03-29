@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import {
   AppBar,
   SearchBox,
@@ -8,12 +9,14 @@ import {
   withStyles,
 } from '../../components/elements';
 
-import { Link } from 'react-router-dom';
+import { Route, Link, matchPath } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
+import { ENTITY_TYPE_PATHS } from '../../utils/entityTypes';
 
 const Header = (props) => {
   const { classes } = props;
+
   return (
     <div>
       <AppBar position="static" className={classes.root}>
@@ -29,9 +32,20 @@ const Header = (props) => {
             </Link>
           </div>
           {props.isAuthenticated ? (
-            <SearchBox
-              classes={{
-                root: classes.searchBox,
+            <Route
+              path={ENTITY_TYPE_PATHS}
+              component={({ match }) => {
+                const entityType = matchPath(match.url, {
+                  path: '/:entityType',
+                }).params.entityType;
+                return (
+                  <SearchBox
+                    initialEntityType={entityType}
+                    classes={{
+                      root: classes.searchBox,
+                    }}
+                  />
+                );
               }}
             />
           ) : null}

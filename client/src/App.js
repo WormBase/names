@@ -25,6 +25,7 @@ import {
   EntityProfile,
   EntityCreate,
 } from './containers/Entity';
+import { ENTITY_TYPE_PATHS } from '../src/utils/entityTypes';
 // import {
 //   Directory as VariationDirectory,
 //   Create as VariationCreate,
@@ -76,7 +77,7 @@ class App extends Component {
                           )}
                         />
                         <Route
-                          path={['/gene', '/variation']}
+                          path={ENTITY_TYPE_PATHS}
                           component={({ match }) => {
                             const entityType = matchPath(match.url, {
                               path: '/:entityType',
