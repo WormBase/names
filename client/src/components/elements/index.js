@@ -45,6 +45,7 @@ export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as Button } from './Button';
 export { default as DocumentTitle } from './DocumentTitle';
+export { default as EntityTypeSelect } from './EntityTypeSelect';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';
 export { default as NotFound } from './NotFound';

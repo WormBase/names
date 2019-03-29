@@ -23,8 +23,9 @@ export default class AutocompleteLoader extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      prevProps.inputValue !== this.props.inputValue &&
-      this.props.inputValue !== this.props.selectedValue // don't reload suggestion when selecting an item from selection
+      prevProps.entityType !== this.props.entityType ||
+      (prevProps.inputValue !== this.props.inputValue &&
+        this.props.inputValue !== this.props.selectedValue) // don't reload suggestion when selecting an item from selection
     ) {
       this.loadSuggestions(this.props.inputValue);
     }

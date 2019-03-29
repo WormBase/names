@@ -12,7 +12,7 @@ import {
 import { Route, Link, matchPath } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
-import { ENTITY_TYPE_PATHS } from '../../utils/entityTypes';
+import { existsEntitiyType } from '../../utils/entityTypes';
 
 const Header = (props) => {
   const { classes } = props;
@@ -33,14 +33,16 @@ const Header = (props) => {
           </div>
           {props.isAuthenticated ? (
             <Route
-              path={ENTITY_TYPE_PATHS}
+              path="/:entityType"
               component={({ match }) => {
-                const entityType = matchPath(match.url, {
-                  path: '/:entityType',
-                }).params.entityType;
+                const entityType = match.params.entityType;
+
                 return (
                   <SearchBox
-                    initialEntityType={entityType}
+                    entityType={
+                      existsEntitiyType(entityType) ? entityType : 'gene'
+                    }
+                    enableEntityTypeSelect={true}
                     classes={{
                       root: classes.searchBox,
                     }}

@@ -37,8 +37,14 @@ const BiotypeSelect = (props) => {
         },
         ...BIOTYPES,
       ];
+  const { classes } = props;
   return (
-    <TextField select label="Biotype" className={props.classes.root} {...props}>
+    <TextField
+      select
+      label="Biotype"
+      InputProps={{ classes: { root: classes.inputRoot } }}
+      {...props}
+    >
       {biotypeOptions.map((biotype) => (
         <MenuItem key={biotype.id} value={biotype.id}>
           {biotype.label
@@ -56,7 +62,7 @@ BiotypeSelect.propTypes = {
 };
 
 const styles = (theme) => ({
-  root: {
+  inputRoot: {
     minWidth: 100,
   },
 });
