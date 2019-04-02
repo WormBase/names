@@ -45,7 +45,7 @@
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (let [db (:db request)
           matching-rules (concat wnm/name-matching-rules name-matching-rules)
-          term (stc/conform ::wsv/find-term pattern)
+          term (stc/conform ::wsc/find-term pattern)
           q-result (d/q '[:find ?vid ?vname
                           :in $ % ?term
                           :where
