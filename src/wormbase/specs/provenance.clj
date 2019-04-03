@@ -9,6 +9,7 @@
 
 ;; TODO: clients should provide zoned-date-time (times in UTC)
 ;;       - db wants instants (java.utl.Date values)
+(s/def ::t sts/inst?)
 
 (s/def :provenance/when sts/inst?)
 

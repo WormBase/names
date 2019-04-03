@@ -79,17 +79,19 @@
 (defmethod wnp/resolve-change :gene/id
   [db change]
   (when-let [found (wnu/resolve-refs db (find change :gene/id))]
-    (:gene/id found)))
+    (assoc change :value (:gene/id found))))
 
 (defmethod wnp/resolve-change :gene/species
   [db change]
   (when-let [found (wnu/resolve-refs db {:gene/species (:value change)})]
-    (get-in found [:gene/species :species/latin-name])))
+    (assoc change
+           :value
+           (get-in found [:gene/species :species/latin-name]))))
 
 (defn- resolve-ref-to-gene-id
   [attr db change]
   (let [found (wnu/resolve-refs db {attr (:value change)})]
-    (get-in found [attr :gene/id])))
+    (assoc change :value (get-in found [attr :gene/id]))))
 
 (defmethod wnp/resolve-change :gene/merges
   [db change]
@@ -101,9 +103,10 @@
 
 (defn summary [request identifier]
   (let [db (:db request)
+        log (-> request :conn d/log)
         [lur _] (identify request identifier)]
     (when-let [info (wdb/pull db summary-pull-expr lur)]
-      (let [prov (wnp/query-provenance db lur)]
+      (let [prov (wnp/query-provenance db log lur)]
         (-> info (assoc :history prov) ok)))))
 
 (defn new-unnamed-gene [request]
@@ -386,7 +389,7 @@
       {:get
        {:summary "Information about a given gene."
         :x-name ::summary
-        :responses (wnu/response-map ok {:schema ::wsg/info})
+        :responses (wnu/response-map ok {:schema ::wsg/summary})
         :handler (fn [request]
                    (summary request identifier))}
        :put

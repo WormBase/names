@@ -77,7 +77,7 @@
    :gene/status (constantly status)
    :gene/sequence-name (constantly sequence-name)})
 
-(def info (s/gen ::wsg/info overrides))
+(def summary (s/gen ::wsg/summary overrides))
 
 (def cloned (s/gen ::wsg/cloned overrides))
 
