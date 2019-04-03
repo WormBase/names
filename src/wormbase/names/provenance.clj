@@ -10,7 +10,9 @@
    [wormbase.names.agent :as wna]
    [wormbase.specs.person :as wsp]))
 
-(def pull-expr '[:provenance/when :provenance/why
+(def pull-expr '[:provenance/when
+                 :provenance/why
+                 [:db/txInstant :as :t]
                  {:provenance/what [:db/ident]
                   :provenance/who [:person/name :person/email :person/id]
                   :provenance/how [:db/ident]}])
@@ -55,28 +57,30 @@
      (when (inst? whence)
        {:provenance/when whence}))))
 
-(defn sort-events-by-when
+(defn sort-events-by
   "Sort a sequence of mappings representing events in temporal order."
-  [events & {:keys [most-recent-first]
-             :or {most-recent-first false}}]
+  [k events & {:keys [most-recent-first]
+               :or {most-recent-first false}}]
   (let [cmp (if most-recent-first
               #(compare %2 %1)
               #(compare %1 %2))]
-    (sort-by :provenance/when cmp events)))
+    (sort-by k cmp events)))
 
 (defmulti resolve-change (fn [db change]
                            (get change :attr :default)))
 
 (defmethod resolve-change :provenance/who
   [db change]
-  (d/pull db [:person/id
-              :person/email
-              :person/name] (:value change)))
+  (assoc change
+         :value
+         (d/pull db [:person/id
+                     :person/email
+                     :person/name] (:value change))))
 
 (defmethod resolve-change :default
   [db change]
   (let [cv (:value change)]
-    (d/ident db (:value change))))
+    (assoc change :value (d/ident db (:value change)))))
 
 (def ref-change-rules
   '[[(ref-changes ?e ?aname ?a ?eid)
@@ -87,40 +91,41 @@
 (defn- convert-change
   "Convert entity ids to provenance representation."
   [db eid change-data]
-  (let [change (cond ;; Inverts :eid and :value when we have a reverse ref
-                 (and (= (:value change-data) eid)
-                      (not= (:eid change-data) eid))
-                 (assoc change-data
-                        :eid (:value change-data)
-                        :value (:eid change-data))
-                 (= (:eid change-data) eid)
-                 change-data)]
-    (some-> change
-            (update :value
-                    (fn resolve-change-value [value]
-                      (or (resolve-change db change) value)))
-            (dissoc :eid))))
+  (let [cd (or (resolve-change db change-data) change-data)]
+    (dissoc cd :eid)))
 
 (defn entire-history [db entity-id]
-  (d/q '[:find ?e ?aname ?v ?added
+  (d/q '[:find ?e ?aname ?v ?tx ?added
          :in $h ?e
-         :where
-         [$h ?e ?a ?v _ ?added]
+        :where
+         [$h ?e ?a ?v ?tx ?added]
          [$h ?a :db/ident ?aname]]
        (d/history db)
        entity-id))
 
 (def ^:private exclude-nses (conj wdbs/datomic-internal-namespaces "importer"))
 
+(defn tx-changes [db log tx]
+  (->> (d/q '[:find ?e ?a ?v ?added
+              :in $ ?log ?tx
+              :where
+              [(tx-data ?log ?tx) [[?e ?a ?v _ ?added]]]]
+            db
+            log
+            tx)
+       (map (partial zipmap [:eid :attr :value :added]))
+       (map #(update % :attr (partial d/ident db)))
+       (remove #(exclude-nses (-> % :attr namespace)))))
+
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
-  [db entity-id tx]
+  [db log entity-id tx]
+  ;; using d/entid to normalise the form of entity-id (could be lookup ref) to datomic numeric eid.
   (let [eid (d/entid db entity-id)]
-    (->> (entire-history db eid)
-         (map (partial zipmap [:eid :attr :value :added]))
-         (remove #(exclude-nses (-> % :attr namespace)))
+    (->> (tx-changes db log tx)
+         (filter (fn [change]
+                   (some #(= % eid) ((juxt :eid :value) change))))
          (map (partial convert-change db eid))
-         (remove (comp nil? :value))
          (sort-by (juxt :attr :added :value)))))
 
 (defn involved-in-txes
@@ -150,12 +155,12 @@
                    a datomic pull operation for the entity id.
 
   Returns a sequence of mappings describing the entity history."
-  ([db entity-id]
-   (query-provenance db entity-id pull-expr))
-  ([db entity-id prov-pull-expr]
-   (let [pull-changes (partial query-tx-changes-for-event db entity-id)
+  ([db log entity-id]
+   (query-provenance db log entity-id pull-expr))
+  ([db log entity-id prov-pull-expr]
+   (let [pull-changes (partial query-tx-changes-for-event db log entity-id)
          pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
-         sort-mrf #(sort-events-by-when % :most-recent-first true)
+         sort-mrf #(sort-events-by :t % :most-recent-first true)
          tx-ids (involved-in-txes db entity-id)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq

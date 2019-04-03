@@ -178,7 +178,7 @@
   \"imported\" more than once (data fudging)."
   [events]
   (->> (filter #(= (:provenance/what %) :event/new-gene) events)
-       wnp/sort-events-by-when
+       (wnp/sort-events-by :provenance/when)
        last))
 
 (defn process-gene-events [[gid events]]
@@ -191,7 +191,7 @@
         fixedup-events (if first-created
                          (conj no-created first-created)
                          no-created)]
-    [gid (wnp/sort-events-by-when fixedup-events)]))
+    [gid (wnp/sort-events-by :provenance/when fixedup-events)]))
 
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)

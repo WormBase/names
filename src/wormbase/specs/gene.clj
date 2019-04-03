@@ -93,13 +93,13 @@
 (s/def ::added sts/boolean?)
 (s/def ::change (s/keys :req-un [::attr ::value ::added]))
 (s/def ::changes (s/coll-of ::change))
-(s/def ::provenance (s/merge ::wsp/provenance (s/keys :req-un [::changes])))
+(s/def ::provenance (s/merge ::wsp/provenance (s/keys :req-un [::changes ::wsp/t])))
 (s/def ::history (stc/spec
                   (s/coll-of ::provenance :type vector? :min-count 1)))
 
-(s/def ::info (stc/spec (s/or :cloned ::cloned
-                              :uncloned ::uncloned
-                              :anonymous ::anonymous)))
+(s/def ::summary (stc/spec (s/or :cloned ::cloned
+                                 :uncloned ::uncloned
+                                 :anonymous ::anonymous)))
 
 (s/def ::identifier (stc/spec (s/or :gene/id :gene/id
                                     :gene/cgc-name :gene/cgc-name

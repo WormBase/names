@@ -19,7 +19,9 @@
 (defmethod wnp/resolve-change :person/id
   [attr db change]
   (when-let [found (wnu/resolve-refs db (find change :person/id))]
-    (:person/id found)))
+    (assoc change
+           :value
+           (:person/id found))))
 
 (defn create-person [request]
   (admin-required request)
