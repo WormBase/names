@@ -106,7 +106,7 @@
         log (-> request :conn d/log)
         [lur _] (identify request identifier)]
     (when-let [info (wdb/pull db summary-pull-expr lur)]
-      (let [prov (wnp/query-provenance db log lur)]
+      (let [prov (wnp/query-provenance db log lur #{:gene/merges :gene/splits})]
         (-> info (assoc :history prov) ok)))))
 
 (defn new-unnamed-gene [request]

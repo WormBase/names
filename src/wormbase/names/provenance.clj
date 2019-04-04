@@ -88,11 +88,19 @@
      [(namespace ?aname) ?ns]
      (not [(#{"provenance" "db"} ?ns)])]])
 
+(defn- convert-reverse-ref [db eid change-data]
+  (if (= (:eid change-data) eid)
+    change-data
+    (assoc change-data
+           :value (:eid change-data)
+           :eid (:value change-data))))
+
 (defn- convert-change
   "Convert entity ids to provenance representation."
   [db eid change-data]
-  (let [cd (or (resolve-change db change-data) change-data)]
-    (dissoc cd :eid)))
+  (let [cd (convert-reverse-ref db eid change-data)]
+    (when-let [cd (or (resolve-change db cd) cd)]
+      (dissoc cd :eid))))
 
 (defn entire-history [db entity-id]
   (d/q '[:find ?e ?aname ?v ?tx ?added
@@ -130,13 +138,22 @@
 
 (defn involved-in-txes
   "Return a sequence of tx ids that involve `entity-id`."
-  [db entity-id]
-  (d/q '[:find [?tx ...]
-         :in $h ?e
-         :where
-         [$h ?e _ _ ?tx _]]
-       (d/history db)
-       entity-id))
+  [db entity-id ref-idents]
+  (let [ent-txes (d/q '[:find [?tx ...]
+                      :in $h ?e
+                      :where
+                      [$h ?e _ _ ?tx _]]
+                    (d/history db)
+                    entity-id)
+        ref-txes (mapcat #(d/q '[:find [?tx ...]
+                                 :in $h ?e ?ref-attr
+                                 :where
+                                 [$h _ ?ref-attr ?e ?tx _]]
+                               (d/history db)
+                               entity-id
+                               %)
+                         ref-idents)]
+    (concat ent-txes ref-txes)))
 
 (defn pull-provenance [db entity-id prov-pull-expr pull-changes-fn tx]
   (-> db
@@ -156,12 +173,14 @@
 
   Returns a sequence of mappings describing the entity history."
   ([db log entity-id]
-   (query-provenance db log entity-id pull-expr))
-  ([db log entity-id prov-pull-expr]
+   (query-provenance db log entity-id #{}))
+  ([db log entity-id ref-attrs]
+   (query-provenance db log entity-id ref-attrs pull-expr))
+  ([db log entity-id ref-attrs prov-pull-expr]
    (let [pull-changes (partial query-tx-changes-for-event db log entity-id)
          pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
          sort-mrf #(sort-events-by :t % :most-recent-first true)
-         tx-ids (involved-in-txes db entity-id)
+         tx-ids (involved-in-txes db entity-id ref-attrs)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq
               (remove (fn [v]
@@ -170,3 +189,4 @@
               (map #(update % :provenance/how (fnil identity :agent/importer)))
               (sort-mrf)
               (seq)))))
+

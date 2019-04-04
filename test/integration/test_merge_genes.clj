@@ -150,6 +150,7 @@
                 prov (some->> (wnp/query-provenance (d/db conn)
                                                     (d/log conn)
                                                     [:gene/id from-id]
+                                                    #{:gene/merges :gene/splits}
                                                     ppe)
                               (filter #(= (:provenance/what %) :event/merge-genes))
                               first)]
