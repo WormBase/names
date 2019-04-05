@@ -29,7 +29,32 @@
 
 (def delete-responses (assoc wnu/default-responses ok {:schema {:updated ::wsg/updated}}))
 
-(def identify (partial wne/identify ::wsg/identifier))
+(defn- all-regexp-patterns-for [db ident]
+  (map re-pattern
+       (d/q '[:find [?regex ...]
+              :in $ ?ident
+              :where
+              [_ ?ident ?regex]]
+            db
+            ident)))
+
+(defn identify
+  "Identify a gene given an `identifier` string.
+  Return a tuple of lookup-ref and corrsponding entity from the database,
+  or nil if none found."
+  [request ^String identifier]
+  (let [{db :db} request
+        mm {:gene/sequence-name (all-regexp-patterns-for db :species/sequence-name-pattern)
+            :gene/cgc-name (all-regexp-patterns-for db :species/cgc-name-pattern)
+            :gene/id #{wsg/gene-id-regexp}}
+        result (reduce-kv (fn [m ident regexp-patterns]
+                            (if-let [match (some #(re-matches % identifier) regexp-patterns)]
+                              (into m [ident identifier])
+                              m))
+                          []
+                          mm)]
+    (when (seq result)
+      [result (d/entity db result)])))
 
 (def name-matching-rules
   '[[(gene-name ?pattern ?name ?eid ?attr)
