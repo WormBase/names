@@ -123,8 +123,9 @@
 
 (defn summarizer [identify-fn pull-expr]
   (fn handle-summary [request identifier]
-    (let [db (:db request)
+    (let [{db :db conn :conn} request
+          log (d/log conn)
           [lur _] (identify-fn request identifier)]
       (when-let [info (wdb/pull db pull-expr lur)]
-        (let [prov (wnp/query-provenance db lur)]
+        (let [prov (wnp/query-provenance db log lur)]
           (-> info (assoc :history prov) ok))))))
