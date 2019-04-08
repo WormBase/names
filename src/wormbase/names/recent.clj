@@ -12,50 +12,67 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.recent :as wsr]
-   [wormbase.util :as wu]))
+   [wormbase.util :as wu])
+  (:import (java.util Date)))
 
 (def conf (:recent (wnu/read-app-config)))
 
-(def ^:dynamic *n-days-back* (:days-back conf))
+(def ^{:dynamic true} *default-days-ago* 60)
+
+(defn since-days-ago [n]
+  (-> (jt/instant)
+      (jt/minus (jt/days n))
+      (jt/to-java-date)))
+
+(defn- find-max-imported-date [db]
+  (d/q '[:find (max ?inst) .
+         :where
+         [?tx :provenance/how :agent/importer]
+         [?tx :db/txInstant ?inst]]
+       db))
+
+(def imported-date (memoize find-max-imported-date))
 
 (defn activities
   "Return recent activities for both batch and individual operations.
   The result should be map whose keys represent these two groupings.
   The groupings in turn should be a sequence of maps."
-  ([db log rules]
-   (activities db log rules ""))
-  ([db log rules needle]
-   (activities db log rules needle *n-days-back*))
-  ([db log rules needle n-days]
-   (let [now (jt/to-java-date (jt/instant))
-         since-t (-> (jt/instant)
-                     (jt/minus (jt/days n-days))
-                     (jt/to-java-date))
-         since-db (d/since db since-t)
-         hdb (d/history since-db)
+  ([db log rules ^Date from ^Date until]
+   (activities db log rules "" from until))
+  ([db log rules needle ^Date from ^Date until]
+   ;; find the date for the most recent transaction after imported transactions.
+   (let [import-date (imported-date db)
+         ;; choose the date that is older betweem thn requested date and last import tx
+         since-t (if (>= (compare from import-date) 0)
+                   from
+                   import-date)
+         now (jt/to-java-date (jt/instant))
+         ;; Timings for the `tx-ids` query below with default configured time window (60 days)
+         ;; (excluding pull expressions)
+         ;; jvm (cold): 107.266427 msecs
+         ;; jvm (warm): 30.054339 msecs
          query '[:find [?tx ...]
-                 :in $ $hdb ?log ?offset ?now ?needle %
+                 :in $ % ?log ?since-start ?since-end ?needle
                  :where
-                 [(tx-ids ?log ?offset ?now) [e?tx ...]]
-                 [$hdb ?tx ?a ?v]
-                 [$ ?a :db/ident ?aname]
-                 ($ filter-events ?tx ?aname ?v ?needle)]]
-     (map (partial d/pull since-db wnp/pull-expr)
-          (d/q query db hdb log since-t now needle rules)))))
+                 [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
+                 (filter-events ?tx ?needle)]
+         tx-ids (d/q query db rules log since-t now needle)]
+     (map (partial d/pull db wnp/pull-expr) tx-ids))))
 
-(def entity-rules '[[(filter-events ?tx ?aname ?v ?needle)
+(def entity-rules '[[(filter-events ?tx ?needle)
                      [(missing? $ ?tx :batch/id)]
-                     [?tx :provenance/what ?what]
-                     [?what :db/ident ?what-kw]
-                     [(name ?what-kw) ?what-name]
-                     [(clojure.string/includes? ?what-name ?needle)]]])
+                     [?tx :provenance/what ?wid]
+                     [?wid :db/ident ?what]
+                     [(name ?what) ?w]
+                     [(clojure.string/includes? ?w ?needle)]]])
 
-(def person-rules '[[(filter-events ?tx ?aname ?v ?needle)
+(def person-rules '[[(filter-events ?tx ?needle)
                      [?tx :provenance/who ?pid]
-                     [?pid :person/email ?match-string]]])
+                     [?pid :person/email ?needle]]])
 
-(def batch-rules '[[(filter-events ?tx ?aname ?v ?needle)
+(def batch-rules '[[(filter-events ?tx ?needle)
                     [?tx :batch/id _ _ ]]])
+
 
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
@@ -65,41 +82,44 @@
 (defn decode-etag [etag]
   (codecs/bytes->str (b64/decode (codecs/str->bytes etag))))
 
-(defn handle [request rules & [needle]]
+(defn handle [request rules & [needle from until]]
   (let [{conn :conn db :db} request
         log (d/log conn)
-        items (activities db log rules (or needle "") *n-days-back*)
-        latest-t (some-> items first :db/txInstant)
+        from* (or from (since-days-ago *default-days-ago*))
+        until* (or until (jt/to-java-date (jt/instant)))
+        items (->> (activities db log rules (or needle "") from* until*)
+                   (map (partial wu/elide-db-internals db))
+                   (sort-by :t))
+        latest-t (some-> items first :t)
         etag (encode-etag latest-t)]
-    (-> {:activities (map (partial wu/elide-db-internals db) items)}
+    (-> {:activities items}
         (ok)
         (header "etag" etag))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
                :tags ["recent"]
-               :middleware [wna/restrict-to-authenticated
+               :query-params [{from :- ::wsr/from nil}
+                              {util :- ::wsr/until nil}]
+               :responses response-schema
+               :middleware [;;wna/restrict-to-authenticated
                             rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
                  :summary "List recent batch activity."
                  :tags ["recent" "batch"]
-                 :responses response-schema
                  (handle request batch-rules))
                (sweet/GET "/person" request
                  :summary "List recent activities made by the currently logged-in user."
                  :tags ["recent" "person"]
-                 :responses response-schema
                  (let [person-email (-> request :identity :person :person/email)]
                    (handle request person-rules person-email)))
                (sweet/GET "/gene" request
                  :summary "List recent gene activity."
                  :tags ["recent" "gene"]
-                 :responses response-schema
                  (handle request entity-rules "gene"))
                (sweet/GET "/variation" request
                  :summary "List recent variation activity."
                  :tags ["recent" "variation"]
-                 :responses response-schema
                  (handle request entity-rules "variation")))))
 
 (comment
@@ -108,7 +128,8 @@
 
   Then define `conn` d/connect and db with d/db.
 
-  (binding [*n-days-back** 43]
-    (activities db (d/log conn) entity-rules "gene")
-    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org")
-    (activities db (d/log conn) batch-rules)))
+  (binding [from (jt/to-java-date (jt/instant))
+            until (since-days-ago 2)]
+    (activities db (d/log conn) entity-rules "gene" from until)
+    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org" from until)
+    (activities db (d/log conn) batch-rules from until)))
