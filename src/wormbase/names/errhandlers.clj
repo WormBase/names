@@ -79,8 +79,10 @@
 (defn handle-missing [^Exception exc data request]
   (when (some-> data :entity keyword?)
     (throw (ex-info "Schema not installed!" {:ident (:entity data)})))
-  (let [msg (apply format "%s '%s' does not exist" (:entity data))]
-    (respond-missing request (assoc-error-message data exc :message msg))))
+  (if-let [lookup-ref (:entity data)]
+    (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
+      (respond-missing request (assoc-error-message data exc :message msg)))
+    (respond-missing request (assoc-error-message data exc))))
 
 (defn handle-db-conflict [^Exception exc data request]
   (respond-conflict request (assoc-error-message data exc)))
