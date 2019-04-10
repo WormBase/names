@@ -34,6 +34,30 @@
                 [status body] (update-genes {:data bdata :prov basic-prov})]
             (t/is (= (:status (conflict)) status) (pr-str body))))))))
 
+(t/deftest invalid-cgc-name
+  (t/testing "Errors are reported when provided with a invlaid CGC name"
+    (let [fixtures (tu/gene-samples 2)
+          [g1 g2] fixtures]
+      (tu/with-gene-fixtures
+        fixtures
+        (fn [conn]
+          (let [bdata [{:gene/id (:gene/id g1)
+                        :gene/cgc-name "invalid_CGC_NAME"}]
+                [status body] (update-genes {:data bdata :prov basic-prov})]
+            (t/is (= (:status (bad-request)) status) (pr-str body))))))))
+
+(t/deftest invalid-sequence-name
+  (t/testing "Errors are reported when provided with a invlaid Sequence name"
+    (let [fixtures (tu/gene-samples 2)
+          [g1 g2] fixtures]
+      (tu/with-gene-fixtures
+        fixtures
+        (fn [conn]
+          (let [bdata [{:gene/id (:gene/id g1)
+                        :gene/sequence-name "invalid-sequence-name.1"}]
+                [status body] (update-genes {:data bdata :prov basic-prov})]
+            (t/is (= (:status (bad-request)) status) (pr-str body))))))))
+
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
     (let [fixtures (tu/gene-samples 1)
