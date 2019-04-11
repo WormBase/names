@@ -40,13 +40,13 @@ class SuppressGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, ...otherProps } = this.props;
+    const { wbId, name, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Suppress gene"
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Suppress {geneName}</ProgressButton>
+          <ProgressButton {...props}>Suppress {name}</ProgressButton>
         )}
         {...otherProps}
       >
@@ -55,8 +55,7 @@ class SuppressGeneDialog extends Component {
           return (
             <DialogContent>
               <DialogContentText>
-                Gene <strong>{geneName}</strong> will be suppressed. Are you
-                sure?
+                Gene <strong>{name}</strong> will be suppressed. Are you sure?
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />
@@ -76,7 +75,7 @@ class SuppressGeneDialog extends Component {
 }
 
 SuppressGeneDialog.propTypes = {
-  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 

@@ -67,20 +67,14 @@ class SplitGeneDialog extends Component {
   };
 
   render() {
-    const {
-      classes,
-      geneName,
-      wbId,
-      biotypeOriginal,
-      ...otherProps
-    } = this.props;
+    const { classes, name, wbId, biotypeOriginal, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Split gene"
         data={{ 'gene/biotype': biotypeOriginal }}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Split {geneName}</ProgressButton>
+          <ProgressButton {...props}>Split {name}</ProgressButton>
         )}
         {...otherProps}
       >
@@ -101,7 +95,7 @@ class SplitGeneDialog extends Component {
           return (
             <DialogContent>
               <DialogContentText>
-                Gene <strong>{geneName}</strong> will be split.
+                Gene <strong>{name}</strong> will be split.
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />
@@ -113,11 +107,11 @@ class SplitGeneDialog extends Component {
                 fullWidth
               />
               <BiotypeSelectOriginalField
-                label={`${geneName || wbId} biotype`}
-                helperText={`Modify the biotype of ${geneName}`}
+                label={`${name || wbId} biotype`}
+                helperText={`Modify the biotype of ${name}`}
                 required
                 classes={{
-                  root: classes.biotypeSelectField,
+                  inputRoot: classes.biotypeSelectField,
                 }}
               />
               <br />
@@ -137,13 +131,13 @@ class SplitGeneDialog extends Component {
 SplitGeneDialog.propTypes = {
   classes: PropTypes.object.isRequired,
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   biotypeOriginal: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 
 const styles = (theme) => ({
   biotypeSelectField: {
-    minWidth: 200,
+    minWidth: '15em',
   },
 });
 
