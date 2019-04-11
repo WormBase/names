@@ -16,14 +16,14 @@ const SpeciesSelect = (props) => {
     'Strongyloides ratti',
   ];
   const speciesOptions = props.required ? [...SPECIES] : [null, ...SPECIES];
-  const { classes } = props;
+  const { classes, ...others } = props;
 
   return (
     <TextField
       select
       label="Species"
-      InputProps={{ classes: { root: classes.inputRoot } }}
-      {...props}
+      InputProps={{ className: classes.inputRoot }}
+      {...others}
     >
       {speciesOptions.map((species) => (
         <MenuItem key={species} value={species}>

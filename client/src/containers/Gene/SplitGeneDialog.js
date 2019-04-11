@@ -110,8 +110,8 @@ class SplitGeneDialog extends Component {
                 label={`${name || wbId} biotype`}
                 helperText={`Modify the biotype of ${name}`}
                 required
-                classes={{
-                  inputRoot: classes.biotypeSelectField,
+                InputProps={{
+                  className: classes.biotypeSelectFieldInput,
                 }}
               />
               <br />
@@ -136,7 +136,7 @@ SplitGeneDialog.propTypes = {
 };
 
 const styles = (theme) => ({
-  biotypeSelectField: {
+  biotypeSelectFieldInput: {
     minWidth: '15em',
   },
 });
