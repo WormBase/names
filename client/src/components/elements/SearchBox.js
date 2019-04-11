@@ -149,7 +149,7 @@ const SearchBox = (props) => {
                         if (id) {
                           // ignore empty input
                           downshift.closeMenu();
-                          history.push(`/gene/id/${id}`);
+                          history.push(`/${entityType}/id/${id}`);
                         }
                       }
                     },
@@ -170,7 +170,7 @@ const SearchBox = (props) => {
                             suggestion={suggestion}
                             component={({ ...props }) => (
                               <Link
-                                to={`/gene/id/${suggestion.id}`}
+                                to={`/${entityType}/id/${suggestion.id}`}
                                 {...props}
                               />
                             )}
