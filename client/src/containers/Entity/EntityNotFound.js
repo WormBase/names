@@ -34,7 +34,7 @@ const styles = (theme) => ({
   operations: {
     display: 'flex',
     flexDirection: 'column',
-    width: 150,
+    width: 200,
     '& > *': {
       marginBottom: theme.spacing.unit,
     },

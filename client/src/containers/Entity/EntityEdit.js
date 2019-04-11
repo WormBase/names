@@ -124,9 +124,9 @@ class EntityEditForm extends Component {
           }
         )
           .then((response) => {
-            const nextStatus =
-              response.status === 404 ? 'NOT_FOUND' : 'COMPLETE';
-            return Promise.all([nextStatus, response.json()]);
+            return response.status === 404 || response.status === 500
+              ? Promise.all(['NOT_FOUND', {}])
+              : Promise.all(['COMPLETE', response.json()]);
           })
           .then(([nextStatus, { history: changes, ...data }]) => {
             this.setState(
