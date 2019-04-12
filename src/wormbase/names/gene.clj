@@ -126,13 +126,7 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(defn summary [request identifier]
-  (let [db (:db request)
-        log (-> request :conn d/log)
-        [lur _] (identify request identifier)]
-    (when-let [info (wdb/pull db summary-pull-expr lur)]
-      (let [prov (wnp/query-provenance db log lur #{:gene/merges :gene/splits})]
-        (-> info (assoc :history prov) ok)))))
+(def summary (wne/summarizer identify summary-pull-expr))
 
 (defn new-unnamed-gene [request]
   (let [{payload :body-params conn :conn} request
@@ -291,10 +285,11 @@
                 prov]
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
+          from-gene-lur (find from-gene :gene/id)
           p-gene (wdb/pull dba summary-pull-expr p-gene-lur)
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
-      (->> [p-gene-lur* lur]
+      (->> [p-gene-lur* from-gene-lur]
            (map (partial apply array-map))
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))

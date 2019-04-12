@@ -51,13 +51,16 @@
          ;; (excluding pull expressions)
          ;; jvm (cold): 107.266427 msecs
          ;; jvm (warm): 30.054339 msecs
-         query '[:find [?tx ...]
+         query '[:find ?tx ?e
                  :in $ % ?log ?since-start ?since-end ?needle
                  :where
                  [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
-                 (filter-events ?tx ?needle)]
-         tx-ids (d/q query db rules log since-t now needle)]
-     (map (partial d/pull db wnp/pull-expr) tx-ids))))
+                 [(tx-data ?log ?tx) [[?e]]]
+                 (filter-events ?tx ?needle)]]
+     (map (fn [[tx-id ent-id]]
+            (let [pull-changes (partial wnp/query-tx-changes-for-event db log ent-id)]
+              (wnp/pull-provenance db ent-id wnp/pull-expr pull-changes tx-id)))
+          (d/q query db rules log since-t now needle)))))
 
 (def entity-rules '[[(filter-events ?tx ?needle)
                      [(missing? $ ?tx :batch/id)]
@@ -99,27 +102,27 @@
 (def routes (sweet/routes
              (sweet/context "/recent" []
                :tags ["recent"]
+               :responses {200 {:schema {:activities ::wsr/activities}}}
                :query-params [{from :- ::wsr/from nil}
                               {util :- ::wsr/until nil}]
-               :responses response-schema
-               :middleware [;;wna/restrict-to-authenticated
+               :middleware [wna/restrict-to-authenticated
                             rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
-                 :summary "List recent batch activity."
                  :tags ["recent" "batch"]
+                 :summary "List recent batch activity."
                  (handle request batch-rules))
                (sweet/GET "/person" request
-                 :summary "List recent activities made by the currently logged-in user."
                  :tags ["recent" "person"]
+                 :summary "List recent activities made by the currently logged-in user."
                  (let [person-email (-> request :identity :person :person/email)]
                    (handle request person-rules person-email)))
                (sweet/GET "/gene" request
-                 :summary "List recent gene activity."
                  :tags ["recent" "gene"]
+                 :summary "List recent gene activity."
                  (handle request entity-rules "gene"))
                (sweet/GET "/variation" request
-                 :summary "List recent variation activity."
                  :tags ["recent" "variation"]
+                 :summary "List recent variation activity."
                  (handle request entity-rules "variation")))))
 
 (comment
@@ -127,9 +130,11 @@
   (in-ns 'wormbase.names.recent)
 
   Then define `conn` d/connect and db with d/db.
-
   (binding [from (jt/to-java-date (jt/instant))
             until (since-days-ago 2)]
+    (activities db (d/log conn) entity-rules "gene")
     (activities db (d/log conn) entity-rules "gene" from until)
+    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org")
     (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org" from until)
+    (activities db (d/log conn) batch-rules)
     (activities db (d/log conn) batch-rules from until)))

@@ -11,7 +11,8 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
-   [wormbase.names.provenance :as wnp]))
+   [wormbase.names.provenance :as wnp]
+   [wormbase.names.validation :as wnv]))
 
 (s/def ::prov ::wsp/provenance)
 
@@ -35,6 +36,9 @@
     (let [bsize (wnbg/batch-size payload data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
+(defn names-validator [request data]
+  (map (partial wnv/validate-names request) data))
+
 (def routes
   (sweet/context "/gene" []
     :tags ["batch" "gene"]
@@ -51,6 +55,7 @@
                                         :event/update-gene
                                         ::wsg/update-batch
                                         wnu/conform-data
+                                        (partial names-validator request)
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
@@ -66,6 +71,7 @@
                                        event-type
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels
+                                       (partial names-validator request)
                                        request)))}
       :delete
       {:summary "Kill genes."

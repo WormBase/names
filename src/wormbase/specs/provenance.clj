@@ -28,3 +28,18 @@
                                     :provenance/what
                                     :provenance/when
                                     :provenance/why]))))
+
+(s/def ::attr sts/keyword?)
+
+(s/def ::value any?)
+
+(s/def ::added sts/boolean?)
+
+(s/def ::change (s/keys :req-un [::attr ::value ::added]))
+
+(s/def ::changes (s/coll-of ::change))
+
+(s/def ::temporal-change (s/merge ::provenance (s/keys :req-un [::changes ::t])))
+
+(s/def ::history (stc/spec
+                  (s/coll-of ::temporal-change :type vector? :min-count 1)))

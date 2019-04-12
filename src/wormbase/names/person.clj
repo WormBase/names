@@ -16,6 +16,8 @@
 
 (def admin-required (partial wna/require-role! #{:person.role/admin}))
 
+(def pull-expr '[*])
+
 (defmethod wnp/resolve-change :person/id
   [attr db change]
   (when-let [found (wnu/resolve-refs db (find change :person/id))]
@@ -26,7 +28,7 @@
 (defn create-person [request]
   (admin-required request)
   (let [conn (:conn request)
-        spec ::wsp/person
+        spec ::wsp/summary
         person (some-> request :body-params)]
     (let [transformed (stc/conform spec person stc/json-transformer)]
       (if (s/invalid? transformed)
@@ -41,7 +43,7 @@
           (created (str "/person/" pid) person))))))
 
 (defn summary [db lur]
-  (let [person (d/pull db '[*] lur)]
+  (let [person (d/pull db pull-expr lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
@@ -61,7 +63,7 @@
         lur (s/conform ::wsp/identifier identifier)
         person (summary db lur)]
     (if person
-      (let [spec ::wsp/person
+      (let [spec ::wsp/summary
             conn (:conn request)
             data (some-> request
                          :body-params
@@ -85,14 +87,15 @@
   (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (d/pull db [:person/email :person/active?] lur)
-        active? (:person/active? person)
-        prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
-        tx-result @(d/transact-async conn
-                                     [[:db/cas lur :person/active? active? false] prov])]
-    (if-let [dba (:db-after tx-result)]
-      (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
-      (bad-request))))
-  
+        active? (:person/active? person)]
+    (when active?
+      (let [prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
+            tx-result @(d/transact-async conn
+                                         [[:db/cas lur :person/active? active? false] prov])]
+        (if-let [dba (:db-after tx-result)]
+          (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
+          (bad-request))))))
+
 (defn wrap-id-validation [handler identifier]
   (fn [request]
     (if (s/valid? ::wsp/identifier identifier)
@@ -109,8 +112,8 @@
       {:post
        {:summary "Create a new person."
         :x-name ::new-person
-        :parameters {:body-params ::wsp/person}
-        :responses {201 {:schema ::wsp/person}}
+        :parameters {:body-params ::wsp/summary}
+        :responses {201 {:schema ::wsp/summary}}
         :handler create-person}}))
    (sweet/context "/person/:identifier" []
      :tags ["person"]
@@ -119,14 +122,17 @@
       {:get
        {:summary "Summaraise a person."
         :x-name ::person-summary
+        :responses {200 {:schema ::wsp/summary}}
         :handler (wrap-id-validation about-person identifier)}
        :put
        {:summary "Update information about a person."
         :x-name ::update-person
+        :responses {200 {:schema ::wsp/summary}}
         :parameters {:body-params ::wsp/update}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
         :x-name ::deactivate-person
+        :responses {200 {:schema ::wsp/summary}}
         :handler (wrap-id-validation deactivate-person identifier)}}))))
 

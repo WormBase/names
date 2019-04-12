@@ -5,6 +5,7 @@
    [clojure.test :as t]
    [datomic.api :as d]
    [integration.test-batch-new-gene :refer [new-genes]]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
@@ -19,12 +20,12 @@
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
     (let [[status body] (summary (d/squuid))]
-      (tu/status-is? 404 status body))))
+      (t/is (ru-hp/not-found? {:status status :body body})))))
 
 (t/deftest batch-id-invalid
   (t/testing "When a batch ID is not of the correct/expected format."
     (let [[status body] (summary "zxx")]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body}))))) 
 
 (t/deftest summary-success
   (t/testing "Retrieving summary about at batch working (provenance only atm)."
@@ -44,7 +45,7 @@
         samples
         (fn [conn]
           (let [[status body] (summary bid)]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (map? body))
             (t/is (str/includes? (get-in body [:provenance/who] "") "@")
                   (pr-str body))))))))

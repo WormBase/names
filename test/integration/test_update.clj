@@ -4,6 +4,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [basic-prov]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
@@ -39,7 +40,7 @@
           (let [data {}]
             (let [response (update-gene identifier data)
                   [status body] response]
-              (tu/status-is? 400 status (pr-str response)))))))))
+              (t/is (ru-hp/bad-request? {:status status :body body})))))))))
 
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -76,7 +77,7 @@
                 species (tu/species-ref->latin-name sample)
                 payload {:data {:gene/cgc-name new-cgc-name} :prov nil}
                 [status body] (update-gene gid payload)]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (let [db (d/db conn)
                   gid-2 (some-> body :updated :gene/id)
                   updated (:updated body)]
@@ -108,7 +109,7 @@
                                    (assoc :gene/cgc-name nil))
                          :prov nil}
                 [status body] (update-gene gid payload)]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (let [db (d/db conn)
                   identifier (some-> body :updated :gene/id)
                   updated (:updated body)]
@@ -142,7 +143,7 @@
                  [status body] response
                  db (d/db conn)
                  ent (d/entity db [:gene/id gid])]
-             (tu/status-is? 200 status body)
+             (t/is (ru-hp/ok? {:status status :body body}))
              (let [provs (query-provenance conn :gene/cgc-name)
                    act-prov (first provs)]
                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
@@ -172,7 +173,7 @@
           (let [payload {:data {} :prov basic-prov}]
             (let [response (update-variation identifier payload)
                   [status body] response]
-              (tu/status-is? 400 status (pr-str response)))))))))
+              (t/is (ru-hp/bad-request? {:status status :body body})))))))))
 
 (t/deftest changing-variation-name-success
   (t/testing "Changing the name of an existing variation."
@@ -186,7 +187,7 @@
           (let [data {:variation/name "mynew1"}
                 payload {:data data :prov basic-prov}
                 [status body] (update-variation identifier payload)]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (= (:variation/name (d/pull (d/db conn)
                                               '[:variation/name]
                                               [:variation/id identifier]))
@@ -207,7 +208,7 @@
           (let [data {:variation/name (-> samples first :variation/name)}
                 payload {:data data :prov basic-prov}
                 [status body] (update-variation subject-identifier payload)]
-            (tu/status-is? 409 status body)))))))
+            (t/is (ru-hp/conflict? {:status status :body body}))))))))
 
 (t/deftest non-uniq-species-causes-conflict
   (t/testing "Attempting to update a species that has a name that's already taken fails."
@@ -226,7 +227,7 @@
                                    (assoc :species/latin-name dup-name))
                          :prov basic-prov}
                 [status body] (update-species species-id-name payload)]
-            (tu/status-is? 409 status body)))))))
+            (t/is (ru-hp/conflict? {:status status :body body}))))))))
 
 (t/deftest update-species-success
   (t/testing "Update a species that has a unique new name succeeds."
@@ -245,4 +246,4 @@
                                    (assoc :species/latin-name new-name))
                          :prov basic-prov}
                 [status body] (update-species species-id-name payload)]
-            (tu/status-is? 200 status body)))))))
+            (t/is (ru-hp/ok? {:status status :body body}))))))))

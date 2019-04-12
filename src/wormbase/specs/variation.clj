@@ -2,7 +2,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [spec-tools.spec :as sts]
-   [spec-tools.core :as stc]))
+   [spec-tools.core :as stc]
+   [wormbase.specs.provenance :as wsp]))
 
 (def id-regexp #"WBVar\d{8}")
 
@@ -20,8 +21,9 @@
 
 (s/def :variation/status sts/keyword?)
 
-(s/def ::summary (stc/spec (s/keys :req [:variation/id :variation/status]
-                                   :opt [:variation/name])))
+(s/def ::summary (stc/spec (s/merge ::wsp/provenance
+                                    (s/keys :req [:variation/id :variation/status]
+                                            :opt [:variation/name]))))
 
 (s/def ::status-changed (stc/spec (s/keys :req [:variation/status])))
 

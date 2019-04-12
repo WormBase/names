@@ -10,7 +10,8 @@
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.sequence-feature :as gssf]
-   [wormbase.test-utils :as tu]))
+   [wormbase.test-utils :as tu]
+   [ring.util.http-predicates :as ru-hp]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -31,7 +32,7 @@
   (t/testing "Empty batches are rejected."
     (doseq [op [:kill :resurrect]]
       (let [[status body] (send-change-status-request op {:data [] :prov basic-prov})]
-        (tu/status-is? 400 status body)))))
+        (t/is (ru-hp/bad-request? {:status status :body body}))))))
 
 (t/deftest dup-ids
   (t/testing "Duplicate entity ids in payload don't cause an error."
@@ -42,7 +43,7 @@
         (fn [conn]
           (let [data [id id]
                 [status body] (send-change-status-request :kill {:data data :prov basic-prov})]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (-> body :dead (get :batch/id "") uuid/uuid-string?))))))))
 
 (t/deftest entity-in-db-missing
@@ -50,7 +51,7 @@
     (let [gid (first (gen/sample gssf/id 1))
           [status body] (send-change-status-request :kill {:data [gid]
                                                            :prov basic-prov})]
-      (tu/status-is? 409 status body)
+      (t/is (ru-hp/conflict? {:status status :body body}))
       (t/is (str/includes? (get body :message "") "processing errors occurred"))
       (t/is (some (fn [msg]
                     (and (str/includes? msg "does not exist")
@@ -68,7 +69,7 @@
         fixtures
         (fn [conn]
           (let [[status body] (send-change-status-request :kill {:data ids :prov basic-prov})]
-            (tu/status-is? 409 status body)
+            (t/is (ru-hp/conflict? {:status status :body body}))
             (doseq [enf expected-not-found]
               (t/is (str/includes? (get body :message "") enf)))))))))
 
@@ -82,7 +83,7 @@
           (doseq [[to-status exp-resp-key] {:kill :dead
                                             :resurrect :live}]
             (let [[status body] (send-change-status-request to-status {:data ids :prov basic-prov})]
-              (tu/status-is? 200 status body)
+              (t/is (ru-hp/ok? {:status status :body body}))
               (t/is (some-> body exp-resp-key :batch/id uuid/uuid-string?)
                     (pr-str body))
               (doseq [id ids]

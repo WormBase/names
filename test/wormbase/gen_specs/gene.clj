@@ -18,8 +18,7 @@
        (map species-kw)
        set))
 
-(def id (s/gen :gene/id
-               {:gene/id #(sg/string-generator wsg/gene-id-regexp)}))
+(def id (sg/string-generator wsg/gene-id-regexp))
 
 (def biotype-overrides
   {:gene/biotype #(s/gen (->> (util/load-enum-samples "biotype")

@@ -1,9 +1,9 @@
 (ns wormbase.gen-specs.person
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
    [wormbase.gen-specs.util :as util]
-   [clojure.spec.gen.alpha :as gen]
    [wormbase.specs.person :as wsp]))
 
 (def email (sg/string-generator wsp/email-regexp))
@@ -22,4 +22,4 @@
    [:person/email] (constantly email)
    [:person/roles] (constantly roles)})
 
-(def person (s/gen ::wsp/person person-overrides))
+(def person (s/gen ::wsp/summary person-overrides))

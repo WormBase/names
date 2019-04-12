@@ -15,14 +15,12 @@
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [peridot.core :as p]
-   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
    [wormbase.names.gene :as wng]
-   [wormbase.names.variation :as wnv]
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
@@ -184,14 +182,6 @@
                                         (str "/" (name k)))
                                       v]))))
       spec)))
-
-;; TODO: use expound support introduced in compojure.api alpha 28
-(defmacro status-is? [status expected-status body]
-  `(t/is (= ~status ~expected-status)
-         (format "Response body did not contain expected data:\n%s"
-                 (if-let [suspec# (:spec ~body)]
-                   (stc/deserialize suspec#)
-                   (pr-str ~body)))))
 
 (defn species->latin-name [lu-ref]
   (let [[ident value] lu-ref
