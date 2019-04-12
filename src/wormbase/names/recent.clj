@@ -12,10 +12,7 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.recent :as wsr]
-   [wormbase.util :as wu]
-   [wormbase.names.batch :as wnb]
-   [wormbase.names.gene :as wng]
-   [wormbase.names.variation :as wnv])
+   [wormbase.util :as wu])
   (:import (java.util Date)))
 
 (def conf (:recent (wnu/read-app-config)))
