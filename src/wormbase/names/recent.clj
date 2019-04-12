@@ -40,9 +40,9 @@
   "Return recent activities for both batch and individual operations.
   The result should be map whose keys represent these two groupings.
   The groupings in turn should be a sequence of maps."
-  ([db log rules data-pull-expr ^Date from ^Date until]
-   (activities db log rules data-pull-expr "" from until))
-  ([db log rules data-pull-expr needle ^Date from ^Date until]
+  ([db log rules ^Date from ^Date until]
+   (activities db log rules "" from until))
+  ([db log rules needle ^Date from ^Date until]
    ;; find the date for the most recent transaction after imported transactions.
    (let [import-date (imported-date db)
          ;; choose the date that is older betweem thn requested date and last import tx
@@ -88,12 +88,12 @@
 (defn decode-etag [etag]
   (codecs/bytes->str (b64/decode (codecs/str->bytes etag))))
 
-(defn handle [request rules data-pull-expr & [needle from until]]
+(defn handle [request rules & [needle from until]]
   (let [{conn :conn db :db} request
         log (d/log conn)
         from* (or from (since-days-ago *default-days-ago*))
         until* (or until (jt/to-java-date (jt/instant)))
-        items (->> (activities db log rules data-pull-expr (or needle "") from* until*)
+        items (->> (activities db log rules (or needle "") from* until*)
                    (map (partial wu/elide-db-internals db))
                    (sort-by :t))
         latest-t (some-> items first :t)
@@ -113,20 +113,20 @@
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
-                 (handle request batch-rules nil))
+                 (handle request batch-rules))
                (sweet/GET "/person" request
                  :tags ["recent" "person"]
                  :summary "List recent activities made by the currently logged-in user."
                  (let [person-email (-> request :identity :person :person/email)]
-                   (handle request person-rules wnp/pull-expr person-email)))
+                   (handle request person-rules person-email)))
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 (handle request entity-rules wng/summary-pull-expr "gene"))
+                 (handle request entity-rules "gene"))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
-                 (handle request entity-rules wnv/summary-pull-expr "variation")))))
+                 (handle request entity-rules "variation")))))
 
 (comment
   "Examples of each invokation flavour"
