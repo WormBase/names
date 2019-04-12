@@ -98,8 +98,6 @@
                    (sort-by :t))
         latest-t (some-> items first :t)
         etag (encode-etag latest-t)]
-    (println "ITEMS:")
-    (prn items)
     (-> {:activities items}
         (ok)
         (header "etag" etag))))
