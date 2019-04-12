@@ -285,10 +285,11 @@
                 prov]
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
+          from-gene-lur (find from-gene :gene/id)
           p-gene (wdb/pull dba summary-pull-expr p-gene-lur)
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
-      (->> [p-gene-lur* lur]
+      (->> [p-gene-lur* from-gene-lur]
            (map (partial apply array-map))
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
