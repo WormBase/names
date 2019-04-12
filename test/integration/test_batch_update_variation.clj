@@ -18,8 +18,8 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (update-variations {:data [] :prov nil})]
-      (t/is (= 400 status)))))
+    (let [response (update-variations {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (defn make-fixtures []
   (let [ids (gen/sample gsv/id 2)
@@ -39,7 +39,6 @@
                        (merge (select-keys f2 [:variation/id])
                               (select-keys f1 [:variation/name]))]
                 {:keys [status body] :as response} (update-variations {:data bdata :prov basic-prov})]
-            (prn response)
             (t/is (ru-hp/conflict? response))))))))
 
 (t/deftest invalid-name

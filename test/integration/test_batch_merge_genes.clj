@@ -6,7 +6,7 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov]]
    [wormbase.db :as wdb]
@@ -23,7 +23,7 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (let [[status body] (merge-genes {:data [] :prov nil})]
-      (t/is (= (:status (bad-request)) status)))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest invalid-db-state
   (t/testing "Batch rejected when one or more genes specified to be merged are dead in db."
@@ -44,7 +44,7 @@
         fixtures**
         (fn [conn]
           (let [[status body] (merge-genes {:data data :prov basic-prov})]
-            (tu/status-is? (:status (ok)) status body)))))))
+            (t/is (ru-hp/ok? {:status status :body body}))))))))
 
 (t/deftest success
   (t/testing "A succesful specification of merge operations."
@@ -69,7 +69,7 @@
         (fn [conn]
           (let [[status body] (merge-genes {:data bdata :prov basic-prov})
                 bid (get-in body [:batch/id] "")]
-            (tu/status-is? (:status (ok)) status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (uuid/uuid-string? bid))
             (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
                   batch-lookup (into {}

@@ -4,6 +4,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
@@ -37,7 +38,7 @@
 (defn check-empty [create-fn]
   (let [response (create-fn {})
         [status body] response]
-    (tu/status-is? 400 status body)
+    (t/is (ru-hp/bad-request? {:status status :body body}))
     (t/is (contains? (tu/parse-body body) :message))))
 
 (t/deftest gene-data-must-meet-spec
@@ -46,12 +47,12 @@
   (t/testing "Species should always be required when creating gene name."
     (let [cgc-name (tu/cgc-name-for-species :species/c-elegans)
           [status body] (new-gene {:gene/cgc-name cgc-name})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest wrong-gene-data-shape
   (t/testing "Non-conformant data gene should result in HTTP Bad Request 400"
     (let [[status body] (new-gene {})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest invalid-gene-species-specified
   (t/testing "What happens when you specify an invalid species"
@@ -59,7 +60,7 @@
                          {:data {:gene/cgc-name "abc-1"
                                  :gene/species "Cabornot Elegant"}
                           :prov nil})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest invalid-gene-names
   (t/testing "Invalid CGC name for species causes validation error."
@@ -67,7 +68,7 @@
                          {:data {:gene/cgc-name "_INVALID!_"
                                  :gene/species elegans-ln}
                           :prov nil})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest naming-uncloned-gene
   (t/testing "Naming one uncloned gene succesfully returns ids"
@@ -79,7 +80,7 @@
                                      :gene/species elegans-ln}
                               :prov nil})
               expected-id "WBGene00000001"]
-          (tu/status-is? 201 status body)
+          (t/is (ru-hp/created? {:status status :body body}))
           (let [db (d/db conn)
                 identifier (some-> body :created :gene/id)]
             (t/is (= identifier expected-id))
@@ -99,7 +100,7 @@
         sample
         (fn [conn]
           (let [[status body] (new-gene data)]
-            (tu/status-is? 409 status body)))))))
+            (t/is (ru-hp/conflict? {:status status :body body}))))))))
 
 (t/deftest naming-gene-with-provenance
   (t/testing "Naming some genes providing provenance."
@@ -107,7 +108,7 @@
                 :gene/species elegans-ln}
           prov {:provenance/who {:person/email "tester@wormbase.org"}}
           [status body] (new-gene {:data data :prov prov})]
-      (tu/status-is? 201 status body)
+      (t/is (ru-hp/created? {:status status :body body}))
       (t/is (some-> body :created :gene/id) (pr-str body)))))
 
 (t/deftest variation-data-must-meet-spec
@@ -115,13 +116,14 @@
     (check-empty new-variation))
   (t/testing "A new variation must be given a valid name."
     (let [vname "CONJURED_UP_123"
-          [status body] (new-variation {:variation/name vname})]
-      (tu/status-is? 400 status body))))
+          data {:data {:variation/name vname} :prov basic-prov}
+          [status body] (new-variation data)]
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest wrong-variation-data-shape
   (t/testing "Non-conformant variation data should result in HTTP Bad Request 400"
     (let [[status body] (new-variation {})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest variation-naming-conflict
   (t/testing "When a variation already exists with the requested name."
@@ -135,13 +137,13 @@
         sample
         (fn [conn]
           (let [[status body] (new-variation data)]
-            (tu/status-is? 409 status body)))))))
+            (t/is (ru-hp/conflict? {:status status :body body}))))))))
 
 (t/deftest naming-variation-with-provenance
   (t/testing "Naming a variation providing provenance."
     (let [data {:variation/name (first (gen/sample gsv/name 1))}
           [status body] (new-variation {:data data :prov basic-prov})]
-      (tu/status-is? 201 status body)
+      (t/is (ru-hp/created? {:status status :body body}))
       (t/is (some-> body :created :variation/id) (pr-str body)))))
 
 (t/deftest species-data-must-meet-spec
@@ -149,12 +151,12 @@
     (check-empty new-species))
   (t/testing "Species should always be required when creating gene name."
     (let [[status body] (new-species {:species/wrong-ident "Alpha alegator"})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest wrong-species-data-shape
   (t/testing "Non-conformant species data should result in HTTP Bad Request 400"
     (let [[status body] (new-species {})]
-      (tu/status-is? 400 status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest species-creation-success
   (t/testing "Create a new species, providing provenance."
@@ -162,7 +164,7 @@
                 :species/cgc-name-pattern "^Q[a-z]{3}-[0-9]+"
                 :species/sequence-name-pattern "^QSEQNAME_[0-9\\]+"}
           [status body] (new-species {:data data :prov basic-prov})]
-      (tu/status-is? 201 status body)
+      (t/is (ru-hp/created? {:status status :body body}))
       (let [dba (d/db wdb/conn)]
         (t/is (= (:species/id (d/pull dba [:species/id] (find data :species/latin-name)))
                  :species/q-squirmito))))))

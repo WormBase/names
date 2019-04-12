@@ -3,6 +3,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.variation :as gsv]
@@ -40,7 +41,7 @@
   (t/testing "Get an validation errror (400) result for invalid find terms."
     (doseq [term [""]]
       (let [[status body] (find-variation term)]
-        (tu/status-is? 400 status body)
+        (t/is (ru-hp/bad-request? {:status status :body body}))
         (t/is (not (contains? body :matches)))
         (t/is (re-matches #".*validation failed.*"
                           (get body :message "")))
@@ -56,13 +57,13 @@
         (t/testing "Get a 200 response for a non-matching find term"
           (let [[status body] (find-variation "foobar")
                 matches (:matches body)]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (empty? matches))))
         (t/testing "Whitepace at begining and end of find term is ignoreed"
           (doseq [term [" foo" "bar "]]
             (let [[status body] (find-variation term)
                   matches (:matches body)]
-              (tu/status-is? 200 status body)
+              (t/is (ru-hp/ok? {:status status :body body}))
               (t/is (empty? matches)))))
         (t/testing "Results found for matching variation prefixes"
           (let [sample (rand-nth fixtures)
@@ -72,7 +73,7 @@
               (let [valid-prefix (rand-prefix value)
                     [status body] (find-variation valid-prefix)
                     matches (:matches body)]
-                (tu/status-is? 200 status body)
+                (t/is (ru-hp/ok? {:status status :body body}))
                 (t/is (seq matches)
                       (str "No matches found for " valid-prefix))
                 (t/is (some (fn [match] (= (:variation/id match) id)) matches)

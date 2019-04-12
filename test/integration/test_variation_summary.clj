@@ -3,7 +3,6 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
-   [ring.util.http-response :refer [not-found ok]]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.variation :as gsv]   
    [wormbase.test-utils :as tu]
@@ -31,7 +30,7 @@
         data-sample
         (fn check-variation-summary [conn]
           (let [[status body] (summary id)]
-            (tu/status-is? (:status (ok)) status body)))))))
+            (t/is (ru-hp/ok? {:status status :body body}))))))))
 
 (t/deftest maltformed-identifier
   (t/testing "A malformed identifier results in a 404 response."
