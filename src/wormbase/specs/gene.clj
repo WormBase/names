@@ -9,19 +9,13 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(def general-cgc-name-regexp #"[A-Za-z\d-\\.]+")
-
-(def general-seq-name-regexp #"([A-Za-z\d\\._]+)([_|\\.]{0,1}\d+)?")
-
 (s/def ::name (stc/spec (s/and string? not-empty)))
 
-(s/def :gene/id (stc/spec
-                 (s/and string?
-                        (partial re-matches gene-id-regexp))))
+(s/def :gene/id ::name)
 
-(s/def :gene/cgc-name (s/nilable (s/and ::name (partial re-matches general-cgc-name-regexp))))
+(s/def :gene/cgc-name (s/nilable ::name))
 
-(s/def :gene/sequence-name (s/and ::name (partial re-matches general-seq-name-regexp)))
+(s/def :gene/sequence-name ::name)
 
 (s/def :gene/biotype sts/keyword?)
 
