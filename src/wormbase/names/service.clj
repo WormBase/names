@@ -90,12 +90,12 @@
     :swagger swagger-ui}
    (sweet/context "" []
      (sweet/context "/api" []
-       wn-species/routes
-       wn-person/routes
-       wn-gene/routes
-       wn-variation/routes
-       wn-batch/routes
-       wn-recent/routes))))
+      wn-species/routes
+      wn-person/routes
+      wn-gene/routes
+      wn-variation/routes
+      wn-batch/routes
+      wn-recent/routes))))
 
 (defn init
   "Entry-point for ring server initialization."

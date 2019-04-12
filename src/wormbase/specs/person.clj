@@ -34,17 +34,18 @@
 (s/def ::identifier (stc/spec (s/or :person/email ::email
                                     :person/id ::id)))
  
-(s/def ::person (stc/spec (s/keys :req [:person/email :person/id]
-                                  :opt [:person/roles
-                                        :person/active?
-                                        :person/name])))
+(s/def ::summary (stc/spec (s/keys :req [:person/email :person/id]
+                                   :opt [:person/roles
+                                         :person/active?
+                                         :person/name])))
 
-(s/def ::people (stc/spec (s/coll-of ::person :kind sts/vector? :min-count 1)))
+(s/def ::people (stc/spec (s/coll-of ::summary :kind sts/vector? :min-count 1)))
 
 (s/def ::update (stc/spec (s/keys :opt [:person/active?
                                         :person/email
                                         :person/id
                                         :person/name
                                         :person/roles])))
-(s/def ::created ::person)
+(s/def ::created ::summary)
+
 

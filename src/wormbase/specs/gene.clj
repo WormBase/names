@@ -82,25 +82,16 @@
 
 (s/def ::status-changed (stc/spec (s/keys :req [:gene/status])))
 
-(s/def ::attr sts/keyword?)
-(s/def ::value any?)
-(s/def ::added sts/boolean?)
-(s/def ::change (s/keys :req-un [::attr ::value ::added]))
-(s/def ::changes (s/coll-of ::change))
-(s/def ::provenance (s/merge ::wsp/provenance (s/keys :req-un [::changes ::wsp/t])))
-(s/def ::history (stc/spec
-                  (s/coll-of ::provenance :type vector? :min-count 1)))
-
-(s/def ::summary (stc/spec (s/or :cloned ::cloned
-                                 :uncloned ::uncloned
-                                 :anonymous ::anonymous)))
+(s/def ::summary (stc/spec (s/merge (s/keys :req-un [::wsp/history])
+                                    (s/or :cloned ::cloned
+                                          :uncloned ::uncloned
+                                          :anonymous ::anonymous))))
 
 (s/def ::identifier (stc/spec (s/or :gene/id :gene/id
                                     :gene/cgc-name :gene/cgc-name
                                     :gene/sequence-name :gene/sequence-name)))
 
 (s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
-
 
 (s/def ::new-batch (stc/spec (s/coll-of ::new :min-count 1)))
 
