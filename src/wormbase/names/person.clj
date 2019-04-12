@@ -85,14 +85,15 @@
   (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (d/pull db [:person/email :person/active?] lur)
-        active? (:person/active? person)
-        prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
-        tx-result @(d/transact-async conn
-                                     [[:db/cas lur :person/active? active? false] prov])]
-    (if-let [dba (:db-after tx-result)]
-      (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
-      (bad-request))))
-  
+        active? (:person/active? person)]
+    (when active?
+      (let [prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
+            tx-result @(d/transact-async conn
+                                         [[:db/cas lur :person/active? active? false] prov])]
+        (if-let [dba (:db-after tx-result)]
+          (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
+          (bad-request))))))
+
 (defn wrap-id-validation [handler identifier]
   (fn [request]
     (if (s/valid? ::wsp/identifier identifier)
