@@ -132,6 +132,9 @@
   Then define `conn` d/connect and db with d/db.
   (binding [from (jt/to-java-date (jt/instant))
             until (since-days-ago 2)]
+    (activities db (d/log conn) entity-rules "gene")
     (activities db (d/log conn) entity-rules "gene" from until)
+    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org")
     (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org" from until)
+    (activities db (d/log conn) batch-rules)
     (activities db (d/log conn) batch-rules from until)))
