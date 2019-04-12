@@ -26,6 +26,7 @@
                                         :event/update-variation
                                         ::wsv/update-batch
                                         wnu/conform-data
+                                        identity
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new variations."
@@ -41,6 +42,7 @@
                                        event-type
                                        ::wsv/new-batch
                                        wnu/conform-data
+                                       identity
                                        request)))}
       :delete
       {:summary "Kill variations."

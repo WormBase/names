@@ -66,11 +66,11 @@
 
 (defn new-entities
   "Create a batch of new entities."
-  [uiident event-type spec conformer request]
+  [uiident event-type spec conformer validator request]
   (let [entity-type (namespace uiident)
         data-transform (fn set-live [_ data]
                          (let [live-status (keyword (str entity-type ".status") "live")]
-                           (->> data
+                           (->> (validator data)
                                 (conformer spec)
                                 (assign-status entity-type live-status))))
         batch-result (batcher wbids-batch/new
@@ -84,16 +84,19 @@
     (created (str "/api/batch/" (:batch/id result)) result)))
 
 (defn update-entities
-  [uiident event-type spec conformer request]
-  (let [result (batcher wbids-batch/update
+  [uiident event-type spec conformer validator request]
+  (let [data-transform (fn valdiating-conformer [_ data]
+                         (conformer spec (validator data)))
+        result (batcher wbids-batch/update
                         uiident
                         event-type
                         spec
-                        conformer
+                        data-transform
                         request)]
     (ok {:updated result})))
 
-(defn change-entity-statuses [uiident event-type to-status spec conformer request]
+(defn change-entity-statuses
+  [uiident event-type to-status spec conformer request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
         entity-type (namespace uiident)

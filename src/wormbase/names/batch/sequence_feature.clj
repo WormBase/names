@@ -33,6 +33,7 @@
                                      :event/new-sequence-feature
                                      ::wssf/new-batch
                                      conform
+                                     identity
                                      request))}
       :delete
       {:summary "Kill sequence features."
