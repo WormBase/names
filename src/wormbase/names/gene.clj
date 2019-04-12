@@ -126,13 +126,7 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(defn summary [request identifier]
-  (let [db (:db request)
-        log (-> request :conn d/log)
-        [lur _] (identify request identifier)]
-    (when-let [info (wdb/pull db summary-pull-expr lur)]
-      (let [prov (wnp/query-provenance db log lur #{:gene/merges :gene/splits})]
-        (-> info (assoc :history prov) ok)))))
+(def summary (wne/summarizer identify summary-pull-expr))
 
 (defn new-unnamed-gene [request]
   (let [{payload :body-params conn :conn} request

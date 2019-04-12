@@ -14,17 +14,17 @@
   Lookups `identifier` (conformed with `identify-spec`) in the database.
   Returns `nil` when the entity cannot be found."
   [identitfy-spec request identifier]
-  (when-not (s/valid? identitfy-spec identifier)
-    (throw (ex-info "Found one or more invalid identifiers."
-                    {:problems (s/explain-data identitfy-spec identifier)
-                     :type ::validation-error})))
-  (let [lookup-ref (s/conform identitfy-spec identifier)
-        db (:db request)
-        ent (d/entity db lookup-ref)]
-    (if (:db/id ent)
-      [lookup-ref ent]
-      (not-found! {:message "Entity lookup failed"
-                   :lookup-ref lookup-ref}))))
+  (let [lookup-ref (s/conform identitfy-spec identifier)]
+    (when (s/invalid? lookup-ref)
+      (not-found! {:message "Identifier malformed."
+                   :problems (s/explain-data identitfy-spec identifier)
+                   :type ::validation-error}))
+    (let [db (:db request)
+          ent (d/entity db lookup-ref)]
+      (if (:db/id ent)
+        [lookup-ref ent]
+        (not-found! {:message "Entity lookup failed"
+                     :lookup-ref lookup-ref})))))
 
 (defn prepare-data-for-transact
   "Strip any data keys that are not valid datomic idents."
@@ -126,6 +126,7 @@
     (let [{db :db conn :conn} request
           log (d/log conn)
           [lur _] (identify-fn request identifier)]
-      (when-let [info (wdb/pull db pull-expr lur)]
-        (let [prov (wnp/query-provenance db log lur)]
-          (-> info (assoc :history prov) ok))))))
+      (when lur
+        (when-let [info (wdb/pull db pull-expr lur)]
+          (let [prov (wnp/query-provenance db log lur)]
+            (-> info (assoc :history prov) ok)))))))
