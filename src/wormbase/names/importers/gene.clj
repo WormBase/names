@@ -1,4 +1,14 @@
 (ns wormbase.names.importers.gene
+  "Import gene data from an ACeDB export.
+
+  Gene data comes in the form of two TSV files:
+    1. a set of the 'current data'
+    2. a set of the historic actions that have occurred over time.
+
+  The 'current data' set is transated with event type :event/import-gene.
+  The histoic actions are recorded after-the-fact by transacting provenance against
+  the current data set; this results in empty changesets for historic actions as its
+  not possible to re-create the history of changes since these have been lost (in ACeDB)."
   (:require
    [clojure.java.io :as io]
    [clojure.set :refer [rename-keys]]
@@ -25,9 +35,9 @@
 
 (def geneace-text-ref #(last (str/split % #"\s")))
 
-(defn transact-batch [conn tx-data & {:keys [transact-fn]}]
+(defn transact-batch [conn tx-data event-type & {:keys [transact-fn]}]
   (try
-    (wnip/transact-batch :event/import-gene conn tx-data :tranasct-fn transact-fn)
+    (wnip/transact-batch event-type conn tx-data :tranasct-fn transact-fn)
     (catch Exception exc
       (println "EXCEPTION!!!!")
       (println "EX-DATA follows:")
@@ -259,13 +269,13 @@
           tx-data (partition-all 500 data)]
     @(noisy-transact conn tx-data)))
 
-(defn batch-transact-data [conn tsv-path]
+(defn transact-current-data [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
     ;; process all genes that are not dead, using the default batch size of 500.
     (doseq [batch (build-data-txes tsv-path
                                    cd-ex-conf
                                    #(not= (:gene/status %) :gene.status/dead))]
-      @(transact-batch conn batch :tranasct-fn noisy-transact))
+      @(transact-batch conn batch :event/import-gene :tranasct-fn noisy-transact))
     ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
     ;; - only process the dead genees now, 1 at a time.
     ;; - use batch-size of 1, since there are dead genes with
@@ -275,13 +285,14 @@
                                    #(= (:gene/status %) :gene.status/dead)
                                    :batch-size 1)]
       @(transact-batch conn
+                       :event/import-gene
                        (map (partial fixup-non-live-gene (d/db conn)) batch)
                        :tranasct-fn noisy-transact))))
 
 (defn process
   [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
                                           :or {n-in-flight 10}}]
-  (batch-transact-data conn data-tsv-path)
+  (transact-current-data conn data-tsv-path)
   (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
     (let [event-txes (->> gene-events
                           (keep-indexed #(vector (inc %1) %2))
