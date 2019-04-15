@@ -58,12 +58,12 @@
         into-lur [:gene/id (geneace-text-ref event-text)]
         prov (-> event
                  (wnu/select-keys-with-ns "provenance")
-                 (assoc :provenance/what event-type
+                 (assoc :db/id "datomic.tx"
+                        :provenance/what event-type
                         :provenance/how :agent/importer))]
     (swap! deferred
            defer-tx
-           [[:db/add from-lur data-attr into-lur]
-            prov]))
+           [[:db/add from-lur data-attr into-lur] prov]))
     nil)
 
 ;; A string describing the Gene "HistoryAction".
@@ -256,7 +256,7 @@
 
 (defn process-deferred [conn]
   (doseq [data (:tx-data @deferred)
-          tx-data (partition-all 100 data)]
+          tx-data (partition-all 500 data)]
     @(noisy-transact conn tx-data)))
 
 (defn batch-transact-data [conn tsv-path]
