@@ -156,13 +156,9 @@
     (concat ent-txes ref-txes)))
 
 (defn pull-provenance [db entity-id prov-pull-expr pull-changes-fn tx]
-  (-> db
-      (wdb/pull prov-pull-expr tx)
-      (update :changes (fnil identity (pull-changes-fn tx)))))
-
-(def exclude-imported (remove (fn [v]
-                                (if-let [what (:provenance/what v)]
-                                  (and (string? what) (str/includes? what "import"))))))
+  (some-> db
+          (wdb/pull prov-pull-expr tx)
+          (update :changes (fnil identity (pull-changes-fn tx)))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
@@ -187,8 +183,6 @@
          tx-ids (involved-in-txes db entity-id ref-attrs)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq
-              (sequence exclude-imported)
-              (map #(update % :provenance/how (fnil identity :agent/importer)))
               (sort-mrf)
               (seq)))))
 
