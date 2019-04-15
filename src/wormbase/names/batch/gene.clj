@@ -98,7 +98,7 @@
                                    wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/POST "/suppress" request
-      :summary "Suppress entities."
+      :summary "Suppress genes."
       :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsg/suppress-batch}
              prov {:prov ::wsp/provenance}]
