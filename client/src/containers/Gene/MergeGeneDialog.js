@@ -15,7 +15,10 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 import GeneAutocomplete from './GeneAutocomplete';
 
 class MergeGeneDialog extends Component {
-  submitData = ({ data: rawData = {}, prov: provenance } = {}) => {
+  submitData = (
+    { data: rawData = {}, prov: provenance } = {},
+    authorizedFetch
+  ) => {
     const { geneIdMergeInto, ...data } = rawData;
     return mockFetchOrNot(
       (mockFetch) => {
@@ -31,7 +34,7 @@ class MergeGeneDialog extends Component {
         }
       },
       () => {
-        return this.props.authorizedFetch(
+        return authorizedFetch(
           `/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`,
           {
             method: 'POST',
@@ -46,13 +49,13 @@ class MergeGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, name, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Merge gene"
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Merge and kill {geneName}</ProgressButton>
+          <ProgressButton {...props}>Merge and kill {name}</ProgressButton>
         )}
         {...otherProps}
       >
@@ -66,8 +69,8 @@ class MergeGeneDialog extends Component {
           return (
             <DialogContent>
               <DialogContentText>
-                Gene <strong>{geneName}</strong> will be merged into the gene
-                you specify below. Are you sure?
+                Gene <strong>{name}</strong> will be merged into the gene you
+                specify below. Are you sure?
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />
@@ -77,7 +80,7 @@ class MergeGeneDialog extends Component {
                 helperText={
                   <span>
                     Enter WBID or CGC name of the gene that{' '}
-                    <strong>{geneName}</strong> will be merged into
+                    <strong>{name}</strong> will be merged into
                   </span>
                 }
                 required
@@ -103,8 +106,7 @@ class MergeGeneDialog extends Component {
 
 MergeGeneDialog.propTypes = {
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
+  name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 
 const styles = (theme) => ({});

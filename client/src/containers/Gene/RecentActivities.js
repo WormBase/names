@@ -39,12 +39,10 @@ class RecentActivities extends Component {
   };
 
   render() {
-    const { authorizedFetch } = this.props;
     return (
       <div>
         <GeneActivitiesTable
           activities={this.state.data}
-          authorizedFetch={authorizedFetch}
           onUpdate={this.fetchData}
         />
         <p>
@@ -62,7 +60,7 @@ class RecentActivities extends Component {
 }
 
 RecentActivities.propTypes = {
-  authorizedFetch: PropTypes.func,
+  entityType: PropTypes.string.isRequired,
 };
 
 export default RecentActivities;

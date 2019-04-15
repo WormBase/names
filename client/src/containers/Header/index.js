@@ -1,18 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import {
   AppBar,
+  SearchBox,
   Toolbar,
   Typography,
   withStyles,
 } from '../../components/elements';
-import GeneSearchBox from '../Gene/GeneSearchBox';
-import { Link } from 'react-router-dom';
+
+import { Route, Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
+import { existsEntitiyType } from '../../utils/entityTypes';
 
 const Header = (props) => {
   const { classes } = props;
+
   return (
     <div>
       <AppBar position="static" className={classes.root}>
@@ -28,9 +32,22 @@ const Header = (props) => {
             </Link>
           </div>
           {props.isAuthenticated ? (
-            <GeneSearchBox
-              classes={{
-                root: classes.searchBox,
+            <Route
+              path="/:entityType"
+              component={({ match }) => {
+                const entityType = match.params.entityType;
+
+                return (
+                  <SearchBox
+                    entityType={
+                      existsEntitiyType(entityType) ? entityType : 'gene'
+                    }
+                    enableEntityTypeSelect={true}
+                    classes={{
+                      root: classes.searchBox,
+                    }}
+                  />
+                );
               }}
             />
           ) : null}

@@ -13,7 +13,7 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class UndoSplitGeneDialog extends Component {
-  submitData = (data) => {
+  submitData = (data, authorizedFetch) => {
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.delete('*', {
@@ -22,7 +22,7 @@ class UndoSplitGeneDialog extends Component {
         });
       },
       () => {
-        return this.props.authorizedFetch(
+        return authorizedFetch(
           `/api/gene/${this.props.wbId}/split/${this.props.wbIntoId}`,
           {
             method: 'DELETE',
@@ -38,7 +38,6 @@ class UndoSplitGeneDialog extends Component {
       wbIntoId,
       geneName,
       geneIntoName,
-      authorizedFetch,
       ...otherProps
     } = this.props;
     return (
@@ -80,7 +79,6 @@ UndoSplitGeneDialog.propTypes = {
   wbIntoId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneIntoName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({});

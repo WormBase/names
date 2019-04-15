@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 
 class SimpleAjax extends React.Component {
   constructor(props) {
@@ -10,7 +11,7 @@ class SimpleAjax extends React.Component {
     };
   }
 
-  handleSubmit = (data) => {
+  handleSubmit = (data, authorizedFetch) => {
     const { onSubmitStart, onSubmitSuccess, onSubmitError } = this.props;
     this.setState(
       {
@@ -20,7 +21,7 @@ class SimpleAjax extends React.Component {
         onSubmitStart && onSubmitStart();
         console.log(data);
         this.props
-          .submitter(data)
+          .submitter(data, authorizedFetch)
           .then((response) => {
             return Promise.all([response, response.json()]);
           })
@@ -46,12 +47,21 @@ class SimpleAjax extends React.Component {
 
   render() {
     const { data } = this.props;
-    return this.props.children({
-      errorMessage: this.state.errorMessage,
-      status: this.state.status,
-      handleSubmit: () =>
-        this.handleSubmit(typeof data === 'function' ? data() : data),
-    });
+    return (
+      <AuthorizationContext.Consumer>
+        {({ authorizedFetch }) =>
+          this.props.children({
+            errorMessage: this.state.errorMessage,
+            status: this.state.status,
+            handleSubmit: () =>
+              this.handleSubmit(
+                typeof data === 'function' ? data() : data,
+                authorizedFetch
+              ),
+          })
+        }
+      </AuthorizationContext.Consumer>
+    );
   }
 }
 
