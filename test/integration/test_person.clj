@@ -6,6 +6,7 @@
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
+   [wormbase.fake-auth]
    [wormbase.specs.person :as wsp]
    [wormbase.test-utils :as tu]))
 

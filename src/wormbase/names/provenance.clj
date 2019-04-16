@@ -41,7 +41,7 @@
                  (-> request :db (d/pull [:db/id] plur))
                  (-> auth-identity :person :db/id))
         whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
-        how (wna/identify (:token-info auth-identity))
+        how (-> auth-identity :token-info wna/identify)
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
               :provenance/what what

@@ -1,6 +1,7 @@
 (ns wormbase.fake-auth
   (:require
    [clojure.tools.logging :as log]
+   [clojure.walk :as w]
    [cheshire.core :as json]
    [environ.core :as environ]
    [wormbase.names.auth :as wn-auth])
@@ -51,5 +52,9 @@
  (fn fake-parse-token [token]
    (fn [x]
      (log/debug "NOTICE: faking wna/parse-token")
-     defaults)))
+     (merge
+      (w/keywordize-keys defaults)
+      (some->> *gapi-verify-token-response*
+               (into {})
+               (w/keywordize-keys))))))
 

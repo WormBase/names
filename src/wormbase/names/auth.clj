@@ -38,7 +38,10 @@
                                   (build)))
 
 (defn parse-token [token]
-  (w/keywordize-keys (into {} (.getPayload (GoogleIdToken/parse json-factory token)))))
+  (some->> (GoogleIdToken/parse json-factory token)
+           (.getPayload)
+           (into {})
+           (w/keywordize-keys)))
 
 (defn client-id [client-type]
   (-> gapps-conf client-type :client-id))
@@ -60,39 +63,39 @@
       (log/error exc "Invalid token supplied"))))
 
 (defn query-person
-  [db ^String ident auth-token]
+  [db ident auth-token]
   (let [person (d/pull db '[*] [ident auth-token])]
     (when (:db/id person)
-      person)))
-
-(def query-person-memoized (memoize query-person))
+      (dissoc person :person/auth-token))))
 
 (defn sign-token [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
 (defrecord Identification [token-info person])
 
-(defn verified-stored-token [db auth-token-conf parsed-token]
-  (if-let [{stored-token :person/auth-token} (d/pull db
-                                                     '[:person/auth-token]
-                                                     [:person/email (:email parsed-token)])]
+(defn verified-person
+  "Return a person from the database having a matching stored token."
+  [db auth-token-conf parsed-token]
+  (let [email (:email parsed-token)]
+    (if-let [{stored-token :person/auth-token} (d/pull db
+                                                       '[:person/auth-token]
+                                                       [:person/email email])]
 
-    (when-let [unsigned-token (try
-                                (bsc/unsign stored-token (:key auth-token-conf)
-                                            (select-keys auth-token-conf [:max-age]))
-                                (catch Exception ex
-                                  (log/debug "Failed to unsigned stored token"
-                                             {:stored-token stored-token
-                                              :key (:key auth-token-conf)})))]
-      (Identification. (read-string unsigned-token)
-                       (query-person-memoized db :person/auth-token stored-token)))))
+      (when-let [unsigned-token (try
+                                  (bsc/unsign stored-token (:key auth-token-conf)
+                                              (select-keys auth-token-conf [:max-age]))
+                                  (catch Exception ex
+                                    (log/debug "Failed to unsigned stored token"
+                                               {:stored-token stored-token
+                                                :key (:key auth-token-conf)})))]
+        (query-person db :person/email email)))))
 
 (defn identify [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
-        auth-token (parse-token token)
+        parsed-token (parse-token token)
         db (:db request)]
-    (if-let [identification (verified-stored-token db auth-token-conf auth-token)]
-      identification
+    (if-let [person (verified-person db auth-token-conf parsed-token)]
+      (Identification. parsed-token person)
       (when-let [tok (verify-token token)]
         (if-let [person (query-person db :person/email (:email tok))]
           (let [auth-token (sign-token auth-token-conf tok)
@@ -101,10 +104,8 @@
                                                (:db/id person)
                                                :person/auth-token
                                                auth-token]])]
-            (if-let [person (query-person (:db-after tx-result)
-                                          :person/auth-token auth-token)]
-              (Identification. tok person)))
-              (log/warn (str "No matching token in db")))))))
+            (Identification. parsed-token person)))
+        (log/warn (str "No matching token in db"))))))
 
 (def backend (babt/token-backend {:authfn identify}))
 
