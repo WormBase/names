@@ -12,6 +12,7 @@
 
 (def pull-expr '[:provenance/when
                  :provenance/why
+                 :batch/id
                  [:db/txInstant :as :t]
                  {:provenance/what [:db/ident]
                   :provenance/who [:person/name :person/email :person/id]
@@ -155,10 +156,12 @@
                          ref-idents)]
     (concat ent-txes ref-txes)))
 
-(defn pull-provenance [db entity-id prov-pull-expr pull-changes-fn tx]
-  (some-> db
-          (wdb/pull prov-pull-expr tx)
-          (update :changes (fnil identity (pull-changes-fn tx)))))
+(defn pull-provenance
+  ([db entity-id prov-pull-expr tx pull-changes-fn]
+   (update (pull-provenance db entity-id prov-pull-expr tx)
+           :changes (fnil identity (pull-changes-fn tx))))
+  ([db entity-id prov-pull-expr tx]
+   (wdb/pull db prov-pull-expr tx)))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
@@ -178,11 +181,12 @@
    (query-provenance db log entity-id ref-attrs pull-expr))
   ([db log entity-id ref-attrs prov-pull-expr]
    (let [pull-changes (partial query-tx-changes-for-event db log entity-id)
-         pull-prov (partial pull-provenance db entity-id prov-pull-expr pull-changes)
+         pull-prov #(pull-provenance db entity-id prov-pull-expr % pull-changes)
          sort-mrf #(sort-events-by :t % :most-recent-first true)
          tx-ids (involved-in-txes db entity-id ref-attrs)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq
               (sort-mrf)
               (seq)))))
+
 
