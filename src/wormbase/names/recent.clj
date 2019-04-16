@@ -116,7 +116,8 @@
 (defn decode-etag [etag]
   (-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
-(defn handle [request rules puller & [needle from until]]
+(defn handle
+  [request rules puller needle from until]
   (let [{conn :conn db :db} request
         log (d/log conn)
         from* (or from (since-days-ago *default-days-ago*))
@@ -135,37 +136,63 @@
                :tags ["recent"]
                :responses {200 {:schema {:activities ::wsr/activities}}}
                :query-params [{from :- ::wsr/from nil}
-                              {util :- ::wsr/until nil}]
+                              {until :- ::wsr/until nil}]
                :middleware [wna/restrict-to-authenticated
                             rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
-                 (handle request batch-rules (prov-only-puller request)))
+                 (handle request batch-rules (prov-only-puller request) "" from until))
                (sweet/GET "/person" request
                  :tags ["recent" "person"]
+                 :query-params [id :- :person/id]
                  :summary "List recent activities made by the currently logged-in user."
-                 (let [person-email (-> request :identity :person :person/email)]
-                   (handle request person-rules (changes-and-prov-puller request) person-email)))
+                 (when-let [person (if id
+                                     (d/pull db [:person/email] [:person/id id])
+                                     (some-> request :identity :person))]
+                   (handle request
+                           person-rules
+                           (changes-and-prov-puller request)
+                           (:person/email person)
+                           from
+                           until)))
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 (handle request entity-rules (changes-and-prov-puller request) "gene"))
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "gene"
+                         from
+                         until))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
-                 (handle request entity-rules (changes-and-prov-puller request) "variation")))))
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "variation"
+                         from
+                         until)))))
 
 (comment
   "Examples of each invokation flavour"
   (in-ns 'wormbase.names.recent)
 
   Then define `conn` d/connect and db with d/db.
-  (binding [from (jt/to-java-date (jt/instant))
+  (binding [db (d/db conn) log (d/log conn)
+            pull-prov-only (prov-only-puller db log)
+            pull-changes-and-prov (changes-and-prov-puller db log)
+            from (jt/to-java-date (jt/instant))
             until (since-days-ago 2)]
-    (activities db (d/log conn) entity-rules "gene")
-    (activities db (d/log conn) entity-rules "gene" from until)
-    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org")
-    (activities db (d/log conn) person-rules "matthew.rustsell@wormbase.org" from until)
-    (activities db (d/log conn) batch-rules)
-    (activities db (d/log conn) batch-rules from until)))
+    (activities db log entity-rules pull-changes-and-prov "gene")
+    (activities db log entity-rules-rules pull-changes-and-prov "gene" from until)
+
+    (activities db log entity-rules pull-changes-and-prov "variation")
+    (activities db log entity-rules-rules pull-changes-and-prov "variation" from until)
+
+    (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org")
+    (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org" from until)
+    
+    (activities db (d/log conn) batch-rules pull-prov-only)
+    (activities db (d/log conn) batch-rules pull-prov-only from until)))
