@@ -80,10 +80,10 @@
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
 (defn encode-etag [latest-t]
-  (codecs/bytes->str (b64/encode (str latest-t))))
+  (-> latest-t str b64/encode codecs/bytes->str))
 
 (defn decode-etag [etag]
-  (codecs/bytes->str (b64/decode (codecs/str->bytes etag))))
+  (-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn handle [request rules & [needle from until]]
   (let [{conn :conn db :db} request
