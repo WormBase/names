@@ -95,9 +95,10 @@
 (t/deftest multi-item
   (t/testing "Batch with a random number of items is successful"
     (let [[g1 g2] (tu/gene-samples 2)
-          bdata [{:gene/cgc-name "oky-1"
+          species (-> g1 :gene/species second)
+          bdata [{:gene/cgc-name (tu/cgc-name-for-species species)
                   :gene/id (:gene/id g1)
-                  :gene/species (-> g1 :gene/species second)}
+                  :gene/species species}
                  {:gene/sequence-name "OKY.1"
                   :gene/biotype :biotype/cds
                   :gene/id (:gene/id g2)
