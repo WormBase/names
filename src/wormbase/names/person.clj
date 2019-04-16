@@ -5,16 +5,16 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
+   [ring.util.http-response :refer [bad-request created ok]]
+   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
    [wormbase.names.auth :as wna]
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
-   [ring.util.http-response :refer [bad-request created ok]]
-   [spec-tools.core :as stc]
    [wormbase.names.util :as wnu]))
 
-(def admin-required (partial wna/require-role! #{:person.role/admin}))
+(def admin-required! (partial wna/require-role! #{:person.role/admin}))
 
 (def pull-expr '[*])
 
@@ -26,7 +26,7 @@
            (:person/id found))))
 
 (defn create-person [request]
-  (admin-required request)
+  (admin-required! request)
   (let [conn (:conn request)
         spec ::wsp/summary
         person (some-> request :body-params)]
@@ -58,7 +58,7 @@
 (defn update-person
   "Handler for apply an update a person."
   [identifier request]
-  (admin-required request)
+  (admin-required! request)
   (let [db (:db request)
         lur (s/conform ::wsp/identifier identifier)
         person (summary db lur)]
@@ -83,7 +83,7 @@
             :problems (expound-str spec data*)}))))))
 
 (defn deactivate-person [identifier request]
-  (admin-required request)
+  (admin-required! request)
   (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (d/pull db [:person/email :person/active?] lur)
