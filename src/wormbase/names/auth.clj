@@ -95,9 +95,7 @@
         parsed-token (parse-token token)
         db (:db request)]
     (if-let [person (verified-person db auth-token-conf parsed-token)]
-      (do
-        (println "Found stored token")
-        (Identification. parsed-token person))
+      (Identification. parsed-token person)
       (when-let [tok (verify-token token)]
         (do
           (println "Checking for person in db with email:" (:email tok))

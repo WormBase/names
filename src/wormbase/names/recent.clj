@@ -161,15 +161,13 @@
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
                  :query-params [how :- ::wsr/how]
-                 (do
-                   (println "HOW:" how)
-                   (handle request
-                           entity-rules
-                           (changes-and-prov-puller request)
-                           "gene"
-                           how
-                           from
-                           until)))
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "gene"
+                         how
+                         from
+                         until))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
