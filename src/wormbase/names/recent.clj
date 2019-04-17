@@ -37,9 +37,9 @@
 (def imported-date (memoize find-max-imported-date))
 
 (defn query-activities
-  ([db log rules ^Date from ^Date until]
-   (query-activities db log rules "" from until))
-  ([db log rules needle ^Date from ^Date until]
+  ([db log rules ^Date from ^Date until how]
+   (query-activities db log rules "" from until how))
+  ([db log rules needle ^Date from ^Date until how]
    ;; find the date for the most recent transaction after imported transactions.
    (let [import-date (imported-date db)
          ;; choose the date that is older betweem thn requested date and last import tx
@@ -52,12 +52,12 @@
          ;; jvm (cold): 107.266427 msecs
          ;; jvm (warm): 30.054339 msecs
          query '[:find ?tx ?e
-                 :in $ % ?log ?since-start ?since-end ?needle
+                 :in $ % ?log ?since-start ?since-end ?needle ?how
                  :where
                  [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
-                 (filter-events ?tx ?needle)
+                 (filter-events ?tx ?needle ?how)
                  [(tx-data ?log ?tx) [[?e]]]]]
-     (d/q query db rules log since-t now needle))))
+     (d/q query db rules log since-t now needle how))))
 
 (defn changes-and-prov-puller
   "Creates a transducer for pulling changes and provenance."
@@ -86,25 +86,24 @@
   "Return recent activities for both batch and individual operations.
   The result should be map whose keys represent these two groupings.
   The groupings in turn should be a sequence of maps."
-  ([db log rules puller ^Date from ^Date until]
-   (activities db log rules puller "" from until))
-  ([db log rules puller needle ^Date from ^Date until]
-   (->> (query-activities db log rules from until)
-        (sequence puller)
-        (remove nil?))))
+  [db log rules puller needle how ^Date from ^Date until]
+  (->> (query-activities db log rules from until how)
+       (sequence puller)
+       (remove nil?)))
 
-(def entity-rules '[[(filter-events ?tx ?needle)
+(def entity-rules '[[(filter-events ?tx ?needle ?how)
                      [(missing? $ ?tx :batch/id)]
                      [?tx :provenance/what ?wid]
+                     [?tx :provenance/how ?how]
                      [?wid :db/ident ?what]
                      [(name ?what) ?w]
                      [(clojure.string/includes? ?w ?needle)]]])
 
-(def person-rules '[[(filter-events ?tx ?needle)
+(def person-rules '[[(filter-events ?tx ?needle _)
                      [?tx :provenance/who ?pid]
                      [?pid :person/email ?needle]]])
 
-(def batch-rules '[[(filter-events ?tx ?needle)
+(def batch-rules '[[(filter-events ?tx ?needle _)
                     [?tx :batch/id _ _ ]]])
 
 
@@ -117,19 +116,21 @@
   (-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn handle
-  [request rules puller needle from until]
-  (let [{conn :conn db :db} request
-        log (d/log conn)
-        from* (or from (since-days-ago *default-days-ago*))
-        until* (or until (jt/to-java-date (jt/instant)))
-        items (->> (activities db log rules puller (or needle "") from* until*)
-                   (map (partial wu/elide-db-internals db))
-                   (sort-by :t))
-        latest-t (some-> items first :t)
-        etag (encode-etag latest-t)]
-    (-> {:activities items}
-        (ok)
-        (header "etag" etag))))
+  ([request rules puller needle from until]
+   (handle request rules puller needle #{:agent/console :agent/web} from until))
+  ([request rules puller needle how from until]
+   (let [{conn :conn db :db} request
+         log (d/log conn)
+         from* (or from (since-days-ago *default-days-ago*))
+         until* (or until (jt/to-java-date (jt/instant)))
+         items (->> (activities db log rules puller (or needle "") how from* until*)
+                    (map (partial wu/elide-db-internals db))
+                    (sort-by :t))
+         latest-t (some-> items first :t)
+         etag (encode-etag latest-t)]
+     (-> {:activities items}
+         (ok)
+         (header "etag" etag)))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
@@ -159,19 +160,25 @@
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 (handle request
-                         entity-rules
-                         (changes-and-prov-puller request)
-                         "gene"
-                         from
-                         until))
+                 :query-params [how :- ::wsr/how]
+                 (do
+                   (println "HOW:" how)
+                   (handle request
+                           entity-rules
+                           (changes-and-prov-puller request)
+                           "gene"
+                           how
+                           from
+                           until)))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
+                 :query-params [how :- ::wsr/how]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
                          "variation"
+                         how
                          from
                          until)))))
 
