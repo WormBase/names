@@ -121,12 +121,12 @@
              (wu/elide-db-internals dba)
              ok)))))
 
-(defn summarizer [identify-fn pull-expr]
+(defn summarizer [identify-fn pull-expr ref-attrs]
   (fn handle-summary [request identifier]
     (let [{db :db conn :conn} request
           log (d/log conn)
           [lur _] (identify-fn request identifier)]
       (when lur
         (when-let [info (wdb/pull db pull-expr lur)]
-          (let [prov (wnp/query-provenance db log lur)]
+          (let [prov (wnp/query-provenance db log lur ref-attrs)]
             (-> info (assoc :history prov) ok)))))))
