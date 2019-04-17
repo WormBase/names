@@ -12,12 +12,13 @@ import {
   PageMain,
   SearchBox,
 } from '../../components/elements';
+import EntityRecentActivities from './EntityRecentActivities';
 
 const EntityDirectory = (props) => {
   const {
     classes,
     entityType,
-    renderHistory = () => <i>Coming soon...</i>,
+    renderHistory = () => <EntityRecentActivities entityType={entityType} />, //<i>Coming soon...</i>,
   } = props;
   return (
     <DocumentTitle title={`${capitalize(entityType)} directory`}>
