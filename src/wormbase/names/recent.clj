@@ -148,7 +148,7 @@
                  :query-params [id :- :person/id]
                  :summary "List recent activities made by the currently logged-in user."
                  (when-let [person (if id
-                                     (d/pull db [:person/email] [:person/id id])
+                                     (d/pull (:db request) [:person/email] [:person/id id])
                                      (some-> request :identity :person))]
                    (handle request
                            person-rules
