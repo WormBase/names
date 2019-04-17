@@ -66,7 +66,7 @@
 
 (def summary-pull-expr '[* {:variation/status [:db/ident]}])
 
-(def summary (wne/summarizer identify summary-pull-expr))
+(def summary (wne/summarizer identify summary-pull-expr #{}))
 
 (def status-changer (partial wne/status-changer ::wsv/identifier :variation/status))
 

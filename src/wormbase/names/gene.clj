@@ -126,7 +126,7 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(def summary (wne/summarizer identify summary-pull-expr))
+(def summary (wne/summarizer identify summary-pull-expr #{:gene/splits :gene/merges}))
 
 (defn new-unnamed-gene [request]
   (let [{payload :body-params conn :conn} request
@@ -224,7 +224,8 @@
         txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
-      (let [[from-gene into-gene] (merged-info dba from-id into-id)]
+      (let [[into-gid from-gid] (map :gene/id [into-g from-g])
+            [from-gene into-gene] (merged-info dba from-gid into-gid)]
         (ok {:updated into-gene
              :merges (:gene/merges from-gene)
              :statuses {from-id (:gene/status from-gene)

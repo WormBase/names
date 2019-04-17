@@ -121,7 +121,7 @@
              (wu/elide-db-internals dba)
              ok)))))
 
-(defn summarizer [identify-fn pull-expr]
+(defn summarizer [identify-fn pull-expr ref-attrs]
   (fn handle-summary [request identifier]
     (let [{db :db conn :conn} request
           log (d/log conn)
