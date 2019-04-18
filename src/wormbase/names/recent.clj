@@ -160,7 +160,7 @@
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 :query-params [how :- ::wsr/how]
+                 :query-params [how :- ::wsr/how #{:gene/merges :gene/splits}]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
@@ -171,7 +171,7 @@
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
-                 :query-params [how :- ::wsr/how]
+                 :query-params [how :- ::wsr/how #{:gene/merges :gene/splits}]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
