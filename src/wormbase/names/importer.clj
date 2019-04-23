@@ -23,7 +23,6 @@
   (System/exit status))
 
 (def importers {"gene" gene-importer/process
-                "gms" gene-importer/process-merges-and-splits
                 "variation" var-importer/process})
 
 (defn -main
