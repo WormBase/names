@@ -36,6 +36,13 @@
 
 (def imported-date (memoize find-max-imported-date))
 
+(def query '[:find ?tx ?e
+             :in $ % ?log ?since-start ?since-end ?needle [?how ...]
+             :where
+             [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
+             (filter-events ?tx ?needle ?how)
+             [(tx-data ?log ?tx) [[?e]]]])
+
 (defn query-activities
   ([db log rules ^Date from ^Date until how]
    (query-activities db log rules "" from until how))
@@ -46,17 +53,11 @@
          since-t (if (and from (>= (compare from import-date) 0))
                    from
                    import-date)
-         now (jt/to-java-date (jt/instant))
+         now (jt/to-java-date (jt/instant))]
          ;; Timings for the `tx-ids` query below with default configured time window (60 days)
          ;; (excluding pull expressions)
          ;; jvm (cold): 107.266427 msecs
          ;; jvm (warm): 30.054339 msecs
-         query '[:find ?tx ?e
-                 :in $ % ?log ?since-start ?since-end ?needle ?how
-                 :where
-                 [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
-                 (filter-events ?tx ?needle ?how)
-                 [(tx-data ?log ?tx) [[?e]]]]]
      (d/q query db rules log since-t now needle how))))
 
 (defn changes-and-prov-puller
@@ -87,9 +88,9 @@
   The result should be map whose keys represent these two groupings.
   The groupings in turn should be a sequence of maps."
   [db log rules puller needle how ^Date from ^Date until]
-  (->> (query-activities db log rules from until how)
-       (sequence puller)
-       (remove nil?)))
+  (some->> (query-activities db log rules needle from until how)
+           (sequence puller)
+           (remove nil?)))
 
 (def entity-rules '[[(filter-events ?tx ?needle ?how)
                      [(missing? $ ?tx :batch/id)]
