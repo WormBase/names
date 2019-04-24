@@ -25,14 +25,17 @@
       (jt/to-java-date)))
 
 (defn- find-max-imported-date [db]
-  (-> (d/q '[:find (max ?inst) .
-             :where
-             [?tx :provenance/how :agent/importer]
-             [?tx :db/txInstant ?inst]]
-           db)
-      (jt/instant)
-      (jt/plus (jt/seconds 1))
-      (jt/to-java-date)))
+  (let [max-tx-inst (d/q '[:find (max ?inst) .
+                           :where
+                           [?tx :provenance/how :agent/importer]
+                           [?tx :db/txInstant ?inst]]
+                         db)
+        max-date (if max-tx-inst
+                   (jt/instant max-tx-inst)
+                   (jt/instant))]
+    (-> max-date
+        (jt/plus (jt/seconds 1))
+        (jt/to-java-date))))
 
 (def imported-date (memoize find-max-imported-date))
 
@@ -129,9 +132,9 @@
                     (sort-by :t))
          latest-t (some-> items first :t)
          etag (encode-etag latest-t)]
-     (-> {:activities items}
-         (ok)
-         (header "etag" etag)))))
+     (some-> {:activities items}
+             (ok)
+             (header "etag" etag)))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
