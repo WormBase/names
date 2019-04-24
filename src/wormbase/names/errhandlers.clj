@@ -98,11 +98,10 @@
      (if-let [db-err-handler (db-err handlers)]
        (db-err-handler exc data request)
        (handle-unexpected-error exc))
-     (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
-       (throw exc)
-       (ex/safe-handler exc data request))))
+     (throw exc)))
   ([exc]
    (log/fatal "Unexpected errror" exc)
+   (throw exc)
    (internal-server-error "Ooops, something went really wrong!")))
 
 (defn handle-txfn-error [^Exception exc data request]
