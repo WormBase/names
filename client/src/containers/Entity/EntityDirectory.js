@@ -10,7 +10,7 @@ import {
   ErrorBoundary,
   Page,
   PageMain,
-  SearchBox,
+  // SearchBox,
 } from '../../components/elements';
 
 const EntityDirectory = (props) => {
@@ -34,10 +34,12 @@ const EntityDirectory = (props) => {
               >
                 Add new {entityType}
               </Button>
-              <div className={classes.or}>OR</div>
-              <div className={classes.search}>
-                <SearchBox entityType={entityType} />
-              </div>
+              {/*
+                <div className={classes.or}>OR</div>
+                  <div className={classes.search}>
+                  <SearchBox entityType={entityType} />
+                </div>
+                */}
             </div>
           </div>
           <div className={classes.main}>
@@ -73,7 +75,7 @@ const styles = (theme) => ({
   },
   header: {
     display: 'flex',
-    justifyContent: 'space-around',
+    justifyContent: 'start',
     alignItems: 'center',
     marginBottom: theme.spacing.unit * 6,
     [theme.breakpoints.down('xs')]: {
