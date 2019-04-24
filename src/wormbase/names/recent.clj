@@ -1,5 +1,6 @@
 (ns wormbase.names.recent
   (:require
+   [clojure.string :as str]
    [buddy.core.codecs :as codecs]
    [buddy.core.codecs.base64 :as b64]
    [compojure.api.sweet :as sweet]
@@ -113,11 +114,13 @@
 
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
-(defn encode-etag [latest-t]
-  (-> latest-t str b64/encode codecs/bytes->str))
+(defn encode-etag [latest-t/]
+  {:pre [(not (str/blank? latest-t))]}
+  (some-> latest-t str b64/encode codecs/bytes->str))
 
-(defn decode-etag [etag]
-  (-> etag codecs/str->bytes b64/decode codecs/bytes->str))
+(defn decode-etag [^String etag]
+  {:pre [(not (str/blank? etag))]}
+  (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn handle
   ([request rules puller needle from until]
