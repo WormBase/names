@@ -5,6 +5,7 @@ import {
   AutocompleteChip,
   AutocompleteLoader,
   AutocompleteSuggestion,
+  CircularProgress,
   withStyles,
   InputAdornment,
   Paper,
@@ -82,7 +83,7 @@ class GeneAutocomplete extends Component {
                 }
               }}
             >
-              {({ suggestions }) => (
+              {({ suggestions, isLoading }) => (
                 <div className={classes.root}>
                   {renderInput({
                     fullWidth: true,
@@ -94,6 +95,13 @@ class GeneAutocomplete extends Component {
                     reset: clearSelection,
                     ...otherProps,
                   })}
+                  {isLoading ? (
+                    <Paper className={classes.paper} square>
+                      <div className={classes.loading}>
+                        <CircularProgress size={24} />
+                      </div>
+                    </Paper>
+                  ) : null}
                   <SimpleListPagination
                     items={suggestions}
                     pageSize={pageSize}
@@ -143,9 +151,15 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 1,
-    marginTop: -4 * theme.spacing.unit,
+    marginTop: -6 * theme.spacing.unit,
     left: 0,
     right: 0,
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: theme.spacing.unit,
   },
 });
 

@@ -12,6 +12,7 @@ export default class AutocompleteLoader extends React.Component {
     this.state = {
       inputValue: '', // track the input value to compare with the ajax response
       suggestions: [],
+      isLoading: false,
     };
   }
 
@@ -53,6 +54,7 @@ export default class AutocompleteLoader extends React.Component {
       {
         inputValue: inputValue,
         suggestions: [],
+        isLoading: true,
       },
       () => {
         mockFetchOrNot(
@@ -99,6 +101,7 @@ export default class AutocompleteLoader extends React.Component {
               this.setState(
                 {
                   suggestions,
+                  isLoading: false,
                 },
                 () => {
                   this.props.onSuggestionChange &&
@@ -115,6 +118,7 @@ export default class AutocompleteLoader extends React.Component {
   render() {
     return this.props.children({
       suggestions: this.state.suggestions || [],
+      isLoading: this.state.isLoading,
     });
   }
 }

@@ -5,6 +5,7 @@ import { Link, withRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/core';
 import SearchIcon from '@material-ui/icons/Search';
 import CancelIcon from '@material-ui/icons/Cancel';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Paper from '@material-ui/core/Paper';
@@ -105,7 +106,7 @@ const SearchBox = (props) => {
             inputValue={inputValue}
             selectedValue={selectedItem && selectedItem.id}
           >
-            {({ suggestions }) => (
+            {({ suggestions, isLoading }) => (
               <div>
                 {renderInput({
                   fullWidth: true,
@@ -155,6 +156,13 @@ const SearchBox = (props) => {
                     },
                   }),
                 })}
+                {isLoading ? (
+                  <Paper className={classes.paper} square>
+                    <div className={classes.loading}>
+                      <CircularProgress size={24} />
+                    </div>
+                  </Paper>
+                ) : null}
                 <SimpleListPagination
                   items={suggestions}
                   onPageChange={(startIndex, endIndex) => {
@@ -222,9 +230,15 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 1,
-    marginTop: -1 * theme.spacing.unit,
+    marginTop: -2 * theme.spacing.unit,
     left: 0,
     right: 0,
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: theme.spacing.unit,
   },
   searchIcon: {
     paddingLeft: theme.spacing.unit,
