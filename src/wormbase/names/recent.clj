@@ -114,18 +114,22 @@
 
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
-(defn encode-etag [latest-t/]
-  {:pre [(not (str/blank? latest-t))]}
+(defn encode-etag [latest-t]
   (some-> latest-t str b64/encode codecs/bytes->str))
 
 (defn decode-etag [^String etag]
-  {:pre [(not (str/blank? etag))]}
+ {:pre [(not (str/blank? etag))]}
   (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
+
+(defn add-etag-header-maybe [response etag]
+  (if (seq etag)
+    (header response "etag" etag)
+    response))
 
 (defn handle
   ([request rules puller needle from until]
    (handle request rules puller needle #{:agent/console :agent/web} from until))
-  ([request rules puller needle how from until]
+  ([request rules puller needle from until how]
    (let [{conn :conn db :db} request
          log (d/log conn)
          from* (or from (since-days-ago *default-days-ago*))
@@ -137,7 +141,7 @@
          etag (encode-etag latest-t)]
      (some-> {:activities items}
              (ok)
-             (header "etag" etag)))))
+             (add-etag-header-maybe etag)))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
@@ -167,25 +171,46 @@
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 :query-params [{how :- ::wsr/how #{:agent/console :agent/web}}]
+                 :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
                          "gene"
-                         how
                          from
-                         until))
+                         until
+                         how))
+               (sweet/GET "/gene/:agent" request
+                 :tags ["recent" "gene"]
+                 :summary "List recent gene activity performed via console scripts."
+                 :path-params [agent :- string?]
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "gene"
+                         from
+                         until
+                         #{(keyword "agent" agent)}))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
-                 :query-params [{how :- ::wsr/how #{:agent/console :agent/web}}]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
                          "variation"
-                         how
                          from
-                         until)))))
+                         until
+                         #{:agent/console :agent/web}))
+               (sweet/GET "/variation/:agent" request
+                 :tags ["recent" "variation"]
+                 :summary "List recent variation activity perfomed via console scripts."
+                 :path-params [agent :- string?]
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "variation"
+                         from
+                         until
+                         #{(keyword "agent" agent)})))))
 
 (comment
   "Examples of each invokation flavour"
