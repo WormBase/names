@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
+   [java-time :as jt]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [elegans-ln]]
    [wormbase.db :as wdb]
@@ -156,7 +157,7 @@
                               (filter #(= (:provenance/what %) :event/merge-genes))
                               first)]
             (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (inst? (:provenance/when prov)))
+            (t/is (jt/zoned-date-time? (:provenance/when prov)))
 
             (let [{src-merges :gene/merges} (d/pull (d/db conn)
                                                     [{:gene/merges [[:gene/id]]}]

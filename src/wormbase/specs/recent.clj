@@ -17,7 +17,7 @@
 
 (s/def ::from (stc/spec
                {:spec (s/nilable inst?)
-                :swagger/example (wu/days-ago *default-days-ago*)
+                :swagger/example (wu/format-java-date (wu/days-ago *default-days-ago*))
                 :description (str "Defaults to the date-time at "
                                   *default-days-ago*
                                   " days ago.")}))

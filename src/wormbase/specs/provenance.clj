@@ -2,16 +2,19 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [java-time :as jt]
+   [spec-tools.core :as stc]
+   [spec-tools.spec :as sts]
    [wormbase.specs.person] ;; side effecting: to bring in specs
    [wormbase.specs.agent :as wsa]
-   [spec-tools.core :as stc]
-   [spec-tools.spec :as sts]))
+   [wormbase.util :as wu]))
 
-;; TODO: clients should provide zoned-date-time (times in UTC)
-;;       - db wants instants (java.utl.Date values)
+;; internal datomic tx/Instant (java.util.Date instance)
 (s/def ::t sts/inst?)
 
-(s/def :provenance/when sts/inst?)
+;; clients are requried to provide their time zone when specifying dates.
+(s/def :provenance/when (stc/spec {:spec (s/nilable wu/zoned-date-time?)
+                                   :description "The date-time the curator performed the action."}))
 
 (s/def :provenance/what sts/keyword?)
 

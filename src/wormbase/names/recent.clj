@@ -174,7 +174,7 @@
                          how))
                (sweet/GET "/gene/:agent" request
                  :tags ["recent" "gene"]
-                 :summary "List recent gene activity performed via console scripts."
+                 :summary "List recent gene activity performed via a given agent."
                  :path-params [agent :- ::wsr/agent]
                  (handle request
                          entity-rules
@@ -195,7 +195,7 @@
                          #{:agent/console :agent/web}))
                (sweet/GET "/variation/:agent" request
                  :tags ["recent" "variation"]
-                 :summary "List recent variation activity perfomed via console scripts."
+                 :summary "List recent variation activity perfomed via a given agent."
                  :path-params [agent :- ::wsr/agent]
                  (handle request
                          entity-rules

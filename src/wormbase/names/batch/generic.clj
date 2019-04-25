@@ -4,6 +4,7 @@
    [clojure.string :as str]
    [clj-uuid :as uuid]
    [datomic.api :as d]
+   [java-time :as jt]
    [ring.util.http-response :refer [bad-request created ok]]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
@@ -13,7 +14,8 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
-   [wormbase.specs.variation :as wsv]))
+   [wormbase.specs.variation :as wsv]
+   [java-time :as jt]))
 
 (s/def ::entity-type sts/string?)
 
@@ -52,6 +54,9 @@
                 db
                 bid)
            (map (partial wdb/pull db pull-expr))
+           (map #(update %
+                         :provenance/when
+                         (fn [v] (jt/zoned-date-time v (jt/zone-id)))))
            (first)))
 
 (defn ids-created [db uiident batch-id]
@@ -143,4 +148,7 @@
     (when b-prov-summary
       (-> b-prov-summary
           (assoc :batch/id batch-id)
+          (update :provenance/when (fn [v]
+                                     (when v
+                                       (jt/zoned-date-time v (jt/zone-id)))))
           (ok)))))

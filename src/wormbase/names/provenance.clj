@@ -8,7 +8,8 @@
    [wormbase.db.schema :as wdbs]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
-   [wormbase.specs.person :as wsp]))
+   [wormbase.specs.person :as wsp]
+   [clojure.test :as t]))
 
 (def pull-expr '[:provenance/when
                  :provenance/why
@@ -34,14 +35,18 @@
   The `how` (agent) is always assigned (not overridable by data in request).
 
   Returns a map."
-  [request payload what]
+  [request payload what & {:keys [tz]
+                           :or {tz (jt/zone-id)}}]
   (let [auth-identity (:identity request)
         person-email (-> auth-identity :person :person/email)
         prov (get payload :prov {})
         who (if-let [plur (person-lur-from-provenance prov)]
                  (-> request :db (d/pull [:db/id] plur))
                  (-> auth-identity :person :db/id))
-        whence (get prov :provenance/when (jt/to-java-date (jt/instant)))
+        whence (-> (get prov :provenance/when (jt/instant))
+                   (jt/zoned-date-time tz)
+                   (jt/with-zone-same-instant tz)
+                   (jt/to-java-date))
         how (-> auth-identity :token-info wna/identify)
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
@@ -53,7 +58,7 @@
      prov
      (when (nil? how)
        {:provenance/how :agent/importer})
-     (when-not (str/blank? why)
+     (when-not (or (nil? why) (str/blank? why))
        {:provenance/why why})
      (when (inst? whence)
        {:provenance/when whence}))))
@@ -161,7 +166,10 @@
    (update (pull-provenance db entity-id prov-pull-expr tx)
            :changes (fnil identity (pull-changes-fn tx))))
   ([db entity-id prov-pull-expr tx]
-   (wdb/pull db prov-pull-expr tx)))
+   (update (wdb/pull db prov-pull-expr tx)
+           :provenance/when (fn [v]
+                              (when v
+                                (jt/zoned-date-time v (jt/zone-id)))))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
@@ -188,5 +196,3 @@
      (some->> prov-seq
               (sort-mrf)
               (seq)))))
-
-
