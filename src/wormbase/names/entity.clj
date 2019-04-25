@@ -128,5 +128,5 @@
           [lur _] (identify-fn request identifier)]
       (when lur
         (when-let [info (wdb/pull db pull-expr lur)]
-          (let [prov (wnp/query-provenance db log lur ref-attrs)]
+          (let [prov (wnp/query-provenance db log lur #{:gene/splits :gene/merges})]
             (-> info (assoc :history prov) ok)))))))
