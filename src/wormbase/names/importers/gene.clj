@@ -248,7 +248,11 @@
            (partition-all batch-size)
            doall))))
 
-(defn fixup-non-live-gene [db gene]
+(defn fixup-non-live-gene
+  "Remove names from dead genes that have already been assigned.
+
+  This is required due to the messiness of the export data/ACeDB data source."
+  [db gene]
   (cond-> gene
     (d/entity db (find gene :gene/cgc-name))
     (dissoc :gene/cgc-name)
@@ -256,7 +260,12 @@
     (d/entity db (find gene :gene/sequence-name))
     (dissoc :gene/sequence-name)))
 
-(defn transact-current-data [conn tsv-path]
+(defn transact-current-data
+  "Import the current set of data and transact into the database.
+
+  Dead genes are transacted one-by-one with special care taken to avoid
+  storing duplicate names."
+  [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
     ;; process all genes that are not dead, using the default batch size of 500.
     (doseq [batch (build-data-txes tsv-path
