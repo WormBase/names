@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [clojure.walk :as w]
    [datomic.api :as d]
+   [java-time :as jt]
    [wormbase.ids.core :as wic])
   (:import
    (java.io PushbackReader)))
@@ -38,3 +39,8 @@
                  (assoc m k v)))
              (empty data)
              data))
+
+(defn days-ago [n]
+  (-> (jt/instant)
+      (jt/minus (jt/days n))
+      (jt/to-java-date)))
