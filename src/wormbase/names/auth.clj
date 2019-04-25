@@ -95,19 +95,17 @@
         parsed-token (parse-token token)
         db (:db request)]
     (if-let [person (verified-person db auth-token-conf parsed-token)]
-      (Identification. parsed-token person)
+      (map->Identification {:token-info parsed-token :person person})
       (when-let [tok (verify-token token)]
-        (do
-          (println "Checking for person in db with email:" (:email tok))
-          (if-let [person (query-person db :person/email (:email tok))]
-            (let [auth-token (sign-token auth-token-conf tok)
-                  tx-result @(d/transact-async (:conn request)
-                                               [[:db/add
-                                                 (:db/id person)
-                                                 :person/auth-token
-                                                 auth-token]])]
-              (Identification. parsed-token person))))
-        (log/warn (str "No matching token in db"))))))
+        (if-let [person (query-person db :person/email (:email tok))]
+          (let [auth-token (sign-token auth-token-conf tok)
+                tx-result @(d/transact-async (:conn request)
+                                             [[:db/add
+                                               (:db/id person)
+                                               :person/auth-token
+                                               auth-token]])]
+            (map->Identification {:token-info parsed-token :person person}))
+          (log/warn "NO PERSON FOUND IN DB:" tok))))))
 
 (def backend (babt/token-backend {:authfn identify}))
 

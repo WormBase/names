@@ -12,6 +12,4 @@
 
 (s/def ::activities (stc/spec {:spec (s/coll-of ::wsp/temporal-change)}))
 
-(s/def ::how (stc/spec {:spec (s/and sts/keyword? #{:agent/console :agent/web})
-                        :into #{}
-                        :type :keyword}))
+(s/def ::how (stc/spec {:spec (s/and sts/keyword? #{:agent/console :agent/web})}))

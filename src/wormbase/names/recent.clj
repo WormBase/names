@@ -1,5 +1,6 @@
 (ns wormbase.names.recent
   (:require
+   [clojure.string :as str]
    [buddy.core.codecs :as codecs]
    [buddy.core.codecs.base64 :as b64]
    [compojure.api.sweet :as sweet]
@@ -25,16 +26,26 @@
       (jt/to-java-date)))
 
 (defn- find-max-imported-date [db]
-  (-> (d/q '[:find (max ?inst) .
-             :where
-             [?tx :provenance/how :agent/importer]
-             [?tx :db/txInstant ?inst]]
-           db)
-      (jt/instant)
-      (jt/plus (jt/seconds 1))
-      (jt/to-java-date)))
+  (let [max-tx-inst (d/q '[:find (max ?inst) .
+                           :where
+                           [?tx :provenance/how :agent/importer]
+                           [?tx :db/txInstant ?inst]]
+                         db)
+        max-date (if max-tx-inst
+                   (jt/instant max-tx-inst)
+                   (jt/instant))]
+    (-> max-date
+        (jt/plus (jt/seconds 1))
+        (jt/to-java-date))))
 
 (def imported-date (memoize find-max-imported-date))
+
+(def query '[:find ?tx ?e
+             :in $ % ?log ?since-start ?since-end ?needle [?how ...]
+             :where
+             [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
+             (filter-events ?tx ?needle ?how)
+             [(tx-data ?log ?tx) [[?e]]]])
 
 (defn query-activities
   ([db log rules ^Date from ^Date until how]
@@ -46,17 +57,11 @@
          since-t (if (and from (>= (compare from import-date) 0))
                    from
                    import-date)
-         now (jt/to-java-date (jt/instant))
+         now (jt/to-java-date (jt/instant))]
          ;; Timings for the `tx-ids` query below with default configured time window (60 days)
          ;; (excluding pull expressions)
          ;; jvm (cold): 107.266427 msecs
          ;; jvm (warm): 30.054339 msecs
-         query '[:find ?tx ?e
-                 :in $ % ?log ?since-start ?since-end ?needle ?how
-                 :where
-                 [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
-                 (filter-events ?tx ?needle ?how)
-                 [(tx-data ?log ?tx) [[?e]]]]]
      (d/q query db rules log since-t now needle how))))
 
 (defn changes-and-prov-puller
@@ -87,9 +92,9 @@
   The result should be map whose keys represent these two groupings.
   The groupings in turn should be a sequence of maps."
   [db log rules puller needle how ^Date from ^Date until]
-  (->> (query-activities db log rules from until how)
-       (sequence puller)
-       (remove nil?)))
+  (some->> (query-activities db log rules needle from until how)
+           (sequence puller)
+           (remove nil?)))
 
 (def entity-rules '[[(filter-events ?tx ?needle ?how)
                      [(missing? $ ?tx :batch/id)]
@@ -110,15 +115,21 @@
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
 (defn encode-etag [latest-t]
-  (-> latest-t str b64/encode codecs/bytes->str))
+  (some-> latest-t str b64/encode codecs/bytes->str))
 
-(defn decode-etag [etag]
-  (-> etag codecs/str->bytes b64/decode codecs/bytes->str))
+(defn decode-etag [^String etag]
+ {:pre [(not (str/blank? etag))]}
+  (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
+
+(defn add-etag-header-maybe [response etag]
+  (if (seq etag)
+    (header response "etag" etag)
+    response))
 
 (defn handle
   ([request rules puller needle from until]
    (handle request rules puller needle #{:agent/console :agent/web} from until))
-  ([request rules puller needle how from until]
+  ([request rules puller needle from until how]
    (let [{conn :conn db :db} request
          log (d/log conn)
          from* (or from (since-days-ago *default-days-ago*))
@@ -128,9 +139,9 @@
                     (sort-by :t))
          latest-t (some-> items first :t)
          etag (encode-etag latest-t)]
-     (-> {:activities items}
-         (ok)
-         (header "etag" etag)))))
+     (some-> {:activities items}
+             (ok)
+             (add-etag-header-maybe etag)))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
@@ -160,25 +171,46 @@
                (sweet/GET "/gene" request
                  :tags ["recent" "gene"]
                  :summary "List recent gene activity."
-                 :query-params [how :- ::wsr/how]
+                 :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
                          "gene"
-                         how
                          from
-                         until))
+                         until
+                         how))
+               (sweet/GET "/gene/:agent" request
+                 :tags ["recent" "gene"]
+                 :summary "List recent gene activity performed via console scripts."
+                 :path-params [agent :- string?]
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "gene"
+                         from
+                         until
+                         #{(keyword "agent" agent)}))
                (sweet/GET "/variation" request
                  :tags ["recent" "variation"]
                  :summary "List recent variation activity."
-                 :query-params [how :- ::wsr/how]
                  (handle request
                          entity-rules
                          (changes-and-prov-puller request)
                          "variation"
-                         how
                          from
-                         until)))))
+                         until
+                         #{:agent/console :agent/web}))
+               (sweet/GET "/variation/:agent" request
+                 :tags ["recent" "variation"]
+                 :summary "List recent variation activity perfomed via console scripts."
+                 :path-params [agent :- string?]
+                 (handle request
+                         entity-rules
+                         (changes-and-prov-puller request)
+                         "variation"
+                         from
+                         until
+                         #{(keyword "agent" agent)})))))
 
 (comment
   "Examples of each invokation flavour"

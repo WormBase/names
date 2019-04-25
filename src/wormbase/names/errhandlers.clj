@@ -2,9 +2,9 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.tools.logging :as log]
-   [datomic.api :as d]
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
+   [datomic.api :as d]
    [environ.core :as environ]
    [expound.alpha :as expound]
    [muuntaja.core :as mc]
@@ -98,11 +98,10 @@
      (if-let [db-err-handler (db-err handlers)]
        (db-err-handler exc data request)
        (handle-unexpected-error exc))
-     (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
-       (handle-unexpected-error exc)
-       (internal-server-error data))))
+     (throw exc)))
   ([exc]
    (log/fatal "Unexpected errror" exc)
+   (throw exc)
    (internal-server-error "Ooops, something went really wrong!")))
 
 (defn handle-txfn-error [^Exception exc data request]
