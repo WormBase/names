@@ -3,16 +3,9 @@ import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
 import ProfileButton from './ProfileButton';
-
-const DEFAULT_AUTHENTICATION_STATE = {
-  isAuthenticated: undefined,
-  user: {
-    name: null,
-    email: null,
-    id_token: null,
-  },
-  errorMessage: null, //JSON.stringify({a: 100}, undefined, 2),
-};
+import AuthorizationContext, {
+  DEFAULT_AUTHENTICATION_STATE,
+} from './AuthorizationContext';
 
 class Authenticate extends Component {
   constructor(props) {
@@ -108,22 +101,18 @@ class Authenticate extends Component {
   };
 
   render() {
-    console.log(this.state);
-    const { user } = this.state;
-    const logout = <Logout onLogout={this.handleLogout} />;
-    return this.props.children({
-      isAuthenticated: this.state.isAuthenticated,
-      user: { ...user },
-      login: (
-        <Login
-          onSignIn={this.handleLogin}
-          errorMessage={this.state.errorMessage}
-        />
-      ),
-      logout: logout,
-      authorizedFetch: this.authorizedFetch,
-      profile: <Profile {...user}>{logout}</Profile>,
-    });
+    return (
+      <AuthorizationContext.Provider
+        value={{
+          ...this.state,
+          handleLogin: this.handleLogin,
+          handleLogout: this.handleLogout,
+          authorizedFetch: this.authorizedFetch,
+        }}
+      >
+        {this.props.children}
+      </AuthorizationContext.Provider>
+    );
   }
 }
 
@@ -131,4 +120,4 @@ Authenticate.propTypes = {};
 
 export default Authenticate;
 
-export { ProfileButton };
+export { ProfileButton, Login, Logout, Profile, AuthorizationContext };

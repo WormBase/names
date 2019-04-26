@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { mockFetchOrNot } from '../../mock';
+import { capitalize } from '../../utils/format';
 import PropTypes from 'prop-types';
 import {
   withStyles,
@@ -12,8 +13,9 @@ import {
 } from '../../components/elements';
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
-class KillGeneDialog extends Component {
-  submitData = (data) => {
+class EntityDialogKill extends Component {
+  submitData = (data, authorizedFetch) => {
+    const { entityType } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
@@ -29,7 +31,7 @@ class KillGeneDialog extends Component {
         }
       },
       () => {
-        return this.props.authorizedFetch(`/api/gene/${this.props.wbId}`, {
+        return authorizedFetch(`/api/${entityType}/${this.props.wbId}`, {
           method: 'DELETE',
           body: JSON.stringify({
             ...data,
@@ -40,13 +42,13 @@ class KillGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, name, entityType, ...otherProps } = this.props;
     return (
       <AjaxDialog
-        title="Kill gene"
+        title={`Kill ${entityType} ${name}`}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Kill {geneName}</ProgressButton>
+          <ProgressButton {...props}>Kill {name}</ProgressButton>
         )}
         {...otherProps}
       >
@@ -55,14 +57,15 @@ class KillGeneDialog extends Component {
           return (
             <DialogContent>
               <DialogContentText>
-                Gene <strong>{geneName}</strong> will be killed. Are you sure?
+                {capitalize(entityType)} <strong>{name}</strong> will be killed.
+                Are you sure?
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />
               </DialogContentText>
               <ReasonField
                 label="Reason"
-                helperText="Enter the reason for killing the gene"
+                helperText={`Enter the reason for killing this ${entityType}`}
                 required
                 fullWidth
               />
@@ -74,10 +77,10 @@ class KillGeneDialog extends Component {
   }
 }
 
-KillGeneDialog.propTypes = {
-  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+EntityDialogKill.propTypes = {
+  name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
+  entityType: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 
 const styles = (theme) => ({
@@ -87,4 +90,4 @@ const styles = (theme) => ({
   },
 });
 
-export default withStyles(styles)(KillGeneDialog);
+export default withStyles(styles)(EntityDialogKill);

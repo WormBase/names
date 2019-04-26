@@ -6,12 +6,13 @@ import {
   parse as parseQueryString,
 } from 'query-string';
 
-export default class GeneAutocompleteLoader extends React.Component {
+export default class AutocompleteLoader extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       inputValue: '', // track the input value to compare with the ajax response
       suggestions: [],
+      isLoading: false,
     };
   }
 
@@ -23,12 +24,26 @@ export default class GeneAutocompleteLoader extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (
-      prevProps.inputValue !== this.props.inputValue &&
-      this.props.inputValue !== this.props.selectedValue // don't reload suggestion when selecting an item from selection
+      prevProps.entityType !== this.props.entityType ||
+      (prevProps.inputValue !== this.props.inputValue &&
+        this.props.inputValue !== this.props.selectedValue) // don't reload suggestion when selecting an item from selection
     ) {
       this.loadSuggestions(this.props.inputValue);
     }
   }
+
+  getSuggestionFromMatches = (match) => {
+    return Object.keys(match).reduce((result, key) => {
+      const value = match[key];
+      const [namespace, keyName] = key.split('/');
+      let newPairs = keyName === 'id' ? { entityType: namespace } : {};
+      return {
+        ...result,
+        [keyName]: value,
+        ...newPairs,
+      };
+    }, {});
+  };
 
   loadSuggestions = (inputValue, isInitialLoad) => {
     if (inputValue.length < 2) {
@@ -39,6 +54,7 @@ export default class GeneAutocompleteLoader extends React.Component {
       {
         inputValue: inputValue,
         suggestions: [],
+        isLoading: true,
       },
       () => {
         mockFetchOrNot(
@@ -65,7 +81,9 @@ export default class GeneAutocompleteLoader extends React.Component {
             );
           },
           () => {
-            return fetch(`/api/gene/?pattern=${inputValue}`);
+            return fetch(
+              `/api/${this.props.entityType}/?pattern=${inputValue}`
+            );
           }
         )
           .then((response) => {
@@ -78,17 +96,12 @@ export default class GeneAutocompleteLoader extends React.Component {
             if (matchedPattern === this.state.inputValue) {
               // to avoid problem caused by response coming back in the wrong order
               // compare inputValue to produce suggestion with current inputValue,
-              const { matches } = content;
-              const suggestions = matches.map((item) => ({
-                id: item['gene/id'],
-                label:
-                  item['gene/cgc-name'] ||
-                  item['gene/sequence-name'] ||
-                  item['gene/id'],
-              }));
+              const { matches = [] } = content;
+              const suggestions = matches.map(this.getSuggestionFromMatches);
               this.setState(
                 {
                   suggestions,
+                  isLoading: false,
                 },
                 () => {
                   this.props.onSuggestionChange &&
@@ -105,11 +118,13 @@ export default class GeneAutocompleteLoader extends React.Component {
   render() {
     return this.props.children({
       suggestions: this.state.suggestions || [],
+      isLoading: this.state.isLoading,
     });
   }
 }
 
-GeneAutocompleteLoader.propTypes = {
+AutocompleteLoader.propTypes = {
+  entityType: PropTypes.string.isRequired,
   inputValue: PropTypes.string,
   selectedValue: PropTypes.string,
   onSuggestionChange: PropTypes.func,

@@ -38,6 +38,6 @@
 (s/def ::split-item (s/keys :req-un [::split-into ::split-from]))
 (s/def ::split (stc/spec (s/coll-of ::split-item :min-count 1)))
 
-(s/def ::info (s/merge ::wsp/provenance ::success-response))
+(s/def ::summary (s/merge ::wsp/provenance ::success-response))
 
 

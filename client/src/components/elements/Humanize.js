@@ -1,10 +1,11 @@
 import PropTypes from 'prop-types';
+import { capitalize } from '../../utils/format';
 
 const Humanize = ({
   children,
   placeholder = 'Unknown',
   postProcessor,
-  capitalize = false,
+  capitalized = false,
 }) => {
   if (!children) {
     return placeholder;
@@ -12,9 +13,8 @@ const Humanize = ({
   let [humanizedText] = (children || '').split('/').slice(-1);
   humanizedText = humanizedText.replace(/(_|-)+/g, ' ');
 
-  if (capitalize) {
-    humanizedText =
-      humanizedText.charAt(0).toUpperCase() + humanizedText.slice(1);
+  if (capitalized) {
+    humanizedText = capitalize(humanizedText);
   }
 
   if (postProcessor) {
@@ -26,7 +26,7 @@ const Humanize = ({
 
 Humanize.propTypes = {
   children: PropTypes.string,
-  capitalize: PropTypes.bool,
+  capitalized: PropTypes.bool,
   placeholder: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
   postProcessor: PropTypes.func,
 };

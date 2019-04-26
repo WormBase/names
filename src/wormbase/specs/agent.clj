@@ -8,7 +8,7 @@
 
 (s/def :agent/web sts/keyword?)
 
-(def all-agents (stc/spec #{:agent/console :agent/web :agent/importer}))
+(def all-agents (stc/spec {:spec #{:agent/console :agent/web :agent/importer}}))
 
 (s/def ::id all-agents)
 

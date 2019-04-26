@@ -4,6 +4,7 @@
    [clojure.string :as str]
    [clj-uuid :as uuid]
    [datomic.api :as d]
+   [java-time :as jt]
    [ring.util.http-response :refer [bad-request created ok]]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
@@ -13,7 +14,8 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
-   [wormbase.specs.variation :as wsv]))
+   [wormbase.specs.variation :as wsv]
+   [java-time :as jt]))
 
 (s/def ::entity-type sts/string?)
 
@@ -52,6 +54,9 @@
                 db
                 bid)
            (map (partial wdb/pull db pull-expr))
+           (map #(update %
+                         :provenance/when
+                         (fn [v] (jt/zoned-date-time v (jt/zone-id)))))
            (first)))
 
 (defn ids-created [db uiident batch-id]
@@ -66,11 +71,11 @@
 
 (defn new-entities
   "Create a batch of new entities."
-  [uiident event-type spec conformer request]
+  [uiident event-type spec conformer validator request]
   (let [entity-type (namespace uiident)
         data-transform (fn set-live [_ data]
                          (let [live-status (keyword (str entity-type ".status") "live")]
-                           (->> data
+                           (->> (validator data)
                                 (conformer spec)
                                 (assign-status entity-type live-status))))
         batch-result (batcher wbids-batch/new
@@ -84,16 +89,19 @@
     (created (str "/api/batch/" (:batch/id result)) result)))
 
 (defn update-entities
-  [uiident event-type spec conformer request]
-  (let [result (batcher wbids-batch/update
+  [uiident event-type spec conformer validator request]
+  (let [data-transform (fn valdiating-conformer [_ data]
+                         (conformer spec (validator data)))
+        result (batcher wbids-batch/update
                         uiident
                         event-type
                         spec
-                        conformer
+                        data-transform
                         request)]
     (ok {:updated result})))
 
-(defn change-entity-statuses [uiident event-type to-status spec conformer request]
+(defn change-entity-statuses
+  [uiident event-type to-status spec conformer request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
         entity-type (namespace uiident)
@@ -133,9 +141,14 @@
                     :batch-size bsize)]
         (ok {:retracted result})))))
 
-(defn info [request bid pull-expr]
+(defn summary [request bid pull-expr]
   (let [{db :db} request
         batch-id (uuid/as-uuid bid)
-        b-prov-info (query-provenance db batch-id pull-expr)]
-    (when b-prov-info
-      (ok b-prov-info))))
+        b-prov-summary (query-provenance db batch-id pull-expr)]
+    (when b-prov-summary
+      (-> b-prov-summary
+          (assoc :batch/id batch-id)
+          (update :provenance/when (fn [v]
+                                     (when v
+                                       (jt/zoned-date-time v (jt/zone-id)))))
+          (ok)))))

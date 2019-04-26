@@ -3,6 +3,7 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [clj-uuid :as uuid]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
@@ -25,7 +26,7 @@
     (doseq [retract-fn [retract-gene-cgc-name
                         retract-variation-name]]
       (let [[status body] (retract-fn {:data [] :prov nil})]
-        (t/is (= 400 status))))))
+        (t/is (ru-hp/bad-request? {:status status :body body}))))))
 
 (t/deftest batch-retract-gene-cgc-name-success
   (t/testing "Succesfully removing gene CGC names."
@@ -37,7 +38,7 @@
         fixtures
         (fn [conn]
           (let [[status body] (retract-gene-cgc-name {:data cgc-names :prov basic-prov})]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             ;; TODO: check batch with (wng/query-batch db <bid>)
             ))))))
 
@@ -49,6 +50,6 @@
         fixtures
         (fn [conn]
           (let [[status body] (retract-variation-name {:data names :prov basic-prov})]
-            (tu/status-is? 200 status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             ;; TODO: check batch with (wng/query-batch db <bid>)
             ))))))

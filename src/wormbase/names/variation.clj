@@ -45,7 +45,7 @@
   (when-let [pattern (some-> request :query-params :pattern str/trim)]
     (let [db (:db request)
           matching-rules (concat wnm/name-matching-rules name-matching-rules)
-          term (stc/conform ::wsv/find-term pattern)
+          term (stc/conform ::wsc/find-term pattern)
           q-result (d/q '[:find ?vid ?vname
                           :in $ % ?term
                           :where
@@ -64,9 +64,9 @@
                             [])}]
       (ok res))))
 
-(def info-pull-expr '[* {:variation/status [:db/ident]}])
+(def summary-pull-expr '[* {:variation/status [:db/ident]}])
 
-(def summary (wne/summarizer identify info-pull-expr))
+(def summary (wne/summarizer identify summary-pull-expr #{}))
 
 (def status-changer (partial wne/status-changer ::wsv/identifier :variation/status))
 
@@ -104,7 +104,7 @@
                   (let [new-variation (wne/creator :variation/id
                                                    (partial wnu/conform-data ::wsv/new)
                                                    :event/new-variation
-                                                   info-pull-expr)]
+                                                   summary-pull-expr)]
                     (new-variation request)))}})))
 
 (def item-resources
@@ -134,13 +134,13 @@
                                                       :variation/id
                                                       (partial wnu/conform-data ::wsv/update)
                                                       :event/update-variation
-                                                      info-pull-expr)]
+                                                      summary-pull-expr)]
                     (update-variation request identifier)))}
       :get
       {:summary "Summarise a variation."
        :x-name ::about-variation
        :responses (-> wnu/default-responses
-                      (assoc ok {:schema ::wsv/info})
+                      (assoc ok {:schema ::wsv/summary})
                       (wnu/response-map))
        
        :handler (fn [request]

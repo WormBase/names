@@ -8,7 +8,7 @@
    [wormbase.util :refer [read-edn]])
   (:import (java.io PushbackReader)))
 
-(def exclude-definitions
+(def datomic-internal-namespaces
   #{"db" "db.alter" "db.install" "db.excise" "db.sys" "conformity" "fressian"})
 
 (defn definitions [db]
@@ -21,7 +21,7 @@
          (not
           [(contains? ?excludes ?ns)])]
        db
-       exclude-definitions))
+       datomic-internal-namespaces))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]

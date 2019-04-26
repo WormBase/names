@@ -12,8 +12,9 @@ import {
 } from '../../components/elements';
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
-class ResurrectGeneDialog extends Component {
-  submitData = (data) => {
+class EntityDialogResurrect extends Component {
+  submitData = (data, authorizedFetch) => {
+    const { entityType } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.post('*', {
@@ -23,8 +24,8 @@ class ResurrectGeneDialog extends Component {
         });
       },
       () => {
-        return this.props.authorizedFetch(
-          `/api/gene/${this.props.wbId}/resurrect`,
+        return authorizedFetch(
+          `/api/${entityType}/${this.props.wbId}/resurrect`,
           {
             method: 'POST',
             body: JSON.stringify({
@@ -37,13 +38,13 @@ class ResurrectGeneDialog extends Component {
   };
 
   render() {
-    const { wbId, geneName, authorizedFetch, ...otherProps } = this.props;
+    const { wbId, entityType, name, ...otherProps } = this.props;
     return (
       <AjaxDialog
-        title="Resurrect gene"
+        title={`Resurrect ${entityType} ${name}`}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Resurrect {geneName}</ProgressButton>
+          <ProgressButton {...props}>Resurrect {name}</ProgressButton>
         )}
         {...otherProps}
       >
@@ -52,8 +53,7 @@ class ResurrectGeneDialog extends Component {
           return (
             <DialogContent>
               <DialogContentText>
-                Gene <strong>{geneName}</strong> will be resurrected. Are you
-                sure?
+                Gene <strong>{name}</strong> will be resurrected. Are you sure?
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />
@@ -72,10 +72,10 @@ class ResurrectGeneDialog extends Component {
   }
 }
 
-ResurrectGeneDialog.propTypes = {
-  geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+EntityDialogResurrect.propTypes = {
+  name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
+  entityType: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
 };
 
 const styles = (theme) => ({
@@ -85,4 +85,4 @@ const styles = (theme) => ({
   },
 });
 
-export default withStyles(styles)(ResurrectGeneDialog);
+export default withStyles(styles)(EntityDialogResurrect);

@@ -14,22 +14,27 @@
   Lookups `identifier` (conformed with `identify-spec`) in the database.
   Returns `nil` when the entity cannot be found."
   [identitfy-spec request identifier]
-  (when-not (s/valid? identitfy-spec identifier)
-    (throw (ex-info "Found one or more invalid identifiers."
-                    {:problems (s/explain-data identitfy-spec identifier)
-                     :type ::validation-error})))
-  (let [lookup-ref (s/conform identitfy-spec identifier)
-        db (:db request)
-        ent (d/entity db lookup-ref)]
-    (if (:db/id ent)
-      [lookup-ref ent]
-      (not-found! {:message "Entity lookup failed"
-                   :lookup-ref lookup-ref}))))
+  (let [lookup-ref (s/conform identitfy-spec identifier)]
+    (when (s/invalid? lookup-ref)
+      (not-found! {:message "Identifier malformed."
+                   :problems (s/explain-data identitfy-spec identifier)
+                   :type ::validation-error}))
+    (let [db (:db request)
+          ent (d/entity db lookup-ref)]
+      (if (:db/id ent)
+        [lookup-ref ent]
+        (not-found! {:message "Entity lookup failed"
+                     :lookup-ref lookup-ref})))))
+
+(defn prepare-data-for-transact
+  "Strip any data keys that are not valid datomic idents."
+  [db data]
+  (select-keys data (filter (partial d/entid db) (keys data))))
 
 (defn creator
  "Return an endpoint handler for new entity creation."
-  ;; [uiident data-spec event info-pull-expr & [validate-names]]
-  [uiident conform-spec-fn event info-pull-expr & [validate-names]]
+  ;; [uiident data-spec event summary-pull-expr & [validate-names]]
+  [uiident conform-spec-fn event summary-pull-expr & [validate-names]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
@@ -40,36 +45,39 @@
                    :data
                    (update live-status-attr (fnil identity live-status-val)))
           names-validator (or validate-names (constantly (identity data)))
-          cdata (conform-spec-fn data (partial names-validator request))
+          cdata (prepare-data-for-transact db (conform-spec-fn data (partial names-validator request)))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
           tx-res @(d/transact-async conn tx-data)
           dba (:db-after tx-res)
           new-id (wdb/extract-id tx-res uiident)
-          emap (wdb/pull dba info-pull-expr [uiident new-id])
+          emap (wdb/pull dba summary-pull-expr [uiident new-id])
           result {:created emap}]
       (created (str "/" ent-ns "/") result))))
 
 (defn updater
-  [identify-fn uiident conform-spec-fn event info-pull-expr & [validate-names ref-resolver-fn]]
+  [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate-names ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
-        (let [ent-data (wdb/pull db info-pull-expr lur)
+        (let [ent-data (wdb/pull db summary-pull-expr lur)
               data (merge ent-data (:data payload))
               names-validator (if validate-names
                                 (partial validate-names request))]
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn passthru-resolver [_ data]
                                              data))
-                cdata (resolve-refs-to-db-ids db (conform-spec-fn data names-validator))
+                cdata (->> (conform-spec-fn data names-validator)
+                           (resolve-refs-to-db-ids db)
+                           (into {})
+                           (prepare-data-for-transact db))
                 prov (wnp/assoc-provenance request payload event)
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (when-let [db-after (:db-after tx-result)]
-              (if-let [updated (wdb/pull db-after info-pull-expr lur)]
+              (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
                 (ok {:updated updated})
                 (not-found
                  (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
@@ -113,10 +121,12 @@
              (wu/elide-db-internals dba)
              ok)))))
 
-(defn summarizer [identify-fn pull-expr]
+(defn summarizer [identify-fn pull-expr ref-attrs]
   (fn handle-summary [request identifier]
-    (let [db (:db request)
+    (let [{db :db conn :conn} request
+          log (d/log conn)
           [lur _] (identify-fn request identifier)]
-      (when-let [info (wdb/pull db pull-expr lur)]
-        (let [prov (wnp/query-provenance db lur)]
-          (-> info (assoc :history prov) ok))))))
+      (when lur
+        (when-let [info (wdb/pull db pull-expr lur)]
+          (let [prov (wnp/query-provenance db log lur #{:gene/splits :gene/merges})]
+            (-> info (assoc :history prov) ok)))))))

@@ -4,9 +4,9 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [clj-uuid :as uuid]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov]]
+   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.test-utils :as tu]))
 
@@ -18,7 +18,7 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (let [[status body] (update-genes {:data [] :prov nil})]
-      (t/is (= (:status (bad-request)) status)))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items containing non-unique names is rejected."
@@ -32,7 +32,31 @@
                        {:gene/id (:gene/id g2)
                         :gene/cgc-name "dup-1"}]
                 [status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (= (:status (conflict)) status) (pr-str body))))))))
+            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+
+(t/deftest invalid-cgc-name
+  (t/testing "Errors are reported when provided with a invlaid CGC name"
+    (let [fixtures (tu/gene-samples 2)
+          [g1 g2] fixtures]
+      (tu/with-gene-fixtures
+        fixtures
+        (fn [conn]
+          (let [bdata [{:gene/id (:gene/id g1)
+                        :gene/cgc-name "invalid_CGC_NAME"}]
+                [status body] (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+
+(t/deftest invalid-sequence-name
+  (t/testing "Errors are reported when provided with a invlaid Sequence name"
+    (let [fixtures (tu/gene-samples 2)
+          [g1 g2] fixtures]
+      (tu/with-gene-fixtures
+        fixtures
+        (fn [conn]
+          (let [bdata [{:gene/id (:gene/id g1)
+                        :gene/sequence-name "invalid-sequence-name.1"}]
+                [status body] (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
@@ -46,12 +70,11 @@
                         :gene/species bad-species
                         :gene/id gid}]
                 [status body] (update-genes {:data bdata :prov basic-prov})]
-            (tu/status-is? (:status (conflict)) status body)
+            (t/is (ru-hp/bad-request? {:status status :body body}))
             (t/is (some (fn [error]
-                          (and error
-                               (str/includes? (str/lower-case error) "does not exist")
-                               (str/includes? error bad-species)))
-                        (get body :errors [])))))))))
+                          (str/includes? error bad-species))
+                        (get body :errors []))
+                  (str body))))))))
 
 (t/deftest single-item
   (let [fixtures (tu/gene-samples 1)
@@ -60,28 +83,30 @@
       fixtures
       (fn [conn]
         (t/testing "Batch with one item accepted, returns batch id."
-          (let [bdata [(merge {:gene/species (-> gene-rec :gene/species second)
-                               :gene/cgc-name "chg-1"}
+          (let [species (-> gene-rec :gene/species second)
+                bdata [(merge {:gene/species species
+                               :gene/cgc-name (tu/cgc-name-for-species species)}
                               (find gene-rec :gene/id))]
                 payload {:data bdata :prov basic-prov}
                 [status body] (update-genes payload)]
-            (tu/status-is? (:status (ok)) status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (get-in body [:updated :batch/id]) (pr-str body))))))))
 
 (t/deftest multi-item
   (t/testing "Batch with a random number of items is successful"
     (let [[g1 g2] (tu/gene-samples 2)
-          bdata [{:gene/cgc-name "okay-1"
+          species (-> g1 :gene/species second)
+          bdata [{:gene/cgc-name (tu/cgc-name-for-species species)
                   :gene/id (:gene/id g1)
-                  :gene/species (-> g1 :gene/species second)}
-                 {:gene/sequence-name "OKIDOKE.1"
+                  :gene/species species}
+                 {:gene/sequence-name "OKY.1"
                   :gene/biotype :biotype/cds
                   :gene/id (:gene/id g2)
-                  :gene/species (-> g2 :gene/species second)}]]
+                  :gene/species elegans-ln}]]
       (tu/with-gene-fixtures
         [g1 g2]
         (fn [conn]
           (let [[status body] (update-genes {:data bdata :prov basic-prov})]
-            (tu/status-is? (:status (ok)) status body)
+            (t/is (ru-hp/ok? {:status status :body body}) (str body))
             (let [bid (get-in body [:updated :batch/id] "")]
               (t/is (uuid/uuid-string? bid)))))))))

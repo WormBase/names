@@ -3,13 +3,14 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [ring.util.http-predicates :as ru-hp]
+   [wormbase.constdata :refer [elegans-ln]]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.gene :as gs]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
-   [wormbase.db :as wdb]
-   [ring.util.http-response :refer [conflict created not-found]]))
+   [wormbase.db :as wdb]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -70,7 +71,7 @@
     (let [[status body] (split-gene {:data {:gene/cgc-name "abc-1"}
                                      :prov nil}
                                     "WB1")]
-      (tu/status-is? status 400 (format "Body: " body))))
+      (t/is (ru-hp/bad-request? {:status status :body body}))))
   (t/testing "Request to split gene must meet spec."
     (let [[data-sample] (tu/gene-samples 1)]
       (tu/with-gene-fixtures
@@ -81,7 +82,7 @@
                                        :product {}}
                                 :prov nil}
                                (:gene/id data-sample))]
-            (tu/status-is? status 400 body)
+            (t/is (ru-hp/bad-request? {:status status :body body}))
             (t/is (contains? (tu/parse-body body) :problems)
                   (pr-str body))))))))
 
@@ -94,7 +95,7 @@
                                   :gene/biotype "transcript"}}
                           :prov nil}
                          "WBGene00000001")]
-      (tu/status-is? status 400 body)
+      (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 response for product must be specified"
@@ -102,7 +103,7 @@
                          {:data {:gene/biotype :biotype/transcript}
                           :prov nil}
                          "WBGene00000001")]
-      (tu/status-is? status 400 body)
+      (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-matches #".*validation failed.*" (:message body)))))
   (t/testing "Get 400 if product biotype not supplied"
     (let [[status body] (split-gene
@@ -111,7 +112,7 @@
                                   :gene/biotype "transcript"}}
                           :prov nil}
                          "WBGene00000001")]
-      (tu/status-is? status 400 body)
+      (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 400 if sequence-name not supplied"
@@ -120,7 +121,7 @@
                                  :product {:gene/biotype :biotype/transposable-element-gene}}
                           :prov nil}
                          "WBGene00000001")]
-      (tu/status-is? status 400 body)
+      (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-matches #".*validation failed.*" (:message body))
             (pr-str body))))
   (t/testing "Get 404 when gene to be operated on is missing"
@@ -132,7 +133,7 @@
                                   :gene/sequence-name "FKM.1"}}
                           :prov nil}
                          gene-id)]
-      (tu/status-is? (:status (not-found)) status body)))
+      (t/is (ru-hp/not-found? {:status status :body body}))))
   (t/testing "Expect a conflict response when attempting to split a dead gene."
     (let [[data-sample] (tu/gene-samples 1)
           gene-id (:gene/id data-sample)
@@ -153,12 +154,12 @@
                                  :gene/sequence-name seq-name}}
                          :prov nil}
                 [status body] (split-gene payload gene-id)]
-            (tu/status-is? (:status (conflict)) status body))))))
+            (t/is (ru-hp/conflict? {:status status :body body})))))))
   (t/testing "400 for validation errors"
     (let [[status body] (split-gene {:data {:gene/biotype :biotype/godzilla}
                                      :prov nil}
                                     "WBGene00000001")]
-      (tu/status-is? status 400 body)
+      (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-seq #".*validation failed" (:message body))
             (pr-str body)))))
 
@@ -191,7 +192,7 @@
                 [status body] (split-gene {:data data :prov prov}
                                           gene-id
                                           :current-user user-email)]
-            (tu/status-is? (:status (created "/")) status body)
+            (t/is (ru-hp/created? {:status status :body body}))
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
                   src (d/pull (d/db conn) '[* {:gene/status [:db/ident]
                                                :gene/splits [[:gene/id]]}] from-lur)
@@ -211,7 +212,7 @@
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."
-    (let [species "Caenorhabditis elegans"
+    (let [species elegans-ln
           split-from "WBGene00000001"
           split-into "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
@@ -253,7 +254,7 @@
               [status body] (undo-split-gene split-from
                                              split-into
                                              :current-user user-email)]
-          (tu/status-is? status 200 body)
+          (t/is (ru-hp/ok? {:status status :body body}))
           (let [db (d/db conn)
                 invoke (partial d/invoke db)
                 [from-g into-g] (map #(d/pull db '[*

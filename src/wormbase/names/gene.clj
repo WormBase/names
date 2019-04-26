@@ -29,7 +29,32 @@
 
 (def delete-responses (assoc wnu/default-responses ok {:schema {:updated ::wsg/updated}}))
 
-(def identify (partial wne/identify ::wsg/identifier))
+(defn- all-regexp-patterns-for [db ident]
+  (map re-pattern
+       (d/q '[:find [?regex ...]
+              :in $ ?ident
+              :where
+              [_ ?ident ?regex]]
+            db
+            ident)))
+
+(defn identify
+  "Identify a gene given an `identifier` string.
+  Return a tuple of lookup-ref and corrsponding entity from the database,
+  or nil if none found."
+  [request ^String identifier]
+  (let [{db :db} request
+        mm {:gene/sequence-name (all-regexp-patterns-for db :species/sequence-name-pattern)
+            :gene/cgc-name (all-regexp-patterns-for db :species/cgc-name-pattern)
+            :gene/id #{wsg/gene-id-regexp}}
+        result (reduce-kv (fn [m ident regexp-patterns]
+                            (if-let [match (some #(re-matches % identifier) regexp-patterns)]
+                              (into m [ident identifier])
+                              m))
+                          []
+                          mm)]
+    (when (seq result)
+      [result (d/entity db result)])))
 
 (def name-matching-rules
   '[[(gene-name ?pattern ?name ?eid ?attr)
@@ -68,28 +93,30 @@
                             [])}]
       (ok res))))
 
-(def info-pull-expr '[* {:gene/biotype [[:db/ident]]
-                         :gene/species [[:species/latin-name]]
-                         :gene/status [[:db/ident]]
-                         [:gene/merges :as :merged-into] [[:gene/id]]
-                         [:gene/_merges :as :merged-from] [[:gene/id]]
-                         [:gene/splits :as :split-into] [[:gene/id]]
-                         [:gene/_splits :as :split-from] [[:gene/id]]}])
+(def summary-pull-expr '[* {:gene/biotype [[:db/ident]]
+                            :gene/species [[:species/latin-name]]
+                            :gene/status [[:db/ident]]
+                            [:gene/merges :as :merged-into] [[:gene/id]]
+                            [:gene/_merges :as :merged-from] [[:gene/id]]
+                            [:gene/splits :as :split-into] [[:gene/id]]
+                            [:gene/_splits :as :split-from] [[:gene/id]]}])
 
 (defmethod wnp/resolve-change :gene/id
   [db change]
   (when-let [found (wnu/resolve-refs db (find change :gene/id))]
-    (:gene/id found)))
+    (assoc change :value (:gene/id found))))
 
 (defmethod wnp/resolve-change :gene/species
   [db change]
   (when-let [found (wnu/resolve-refs db {:gene/species (:value change)})]
-    (get-in found [:gene/species :species/latin-name])))
+    (assoc change
+           :value
+           (get-in found [:gene/species :species/latin-name]))))
 
 (defn- resolve-ref-to-gene-id
   [attr db change]
   (let [found (wnu/resolve-refs db {attr (:value change)})]
-    (get-in found [attr :gene/id])))
+    (assoc change :value (get-in found [attr :gene/id]))))
 
 (defmethod wnp/resolve-change :gene/merges
   [db change]
@@ -99,12 +126,7 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(defn summary [request identifier]
-  (let [db (:db request)
-        [lur _] (identify request identifier)]
-    (when-let [info (wdb/pull db info-pull-expr lur)]
-      (let [prov (wnp/query-provenance db lur)]
-        (-> info (assoc :history prov) ok)))))
+(def summary (wne/summarizer identify summary-pull-expr #{:gene/splits :gene/merges}))
 
 (defn new-unnamed-gene [request]
   (let [{payload :body-params conn :conn} request
@@ -117,7 +139,7 @@
     @(d/transact-async conn tx-data)))
 
 (defn resolve-refs-to-dbids
-  "Resolve references in a data payload to database ids for compare on swap operations."
+  "Resolve references in a data payload to database ids for compare-and-swap operations."
   [db data]
   (let [species-lur (-> data :gene/species vec)
         species-entid (d/entid db species-lur)
@@ -186,7 +208,7 @@
 (defn merged-info [db id & more-ids]
   (some->> (cons id more-ids)
            (map (partial vector :gene/id))
-           (map (partial d/pull db info-pull-expr))
+           (map (partial d/pull db summary-pull-expr))
            (wu/elide-db-internals db)))
 
 (defn merge-genes [request into-id from-id]
@@ -202,7 +224,8 @@
         txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
-      (let [[from-gene into-gene] (merged-info dba from-id into-id)]
+      (let [[into-gid from-gid] (map :gene/id [into-g from-g])
+            [from-gene into-gene] (merged-info dba from-gid into-gid)]
         (ok {:updated into-gene
              :merges (:gene/merges from-gene)
              :statuses {from-id (:gene/status from-gene)
@@ -263,10 +286,11 @@
                 prov]
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
-          p-gene (wdb/pull dba info-pull-expr p-gene-lur)
+          from-gene-lur (find from-gene :gene/id)
+          p-gene (wdb/pull dba summary-pull-expr p-gene-lur)
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
-      (->> [p-gene-lur* lur]
+      (->> [p-gene-lur* from-gene-lur]
            (map (partial apply array-map))
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
@@ -345,7 +369,7 @@
                   (let [new-gene (wne/creator :gene/id
                                               (partial wnu/conform-data-drop-label ::wsg/new)
                                               :event/new-gene
-                                              info-pull-expr
+                                              summary-pull-expr
                                               validate-names)]
                     (new-gene request)))}})))
 
@@ -386,9 +410,13 @@
       {:get
        {:summary "Information about a given gene."
         :x-name ::summary
-        :responses (wnu/response-map ok {:schema ::wsg/info})
+        :responses (wnu/response-map ok {:schema ::wsg/summary})
         :handler (fn [request]
-                   (summary request identifier))}
+                   (try
+                     (summary request identifier)
+                     (catch Exception e
+                       (prn e)
+                       (throw e))))}
        :put
        {:summary "Update an existing gene."
         :x-name ::update-gene
@@ -403,7 +431,7 @@
                                                   :gene/id
                                                   (partial wnu/conform-data ::wsg/update)
                                                   :event/update-gene
-                                                  info-pull-expr
+                                                  summary-pull-expr
                                                   validate-names
                                                   resolve-refs-to-dbids)]
                      (update-gene request identifier)))}})

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Prompt } from 'react-router';
 import { createStore } from 'redux';
 
 /*
@@ -62,6 +61,17 @@ function dirtySelect(state) {
       const initialValue = (state.fields[fieldId] || {}).initialValue || '';
       return result || value !== initialValue;
     }, false);
+}
+
+function getDirtyFields(fields) {
+  return Object.keys(fields).reduce((result, fieldId) => {
+    const value = (fields[fieldId] || {}).value || '';
+    const initialValue = (fields[fieldId] || {}).initialValue || '';
+    if (value !== initialValue) {
+      result[fieldId] = fields[fieldId];
+    }
+    return result;
+  }, {});
 }
 
 class BaseForm extends Component {
@@ -126,8 +136,7 @@ class BaseForm extends Component {
     };
   };
 
-  gatherFields(fieldIds) {
-    const fields = this.dataStore.getState().fields;
+  gatherFields(fieldIds, fields) {
     return fieldIds.reduce((result, fieldId) => {
       const value = fields[fieldId] && fields[fieldId].value;
       const idSegments = fieldId.split(':');
@@ -143,6 +152,24 @@ class BaseForm extends Component {
     }, {});
   }
 
+  getDataModified = () => {
+    const fields = getDirtyFields(this.dataStore.getState().fields);
+    console.log(fields);
+    const dataFieldIds = Object.keys(fields).filter(
+      (fieldId) => !fieldId.match(/provenance\//g)
+    );
+    if (Object.keys(dataFieldIds).length === 0) {
+      return null;
+    }
+    const provenanceFieldIds = Object.keys(fields).filter((fieldId) =>
+      fieldId.match(/provenance\//g)
+    );
+    return {
+      data: this.gatherFields(dataFieldIds, fields),
+      prov: this.gatherFields(provenanceFieldIds, fields),
+    };
+  };
+
   getData = () => {
     const fields = this.dataStore.getState().fields;
     const dataFieldIds = Object.keys(fields).filter(
@@ -152,8 +179,8 @@ class BaseForm extends Component {
       fieldId.match(/provenance\//g)
     );
     return {
-      data: this.gatherFields(dataFieldIds),
-      prov: this.gatherFields(provenanceFieldIds),
+      data: this.gatherFields(dataFieldIds, fields),
+      prov: this.gatherFields(provenanceFieldIds, fields),
     };
   };
 
@@ -266,26 +293,21 @@ class BaseForm extends Component {
   };
 
   render() {
-    return (
-      <form noValidate autoComplete="off">
-        {this.dirtinessContext(({ dirty }) => (
-          <Prompt
-            when={dirty}
-            message="Form contains unsubmitted content, which will be lost when you leave. Are you sure you want to leave?"
-          />
-        ))}
-        {/* render props changes causes inputs to lose focus */
-        /* to get around the issue, pass getter functions instead of values */
-        this.props.children({
-          withFieldData: this.withFieldData,
-          dirtinessContext: this.dirtinessContext,
-          getFormData: this.getData,
-          resetData: () => {
-            this.initialize(this.props);
-          },
-        })}
-      </form>
-    );
+    /* render props changes causes inputs to lose focus */
+    /* to get around the issue, pass getter functions instead of values */
+    return this.props.children({
+      withFieldData: this.withFieldData,
+      dirtinessContext: this.dirtinessContext,
+      getFormData: this.getData,
+      getFormDataModified: this.getDataModified,
+      // getFormProps: () => ({
+      //   noValidate: true,
+      //   autoComplete: 'off',
+      // }),
+      resetData: () => {
+        this.initialize(this.props);
+      },
+    });
   }
 }
 

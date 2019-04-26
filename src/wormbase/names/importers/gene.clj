@@ -1,4 +1,14 @@
 (ns wormbase.names.importers.gene
+  "Import gene data from an ACeDB export.
+
+  Gene data comes in the form of two TSV files:
+    1. a set of the 'current data'
+    2. a set of the historic actions that have occurred over time.
+
+  The 'current data' set is transated with event type :event/import-gene.
+  The histoic actions are recorded after-the-fact by transacting provenance against
+  the current data set; this results in empty changesets for historic actions as its
+  not possible to re-create the history of changes since these have been lost (in ACeDB)."
   (:require
    [clojure.java.io :as io]
    [clojure.set :refer [rename-keys]]
@@ -21,18 +31,17 @@
    [wormbase.names.importers.processing :as wnip])
   (:gen-class))
 
-(def deferred (atom {}))
-
 (def geneace-text-ref #(last (str/split % #"\s")))
 
-(defn transact-batch [conn tx-data & {:keys [transact-fn]}]
+(defn transact-batch [conn tx-data event-type & {:keys [transact-fn]}]
   (try
-    (wnip/transact-batch :event/import-gene conn tx-data :tranasct-fn transact-fn)
+    (wnip/transact-batch event-type conn tx-data :tranasct-fn transact-fn)
     (catch Exception exc
-      (if-not (some-> exc ex-data :db.error/unique-conflict)
-        (throw exc)
-        (do (println "Not throwing exception for error: " exc)
-            (prn (ex-data exc)))))))
+      (println "EXCEPTION!!!!")
+      (println "EX-DATA follows:")
+      (prn (ex-data exc))
+      (println)
+      (throw exc))))
 
 (defn handle-transact-exc [exc data]
   (throw (ex-info "Failed to transact data!"
@@ -49,21 +58,6 @@
     (catch Exception exc
       (handle-transact-exc exc data))))
 
-(defn defer-tx [d event]
-  (update d :tx-data conj event))
-
-(defn defer-event [event data-attr event-type event-text]
-  (let [from-lur (find event :gene/id)
-        into-lur [:gene/id (geneace-text-ref event-text)]
-        prov (-> event
-                 (wnu/select-keys-with-ns "provenance")
-                 (assoc :provenance/what event-type))]
-    (swap! deferred
-           defer-tx
-           [[:db/add from-lur data-attr into-lur]
-            prov]))
-    nil)
-
 ;; A string describing the Gene "HistoryAction".
 ;; This contains data about the change in some cases (e.g split, merge, change name)
 (s/def :geneace/event-text (s/and string? not-empty))
@@ -77,7 +71,7 @@
   (s/and string?
          (s/or :biotype/transposable-element-gene #(or
                                                     (= % "transposable_element_gene")
-                                                    (= % "Transposon In Origin"))
+                                                   (= % "Transposon In Origin"))
                :biotype/transcript #(= % "Transcript")
                :biotype/cds #(= % "CDS")
                :biotype/pseudogene #(= % "Pseudogene"))))
@@ -109,14 +103,17 @@
                             rest)]
     (-> m
         (assoc :provenance/what :event/update-gene)
-        (assoc :import-event/biotype-from bt-from)
-        (assoc :import-event/biotype-to bt-to)
         (wnip/discard-empty-valued-entries))))
 
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
       (assoc :provenance/what :event/update-gene)
       (assoc target-attr (geneace-text-ref event-text))))
+
+(defn decode-ref-event [m target-attr event-text event-type]
+  (-> m
+      (assoc :provenance/what event-type)
+      (assoc target-attr [:gene/id (geneace-text-ref event-text)])))
 
 (defn decode-geneace-event [event]
   (let [what (:geneace/event-text event)]
@@ -131,10 +128,10 @@
       (decode-biotype-event what)
 
       (str/starts-with? what "Merged_into")
-      (defer-event :gene/merges :event/merge-genes what)
+      (decode-ref-event :gene/merges what :event/merge-genes)
 
       (str/starts-with? what "Split_into")
-      (defer-event :gene/splits :event/split-gene what)
+      (decode-ref-event :gene/splits what :event/split-gene)
 
       (= what "Killed")
       (assoc :provenance/what :event/kill-gene)
@@ -178,7 +175,7 @@
   \"imported\" more than once (data fudging)."
   [events]
   (->> (filter #(= (:provenance/what %) :event/new-gene) events)
-       wnp/sort-events-by-when
+       (wnp/sort-events-by :provenance/when)
        last))
 
 (defn process-gene-events [[gid events]]
@@ -191,7 +188,7 @@
         fixedup-events (if first-created
                          (conj no-created first-created)
                          no-created)]
-    [gid (wnp/sort-events-by-when fixedup-events)]))
+    [gid (wnp/sort-events-by :provenance/when fixedup-events)]))
 
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
@@ -207,7 +204,7 @@
            (doall)))))
 
 (defn chuck-on-nils [data]
-  (doseq [[k v] data]
+  (doseq [[k v] (->> data (take-last 2) (apply array-map))]
     (when (nil? v)
       (throw (ex-info (str "value for " k " was nil")
                       {:data data})))))
@@ -216,9 +213,16 @@
   "Record historical events for the current gene set."
   [conn historical-version event]
   (let [pv (wnu/select-keys-with-ns event "provenance")
-        tx-data [{:gene/id (:gene/id event)
-                  :importer/historical-gene-version historical-version}
-                 (assoc pv :db/id "datomic.tx")]
+        gd (wnu/select-keys-with-ns event "gene")
+        lur (find gd :gene/id)
+        gid (second lur)
+        prov (assoc pv :db/id "datomic.tx" :provenance/how :agent/importer)
+        merges-and-splits (mapcat vec (select-keys gd [:gene/merges :gene/splits]))
+        tx-data (conj (concat [[:db/add gid :gene/id gid]]
+                              [[:db/add gid :importer/historical-gene-version historical-version]]
+                              (if (seq merges-and-splits)
+                                [(vec (concat [:db/add lur] merges-and-splits))]))
+                      prov)
         [data prov] tx-data]
     (chuck-on-nils data)
     (chuck-on-nils prov)
@@ -244,7 +248,11 @@
            (partition-all batch-size)
            doall))))
 
-(defn fixup-non-live-gene [db gene]
+(defn fixup-non-live-gene
+  "Remove names from dead genes that have already been assigned.
+
+  This is required due to the messiness of the export data/ACeDB data source."
+  [db gene]
   (cond-> gene
     (d/entity db (find gene :gene/cgc-name))
     (dissoc :gene/cgc-name)
@@ -252,18 +260,18 @@
     (d/entity db (find gene :gene/sequence-name))
     (dissoc :gene/sequence-name)))
 
-(defn process-deferred [conn]
-  (doseq [data (:tx-data @deferred)
-          tx-data (partition-all 100 data)]
-    @(noisy-transact conn tx-data)))
+(defn transact-current-data
+  "Import the current set of data and transact into the database.
 
-(defn batch-transact-data [conn tsv-path]
+  Dead genes are transacted one-by-one with special care taken to avoid
+  storing duplicate names."
+  [conn tsv-path]
   (let [cd-ex-conf (:data export-conf)]
     ;; process all genes that are not dead, using the default batch size of 500.
     (doseq [batch (build-data-txes tsv-path
                                    cd-ex-conf
                                    #(not= (:gene/status %) :gene.status/dead))]
-      @(transact-batch conn batch :tranasct-fn noisy-transact))
+      @(transact-batch conn batch :event/import-gene :tranasct-fn noisy-transact))
     ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
     ;; - only process the dead genees now, 1 at a time.
     ;; - use batch-size of 1, since there are dead genes with
@@ -274,12 +282,13 @@
                                    :batch-size 1)]
       @(transact-batch conn
                        (map (partial fixup-non-live-gene (d/db conn)) batch)
+                       :event/import-gene
                        :tranasct-fn noisy-transact))))
 
 (defn process
   [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
                                           :or {n-in-flight 10}}]
-  (batch-transact-data conn data-tsv-path)
+  (transact-current-data conn data-tsv-path)
   (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
     (let [event-txes (->> gene-events
                           (keep-indexed #(vector (inc %1) %2))
@@ -287,11 +296,4 @@
       ;; keep `n-in-fllght` transactions  running at a time for performance.
       (doseq [event-txes-p (partition-all n-in-flight event-txes)]
         (doseq [event-tx event-txes-p]
-          @event-tx))))
-  (process-deferred conn))
-
-(defn process-merges-and-splits
-  [conn actions-tsv-path & {:keys [n-in-flight]
-                            :or {n-in-flight 10}}]
-  (doall (map-history-actions actions-tsv-path))
-  (process-deferred conn))
+          @event-tx)))))

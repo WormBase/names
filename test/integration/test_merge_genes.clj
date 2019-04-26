@@ -1,15 +1,17 @@
 (ns integration.test-merge-genes
   (:require
+   [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
+   [java-time :as jt]
+   [ring.util.http-predicates :as ru-hp]
+   [wormbase.constdata :refer [elegans-ln]]
    [wormbase.db :as wdb]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.service :as service]
-   [wormbase.test-utils :as tu]
-   [ring.util.http-response :refer [bad-request conflict not-found ok]]
-   [clojure.string :as str]))
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -65,10 +67,10 @@
   (t/testing "Request to merge genes must meet spec."
     (let [response (merge-genes {} "WBGene0000001" "WBGene0000002")
           [status body] response]
-      (tu/status-is? (:status (bad-request)) status (pr-str body))))
+      (t/is (ru-hp/bad-request? {:status status :body body}))))
   (t/testing "Target biotype always required when merging genes."
     (let [[status body] (merge-genes {} "WB000000002" "WBGene00000001")]
-      (tu/status-is? status 400 body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest response-codes
   (t/testing "404 for missing gene(s)"
@@ -77,7 +79,7 @@
                           :prov nil}
                          "WBGene20000000"
                          "WBGene10000000")]
-      (tu/status-is? 404 status body)))
+      (t/is (ru-hp/not-found? {:status status :body body}))))
   (t/testing "409 for conflicting state"
     (let [data-samples (tu/gene-samples 2)
           [from-id into-id] (map :gene/id data-samples)
@@ -107,7 +109,7 @@
                                             :prov nil}
                                            from-id
                                            into-id)]
-            (tu/status-is? (:status (conflict)) status body))))))
+            (t/is (ru-hp/conflict? {:status status :body body})))))))
   (t/testing "400 for validation errors"
     (let [data-samples (tu/gene-samples 2)
           [from-id into-id] (map :gene/id data-samples)]
@@ -118,7 +120,7 @@
                                             :prov nil}
                                            from-id
                                            into-id)]
-            (tu/status-is? (:status (not-found)) status body)
+            (t/is (ru-hp/not-found? {:status status :body body}))
             (t/is (re-seq #"does not exist" (get body :message "")))))))))
 
 (t/deftest provenance-recorded
@@ -147,11 +149,15 @@
                       {:provenance/what [:db/ident]
                        :provenance/who [:person/email :person/name :person/id]
                        :provenance/how [:db/ident]}]
-                prov (some->> (wnp/query-provenance (d/db conn) [:gene/id from-id] ppe)
+                prov (some->> (wnp/query-provenance (d/db conn)
+                                                    (d/log conn)
+                                                    [:gene/id from-id]
+                                                    #{:gene/merges :gene/splits}
+                                                    ppe)
                               (filter #(= (:provenance/what %) :event/merge-genes))
                               first)]
-            (tu/status-is? (:status (ok)) status body)
-            (t/is (inst? (:provenance/when prov)))
+            (t/is (ru-hp/ok? {:status status :body body}))
+            (t/is (jt/zoned-date-time? (:provenance/when prov)))
 
             (let [{src-merges :gene/merges} (d/pull (d/db conn)
                                                     [{:gene/merges [[:gene/id]]}]
@@ -166,7 +172,7 @@
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
-    (let [species "Caenorhabditis elegans"
+    (let [species elegans-ln
           merged-from "WBGene00000001"
           merged-into "WBGene00000002"
           from-seq-name (tu/seq-name-for-species species)
@@ -196,7 +202,7 @@
         (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
                       wdb/db (fn get-db [_] (d/db conn))]
           (let [[status body] (undo-merge-genes merged-into merged-from)]
-            (tu/status-is? (:status (ok)) status body)
+            (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (map? body) (pr-str (type body)))
             (t/is (= (:dead body) merged-from) (pr-str body))
             (t/is (= (:live body) merged-into) (pr-str body))))))))

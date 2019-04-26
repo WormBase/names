@@ -11,7 +11,8 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
-   [wormbase.names.provenance :as wnp]))
+   [wormbase.names.provenance :as wnp]
+   [wormbase.names.validation :as wnv]))
 
 (s/def ::prov ::wsp/provenance)
 
@@ -35,8 +36,12 @@
     (let [bsize (wnbg/batch-size payload data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
+(defn names-validator [request data]
+  (map (partial wnv/validate-names request) data))
+
 (def routes
   (sweet/context "/gene" []
+    :tags ["batch" "gene"]
     (sweet/resource
      {:put
       {:summary "Update gene records."
@@ -50,6 +55,7 @@
                                         :event/update-gene
                                         ::wsg/update-batch
                                         wnu/conform-data
+                                        (partial names-validator request)
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
@@ -65,6 +71,7 @@
                                        event-type
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels
+                                       (partial names-validator request)
                                        request)))}
       :delete
       {:summary "Kill genes."
@@ -91,7 +98,7 @@
                                    wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/POST "/suppress" request
-      :summary "Suppress entities."
+      :summary "Suppress genes."
       :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsg/suppress-batch}
              prov {:prov ::wsp/provenance}]
@@ -113,6 +120,7 @@
                               wnu/conform-data
                               request))
     (sweet/context "/merge" []
+      :tags ["batch" "gene"]
       (sweet/resource
        {:post
         {:summary "Merge multiple pairs of genes."
@@ -122,6 +130,7 @@
          :handler (fn [request]
                     (merge-genes :event/merge-genes ::wsg/merge-gene-batch request))}}))
     (sweet/context "/split" []
+      :tags ["batch" "gene"]
       (sweet/resource
        {:post
         {:summary "Split multiple genes."
@@ -129,8 +138,4 @@
          :parameters {:body-params {:data ::wsg/split-gene-batch
                                     :prov ::wsp/provenance}}
          :handler (fn [request]
-                    (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))
-    (sweet/GET "/:batch-id" request
-      :responses (wnu/response-map ok {:schema ::wsb/success-response})
-      :path-params [batch-id :- :batch/id]
-      (wnbg/info request batch-id wnp/pull-expr))))
+                    (split-genes :event/split-genes ::wsg/split-gene-batch request))}}))))

@@ -1,13 +1,9 @@
 (ns integration.test-batch-new-gene
   (:require
    [clojure.test :as t]
-   [datomic.api :as d]
-   [ring.util.http-response :refer [bad-request
-                                    conflict
-                                    created
-                                    not-found not-found!
-                                    ok]]
    [clj-uuid :as uuid]
+   [datomic.api :as d]
+   [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db :as wdb]
@@ -27,7 +23,7 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (let [[status body] (new-genes {:data [] :prov nil})]
-      (t/is (= (:status (bad-request)) status)))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
@@ -36,7 +32,7 @@
                   :gene/biotype :biotype/cds
                   }]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (= (:status (created)) status))
+      (t/is (ru-hp/created? {:status status :body body}))
       (t/is (get body :batch/id "") (pr-str body)))))
 
 (t/deftest non-uniq-names
@@ -46,14 +42,14 @@
                  {:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (tu/status-is? (:status (conflict)) status body))))
+      (t/is (ru-hp/conflict? {:status status :body body})))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
     (let [bdata [{:gene/cgc-name "dup-1"
                   :gene/species "Caenorhabditis donkey"}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (tu/status-is? (:status (conflict)) status body))))
+      (t/is (ru-hp/bad-request? {:status status :body body})))))
 
 (t/deftest batch-success
   (t/testing "Batch with a random number of items is successful"
@@ -63,14 +59,14 @@
                   :gene/biotype :biotype/cds
                   :gene/species elegans-ln}]
           [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (:status (created)) (str status))
+      (t/is (ru-hp/created? {:status status :body body}))
       (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
-              [info-status info-body] (api-tc/info "batch" bid)]
+              [summary-status summary-body] (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
-          (tu/status-is? 200 info-status info-body)
-          (t/is (= (some-> info-body :provenance/what keyword)
+          (t/is (ru-hp/ok? {:status summary-status :body summary-body}))
+          (t/is (= (some-> summary-body :provenance/what keyword)
                    :event/new-gene)))))))

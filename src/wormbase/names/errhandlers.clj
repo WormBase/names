@@ -2,11 +2,12 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.tools.logging :as log]
-   [datomic.api :as d]
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
+   [datomic.api :as d]
    [environ.core :as environ]
    [expound.alpha :as expound]
+   [muuntaja.core :as mc]
    [ring.util.http-response :refer [bad-request
                                     conflict
                                     content-type
@@ -16,7 +17,8 @@
                                     unauthorized]]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
-   [wormbase.names.gene :as wn-gene])
+   [wormbase.names.gene :as wn-gene]
+   [wormbase.names.response-formats :as wnrf])
   (:import
    (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))
@@ -24,12 +26,9 @@
 (declare handlers)
 
 (defn respond-with [response-fn request data]
-  (let [fmt (-> request
-                :compojure.api.request/muuntaja
-                :default-format)]
-    (-> data
-        (response-fn)
-        (content-type fmt))))
+  (let [fmt (mc/default-format (or (:compojure.api.request/muuntaja request)
+                                   wnrf/json))]
+    (response-fn data)))
 
 (def respond-bad-request (partial respond-with bad-request))
 
@@ -73,14 +72,17 @@
                       :problems
                       (expound/expound-str spec (:value data*)))
                data*)
-        body (assoc-error-message info exc :message message)]
-    (respond-bad-request request body)))
+        body (assoc-error-message info exc :message message)
+        response (respond-bad-request request body)]
+   (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
   (when (some-> data :entity keyword?)
     (throw (ex-info "Schema not installed!" {:ident (:entity data)})))
-  (let [msg (apply format "%s '%s' does not exist" (:entity data))]
-    (respond-missing request (assoc-error-message data exc :message msg))))
+  (if-let [lookup-ref (:entity data)]
+    (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
+      (respond-missing request (assoc-error-message data exc :message msg)))
+    (respond-missing request (assoc-error-message data exc))))
 
 (defn handle-db-conflict [^Exception exc data request]
   (respond-conflict request (assoc-error-message data exc)))
@@ -96,11 +98,11 @@
      (if-let [db-err-handler (db-err handlers)]
        (db-err-handler exc data request)
        (handle-unexpected-error exc))
-     (if-not (empty? (filter nil? ((juxt :test :dev) environ/env)))
-       (handle-unexpected-error exc)
-       (internal-server-error data))))
+     (throw exc)))
   ([exc]
-   (throw exc)))
+   (log/fatal "Unexpected errror" exc)
+   (throw exc)
+   (internal-server-error "Ooops, something went really wrong!")))
 
 (defn handle-txfn-error [^Exception exc data request]
   (let [txfn-err? (instance? ExecutionException exc)

@@ -13,7 +13,7 @@ import {
 import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class UndoMergeGeneDialog extends Component {
-  submitData = (data) => {
+  submitData = (data, authorizedFetch) => {
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.delete('*', {
@@ -22,7 +22,7 @@ class UndoMergeGeneDialog extends Component {
         });
       },
       () => {
-        return this.props.authorizedFetch(
+        return authorizedFetch(
           `/api/gene/${this.props.wbId}/merge/${this.props.wbFromId}`,
           {
             method: 'DELETE',
@@ -38,7 +38,6 @@ class UndoMergeGeneDialog extends Component {
       wbFromId,
       geneName,
       geneFromName,
-      authorizedFetch,
       ...otherProps
     } = this.props;
     return (
@@ -80,7 +79,6 @@ UndoMergeGeneDialog.propTypes = {
   wbFromId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneFromName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  authorizedFetch: PropTypes.func.isRequired,
 };
 
 const styles = (theme) => ({});

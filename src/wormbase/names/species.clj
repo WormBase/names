@@ -21,7 +21,7 @@
          (str (first head) "-")
          (keyword "species"))))
 
-(def info-pull-expr '[*])
+(def summary-pull-expr '[*])
 
 (defn handle-new [request]
   (let [{payload :body-params db :db conn :conn} request
@@ -63,13 +63,13 @@
     :path-params [identifier :- ::identifier]
     (sweet/resource
      {:get
-      {:sumamry "Species details."
+      {:summary "Species details held in the system."
        :x-name ::species-summary
        :handler (fn handle-summary [request]
                   (let [sid (s/conform ::identifier identifier)
                         lur [:species/id (keyword "species" sid)]]
                     (-> (:db request)
-                        (wdb/pull info-pull-expr lur)
+                        (wdb/pull summary-pull-expr lur)
                         ok)))}
       :put
       {:summary "Update species details."

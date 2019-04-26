@@ -2,15 +2,16 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   AutocompleteBase,
+  AutocompleteChip,
+  AutocompleteLoader,
+  AutocompleteSuggestion,
+  CircularProgress,
   withStyles,
-  Chip,
   InputAdornment,
   Paper,
-  MenuItem,
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
-import GeneAutocompleteLoader from './GeneAutocompleteLoader';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
@@ -26,12 +27,7 @@ function renderInput(inputProps) {
         },
         startAdornment: item ? (
           <InputAdornment position="start">
-            <Chip
-              tabIndex={-1}
-              label={`${item.label} [ID: ${item.id}]`}
-              className={classes.chip}
-              onDelete={reset}
-            />
+            <AutocompleteChip suggestion={item} onDelete={reset} />
           </InputAdornment>
         ) : null,
       }}
@@ -39,41 +35,6 @@ function renderInput(inputProps) {
     />
   );
 }
-
-function renderSuggestion({
-  suggestion,
-  index,
-  itemProps,
-  highlightedIndex,
-  selectedItem,
-}) {
-  const isHighlighted = highlightedIndex === index;
-  const isSelected = selectedItem === suggestion;
-
-  return (
-    <MenuItem
-      {...itemProps}
-      key={suggestion.label}
-      selected={isHighlighted}
-      component={'div'}
-      style={{
-        fontWeight: isSelected ? 500 : 400,
-      }}
-    >
-      {suggestion.label}
-    </MenuItem>
-  );
-}
-renderSuggestion.propTypes = {
-  highlightedIndex: PropTypes.number,
-  index: PropTypes.number,
-  itemProps: PropTypes.object,
-  selectedItem: PropTypes.string,
-  suggestion: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string,
-  }).isRequired,
-};
 
 class GeneAutocomplete extends Component {
   itemToString = (item) => (item ? item.id : '');
@@ -103,7 +64,8 @@ class GeneAutocomplete extends Component {
           ...downshift
         }) => (
           <div>
-            <GeneAutocompleteLoader
+            <AutocompleteLoader
+              entityType="gene"
               inputValue={inputValue}
               selectedValue={this.itemToString(selectedItem)}
               onSuggestionChange={(suggestions, isInitialLoad) => {
@@ -121,7 +83,7 @@ class GeneAutocomplete extends Component {
                 }
               }}
             >
-              {({ suggestions }) => (
+              {({ suggestions, isLoading }) => (
                 <div className={classes.root}>
                   {renderInput({
                     fullWidth: true,
@@ -133,6 +95,13 @@ class GeneAutocomplete extends Component {
                     reset: clearSelection,
                     ...otherProps,
                   })}
+                  {isLoading ? (
+                    <Paper className={classes.paper} square>
+                      <div className={classes.loading}>
+                        <CircularProgress size={24} />
+                      </div>
+                    </Paper>
+                  ) : null}
                   <SimpleListPagination
                     items={suggestions}
                     pageSize={pageSize}
@@ -144,15 +113,15 @@ class GeneAutocomplete extends Component {
                     {({ pageItems, navigation }) =>
                       isOpen ? (
                         <Paper className={classes.paper} square>
-                          {pageItems.map((suggestion, index) =>
-                            renderSuggestion({
-                              suggestion,
-                              index,
-                              itemProps: getItemProps({ item: suggestion }),
-                              highlightedIndex,
-                              selectedItem,
-                            })
-                          )}
+                          {pageItems.map((suggestion, index) => (
+                            <AutocompleteSuggestion
+                              suggestion={suggestion}
+                              index={index}
+                              highlightedIndex={highlightedIndex}
+                              selectedItem={selectedItem}
+                              itemProps={getItemProps({ item: suggestion })}
+                            />
+                          ))}
                           {navigation}
                         </Paper>
                       ) : null
@@ -160,7 +129,7 @@ class GeneAutocomplete extends Component {
                   </SimpleListPagination>
                 </div>
               )}
-            </GeneAutocompleteLoader>
+            </AutocompleteLoader>
           </div>
         )}
       </AutocompleteBase>
@@ -182,9 +151,15 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 1,
-    marginTop: -4 * theme.spacing.unit,
+    marginTop: -6 * theme.spacing.unit,
     left: 0,
     right: 0,
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: theme.spacing.unit,
   },
 });
 
