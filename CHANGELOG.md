@@ -1,7 +1,10 @@
 # Change-log
 
 ## [0.4.13]
- - Nothing changed yet.
+ - "Recent" API used to display recent activity and query what's changed over a given time period.
+ - Various improvements to UI/UX.
+ - Refactoring of UI code to make it easier to add new types.
+ - Improvements to automatically generated documentation.
 
 ## [0.4.12]
  - Bumped version of wormbase/ids
