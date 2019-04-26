@@ -329,6 +329,7 @@ class EntityEditForm extends Component {
                     // from BaseForm
                     withFieldData,
                     getFormData,
+                    getFormDataModified,
                     dirtinessContext,
                   })}
                   {dirtinessContext(({ dirty }) => (
