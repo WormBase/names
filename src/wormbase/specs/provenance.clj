@@ -14,23 +14,32 @@
 
 ;; clients are requried to provide their time zone when specifying dates.
 (s/def :provenance/when (stc/spec {:spec (s/nilable wu/zoned-date-time?)
+                                   :swagger/example (jt/format :iso-date-time (jt/zoned-date-time (jt/instant) (jt/zone-id)))
                                    :description "The date-time the curator performed the action."}))
 
-(s/def :provenance/what sts/keyword?)
+(s/def :provenance/what  (stc/spec {:spec sts/keyword?
+                                    :swagger/example "event/new-gene"
+                                    :description "The type of event."}))
 
-(s/def :provenance/who (stc/spec (s/keys :req [(or :person/id :person/email)])))
+(s/def :provenance/who (stc/spec {:spec (s/keys :req [(or :person/id :person/email)])
+                                  :description "The WormBase person who performed the event."}))
 
-(s/def :provenance/how ::wsa/id)
+(s/def :provenance/how (stc/spec {:spec ::wsa/id
+                                  :swagger/example "agent/web"
+                                  :description "The agent that was used to process the event."}))
 
-(s/def :provenance/why (stc/spec (s/and sts/string? (complement str/blank?))))
+(s/def :provenance/why (stc/spec {:spec (s/and sts/string? (complement str/blank?))
+                                  :swagger/example "<express reason here>"
+                                  :description "An optional string describing the reason for the event."}))
 
 (s/def ::provenance (stc/spec
-                     (s/nilable
-                      (s/keys :opt [:provenance/who
-                                    :provenance/how
-                                    :provenance/what
-                                    :provenance/when
-                                    :provenance/why]))))
+                     {:spec (s/nilable
+                             (s/keys :opt [:provenance/who
+                                           :provenance/how
+                                           :provenance/what
+                                           :provenance/when
+                                           :provenance/why]))
+                      :description "A mapping describing provenance of names service events."}))
 
 (s/def ::attr sts/keyword?)
 
@@ -45,4 +54,5 @@
 (s/def ::temporal-change (s/merge ::provenance (s/keys :req-un [::changes ::t])))
 
 (s/def ::history (stc/spec
-                  (s/coll-of ::temporal-change :type vector? :min-count 1)))
+                  {:spec (s/coll-of ::temporal-change :type vector? :min-count 1)
+                   :description "A series of provenance events associated with a names service entity."}))
