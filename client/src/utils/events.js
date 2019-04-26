@@ -1,9 +1,24 @@
 export function pastTense(eventText = '') {
-  return eventText.replace(/(merg|kill|resurrect|suppress)e?/g, '$1ed');
+  return eventText.replace(/(creat|merg|kill|resurrect|suppress)e?/g, '$1ed');
+}
+
+function activityEntityType(activityItem = {}) {
+  return Object.keys(activityItem).reduce((result, key) => {
+    if (result) {
+      return result;
+    }
+    const match = key.match(/(.+)\/id/);
+    if (match) {
+      return match[1];
+    } else {
+      return null;
+    }
+  }, null);
 }
 
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   const what = activityItem['provenance/what'];
+  const entityType = activityEntityType(activityItem);
   const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
     (result, change) => {
       const { attr, value, added } = change || {};
@@ -39,19 +54,21 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
     statusChange === 'gene.status/live'
   ) {
     eventType = 'split_from';
+  } else if (what.match(/new-.+/)) {
+    eventType = 'create';
   } else {
-    eventType = what.replace(/-gene/, '').trim();
+    eventType = what.replace(/-\w+$/, '').trim();
     console.log(eventType);
   }
 
   const descriptor = {
     eventLabel: eventType || activityItem['provenance/what'],
     entity: {
-      'gene/id': selfGeneId || activityItem['gene/id'],
+      [`${entityType}/id`]: selfGeneId || activityItem[`${entityType}/id`],
     },
     relatedEntity: relatedGeneId
       ? {
-          'gene/id': relatedGeneId,
+          [`${entityType}/id`]: relatedGeneId,
         }
       : null,
   };
