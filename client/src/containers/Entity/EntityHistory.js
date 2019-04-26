@@ -71,10 +71,11 @@ class EntityHistory extends Component {
         <Table>
           <TableBody>
             {activities.map((activityItem, activityIndex) => {
-              const { eventLabel, relatedEntity } = getActivityDescriptor(
-                activityItem,
-                wbId
-              );
+              const {
+                eventLabel,
+                entity,
+                relatedEntity,
+              } = getActivityDescriptor(activityItem, wbId);
               console.log(relatedEntity);
               return (
                 <TableRow key={activityIndex}>
@@ -95,6 +96,16 @@ class EntityHistory extends Component {
                   <TableCell className={classes.eventCell}>
                     <Typography gutterBottom className={classes.eventLabel}>
                       <span>
+                        {wbId ? null : (
+                          <Link
+                            to={`/${entityType}/id/${
+                              entity[`${entityType}/id`]
+                            }`}
+                          >
+                            {entity[`${entityType}/id`]}
+                          </Link>
+                        )}
+                        &nbsp;
                         <Humanize postProcessor={pastTense}>
                           {eventLabel}
                         </Humanize>{' '}
@@ -129,7 +140,7 @@ class EntityHistory extends Component {
 
 EntityHistory.propTypes = {
   classes: PropTypes.object.isRequired,
-  wbId: PropTypes.string.isRequired,
+  wbId: PropTypes.string,
   entityType: PropTypes.string.isRequired,
   activities: PropTypes.array,
 };

@@ -47,7 +47,7 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   const descriptor = {
     eventLabel: eventType || activityItem['provenance/what'],
     entity: {
-      'gene/id': selfGeneId,
+      'gene/id': selfGeneId || activityItem['gene/id'],
     },
     relatedEntity: relatedGeneId
       ? {
