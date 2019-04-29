@@ -1,5 +1,9 @@
 # Change-log
 
+## [0.4.19]
+ - UI for recent activities.
+ - UI bufix for blank sequence name.
+ 
 ## [0.4.18]
  - Configured AWS Elasticbeanstalk app to use m4.xlarge EC2 instance type.
 
