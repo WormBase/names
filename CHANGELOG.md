@@ -1,6 +1,7 @@
 # Change-log
+
 ## [0.4.17]
- - Nothing changed yet.
+ - Configured AWS Elasticbeanstalk HTTP termination-at-instance.
 
 ## [0.4.16]
  - Fixed incorrect conversion logic for gene history.
