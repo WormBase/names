@@ -50,11 +50,7 @@ const EntityDirectory = (props) => {
                 <Typography variant="title" gutterBottom>
                   Recent activities
                 </Typography>
-                <ErrorBoundary>
-                  <div className={classes.recentActivitiesTable}>
-                    {renderHistory()}
-                  </div>
-                </ErrorBoundary>
+                <ErrorBoundary>{renderHistory()}</ErrorBoundary>
               </section>
             }
           </div>
@@ -98,9 +94,6 @@ const styles = (theme) => ({
     '& > *': {
       width: '100%',
     },
-  },
-  recentActivitiesTable: {
-    overflow: 'scroll',
   },
 });
 

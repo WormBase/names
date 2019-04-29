@@ -1,5 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthorizationContext } from '../Authenticate';
+import EntityHistory from './EntityHistory';
+import { Paper } from '../../components/elements';
 
 function EntityRecentActivities(props) {
   const { entityType } = props;
@@ -32,7 +34,7 @@ function EntityRecentActivities(props) {
     },
     [entityType]
   );
-  return <pre>{JSON.stringify(activities, null, 2)}</pre>;
+  return <EntityHistory activities={activities} entityType={entityType} />;
 }
 
 export default EntityRecentActivities;
