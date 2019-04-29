@@ -130,7 +130,7 @@
          items (->> (activities db log rules puller (or needle "") how from* until*)
                     (map (partial wu/elide-db-internals db))
                     (sort-by :t))
-         latest-t (some-> items first :t)
+         latest-t (some-> items last :t)
          etag (encode-etag latest-t)]
      (some-> {:activities items}
              (ok)
