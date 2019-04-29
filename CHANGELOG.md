@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.18]
+ - Nothing changed yet.
+
 ## [0.4.17]
  - Configured AWS Elasticbeanstalk HTTP termination-at-instance.
 
