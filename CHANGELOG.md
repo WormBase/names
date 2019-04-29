@@ -1,7 +1,7 @@
 # Change-log
 
 ## [0.4.18]
- - Nothing changed yet.
+ - Configured AWS Elasticbeanstalk app to use m4.xlarge EC2 instance type.
 
 ## [0.4.17]
  - Configured AWS Elasticbeanstalk HTTP termination-at-instance.
