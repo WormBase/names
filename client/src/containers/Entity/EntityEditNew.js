@@ -115,7 +115,13 @@ class EntityEditNew extends Component {
       <AuthorizationContext.Consumer>
         {({ authorizedFetch }) => (
           <BaseForm data={data}>
-            {({ withFieldData, getFormData, dirtinessContext, resetData }) => {
+            {({
+              withFieldData,
+              getFormData,
+              getFormDataModified,
+              dirtinessContext,
+              resetData,
+            }) => {
               return this.props.children({
                 profileContext: {
                   entityType: entityType,
@@ -130,7 +136,7 @@ class EntityEditNew extends Component {
                         ? PROGRESS_BUTTON_PENDING
                         : PROGRESS_BUTTON_READY,
                     onClick: this.getCreateHandler(
-                      getFormData,
+                      getFormDataModified,
                       authorizedFetch
                     ),
                     disabled: status === 'SUBMITTED' || disabled,
@@ -146,6 +152,7 @@ class EntityEditNew extends Component {
                 withFieldData,
                 dirtinessContext,
                 getFormData,
+                getFormDataModified,
               });
             }}
           </BaseForm>
