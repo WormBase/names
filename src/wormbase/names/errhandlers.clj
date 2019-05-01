@@ -67,13 +67,14 @@
   [^Exception exc data request & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
-        info (if-let [problems (some-> data* :problems)]
-               (assoc data*
-                      :problems
-                      (expound/expound-str spec (:value data*)))
+        info (if (s/spec? spec)
+               (if-let [problems (some-> data* :problems)]
+                 (assoc data*
+                        :problems
+                        (expound/expound-str spec (:value data*)))
+                 data*)
                data*)
-        body (assoc-error-message info exc :message message)
-        response (respond-bad-request request body)]
+        body (assoc-error-message info exc :message message)]
    (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]

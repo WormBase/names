@@ -16,9 +16,10 @@
   [identitfy-spec request identifier]
   (let [lookup-ref (s/conform identitfy-spec identifier)]
     (when (s/invalid? lookup-ref)
-      (not-found! {:message "Identifier malformed."
-                   :problems (s/explain-data identitfy-spec identifier)
-                   :type ::validation-error}))
+      (not-found! {:message "Malformed identifier"
+                   :type :user/validation-error
+                   :spec identitfy-spec
+                   :data identifier}))
     (let [db (:db request)
           ent (d/entity db lookup-ref)]
       (if (:db/id ent)

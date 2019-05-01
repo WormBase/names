@@ -133,7 +133,7 @@
       (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
                         {:problems problems
-                         :type ::validation-error
+                         :type :user/validation-error
                          :data data})))
       conformed)))
 

@@ -75,9 +75,9 @@
   (let [entity-type (namespace uiident)
         data-transform (fn set-live [_ data]
                          (let [live-status (keyword (str entity-type ".status") "live")]
-                           (->> (validator data)
-                                (conformer spec)
-                                (assign-status entity-type live-status))))
+                           (some->> (validator data)
+                                    (conformer spec)
+                                    (assign-status entity-type live-status))))
         batch-result (batcher wbids-batch/new
                               uiident
                               event-type
