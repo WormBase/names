@@ -23,7 +23,7 @@
                                       :swagger/example "AAH1.1"
                                       :description "The sequence name of the Gene."}))
 
-(s/def :gene/biotype (stc/spec {:spec sts/keyword?
+(s/def :gene/biotype (stc/spec {:spec (s/and sts/keyword? #(= (namespace %) "biotype"))
                                 :swagger/example "biotype/cds"
                                 :description "The biotype of gene."}))
 
