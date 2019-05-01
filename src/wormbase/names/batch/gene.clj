@@ -12,7 +12,8 @@
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
-   [wormbase.names.validation :as wnv]))
+   [wormbase.names.validation :as wnv]
+   [expound.alpha :as expound]))
 
 (s/def ::prov ::wsp/provenance)
 
@@ -22,7 +23,7 @@
         cdata (stc/conform spec data)]
     (when (s/invalid? cdata)
       (bad-request! {:data data
-                     :problems (s/explain-data spec data)}))
+                     :problems (expound/expound-str spec data)}))
     (let [bsize (wnbg/batch-size payload data)]
       (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
 
@@ -32,7 +33,7 @@
         cdata (stc/conform spec data)]
     (when (s/invalid? cdata)
       (bad-request! {:data data
-                     :problems (s/explain-data spec data)}))
+                     :problems (expound/expound-str spec data)}))
     (let [bsize (wnbg/batch-size payload data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
