@@ -28,6 +28,7 @@
    [wormbase.specs.species :as wss]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
+   [wormbase.util :as wu]
    [wormbase.names.importers.processing :as wnip])
   (:gen-class))
 
@@ -175,7 +176,7 @@
   \"imported\" more than once (data fudging)."
   [events]
   (->> (filter #(= (:provenance/what %) :event/new-gene) events)
-       (wnp/sort-events-by :provenance/when)
+       (wu/sort-events-by :provenance/when)
        last))
 
 (defn process-gene-events [[gid events]]
@@ -188,7 +189,7 @@
         fixedup-events (if first-created
                          (conj no-created first-created)
                          no-created)]
-    [gid (wnp/sort-events-by :provenance/when fixedup-events)]))
+    [gid (wu/sort-events-by :provenance/when fixedup-events)]))
 
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
