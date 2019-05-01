@@ -1,9 +1,14 @@
 # Change-log
 
+## [0.4.20]
+ - Fixed recent activities E-tag/caching bug.
+ - Fixed bugs with error handling of batch operations.
+ - Applied patch to fix initial data spec of per species cgc-name regular expressions.
+
 ## [0.4.19]
  - UI for recent activities.
  - UI bufix for blank sequence name.
- 
+
 ## [0.4.18]
  - Configured AWS Elasticbeanstalk app to use m4.xlarge EC2 instance type.
 
