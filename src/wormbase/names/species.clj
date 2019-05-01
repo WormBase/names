@@ -6,6 +6,7 @@
    [datomic.api :as d]
    [ring.util.http-response :refer [created ok]]
    [spec-tools.core :as stc]
+   [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
    [wormbase.names.provenance :as wnp]
@@ -13,7 +14,9 @@
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.species :as wss]))
 
-(s/def ::identifier (s/and string? (partial re-matches wss/id-regexp)))
+(s/def ::identifier (stc/spec {:spec (s/and sts/string? #(re-matches wss/id-regexp %))
+                               :swagger/example "c-elegans"
+                               :description "lower-case hyphen seperated abbriviation. e.g: \"c-elegans\"."}))
 
 (defn latin-name->id [ln]
   (let [[head tail] (-> ln str/lower-case (str/split  #" " 2))]
@@ -35,12 +38,14 @@
       (created (str "/species/" id) {}))))
 
 (defn handle-update
-  [request]
+  [request identifier]
   (let [{payload :body-params db :db conn :conn} request
         {data :data prov :prov} payload
+        species-id (keyword "species" identifier)
         cdata (wnu/conform-data ::wss/update data)
         prov (wnp/assoc-provenance request payload :event/update-species)
-        tx-data [cdata prov]
+        tx-data [['wormbase.ids.core/cas-batch [:species/id species-id] cdata]
+                 prov]
         tx-res @(d/transact-async conn tx-data)]
     (when-let [dba (:db-after tx-res)]
       (ok))))
@@ -60,7 +65,7 @@
 (def item-resources
   (sweet/context "/species/:identifier" []
     :tags ["species"]
-    :path-params [identifier :- ::identifier]
+    :path-params [identifier :- string?]
     (sweet/resource
      {:get
       {:summary "Species details held in the system."
@@ -76,7 +81,12 @@
        :x-name ::species-update
        :parameters {:body-params {:data ::wss/update
                                   :prov ::wsp/provenance}}
-       :handler handle-update}})))
+       :handler (fn [request]
+                  (try
+                    (handle-update request identifier)
+                    (catch Exception exc
+                      (prn exc)
+                      (throw exc))))}})))
 
 (def routes (sweet/routes coll-resources item-resources))
 
