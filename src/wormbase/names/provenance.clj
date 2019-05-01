@@ -63,15 +63,6 @@
      (when (inst? whence)
        {:provenance/when whence}))))
 
-(defn sort-events-by
-  "Sort a sequence of mappings representing events in temporal order."
-  [k events & {:keys [most-recent-first]
-               :or {most-recent-first false}}]
-  (let [cmp (if most-recent-first
-              #(compare %2 %1)
-              #(compare %1 %2))]
-    (sort-by k cmp events)))
-
 (defmulti resolve-change (fn [db change]
                            (get change :attr :default)))
 
@@ -190,7 +181,7 @@
   ([db log entity-id ref-attrs prov-pull-expr]
    (let [pull-changes (partial query-tx-changes-for-event db log entity-id)
          pull-prov #(pull-provenance db entity-id prov-pull-expr % pull-changes)
-         sort-mrf #(sort-events-by :t % :most-recent-first true)
+         sort-mrf #(wu/sort-events-by :t % :most-recent-first true)
          tx-ids (involved-in-txes db entity-id ref-attrs)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq

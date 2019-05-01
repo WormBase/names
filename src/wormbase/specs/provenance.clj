@@ -10,7 +10,8 @@
    [wormbase.util :as wu]))
 
 ;; internal datomic tx/Instant (java.util.Date instance)
-(s/def ::t sts/inst?)
+(s/def ::t (stc/spec {:spec sts/inst?
+                      :description "The server-local system time when the event was proccessed."}))
 
 ;; clients are requried to provide their time zone when specifying dates.
 (s/def :provenance/when (stc/spec {:spec (s/nilable wu/zoned-date-time?)

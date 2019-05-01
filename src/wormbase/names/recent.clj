@@ -34,10 +34,11 @@
 (def imported-date (memoize find-max-imported-date))
 
 (def query '[:find ?tx ?e
-             :in $ % ?log ?since-start ?since-end ?needle [?how ...]
+             :in $ % ?log ?start ?end ?needle [?how ...]
              :where
-             [(tx-ids ?log ?since-start ?since-end) [?tx ...]]
-             (filter-events ?tx ?needle ?how)
+             [(tx-ids ?log ?start ?end) [?tx ...]]
+             [?tx :provenance/how ?how]
+             (filter-events ?tx ?needle)
              [(tx-data ?log ?tx) [[?e]]]])
 
 (defn query-activities
@@ -54,7 +55,7 @@
          ;; Timings for the `tx-ids` query below with default configured time window (60 days)
          ;; (excluding pull expressions)
          ;; jvm (cold): 107.266427 msecs
-         ;; jvm (warm): 30.054339 msecs
+     ;; jvm (warm): 30.054339 msecs
      (d/q query db rules log from-t until-t needle how))))
 
 (defn changes-and-prov-puller
@@ -80,6 +81,9 @@
          (when-not (= tx-id ent-id)
            (wnp/pull-provenance (:db request) ent-id wnp/pull-expr tx-id)))))
 
+(defn sort-activities [acts]
+  (wu/sort-events-by :t acts :most-recent-first true))
+
 (defn activities
   "Return recent activities for both batch and individual operations.
   The result should be map whose keys represent these two groupings.
@@ -87,23 +91,23 @@
   [db log rules puller needle how ^Date from ^Date until]
   (some->> (query-activities db log rules needle from until how)
            (sequence puller)
-           (remove nil?)))
+           (remove nil?)
+           (map (partial wu/elide-db-internals db))
+           (sort-activities)))
 
-(def entity-rules '[[(filter-events ?tx ?needle ?how)
+(def entity-rules '[[(filter-events ?tx ?needle)
                      [(missing? $ ?tx :batch/id)]
                      [?tx :provenance/what ?wid]
-                     [?tx :provenance/how ?how]
                      [?wid :db/ident ?what]
                      [(name ?what) ?w]
                      [(clojure.string/includes? ?w ?needle)]]])
 
-(def person-rules '[[(filter-events ?tx ?needle _)
+(def person-rules '[[(filter-events ?tx ?needle)
                      [?tx :provenance/who ?pid]
                      [?pid :person/email ?needle]]])
 
-(def batch-rules '[[(filter-events ?tx ?needle _)
+(def batch-rules '[[(filter-events ?tx ?needle)
                     [?tx :batch/id _ _ ]]])
-
 
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
@@ -121,18 +125,16 @@
 
 (defn handle
   ([request rules puller needle from until]
-   (handle request rules puller needle #{:agent/console :agent/web} from until))
+   (handle request rules puller needle from until #{:agent/console :agent/web}))
   ([request rules puller needle from until how]
    (let [{conn :conn db :db} request
          log (d/log conn)
          from* (or from (wu/days-ago wsr/*default-days-ago*))
          until* (or until (jt/to-java-date (jt/instant)))
-         items (->> (activities db log rules puller (or needle "") how from* until*)
-                    (map (partial wu/elide-db-internals db))
-                    (sort-by :t))
-         latest-t (some-> items first :t)
-         etag (encode-etag latest-t)]
-     (some-> {:activities items}
+         items (activities db log rules puller (or needle "") how from* until*)
+         etag (some-> items first :t encode-etag)]
+     (some-> {:from from* :until until*}
+             (assoc :activities (reverse items))
              (ok)
              (add-etag-header-maybe etag)))))
 
@@ -148,9 +150,9 @@
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
                  (handle request batch-rules (prov-only-puller request) "" from until))
-               (sweet/GET "/person" request
+               (sweet/GET "/person/:id" request
                  :tags ["recent" "person"]
-                 :query-params [id :- :person/id]
+                 :path-params [id :- :person/id]
                  :summary "List recent activities made by the currently logged-in user."
                  (when-let [person (if id
                                      (d/pull (:db request) [:person/email] [:person/id id])
@@ -223,6 +225,6 @@
 
     (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org")
     (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org" from until)
-    
+
     (activities db (d/log conn) batch-rules pull-prov-only)
     (activities db (d/log conn) batch-rules pull-prov-only from until)))
