@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.4.21]
+ - Fixed species update API.
+ 
 ## [0.4.20]
  - Fixed recent activities E-tag/caching bug.
  - Fixed bugs with error handling of batch operations.
