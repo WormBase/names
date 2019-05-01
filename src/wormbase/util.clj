@@ -58,3 +58,12 @@
   (try
     (jt/zoned-date-time dt)
     (catch Exception e)))
+
+(defn sort-events-by
+  "Sort a sequence of mappings representing events in temporal order."
+  [k events & {:keys [most-recent-first]
+               :or {most-recent-first false}}]
+  (let [cmp (if most-recent-first
+              #(compare %2 %1)
+              #(compare %1 %2))]
+    (sort-by k cmp events)))
