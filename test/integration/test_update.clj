@@ -210,8 +210,8 @@
                 [status body] (update-variation subject-identifier payload)]
             (t/is (ru-hp/conflict? {:status status :body body}))))))))
 
-(t/deftest non-uniq-species-causes-conflict
-  (t/testing "Attempting to update a species that has a name that's already taken fails."
+(t/deftest cannot-update-latin-name
+  (t/testing "Attempting to update a \"latin-name\" for species is not permitted."
     (let [samples (map (fn add-id [sample]
                          (assoc sample :species/id (-> sample
                                                        :species/latin-name
@@ -227,7 +227,7 @@
                                    (assoc :species/latin-name dup-name))
                          :prov basic-prov}
                 [status body] (update-species species-id-name payload)]
-            (t/is (ru-hp/conflict? {:status status :body body}))))))))
+            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
 
 (t/deftest update-species-success
   (t/testing "Update a species that has a unique new name succeeds."
@@ -242,8 +242,9 @@
         sample
         (fn [conn]
           (let [new-name (-> gss/new-latin-name (gen/sample 1) first)
-                payload {:data (-> (dissoc sample :species/id)
-                                   (assoc :species/latin-name new-name))
+                payload {:data (dissoc sample :species/id :species/latin-name)
                          :prov basic-prov}
+                _ (println "PAYLOAD:")
+                _ (prn payload)
                 [status body] (update-species species-id-name payload)]
             (t/is (ru-hp/ok? {:status status :body body}))))))))
