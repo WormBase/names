@@ -181,7 +181,7 @@
   ([db log entity-id ref-attrs prov-pull-expr]
    (let [pull-changes (partial query-tx-changes-for-event db log entity-id)
          pull-prov #(pull-provenance db entity-id prov-pull-expr % pull-changes)
-         sort-mrf #(wu/sort-events-by :t % :most-recent-first true)
+         sort-mrf #(wu/sort-events-by :provenance/when % :most-recent-first true)
          tx-ids (involved-in-txes db entity-id ref-attrs)
          prov-seq (seq (map pull-prov tx-ids))]
      (some->> prov-seq
