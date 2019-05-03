@@ -41,8 +41,8 @@
         person-email (-> auth-identity :person :person/email)
         prov (get payload :prov {})
         who (if-let [plur (person-lur-from-provenance prov)]
-                 (-> request :db (d/pull [:db/id] plur))
-                 (-> auth-identity :person :db/id))
+              (-> request :db (d/pull [:db/id] plur))
+              (-> auth-identity :person :db/id))
         whence (-> (get prov :provenance/when (jt/instant))
                    (jt/zoned-date-time tz)
                    (jt/with-zone-same-instant tz)
