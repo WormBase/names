@@ -16,7 +16,6 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
-   [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.matching :as wnm]
    [wormbase.names.provenance :as wnp]
@@ -360,7 +359,6 @@
                   (find-gene request))}
       :post
       {:summary "Create new names for a gene (cloned or un-cloned)"
-       :middleware [wna/restrict-to-authenticated]
        :x-name ::new-gene
        :parameters {:body-params {:data ::wsg/new :prov ::wsp/provenance}}
        :responses (wnu/response-map created {:schema {:created ::wsg/created}}
@@ -382,7 +380,6 @@
         {:post
          {:summary "Resurrect a gene."
           :x-name ::resurrect-gene
-          :middleware [wna/restrict-to-authenticated]
           :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
@@ -392,7 +389,6 @@
         {:post
          {:summary "Suppress a gene."
           :x-name ::suppress-gene
-          :middleware [wna/restrict-to-authenticated]
           :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
@@ -400,7 +396,6 @@
      (sweet/resource
       {:delete
        {:summary "Kill a gene"
-        :middleware [wna/restrict-to-authenticated]
         :x-name ::kill-gene
         :parameters {:body-params {:prov ::wsp/provenance}}
         :responses status-changed-responses
@@ -422,7 +417,6 @@
         :x-name ::update-gene
         :parameters {:body-params {:data ::wsg/update
                                    :prov ::wsp/provenance}}
-        :middleware [wna/restrict-to-authenticated]
         :responses (-> wnu/default-responses
                        (dissoc conflict)
                        (wnu/response-map))
@@ -439,7 +433,6 @@
        (sweet/resource
         {:post
          {:summary "Merge one gene with another."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::merge-gene
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:data ::wsg/merge
@@ -450,7 +443,6 @@
             (merge-genes request identifier from-identifier))}
          :delete
          {:summary "Undo a merge operation."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-merge-gene
           :path-params [from-identifier ::wsg/identifier]
           :parameters {:body-params {:prov ::wsp/provenance}}
@@ -465,7 +457,6 @@
        (sweet/resource
         {:post
          {:summary "Split a gene."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::split-gene
           :parameters {:body-params {:data ::wsg/split :prov ::wsp/provenance}}
           :responses (-> (dissoc wnu/default-responses ok)
@@ -479,7 +470,6 @@
        (sweet/resource
         {:delete
          {:summary "Undo a split gene operation."
-          :middleware [wna/restrict-to-authenticated]
           :x-name ::undo-split-gene
           :path-params [into-identifier :- ::wsg/identifier]
           :responses (-> delete-responses

@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [buddy.auth :as auth]
    [compojure.api.middleware :as mw]
+   [compojure.api.swagger :as swagger]
    [compojure.api.sweet :as sweet]
    [compojure.route :as route]
    [environ.core :as environ]
@@ -61,9 +62,10 @@
     ;;       can vary depending on the user-agent...
     ;;       i.e scripts will use Bearer auth, browser will use... (?)
     :securityDefinitions
-    {:login
-     {:type "http"
-      :scheme "bearer"}}
+    {:api_key
+     {:type "apiKey"
+      :name "x-apikey"
+      :in "header"}}
     :tags
     [{:name "api"}
      {:name "feature"}
@@ -80,16 +82,17 @@
   (sweet/api
    {:formats wnrf/json
     :coercion :pure-spec
-    :middleware [ring-gzip/wrap-gzip
-                 wrap-static-resources
-                 wdb/wrap-datomic
-                 wna/wrap-auth
-                 mmw/wrap-format
-                 wrap-not-found]
     :exceptions {:handlers wn-eh/handlers}
-    :swagger swagger-ui}
+    :middleware [wrap-not-found
+                 ring-gzip/wrap-gzip]}
    (sweet/context "" []
+     (swagger/swagger-routes swagger-ui)
      (sweet/context "/api" []
+       :middleware [wrap-static-resources
+                    wdb/wrap-datomic
+                    wna/wrap-auth
+                    wna/restrict-to-authenticated
+                    mmw/wrap-format]
        wn-species/routes
        wn-person/routes
        wn-gene/routes

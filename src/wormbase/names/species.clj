@@ -8,7 +8,6 @@
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
-   [wormbase.names.auth :as wna]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.provenance :as wsp]
@@ -57,7 +56,6 @@
      {:post
       {:summary "Add a new species to the system."
        :x-name ::new-species
-       :middleware [wna/restrict-to-authenticated]
        :parameters {:body-params {:data ::wss/new
                                   :prov ::wsp/provenance}}
        :handler handle-new}})))

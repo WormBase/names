@@ -16,7 +16,6 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.ids.core :as wbids]
-   [wormbase.names.auth :as wna]
    [wormbase.names.entity :as wne]
    [wormbase.names.matching :as wnm]
    [wormbase.names.provenance :as wnp]
@@ -91,7 +90,6 @@
       :post
       {:summary "Create a new variation."
        :x-name ::new-variation
-       :middleware [wna/restrict-to-authenticated]
        :parameters {:body-params {:data ::wsv/new
                                   :prov ::wsp/provenance}}
        :responses (-> wnu/default-responses
@@ -115,7 +113,6 @@
      {:delete
       {:summary "Kill a variation."
        :x-name ::kill-variation
-       :middleware [wna/restrict-to-authenticated]
        :parameters {:body-params {:prov ::wsp/provenance}}
        :responses status-changed-responses
        :handler (fn [request]
@@ -125,7 +122,6 @@
        :x-name ::update-variation
        :parameters {:body-params {:data ::wsv/update
                                   :prov ::wsp/provenance}}
-       :middleware [wna/restrict-to-authenticated]
        :responses (-> wnu/default-responses
                       (dissoc conflict)
                       (wnu/response-map))
@@ -154,7 +150,6 @@
         :post
         {:summary "Resurrect a variation."
          :x-name ::resurrect-variation
-         :middleware [wna/restrict-to-authenticated]
          :respones status-changed-responses
          :handler (fn [request]
                     (resurrect-variation request identifier))}}))))

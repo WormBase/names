@@ -47,7 +47,6 @@
      {:put
       {:summary "Update gene records."
        :x-name ::batch-update-genes
-       :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
        :parameters {:body-params {:data ::wsg/update-batch
                                   :prov ::prov}}
@@ -61,7 +60,6 @@
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
        :x-name ::batch-new-genes
-       :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wsg/new-batch
                                   :prov ::prov}}
@@ -89,7 +87,6 @@
                          wnbg/map-conform-data-drop-labels)}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsg/resurrect-batch}
              prov {:prov :wsp/provenance}]
       (wnbg/change-entity-statuses :gene/id
@@ -100,7 +97,6 @@
                                    request))
     (sweet/POST "/suppress" request
       :summary "Suppress genes."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsg/suppress-batch}
              prov {:prov ::wsp/provenance}]
       (wnbg/change-entity-statuses :gene/id
@@ -111,7 +107,6 @@
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsg/cgc-names}
              prov {:prov ::wsp/provenance}]
       (wnbg/retract-attr-vals :gene/cgc-name
