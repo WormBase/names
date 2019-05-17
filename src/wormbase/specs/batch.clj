@@ -1,12 +1,15 @@
 (ns wormbase.specs.batch
   (:require
    [clojure.spec.alpha :as s]
+   [datomic.api :as d]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]))
 
-(s/def :batch/id uuid?)
+(s/def :batch/id (stc/spec {:spec uuid?
+                            :swagger/example (d/squuid)
+                            :description "Unique identifier."}))
 
 (s/def ::size pos-int?)
 

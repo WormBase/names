@@ -10,6 +10,7 @@
 (def name-regexp #"(([a-z]+)(Df|Dp|Ti|T|Is)?(\d+)){1,4}")
 
 (s/def :variation/id (stc/spec {:spec (s/and string? (partial re-matches id-regexp))
+                                :swagger/example "WBVar02143829"
                                 :description "A unique identifier."}))
 
 (s/def :variation/name (stc/spec {:spec (s/and string?

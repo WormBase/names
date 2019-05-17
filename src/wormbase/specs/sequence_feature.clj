@@ -13,7 +13,9 @@
 
 (s/def ::new-batch (s/keys :req-un [::n]))
 
-(s/def ::identifier (stc/spec (s/or :sequence-feature/id :sequence-feature/id)))
+(s/def ::identifier (stc/spec {:spec (s/or :sequence-feature/id :sequence-feature/id)
+                               :swagger/example "WBsf000006"
+                               :description "Unique primary identifier."}))
 
 (s/def ::change-status-batch (stc/spec (s/coll-of ::identifier :min-count 1)))
 
