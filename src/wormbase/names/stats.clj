@@ -15,12 +15,10 @@
        ident))
 
 (defn summary [request]
-  (let [res (into {}
-                  (map (fn ident-to-count [ident]
-                         [ident (or (ident-count (:db request) ident) 0)])
-                       [:gene/id :variation/id :sequence-feature/id :batch/id]))]
-    (prn res)
-    res))
+  (into {}
+        (map (fn ident-to-count [ident]
+               [ident (or (ident-count (:db request) ident) 0)])
+             [:gene/id :variation/id :sequence-feature/id :batch/id])))
 
 (defn handle-summary [request]
   (let [etag (some-> request :db d/basis-t wnu/encode-etag)]
@@ -37,13 +35,4 @@
                  {:summary "Counts of the number of entities in the system."
                   :x-name ::stats-summary-all
                   :responses (wnu/response-map ok {:schema ::wsst/summary})
-                  :handler (fn [req]
-                             (try
-                               (let [res (handle-summary req)]
-                                 (println "RETURN RESPONSE:")
-                                 (prn res)
-                                 res)
-                               (catch Exception exc
-                                 (println "EXCEPTION!")
-                                 (prn exc)
-                                 (throw exc))))}}))))
+                  :handler handle-summary}}))))
