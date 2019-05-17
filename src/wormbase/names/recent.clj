@@ -1,13 +1,10 @@
 (ns wormbase.names.recent
   (:require
-   [clojure.string :as str]
-   [buddy.core.codecs :as codecs]
-   [buddy.core.codecs.base64 :as b64]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
    [ring.middleware.not-modified :as rmnm]
-   [ring.util.http-response :refer [header ok]]
+   [ring.util.http-response :refer [ok]]
    [wormbase.db :as wdb]
    [wormbase.names.auth :as wna]
    [wormbase.names.provenance :as wnp]
@@ -111,18 +108,6 @@
 
 (def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
-(defn encode-etag [latest-t]
-  (some-> latest-t str b64/encode codecs/bytes->str))
-
-(defn decode-etag [^String etag]
- {:pre [(not (str/blank? etag))]}
-  (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
-
-(defn add-etag-header-maybe [response etag]
-  (if (seq etag)
-    (header response "etag" etag)
-    response))
-
 (defn handle
   ([request rules puller needle from until]
    (handle request rules puller needle from until #{:agent/console :agent/web}))
@@ -132,11 +117,11 @@
          from* (or from (wu/days-ago wsr/*default-days-ago*))
          until* (or until (jt/to-java-date (jt/instant)))
          items (activities db log rules puller (or needle "") how from* until*)
-         etag (some-> items first :t encode-etag)]
+         etag (some-> items first :t wnu/encode-etag)]
      (some-> {:from from* :until until*}
              (assoc :activities (reverse items))
              (ok)
-             (add-etag-header-maybe etag)))))
+             (wnu/add-etag-header-maybe etag)))))
 
 (def routes (sweet/routes
              (sweet/context "/recent" []
