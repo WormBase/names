@@ -8,10 +8,7 @@
    [aero.core :as aero]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request
-                                    conflict
-                                    ok
-                                    precondition-failed]]
+   [ring.util.http-response :refer [bad-request conflict ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
@@ -115,8 +112,7 @@
 
 (def default-responses
   {bad-request {:schema {:errors ::wsc/error-response}}
-   conflict {:schema {:conflict ::wsc/error-response}}
-   precondition-failed {:schema ::wsc/error-response}})
+   conflict {:schema {:conflict ::wsc/error-response}}})
 
 (defn response-map
   ([m]
