@@ -244,7 +244,5 @@
           (let [new-name (-> gss/new-latin-name (gen/sample 1) first)
                 payload {:data (dissoc sample :species/id :species/latin-name)
                          :prov basic-prov}
-                _ (println "PAYLOAD:")
-                _ (prn payload)
                 [status body] (update-species species-id-name payload)]
             (t/is (ru-hp/ok? {:status status :body body}))))))))
