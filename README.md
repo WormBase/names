@@ -132,16 +132,17 @@ For a full list of tasks, type:
 make help
 ```
 
-### Running imports
-
-The best way to run the imports is against a local dynamodb-local or dev datomic transactor.
-
-e.g: dynamodb-local
-export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019
+### Importing from GeneACe export data
 
 Conventionally, the export files have been named in the form: `DDMMYYY_<topic>`,
 and we give the datomic database a corresponding name.
-The Dynamo DB table here is `WSNames`
+
+The best way to run the imports is against a local `datomic:ddb-local` or `datomic:dev` transactor.
+
+e.g: dynamodb-local
+export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019 # The Dynamo DB table here is `WSNames`
+
+See [here][14] for creating a local DynamoDB database.
 
 #### Import genes
 
@@ -173,12 +174,23 @@ and instead just record the latest ID and status.
 From a fresh database install, enter the following from a REPL session
 after exporting the `WB_DB_URI` environment variable appropriately:
 
-```repl
+```clojure
 (require '[environ.core :refer [env]])
 (require '[datomic.api :as d])
 (def conn (d/connect (:wb-db-uri conn)))
 @(d/transact conn [{:sequence-feature/id "<latest-id>", :sequence-feature/status :sequence-feature.status/live}
 				  {:db/id "datomic.tx", :provenance/why "Initial import", :provenance/who [:person/id "YourWBPersonID"]}])
+```
+
+### Restoring the datomic database to AWS
+
+Follow the "standard" backup-and-restore method, for example:
+
+```
+mkdir $HOME/names-db-backups
+cd ~/datomic-pro/datomic-pro-0.9.5703
+bin/datomic backup-db $LOCAL_DATOMIC_URI file://$HOME/names-db-backups/names-db
+bin/datomic restore-db file://$HOME/names-db-backups/names-db $REMOTE_DATOMIC_URI
 ```
 
 ## License
@@ -198,3 +210,4 @@ Copyright ©  WormBase 2018, 2019
 [11]: https://github.com/facebook/create-react-app
 [12]: https://github.com/docker/docker-credential-helpers/releases
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
+[14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
