@@ -184,14 +184,29 @@ after exporting the `WB_DB_URI` environment variable appropriately:
 
 ### Restoring the datomic database to AWS
 
+Creation of a new remote DynamoDB database should be done via the AWS CLI or web console (outside of the scope of this document).
+
 Follow the "standard" backup-and-restore method, for example:
 
-```
+```bash
 mkdir $HOME/names-db-backups
 cd ~/datomic-pro/datomic-pro-0.9.5703
 bin/datomic backup-db $LOCAL_DATOMIC_URI file://$HOME/names-db-backups/names-db
+```
+
+Before restoring the database:
+ - Make a note of the current value of `write-capacity`
+ - Increase the `write-capacity` of the DDB table via the AWS CLI/web
+   console to be 1000 (or more), then run the restore command shown
+   below.
+
+```bash
 bin/datomic restore-db file://$HOME/names-db-backups/names-db $REMOTE_DATOMIC_URI
 ```
+After the process concludes, restore the `write-capacity` back to its original value.
+
+Ensure to configure the application via the `.ebextensions/app-env.config` file to match $REMOTE_DATOMIC_URI.
+After deploying a release, verify that the URI has changed in the ElasticBeanStalk configuration section.
 
 ## License
 EPL (Eclipse Public License)
