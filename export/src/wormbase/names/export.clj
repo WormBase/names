@@ -2,11 +2,11 @@
   (:require
    [clojure.java.io :as io]
    [clojure.data.csv :as cd-csv]
+   [clojure.string :as str]
    [clojure.tools.cli :as cli]
    [datomic.api :as d]
    [environ.core :refer [env]]
-   [semantic-csv.core :as sc]
-   [clojure.string :as str])
+   [semantic-csv.core :as sc])
   (:import
    (java.util.concurrent ExecutionException)))
 
