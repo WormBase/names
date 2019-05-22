@@ -26,3 +26,6 @@
                                  :description "A mapping containing the search term pattern."}))
 
 (s/def ::entity-type sts/string?)
+
+(s/def ::force? sts/boolean?)
+

@@ -111,6 +111,15 @@
       (t/is (ru-hp/created? {:status status :body body}))
       (t/is (some-> body :created :gene/id) (pr-str body)))))
 
+(t/deftest naming-gene-bypass-nomenclature
+  (t/testing "Bypassing nomenclature validation when creating gene is ok."
+    (let [data {:gene/cgc-name "AnythingILike123"
+                :gene/species elegans-ln}
+          prov {:provenace/who {:person/email "tester@wormbase.org"}}
+          [status body] (new-gene {:data data :prov prov :force true})]
+      (t/is (ru-hp/created? {:status status :body body}))
+      (t/is (some-> body :created :gene/id) (pr-str body)))))
+
 (t/deftest variation-data-must-meet-spec
   (t/testing "Empty gene data payload is a bad request."
     (check-empty new-variation))

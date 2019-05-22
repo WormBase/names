@@ -58,7 +58,27 @@
                  {:gene/sequence-name "OKIDOKE.1"
                   :gene/biotype :biotype/cds
                   :gene/species elegans-ln}]
-          [status body] (new-genes {:data bdata :prov basic-prov})]
+          [status body] (new-genes {:data bdata :prov basic-prov :force false})]
+      (t/is (ru-hp/created? {:status status :body body}))
+      (let [bid (get body :batch/id "")]
+        (t/is (uuid/uuid-string? bid) (pr-str body))
+        (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
+              xs (map #(get-in % [:gene/status :db/ident]) batch)
+              [summary-status summary-body] (api-tc/summary "batch" bid)]
+          (t/is (seq xs))
+          (t/is (every? (partial = :gene.status/live) xs))
+          (t/is (ru-hp/ok? {:status summary-status :body summary-body}))
+          (t/is (= (some-> summary-body :provenance/what keyword)
+                   :event/new-gene)))))))
+
+(t/deftest batch-success-with-force-override-nomenclature
+  (t/testing "Batch with a random number of items overriding nomenclature guide is successful"
+    (let [bdata [{:gene/cgc-name "FORCETHISBECAUSEIWANTIT"
+                  :gene/species elegans-ln}
+                 {:gene/sequence-name "OKIDOKE.1"
+                  :gene/biotype :biotype/cds
+                  :gene/species elegans-ln}]
+          [status body] (new-genes {:data bdata :prov basic-prov :force true})]
       (t/is (ru-hp/created? {:status status :body body}))
       (let [bid (get body :batch/id "")]
         (t/is (uuid/uuid-string? bid) (pr-str body))
