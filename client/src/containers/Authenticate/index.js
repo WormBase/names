@@ -5,6 +5,7 @@ import Profile from './Profile';
 import ProfileButton from './ProfileButton';
 import AuthorizationContext, {
   DEFAULT_AUTHENTICATION_STATE,
+  useDataFetch,
 } from './AuthorizationContext';
 
 class Authenticate extends Component {
@@ -120,4 +121,11 @@ Authenticate.propTypes = {};
 
 export default Authenticate;
 
-export { ProfileButton, Login, Logout, Profile, AuthorizationContext };
+export {
+  ProfileButton,
+  Login,
+  Logout,
+  Profile,
+  AuthorizationContext,
+  useDataFetch,
+};
