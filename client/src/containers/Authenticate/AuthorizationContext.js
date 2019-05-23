@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 
 export const DEFAULT_AUTHENTICATION_STATE = {
   isAuthenticated: undefined,
@@ -21,17 +21,15 @@ const AuthorizationContext = React.createContext({
 // https://overreacted.io/a-complete-guide-to-useeffect/
 // https://www.robinwieruch.de/react-hooks-fetch-data/
 
-export function useDataFetch(initialUrl, initialData) {
-  const { authorizedFetch } = useContext(AuthorizationContext);
-  const [url, setUrl] = useState(initialUrl);
+export function useDataFetch(initialFetchFunc, initialData) {
   const [state, dispatch] = useReducer(dataFetchReducer, {
     data: initialData,
     isLoading: false,
     isError: false,
   });
+  const [fetchFunc, setFetchFunc] = useState(initialFetchFunc);
 
   function dataFetchReducer(state, action) {
-    console.log(action);
     switch (action.type) {
       case 'FETCH_INIT':
         return {
@@ -62,13 +60,12 @@ export function useDataFetch(initialUrl, initialData) {
       let didCancel = false;
 
       function fetchData() {
-        if (!url) {
+        if (!fetchFunc) {
           return;
         }
         dispatch({ type: 'FETCH_INIT' });
-        return authorizedFetch(url, {
-          method: 'GET',
-        })
+        console.log(fetchFunc);
+        return fetchFunc()
           .then((response) => {
             return Promise.all([response, response.json()]);
           })
@@ -97,10 +94,10 @@ export function useDataFetch(initialUrl, initialData) {
         didCancel = true;
       };
     },
-    [authorizedFetch, dispatch, url]
+    [dispatch, fetchFunc]
   );
 
-  return { ...state, url, setUrl };
+  return { ...state, setFetchFunc };
 }
 
 export default AuthorizationContext;
