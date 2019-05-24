@@ -26,10 +26,10 @@
   com.google.api-client/google-api-client {:mvn/version "1.23.0"}
   io.rkn/conformity {:mvn/version "0.5.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
-  metosin/compojure-api {:mvn/version "2.0.0-alpha28"
+  metosin/compojure-api {:mvn/version "2.0.0-alpha30"
                          :exclusions [potemkin
                                       instaparse]}
-  metosin/muuntaja {:mvn/version "0.6.1"}
+  metosin/muuntaja {:mvn/version "0.6.4"}
   mount {:mvn/version "0.1.12"}
   ring/ring-codec {:mvn/version "1.1.0"}
   ring/ring-defaults {:mvn/version "0.3.1"}

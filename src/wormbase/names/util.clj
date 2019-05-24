@@ -4,11 +4,14 @@
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [clojure.walk :as w]
    [aero.core :as aero]
+   [buddy.core.codecs :as codecs]
+   [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request conflict ok]]
+   [ring.util.http-response :refer [bad-request conflict header ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
@@ -108,7 +111,7 @@
 
 (def suppressed? (partial has-status? "suppressed"))
 
-(def not-live? (comp not live?))
+(def not-live? #(not (live? %)))
 
 (def default-responses
   {bad-request {:schema {:errors ::wsc/error-response}}
@@ -147,3 +150,15 @@
               [?a :db/ident ?aname]]
             db
             bid)))
+
+(defn encode-etag [latest-t]
+  (some-> latest-t str b64/encode codecs/bytes->str))
+
+(defn decode-etag [^String etag]
+ {:pre [(not (str/blank? etag))]}
+  (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
+
+(defn add-etag-header-maybe [response etag]
+  (if (seq etag)
+    (header response "etag" etag)
+    response))
