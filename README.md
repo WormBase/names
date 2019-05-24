@@ -1,7 +1,9 @@
 # wormbase-names
 
-A web app that facilitates the sharing of identifiers and names of a
-subset of WormBase data types.
+This repository provides:
+ - A web app that facilitates the sharing of identifiers and names of a subset of WormBase data types.
+ - A shared library (functions used within the datomic transactor, and the web app)
+ - A command line application to export the data from the names service.
 
 The web app comprises:
 
@@ -140,6 +142,7 @@ and we give the datomic database a corresponding name.
 The best way to run the imports is against a local `datomic:ddb-local` or `datomic:dev` transactor.
 
 e.g: dynamodb-local
+
 export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019 # The Dynamo DB table here is `WSNames`
 
 See [here][14] for creating a local DynamoDB database.
@@ -157,6 +160,8 @@ lein run import gene <current_status_tsv> <actions.tsv>
 At time of writing (as of WormBase release WS270), the gene import pipeline takes ~5 hours to run.
 
 #### Import variations
+
+The variations export data is provided in a single file (no provenance is attached).
 
 ```bash
 lein import variations <variations_tsv>
