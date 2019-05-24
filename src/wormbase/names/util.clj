@@ -11,11 +11,7 @@
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request
-                                    conflict
-                                    header
-                                    ok
-                                    precondition-failed]]
+   [ring.util.http-response :refer [bad-request conflict header ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
@@ -119,8 +115,7 @@
 
 (def default-responses
   {bad-request {:schema {:errors ::wsc/error-response}}
-   conflict {:schema {:conflict ::wsc/error-response}}
-   precondition-failed {:schema ::wsc/error-response}})
+   conflict {:schema {:conflict ::wsc/error-response}}})
 
 (defn response-map
   ([m]
