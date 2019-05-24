@@ -24,31 +24,36 @@ const AuthorizationContext = React.createContext({
 export function useDataFetch(initialFetchFunc, initialData) {
   const [state, dispatch] = useReducer(dataFetchReducer, {
     data: initialData,
+    dataTimestamp: 0,
     isLoading: false,
-    isError: false,
+    isError: null,
+    isNew: true,
   });
   const [fetchFunc, setFetchFunc] = useState(initialFetchFunc);
 
   function dataFetchReducer(state, action) {
+    console.log(action);
     switch (action.type) {
       case 'FETCH_INIT':
         return {
           ...state,
+          isNew: false,
           isLoading: true,
-          isError: false,
+          isError: null,
         };
       case 'FETCH_SUCCESS':
         return {
           ...state,
           isLoading: false,
-          isError: false,
+          isError: null,
           data: action.payload,
+          dataTimestamp: Date.now(),
         };
       case 'FETCH_FAILURE':
         return {
           ...state,
           isLoading: false,
-          isError: true,
+          isError: action.payload,
         };
       default:
         throw new Error();
@@ -64,7 +69,7 @@ export function useDataFetch(initialFetchFunc, initialData) {
           return;
         }
         dispatch({ type: 'FETCH_INIT' });
-        console.log(fetchFunc);
+
         return fetchFunc()
           .then((response) => {
             return Promise.all([response, response.json()]);
@@ -74,7 +79,10 @@ export function useDataFetch(initialFetchFunc, initialData) {
               if (response.ok) {
                 dispatch({ type: 'FETCH_SUCCESS', payload: data });
               } else {
-                dispatch({ type: 'FETCH_FAILURE' });
+                dispatch({
+                  type: 'FETCH_FAILURE',
+                  payload: data,
+                });
               }
             }
           })
@@ -97,7 +105,11 @@ export function useDataFetch(initialFetchFunc, initialData) {
     [dispatch, fetchFunc]
   );
 
-  return { ...state, setFetchFunc };
+  return {
+    ...state,
+    isSuccess: !state.isNew && !state.isLoading && !state.isError,
+    setFetchFunc,
+  };
 }
 
 export default AuthorizationContext;
