@@ -269,6 +269,7 @@ class BaseForm extends Component {
           () => {
             this.unsubscribe = dataStore.subscribe(() => {
               const currentDirty = dirtySelect(dataStore.getState());
+              console.log(`Dirty: ${currentDirty}`);
               if (this.state.dirty !== currentDirty) {
                 this.setState({
                   dirty: currentDirty,

@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 
 import {
   AppBar,
-  SearchBox,
   Toolbar,
   Typography,
   withStyles,
 } from '../../components/elements';
+
+import { SearchBox } from '../Search';
 
 import { Route, Link } from 'react-router-dom';
 import Logo from './Logo';

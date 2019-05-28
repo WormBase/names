@@ -11,8 +11,7 @@
                                     bad-request
                                     conflict
                                     created
-                                    not-found not-found!
-                                    precondition-failed precondition-failed!]]
+                                    not-found not-found!]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.ids.core :as wbids]

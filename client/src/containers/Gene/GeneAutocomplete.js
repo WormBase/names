@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import {
   AutocompleteBase,
   AutocompleteChip,
-  AutocompleteLoader,
   AutocompleteSuggestion,
   CircularProgress,
   withStyles,
@@ -12,6 +11,8 @@ import {
   TextField,
   SimpleListPagination,
 } from '../../components/elements';
+
+import { AutocompleteLoader } from '../Search';
 
 function renderInput(inputProps) {
   const { InputProps, classes, ref, item, reset, ...other } = inputProps;
@@ -68,19 +69,21 @@ class GeneAutocomplete extends Component {
               entityType="gene"
               inputValue={inputValue}
               selectedValue={this.itemToString(selectedItem)}
-              onSuggestionChange={(suggestions, isInitialLoad) => {
-                if (!isOpen || isInitialLoad) {
-                  // set selectedItem based on matching of inputValue with suggestions, when
-                  // 1) suggestion loads when user isn't interacting with the field, OR
-                  // 2) suggestion loads is first loaded with the initial/unmodified inputValue
-                  const [nextSelectedItem] = suggestions.filter(
-                    (item) =>
-                      item.label === inputValue || item.id === inputValue
-                  );
-                  if (nextSelectedItem) {
-                    downshift.selectItem(nextSelectedItem);
-                  }
+              onSuggestionChange={(suggestions) => {
+                //  if (!isOpen || isInitialLoad) {
+                // set selectedItem based on matching of inputValue with suggestions, when
+                // 1) suggestion loads when user isn't interacting with the field, OR
+                // 2) suggestion loads is first loaded with the initial/unmodified inputValue
+                const [nextSelectedItem] = suggestions.filter(
+                  (item) =>
+                    item['cgc-name'] === inputValue ||
+                    item['sequence-name'] === inputValue ||
+                    item.id === inputValue
+                );
+                if (nextSelectedItem) {
+                  downshift.selectItem(nextSelectedItem);
                 }
+                //  }
               }}
             >
               {({ suggestions, isLoading }) => (
@@ -101,32 +104,33 @@ class GeneAutocomplete extends Component {
                         <CircularProgress size={24} />
                       </div>
                     </Paper>
-                  ) : null}
-                  <SimpleListPagination
-                    items={suggestions}
-                    pageSize={pageSize}
-                    onPageChange={(startIndex, endIndex) => {
-                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
-                      downshift.setItemCount(endIndex - startIndex);
-                    }}
-                  >
-                    {({ pageItems, navigation }) =>
-                      isOpen ? (
-                        <Paper className={classes.paper} square>
-                          {pageItems.map((suggestion, index) => (
-                            <AutocompleteSuggestion
-                              suggestion={suggestion}
-                              index={index}
-                              highlightedIndex={highlightedIndex}
-                              selectedItem={selectedItem}
-                              itemProps={getItemProps({ item: suggestion })}
-                            />
-                          ))}
-                          {navigation}
-                        </Paper>
-                      ) : null
-                    }
-                  </SimpleListPagination>
+                  ) : (
+                    <SimpleListPagination
+                      items={suggestions}
+                      pageSize={pageSize}
+                      onPageChange={(startIndex, endIndex) => {
+                        // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                        downshift.setItemCount(endIndex - startIndex);
+                      }}
+                    >
+                      {({ pageItems, navigation }) =>
+                        isOpen ? (
+                          <Paper className={classes.paper} square>
+                            {pageItems.map((suggestion, index) => (
+                              <AutocompleteSuggestion
+                                suggestion={suggestion}
+                                index={index}
+                                highlightedIndex={highlightedIndex}
+                                selectedItem={selectedItem}
+                                itemProps={getItemProps({ item: suggestion })}
+                              />
+                            ))}
+                            {navigation}
+                          </Paper>
+                        ) : null
+                      }
+                    </SimpleListPagination>
+                  )}
                 </div>
               )}
             </AutocompleteLoader>

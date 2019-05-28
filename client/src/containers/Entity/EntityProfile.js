@@ -211,6 +211,7 @@ class EntityProfile extends Component {
                   anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                   open={message}
                   onClose={onMessageClose}
+                  transitionDuration={0}
                 >
                   <SnackbarContent
                     variant={messageVariant}
