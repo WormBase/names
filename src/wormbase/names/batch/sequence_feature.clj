@@ -1,7 +1,6 @@
 (ns wormbase.names.batch.sequence-feature
   (:require
    [compojure.api.sweet :as sweet]
-   [wormbase.names.auth :as wna]
    [wormbase.names.batch.generic :as wnbg]
    [wormbase.names.util :as wnu]
    [wormbase.specs.provenance :as wsp]
@@ -24,7 +23,6 @@
      {:post
       {:summary "Create new sequence-features."
        :x-name ::batch-new-sequence-feature
-       :middleware [wna/restrict-to-authenticated]
        :parameters {:body-params {:data ::wssf/new-batch
                                   ;:prov ::wsp/provenance
                                   }}
@@ -38,7 +36,6 @@
       :delete
       {:summary "Kill sequence features."
        :x-name ::batch-kill-sequence-feature
-       :middleware [wna/restrict-to-authenticated]
        :parameters {:body-params {:data ::wssf/kill-batch
                                   :prov ::wsp/provenance}}
        :handler (fn handle-kill [request]
@@ -50,7 +47,6 @@
                                                request))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect a batch of dead sequence-features."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wssf/resurrect-batch}
              prov {:prov :wsp/provenance}]
       (wnbg/change-entity-statuses :sequence-feature/id

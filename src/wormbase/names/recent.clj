@@ -6,7 +6,6 @@
    [ring.middleware.not-modified :as rmnm]
    [ring.util.http-response :refer [ok]]
    [wormbase.db :as wdb]
-   [wormbase.names.auth :as wna]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.recent :as wsr]
@@ -129,8 +128,7 @@
                :responses {200 {:schema {:activities ::wsr/activities}}}
                :query-params [{from :- ::wsr/from nil}
                               {until :- ::wsr/until nil}]
-               :middleware [wna/restrict-to-authenticated
-                            rmnm/wrap-not-modified]
+               :middleware [rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."

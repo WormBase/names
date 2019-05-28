@@ -10,13 +10,16 @@ import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Paper from '@material-ui/core/Paper';
 
-import AutocompleteBase from './AutocompleteBase';
-import AutocompleteChip from './AutocompleteChip';
+import {
+  AutocompleteBase,
+  AutocompleteChip,
+  AutocompleteSuggestion,
+  SimpleListPagination,
+  TextField,
+  EntityTypeSelect,
+} from '../../components/elements';
+
 import AutocompleteLoader from './AutocompleteLoader';
-import AutocompleteSuggestion from './AutocompleteSuggestion';
-import SimpleListPagination from './SimpleListPagination';
-import TextField from './TextField';
-import EntityTypeSelect from './EntityTypeSelect';
 
 function renderInput(inputProps) {
   const {
@@ -162,37 +165,38 @@ const SearchBox = (props) => {
                       <CircularProgress size={24} />
                     </div>
                   </Paper>
-                ) : null}
-                <SimpleListPagination
-                  items={suggestions}
-                  onPageChange={(startIndex, endIndex) => {
-                    // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
-                    downshift.setItemCount(endIndex - startIndex);
-                  }}
-                >
-                  {({ pageItems, navigation }) =>
-                    isOpen ? (
-                      <Paper className={classes.paper} square>
-                        {pageItems.map((suggestion, index) => (
-                          <AutocompleteSuggestion
-                            suggestion={suggestion}
-                            component={({ ...props }) => (
-                              <Link
-                                to={`/${entityType}/id/${suggestion.id}`}
-                                {...props}
-                              />
-                            )}
-                            index={index}
-                            highlightedIndex={highlightedIndex}
-                            selectedItem={selectedItem}
-                            itemProps={getItemProps({ item: suggestion })}
-                          />
-                        ))}
-                        {navigation}
-                      </Paper>
-                    ) : null
-                  }
-                </SimpleListPagination>
+                ) : (
+                  <SimpleListPagination
+                    items={suggestions}
+                    onPageChange={(startIndex, endIndex) => {
+                      // downshift.openMenu();  // otherwise inputBlur would cause the menu to close
+                      downshift.setItemCount(endIndex - startIndex);
+                    }}
+                  >
+                    {({ pageItems, navigation }) =>
+                      isOpen ? (
+                        <Paper className={classes.paper} square>
+                          {pageItems.map((suggestion, index) => (
+                            <AutocompleteSuggestion
+                              suggestion={suggestion}
+                              component={({ ...props }) => (
+                                <Link
+                                  to={`/${entityType}/id/${suggestion.id}`}
+                                  {...props}
+                                />
+                              )}
+                              index={index}
+                              highlightedIndex={highlightedIndex}
+                              selectedItem={selectedItem}
+                              itemProps={getItemProps({ item: suggestion })}
+                            />
+                          ))}
+                          {navigation}
+                        </Paper>
+                      ) : null
+                    }
+                  </SimpleListPagination>
+                )}
               </div>
             )}
           </AutocompleteLoader>

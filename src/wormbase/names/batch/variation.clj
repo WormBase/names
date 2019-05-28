@@ -6,7 +6,6 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.variation :as wsv]
-   [wormbase.names.auth :as wna]
    [wormbase.names.batch.generic :as wnbg]
    [wormbase.names.util :as wnu]))
 
@@ -17,7 +16,6 @@
      {:put
       {:summary "Update variation records."
        :x-name ::batch-update-variations
-       :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
        :parameters {:body-params {:data ::wsv/update-batch
                                   :prov ::wsp/provenance}}
@@ -31,7 +29,6 @@
       :post
       {:summary "Assign identifiers and associate names, creating new variations."
        :x-name ::batch-new-variations
-       :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wsv/new-batch
                                   :prov ::wsp/provenance}}
@@ -47,7 +44,6 @@
       :delete
       {:summary "Kill variations."
        :x-name ::batch-kill-variations
-       :middleware [wna/restrict-to-authenticated]
        :responses (wnu/response-map ok {:schema ::wsb/status-changed})
        :parameters {:body-params {:data ::wsv/kill-batch}}
        :handler (fn handle-kill [request]
@@ -59,7 +55,6 @@
                                                request))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect a batch of dead variations."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsv/resurrect-batch}
              prov {:prov :wsp/provenance}]
       (wnbg/change-entity-statuses :variation/id
@@ -70,7 +65,6 @@
                                    request))
     (sweet/DELETE "/name" request
       :summary "Remove names from a batch of variations."
-      :middleware [wna/restrict-to-authenticated]
       :body [data {:data ::wsv/names}
              prov {:prov ::wsp/provenance}]
       (wnbg/retract-attr-vals :variation/name
