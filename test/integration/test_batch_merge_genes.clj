@@ -22,8 +22,8 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (merge-genes {:data [] :prov nil})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+    (let [response (merge-genes {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest invalid-db-state
   (t/testing "Batch rejected when one or more genes specified to be merged are dead in db."
@@ -43,8 +43,8 @@
       (tu/with-gene-fixtures
         fixtures**
         (fn [conn]
-          (let [[status body] (merge-genes {:data data :prov basic-prov})]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+          (let [response (merge-genes {:data data :prov basic-prov})]
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest success
   (t/testing "A succesful specification of merge operations."
@@ -67,9 +67,9 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (merge-genes {:data bdata :prov basic-prov})
-                bid (get-in body [:batch/id] "")]
-            (t/is (ru-hp/ok? {:status status :body body}))
+          (let [response (merge-genes {:data bdata :prov basic-prov})
+                bid (get-in response [:body :batch/id] "")]
+            (t/is (ru-hp/ok? response))
             (t/is (uuid/uuid-string? bid))
             (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
                   batch-lookup (into {}

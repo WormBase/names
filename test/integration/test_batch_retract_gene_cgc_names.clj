@@ -25,8 +25,8 @@
   (t/testing "Empty batches are rejected."
     (doseq [retract-fn [retract-gene-cgc-name
                         retract-variation-name]]
-      (let [[status body] (retract-fn {:data [] :prov nil})]
-        (t/is (ru-hp/bad-request? {:status status :body body}))))))
+      (let [response (retract-fn {:data [] :prov nil})]
+        (t/is (ru-hp/bad-request? response))))))
 
 (t/deftest batch-retract-gene-cgc-name-success
   (t/testing "Succesfully removing gene CGC names."
@@ -37,8 +37,8 @@
      (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (retract-gene-cgc-name {:data cgc-names :prov basic-prov})]
-            (t/is (ru-hp/ok? {:status status :body body}))
+          (let [response (retract-gene-cgc-name {:data cgc-names :prov basic-prov})]
+            (t/is (ru-hp/ok? response))
             ;; TODO: check batch with (wng/query-batch db <bid>)
             ))))))
 
@@ -49,7 +49,7 @@
      (tu/with-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (retract-variation-name {:data names :prov basic-prov})]
-            (t/is (ru-hp/ok? {:status status :body body}))
+          (let [response (retract-variation-name {:data names :prov basic-prov})]
+            (t/is (ru-hp/ok? response))
             ;; TODO: check batch with (wng/query-batch db <bid>)
             ))))))

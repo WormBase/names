@@ -19,8 +19,8 @@
     (doseq [payload [{}
                      {:person/email "nobody"}
                      {:person/id "WBPerson123"}]]
-      (let [[status body] (new-person payload)]
-        (t/is (ru-hp/bad-request? {:status status :body body}))))))
+      (let [response (new-person payload)]
+        (t/is (ru-hp/bad-request? response))))))
 
 (t/deftest create-person
   (t/testing "Security - only admins can create a person."
@@ -28,12 +28,12 @@
           sample (-> (tu/person-samples 1)
                      first
                      (assoc :provenance/who {:person/email current-user}))
-          [status body] (new-person sample :current-user current-user)]
-      (t/is (ru-hp/unauthorized? {:status status :body body}))))
+          response (new-person sample :current-user current-user)]
+      (t/is (ru-hp/unauthorized? response))))
   (t/testing "Valid person data returns a created response (201)"
     (let [sample (first (tu/person-samples 1))
-          [status body] (new-person sample)]
-      (t/is (ru-hp/created? {:status status :body body})))))
+          response (new-person sample)]
+      (t/is (ru-hp/created? response)))))
 
 (def person-update (partial api-tc/update "person"))
 
@@ -50,10 +50,10 @@
       (tu/with-fixtures
         [sample]
         (fn check-unauthorized [conn]
-          (let [[status body] (person-update identifier
-                                             update-data
-                                             :current-user current-user)]
-            (t/is (ru-hp/unauthorized? {:status status :body body}))))))))
+          (let [response (person-update identifier
+                                        update-data
+                                        :current-user current-user)]
+            (t/is (ru-hp/unauthorized? response))))))))
 
 (t/deftest update-person-name
   (t/testing "Successfully updating a person."
@@ -64,11 +64,11 @@
       (tu/with-fixtures
         [sample]
         (fn check-update-success [conn]
-          (let [[status body] (person-update identifier
-                                             (assoc sample
-                                                    :person/name
-                                                    "Joe Bloggs"))]
-            (t/is (ru-hp/ok? {:status status :body body}))
+          (let [response (person-update identifier
+                                        (assoc sample
+                                               :person/name
+                                               "Joe Bloggs"))]
+            (t/is (ru-hp/ok? response))
             (let [result (d/pull (d/db conn) '[*] [:person/id identifier])]
               (t/is (= (:person/name result) "Joe Bloggs")))))))))
 
@@ -81,21 +81,22 @@
 
 (t/deftest about
   (t/testing "Attempting to get summary a none existant person yields 404"
-    (let [[status body] (person-summary "WBPerson0")]
-      (t/is (ru-hp/not-found? {:status status :body body}))))
+    (let [response (person-summary "WBPerson0")]
+      (t/is (ru-hp/not-found? response))))
   (t/testing "Getting summary for a person existant in the db by email"
     (tu/with-fixtures
       []
       (fn check-person-summary [conn]
-        (let [[status body] (person-summary "tester@wormbase.org")]
-          (t/is (ru-hp/ok? {:status status :body body}))
+        (let [response (person-summary "tester@wormbase.org")
+              body (:body response)]
+          (t/is (ru-hp/ok? response))
           (t/is (= (:person/email body) "tester@wormbase.org"))
           (t/is (= (:person/id body) "WBPerson007"))))))
   (t/testing "We get 404 for a decactivated person"
     (let [sample (deactivated-person-sample)
           identifier (:person/id sample)
-          [status body] (person-summary identifier)]
-      (t/is (ru-hp/not-found? {:status status :body body})))))
+          response (person-summary identifier)]
+      (t/is (ru-hp/not-found? response)))))
 
 (def deactivate-person (partial api-tc/delete "person"))
 
@@ -106,5 +107,5 @@
       (tu/with-fixtures
         sample
         (fn check-404 [conn]
-          (let [[status body] (deactivate-person identifier)]
-            (t/is (ru-hp/not-found? {:status status :body body}))))))))
+          (let [response (deactivate-person identifier)]
+            (t/is (ru-hp/not-found? response))))))))

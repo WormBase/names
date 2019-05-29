@@ -19,13 +19,13 @@
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
-    (let [[status body] (summary (d/squuid))]
-      (t/is (ru-hp/not-found? {:status status :body body})))))
+    (let [response (summary (d/squuid))]
+      (t/is (ru-hp/not-found? response)))))
 
 (t/deftest batch-id-invalid
   (t/testing "When a batch ID is not of the correct/expected format."
-    (let [[status body] (summary "zxx")]
-      (t/is (ru-hp/bad-request? {:status status :body body}))))) 
+    (let [response (summary "zxx")]
+      (t/is (ru-hp/bad-request? response))))) 
 
 (t/deftest summary-success
   (t/testing "Retrieving summary about at batch working (provenance only atm)."
@@ -44,8 +44,8 @@
           (tu/provenance data :batch-id bid))
         samples
         (fn [conn]
-          (let [[status body] (summary bid)]
-            (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (map? body))
-            (t/is (str/includes? (get-in body [:provenance/who] "") "@")
-                  (pr-str body))))))))
+          (let [response (summary bid)]
+            (t/is (ru-hp/ok? response))
+            (t/is (some-> response :body map?))
+            (t/is (str/includes? (get-in response [:body :provenance/who] "") "@")
+                  (pr-str response))))))))

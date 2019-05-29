@@ -28,8 +28,8 @@
       (tu/with-gene-fixtures
         data-sample
         (fn check-gene-summary [conn]
-          (let [[status body] (summary gene-id)]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+          (let [response (summary gene-id)]
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest maltformed-identifier
   (t/testing "A malformed identifier results in a 404 response."
@@ -37,5 +37,5 @@
       (tu/with-fixtures
         data-sample
         (fn check-missing [conn]
-          (let [[status body] (summary "WBVar1231231231")]
-            (t/is (ru-hp/not-found? {:status status :body body}))))))))
+          (let [response (summary "WBVar1231231231")]
+            (t/is (ru-hp/not-found? response))))))))

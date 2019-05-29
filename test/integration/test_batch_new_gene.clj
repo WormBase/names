@@ -22,8 +22,8 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (new-genes {:data [] :prov nil})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+    (let [response (new-genes {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
@@ -31,9 +31,9 @@
                   :gene/species elegans-ln
                   :gene/biotype :biotype/cds
                   }]
-          [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/created? {:status status :body body}))
-      (t/is (get body :batch/id "") (pr-str body)))))
+          response (new-genes {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/created? response))
+      (t/is (get-in response [:body :batch/id] "") (pr-str response)))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items, unique names is rejected."
@@ -41,15 +41,15 @@
                   :gene/species elegans-ln}
                  {:gene/cgc-name "dup-1"
                   :gene/species elegans-ln}]
-          [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/conflict? {:status status :body body})))))
+          response (new-genes {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/conflict? response)))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
     (let [bdata [{:gene/cgc-name "dup-1"
                   :gene/species "Caenorhabditis donkey"}]
-          [status body] (new-genes {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+          response (new-genes {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest batch-success
   (t/testing "Batch with a random number of items is successful"
@@ -58,17 +58,17 @@
                  {:gene/sequence-name "OKIDOKE.1"
                   :gene/biotype :biotype/cds
                   :gene/species elegans-ln}]
-          [status body] (new-genes {:data bdata :prov basic-prov :force false})]
-      (t/is (ru-hp/created? {:status status :body body}))
-      (let [bid (get body :batch/id "")]
-        (t/is (uuid/uuid-string? bid) (pr-str body))
+          response (new-genes {:data bdata :prov basic-prov :force false})]
+      (t/is (ru-hp/created? response))
+      (let [bid (get-in response [:body :batch/id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
-              [summary-status summary-body] (api-tc/summary "batch" bid)]
+              response2 (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
-          (t/is (ru-hp/ok? {:status summary-status :body summary-body}))
-          (t/is (= (some-> summary-body :provenance/what keyword)
+          (t/is (ru-hp/ok? response2))
+          (t/is (= (some-> response2 :body :provenance/what keyword)
                    :event/new-gene)))))))
 
 (t/deftest batch-success-with-force-override-nomenclature
@@ -78,15 +78,15 @@
                  {:gene/sequence-name "OKIDOKE.1"
                   :gene/biotype :biotype/cds
                   :gene/species elegans-ln}]
-          [status body] (new-genes {:data bdata :prov basic-prov :force true})]
-      (t/is (ru-hp/created? {:status status :body body}))
-      (let [bid (get body :batch/id "")]
-        (t/is (uuid/uuid-string? bid) (pr-str body))
+          response (new-genes {:data bdata :prov basic-prov :force true})]
+      (t/is (ru-hp/created? response))
+      (let [bid (get-in response [:body :batch/id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
-              [summary-status summary-body] (api-tc/summary "batch" bid)]
+              response (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
-          (t/is (ru-hp/ok? {:status summary-status :body summary-body}))
-          (t/is (= (some-> summary-body :provenance/what keyword)
+          (t/is (ru-hp/ok? response))
+          (t/is (= (some-> response :body :provenance/what keyword)
                    :event/new-gene)))))))

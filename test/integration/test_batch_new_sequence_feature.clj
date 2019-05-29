@@ -19,30 +19,30 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (new-sequence-features {:data [] :prov nil})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+    (let [response (new-sequence-features {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest single-item
   (t/testing "Batch with oen item accepted, returns batch id."
-    (let [[status body] (new-sequence-features {:data {:n 1} :prov basic-prov})]
-      (t/is (ru-hp/created? {:status status :body body}))
-      (t/is (get body :batch/id "") (pr-str body)))))
+    (let [response (new-sequence-features {:data {:n 1} :prov basic-prov})]
+      (t/is (ru-hp/created? response))
+      (t/is (get-in response [:body :batch/id] "") (pr-str response)))))
 
 (t/deftest batch-success
   (t/testing "Batch of new sequence-features is processed successfully."
     (let [bdata {:n 20}
-          [status body] (new-sequence-features {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/created? {:status status :body body}))
-      (let [bid (get body :batch/id "")]
-        (t/is (uuid/uuid-string? bid) (pr-str body))
+          response (new-sequence-features {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/created? response))
+      (let [bid (get-in response [:body :batch/id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [db (d/db wdb/conn)              
               batch (wnu/query-batch db (uuid/as-uuid bid) wnbsf/summary-pull-expr)
               xs (map #(get-in % [:sequence-feature/status :db/ident]) batch)
-              [status body] (api-tc/summary "batch" bid)]
+              response (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :sequence-feature.status/live) xs))
-          (t/is (ru-hp/ok? {:status status :body body}))
-          (t/is (= (some-> body :provenance/what keyword)
+          (t/is (ru-hp/ok? response))
+          (t/is (= (some-> response :body :provenance/what keyword)
                    :event/new-sequence-feature)))))))
 
 

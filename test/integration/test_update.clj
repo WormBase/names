@@ -38,9 +38,8 @@
         (t/testing (str "Updating name for existing gene requires "
                         "correct data structure.")
           (let [data {}]
-            (let [response (update-gene identifier data)
-                  [status body] response]
-              (t/is (ru-hp/bad-request? {:status status :body body})))))))))
+            (let [response (update-gene identifier data)]
+              (t/is (ru-hp/bad-request? response)))))))))
 
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -76,11 +75,11 @@
           (let [new-cgc-name (tu/cgc-name-for-sample sample-data)
                 species (tu/species-ref->latin-name sample)
                 payload {:data {:gene/cgc-name new-cgc-name} :prov nil}
-                [status body] (update-gene gid payload)]
-            (t/is (ru-hp/ok? {:status status :body body}))
+                response (update-gene gid payload)]
+            (t/is (ru-hp/ok? response))
             (let [db (d/db conn)
-                  gid-2 (some-> body :updated :gene/id)
-                  updated (:updated body)]
+                  gid-2 (some-> response :body :updated :gene/id)
+                  updated (-> response :body :updated)]
               (t/is (= gid gid-2))
               (t/is (= (:gene/species updated)
                        (-> sample :gene/species second)))
@@ -88,7 +87,7 @@
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
 (t/deftest removing-cgc-name-from-cloned-gene
-  (t/testing (str "Allow CGC name to be removed from a cloned gene.")
+  (t/testing "Allow CGC name to be removed from a cloned gene."
     (let [gid (first (gen/sample gsg/id 1))
           sample (-> (tu/gen-sample gsg/cloned 1)
                      first
@@ -108,16 +107,16 @@
                                    (dissoc :gene/id)
                                    (assoc :gene/cgc-name nil))
                          :prov nil}
-                [status body] (update-gene gid payload)]
-            (t/is (ru-hp/ok? {:status status :body body}))
+                response (update-gene gid payload)]
+            (t/is (ru-hp/ok? response))
             (let [db (d/db conn)
-                  identifier (some-> body :updated :gene/id)
-                  updated (:updated body)]
-              (t/is (empty? (:gene/cgc-name body)))
+                  identifier (some-> response :body :updated :gene/id)
+                  updated (-> response :body :updated)]
+              (t/is (empty? (some-> response :body :gene/cgc-name)))
               (tu/query-provenance conn identifier :event/update-gene))))))))
 
 (t/deftest gene-provenance
-  (t/testing (str "Provenance is recorded for successful transactions")
+  (t/testing "Provenance is recorded for successful transactions"
    (let [gid (first (gen/sample gsg/id 1))
          sample (-> (tu/gen-sample gsg/cloned 1) first tu/species->ref)
          orig-cgc-name (tu/cgc-name-for-sample sample)
@@ -140,10 +139,9 @@
                         :prov {:provenance/why why
                                :provenance/who {:person/email "tester@wormbase.org"}}}]
            (let [response (update-gene gid payload)
-                 [status body] response
                  db (d/db conn)
                  ent (d/entity db [:gene/id gid])]
-             (t/is (ru-hp/ok? {:status status :body body}))
+             (t/is (ru-hp/ok? response))
              (let [provs (query-provenance conn :gene/cgc-name)
                    act-prov (first provs)]
                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
@@ -171,9 +169,8 @@
         (t/testing (str "Updating name for existing variation requires "
                         "correct data structure.")
           (let [payload {:data {} :prov basic-prov}]
-            (let [response (update-variation identifier payload)
-                  [status body] response]
-              (t/is (ru-hp/bad-request? {:status status :body body})))))))))
+            (let [response (update-variation identifier payload)]
+              (t/is (ru-hp/bad-request? response)))))))))
 
 (t/deftest changing-variation-name-success
   (t/testing "Changing the name of an existing variation."
@@ -186,8 +183,8 @@
         (fn [conn]
           (let [data {:variation/name "mynew1"}
                 payload {:data data :prov basic-prov}
-                [status body] (update-variation identifier payload)]
-            (t/is (ru-hp/ok? {:status status :body body}))
+                response (update-variation identifier payload)]
+            (t/is (ru-hp/ok? response))
             (t/is (= (:variation/name (d/pull (d/db conn)
                                               '[:variation/name]
                                               [:variation/id identifier]))
@@ -207,8 +204,8 @@
         (fn [conn]
           (let [data {:variation/name (-> samples first :variation/name)}
                 payload {:data data :prov basic-prov}
-                [status body] (update-variation subject-identifier payload)]
-            (t/is (ru-hp/conflict? {:status status :body body}))))))))
+                response (update-variation subject-identifier payload)]
+            (t/is (ru-hp/conflict? response))))))))
 
 (t/deftest cannot-update-latin-name
   (t/testing "Attempting to update a \"latin-name\" for species is not permitted."
@@ -226,8 +223,8 @@
                                    second
                                    (assoc :species/latin-name dup-name))
                          :prov basic-prov}
-                [status body] (update-species species-id-name payload)]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+                response (update-species species-id-name payload)]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest update-species-success
   (t/testing "Update a species that has a unique new name succeeds."
@@ -244,5 +241,5 @@
           (let [new-name (-> gss/new-latin-name (gen/sample 1) first)
                 payload {:data (dissoc sample :species/id :species/latin-name)
                          :prov basic-prov}
-                [status body] (update-species species-id-name payload)]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+                response (update-species species-id-name payload)]
+            (t/is (ru-hp/ok? response))))))))

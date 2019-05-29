@@ -25,35 +25,35 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (new-variations {:data [] :prov nil})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+    (let [response (new-variations {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
     (let [bdata [{:variation/name "abc1"}]
-          [status body] (new-variations {:data bdata :prov basic-prov})]
-      (t/is (= 201 status))
-      (t/is (get body :batch/id "") (pr-str body)))))
+          response (new-variations {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/created? response))
+      (t/is (get-in response [:body :batch/id] "") (pr-str response)))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items, unique names is rejected."
     (let [bdata [{:variation/name "abc1"}
                  {:variation/name "abc1"}]
-          [status body] (new-variations {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/conflict? {:status status :body body})))))
+          response (new-variations {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/conflict? response)))))
 
 (t/deftest batch-success
   (t/testing "Batch of new vaiations successful"
     (let [bdata (map #(array-map :variation/name (str "okay" %)) (range 1 21))
-          [status body] (new-variations {:data bdata :prov basic-prov})]
-      (t/is (ru-hp/created? {:status status :body body}) (str status))
-      (let [bid (get body :batch/id "")]
-        (t/is (uuid/uuid-string? bid) (pr-str body))
+          response (new-variations {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/created? response) (-> response :status str))
+      (let [bid (get-in response [:body :batch/id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:variation/status :db/ident]) batch)
-              [summary-status summary-body] (api-tc/summary "batch" bid)]
+              response2  (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :variation.status/live) xs))
-          (t/is (ru-hp/ok? {:status summary-status :body summary-body}))
-          (t/is (= (some-> summary-body :provenance/what keyword)
+          (t/is (ru-hp/ok? response2))
+          (t/is (= (some-> response2 :body :provenance/what keyword)
                    :event/new-variation)))))))

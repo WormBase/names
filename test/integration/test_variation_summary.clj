@@ -29,8 +29,8 @@
       (tu/with-fixtures
         data-sample
         (fn check-variation-summary [conn]
-          (let [[status body] (summary id)]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+          (let [response (summary id)]
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest maltformed-identifier
   (t/testing "A malformed identifier results in a 404 response."
@@ -38,5 +38,5 @@
       (tu/with-fixtures
         data-sample
         (fn check-variation-summary [conn]
-          (let [[status body] (summary "WBGene0123123123")]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+          (let [response (summary "WBGene0123123123")]
+            (t/is (ru-hp/bad-request? response))))))))

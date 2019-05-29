@@ -17,8 +17,8 @@
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (let [[status body] (update-genes {:data [] :prov nil})]
-      (t/is (ru-hp/bad-request? {:status status :body body})))))
+    (let [response (update-genes {:data [] :prov nil})]
+      (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items containing non-unique names is rejected."
@@ -31,8 +31,8 @@
                         :gene/cgc-name "dup-1"}
                        {:gene/id (:gene/id g2)
                         :gene/cgc-name "dup-1"}]
-                [status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+                response (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest invalid-cgc-name
   (t/testing "Errors are reported when provided with a invlaid CGC name"
@@ -43,8 +43,8 @@
         (fn [conn]
           (let [bdata [{:gene/id (:gene/id g1)
                         :gene/cgc-name "invalid_CGC_NAME"}]
-                [status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+                response (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest invalid-sequence-name
   (t/testing "Errors are reported when provided with a invlaid Sequence name"
@@ -55,8 +55,8 @@
         (fn [conn]
           (let [bdata [{:gene/id (:gene/id g1)
                         :gene/sequence-name "invalid-sequence-name.1"}]
-                [status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+                response (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest genes-invalid-species
   (t/testing "Batch with invalid species is rejected."
@@ -69,12 +69,12 @@
           (let [bdata [{:gene/cgc-name "dup-1"
                         :gene/species bad-species
                         :gene/id gid}]
-                [status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (ru-hp/bad-request? {:status status :body body}))
+                response (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/bad-request? response))
             (t/is (some (fn [error]
                           (str/includes? error bad-species))
-                        (get body :errors []))
-                  (str body))))))))
+                        (get-in response [:body :errors] []))
+                  (pr-str response))))))))
 
 (t/deftest single-item
   (let [fixtures (tu/gene-samples 1)
@@ -88,9 +88,9 @@
                                :gene/cgc-name (tu/cgc-name-for-species species)}
                               (find gene-rec :gene/id))]
                 payload {:data bdata :prov basic-prov}
-                [status body] (update-genes payload)]
-            (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (get-in body [:updated :batch/id]) (pr-str body))))))))
+                response (update-genes payload)]
+            (t/is (ru-hp/ok? response))
+            (t/is (get-in response [:body :updated :batch/id]) (pr-str response))))))))
 
 (t/deftest multi-item
   (t/testing "Batch with a random number of items is successful"
@@ -106,7 +106,7 @@
       (tu/with-gene-fixtures
         [g1 g2]
         (fn [conn]
-          (let [[status body] (update-genes {:data bdata :prov basic-prov})]
-            (t/is (ru-hp/ok? {:status status :body body}) (str body))
-            (let [bid (get-in body [:updated :batch/id] "")]
+          (let [response (update-genes {:data bdata :prov basic-prov})]
+            (t/is (ru-hp/ok? response) (pr-str response))
+            (let [bid (get-in response [:body :updated :batch/id] "")]
               (t/is (uuid/uuid-string? bid)))))))))

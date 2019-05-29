@@ -89,16 +89,16 @@
 
 (defn check-killed-dead [conn kill-fn ident sample id]
   (let [id (ident sample)
-        [status body] (kill-fn id)
+        response (kill-fn id)
         db (d/db conn)
         ent (d/entity db [ident id])
         [_ status-key status-val] (status-info ident "dead")]
-    (t/is (ru-hp/ok? {:status status :body body}))
+    (t/is (ru-hp/ok? response))
     (t/is (= (status-key ent) status-val))))
 
 (defn check-prov-for-killed [conn kill-fn ident sample]
   (let [id (ident sample)
-        [status body] (kill-fn id)
+        response (kill-fn id)
         db (d/db conn)
         ent (d/entity db [ident id])
         [_ status-key status-val] (status-info ident "dead")
@@ -110,7 +110,7 @@
                :agent/web))
       (t/is (= (some-> prov :provenance/who :person/email)
                "tester@wormbase.org")))
-    (t/is (ru-hp/ok? {:status status :body body}))
+    (t/is (ru-hp/ok? response))
     (t/is (= (status-key ent) status-val))))
 
 (t/deftest killing-gene
@@ -131,8 +131,8 @@
       (tu/with-gene-fixtures
         sample
         (fn [conn]
-          (let [[status body] (kill-gene id)]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+          (let [response (kill-gene id)]
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest ressurecting-gene
   (t/testing "Resurrecting a dead gene succesfully"
@@ -140,15 +140,15 @@
       (tu/with-gene-fixtures
         (assoc sample :gene/id id)
         (fn [conn]
-          (let [[status body] (resurrect-gene id)]
-            (t/is (ru-hp/ok? {:status status :body body})))))))
+          (let [response (resurrect-gene id)]
+            (t/is (ru-hp/ok? response)))))))
   (t/testing "Cannot resurrect live gene"
     (let [[id sample] (gene-sample)]
       (tu/with-gene-fixtures
         (assoc sample :gene/id id)
         (fn [conn]
-          (let [[status body] (resurrect-gene id)]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+          (let [response (resurrect-gene id)]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest suppressing-gene
   (t/testing "Cannot suppress a dead gene."
@@ -156,15 +156,15 @@
       (tu/with-gene-fixtures
         sample
         (fn [conn]
-          (let [[status body] (suppress-gene id)]
-            (t/is (ru-hp/bad-request? {:status status :body body})))))))
+          (let [response (suppress-gene id)]
+            (t/is (ru-hp/bad-request? response)))))))
   (t/testing "Suppressing a live gene."
     (let [[id sample] (gene-sample)]
       (tu/with-gene-fixtures
         sample
         (fn [conn]
-          (let [[status body] (suppress-gene id)]
-            (t/is (ru-hp/ok? {:status status :body body}))))))))
+          (let [response (suppress-gene id)]
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest killing-varation
   (t/testing "kill variation and check right status in db after."
@@ -186,12 +186,12 @@
       (tu/with-fixtures
         (assoc sample :variation/id id)
         (fn [conn]
-          (let [[status body] (resurrect-variation id)]
-            (t/is (ru-hp/ok? {:status status :body body})))))))
+          (let [response (resurrect-variation id)]
+            (t/is (ru-hp/ok? response)))))))
   (t/testing "Cannot resurrect live gene"
     (let [[id sample] (variation-sample)]
       (tu/with-fixtures
         (assoc sample :variation/id id)
         (fn [conn]
-          (let [[status body] (resurrect-variation id)]
-            (t/is (ru-hp/bad-request? {:status status :body body}))))))))
+          (let [response (resurrect-variation id)]
+            (t/is (ru-hp/bad-request? response))))))))

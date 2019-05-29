@@ -13,8 +13,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn update-variations [data]
-  (let [[status body] (api-tc/send-request "batch" :put data :sub-path "variation")]
-    {:status status :body body}))
+  (api-tc/send-request "batch" :put data :sub-path "variation"))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -38,7 +37,7 @@
                 bdata [(select-keys f1 [:variation/id :variation/name])
                        (merge (select-keys f2 [:variation/id])
                               (select-keys f1 [:variation/name]))]
-                {:keys [status body] :as response} (update-variations {:data bdata :prov basic-prov})]
+                response (update-variations {:data bdata :prov basic-prov})]
             (t/is (ru-hp/conflict? response))))))))
 
 (t/deftest invalid-name

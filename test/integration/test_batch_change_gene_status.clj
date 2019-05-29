@@ -25,8 +25,8 @@
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
     (doseq [op [:kill :resurrect :suppress]]
-      (let [[status body] (send-change-status-request op {:data [] :prov basic-prov})]
-        (t/is (ru-hp/bad-request? {:status status :body body}))))))
+      (let [response (send-change-status-request op {:data [] :prov basic-prov})]
+        (t/is (ru-hp/bad-request? response))))))
 
 (t/deftest dup-ids
   (t/testing "Duplicate entity ids in payload don't cause an error."
@@ -36,22 +36,21 @@
         [g1 g2]
         (fn [conn]
           (let [data [gid gid]
-                [status body] (send-change-status-request :kill {:data data :prov basic-prov})]
-            (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (-> body :dead (get :batch/id "") uuid/uuid-string?))))))))
+                response (send-change-status-request :kill {:data data :prov basic-prov})]
+            (t/is (ru-hp/ok? response))
+            (t/is (-> response :body :dead (get :batch/id "") uuid/uuid-string?))))))))
 
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gsg/id 1))
-          [status body] (send-change-status-request :kill {:data [gid]
-                                                           :prov basic-prov})]
-      (t/is (ru-hp/conflict? {:status status :body body}))
-      (t/is (str/includes? (get body :message "") "processing errors occurred"))
+          response (send-change-status-request :kill {:data [gid]
+                                                      :prov basic-prov})]
+      (t/is (ru-hp/conflict? response))
+      (t/is (str/includes?  (get-in response [:body :message] "") "processing errors occurred"))
       (t/is (some (fn [msg]
                     (and (str/includes? msg "does not exist")
                          (str/includes? msg gid)))
-                  (:errors body))
-            (pr-str body)))))
+                  (get-in response [:body :errors]))))))
 
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
@@ -62,10 +61,10 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [[status body] (send-change-status-request :kill {:data gids :prov basic-prov})]
-            (t/is (ru-hp/conflict? {:status status :body body}))
+          (let [response (send-change-status-request :kill {:data gids :prov basic-prov})]
+            (t/is (ru-hp/conflict? response))
             (doseq [enf expected-not-found]
-              (t/is (str/includes? (get body :message "") enf)))))))))
+              (t/is (str/includes? (get-in response [:body :message] "") enf)))))))))
 
 (t/deftest change-status-succesfully
   (t/testing "When a batch is expected to succeed."
@@ -77,10 +76,10 @@
           (doseq [[to-status exp-resp-key] {:kill :dead
                                             :suppress :suppressed
                                             :resurrect :live}]
-            (let [[status body] (send-change-status-request to-status {:data gids :prov basic-prov})]
-              (t/is (ru-hp/ok? {:status status :body body}))
-              (t/is (some-> body exp-resp-key :batch/id uuid/uuid-string?)
-                    (pr-str body))
+            (let [response (send-change-status-request to-status {:data gids :prov basic-prov})]
+              (t/is (ru-hp/ok? response))
+              (t/is (some-> response :body exp-resp-key :batch/id uuid/uuid-string?)
+                    (pr-str response))
               (doseq [gid gids]
                 (let [ent (d/entity (d/db conn) [:gene/id gid])]
                   (t/is (= (:gene/status ent)
