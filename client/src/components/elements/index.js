@@ -47,6 +47,7 @@ export { default as DocumentTitle } from './DocumentTitle';
 export { default as EntityTypeSelect } from './EntityTypeSelect';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';
+export { default as NoData } from './NoData';
 export { default as NotFound } from './NotFound';
 export { Page, PageLeft, PageMain } from './Page';
 export * from './ProgressButton';

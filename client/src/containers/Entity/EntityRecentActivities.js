@@ -1,40 +1,38 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { AuthorizationContext } from '../Authenticate';
+import React, { useContext, useCallback } from 'react';
+import moment from 'moment';
+import AuthorizationContext, {
+  useDataFetch,
+} from '../Authenticate/AuthorizationContext';
 import EntityHistory from './EntityHistory';
-import { Paper } from '../../components/elements';
+import { NoData } from '../../components/elements';
+
+function formatTime(timestamp) {
+  return moment(timestamp).calendar(null, {
+    sameElse: 'LLL',
+  });
+}
 
 function EntityRecentActivities(props) {
   const { entityType } = props;
   const { authorizedFetch } = useContext(AuthorizationContext);
-  const [activities, setActivities] = useState([]);
-  const [requestStatus, setRequestStatus] = useState('REQUEST_BEGIN');
-  useEffect(
-    () => {
-      if (!authorizedFetch) {
-        return;
-      }
+  const memoizedFetchFunc = useCallback(
+    () => () =>
       authorizedFetch(`/api/recent/${entityType}`, {
         method: 'GET',
-      })
-        .then((response) => {
-          return Promise.all([response, response.json()]);
-        })
-        .then(([response, data]) => {
-          if (response.ok) {
-            setRequestStatus('REQUEST_SUCCESS');
-            setActivities(data.activities);
-          } else {
-            setRequestStatus('REQUEST_FAILURE');
-          }
-        })
-        .catch(() => {
-          // error handling
-        });
-      return () => {};
-    },
+      }),
     [entityType]
   );
-  return <EntityHistory activities={activities} entityType={entityType} />;
+
+  const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
+  const { activities = [], from, until } = data;
+  return isLoading ? null : activities.length && false ? (
+    <EntityHistory activities={activities} entityType={entityType} />
+  ) : (
+    <NoData>
+      No activities between <strong>{formatTime(from)}</strong> and{' '}
+      <strong>{formatTime(until)}</strong>
+    </NoData>
+  );
 }
 
 export default EntityRecentActivities;
