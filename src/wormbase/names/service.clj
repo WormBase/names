@@ -84,13 +84,13 @@
    {:formats wnrf/json
     :coercion :pure-spec
     :exceptions {:handlers wn-eh/handlers}
-    :middleware [wrap-not-found
+    :middleware [wrap-static-resources
+                 wrap-not-found
                  ring-gzip/wrap-gzip]}
    (sweet/context "" []
      (swagger/swagger-routes swagger-ui)
      (sweet/context "/api" []
-       :middleware [wrap-static-resources
-                    wdb/wrap-datomic
+       :middleware [wdb/wrap-datomic
                     wna/wrap-auth
                     wna/restrict-to-authenticated
                     mmw/wrap-format]
