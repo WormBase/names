@@ -111,12 +111,6 @@ To allow the UI webpackDevServer to proxy to the ring server, the ring server ha
 Use built-in testing utilities as provided by leiningen.
 Please run all tests before committing/submitting new pull requests.
 
-NB:
-Currently, these tests may occasionally fail with "could not generate after 100 attempts".
-These are transient failures, to due to implementation of  clojure.spec generators in the test suite,
-and can be ignored if they pass on subsequent runs.
-
-
 ## Releases
 
 ```bash
