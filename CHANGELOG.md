@@ -1,5 +1,14 @@
 # Change-log
 
+## [0.5.0]
+ - Fix: rendering of static assets when run from jar.
+ 
+## [0.4.22]
+ - Require authentication for all endpoints.
+ - UI improvement: display message when no recent activities.
+ - Added ability to export current entity state (separate executable jar).
+ - Added endpoint to provide stats (entity counts).
+
 ## [0.4.21]
  - Fixed species update API.
  
