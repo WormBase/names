@@ -1,8 +1,11 @@
 # Change-log
 
+## [0.5.1]
+ - Redeploy of 0.5.0 to fix broken jar within container.
+
 ## [0.5.0]
  - Fix: rendering of static assets when run from jar.
- 
+
 ## [0.4.22]
  - Require authentication for all endpoints.
  - UI improvement: display message when no recent activities.
@@ -11,7 +14,7 @@
 
 ## [0.4.21]
  - Fixed species update API.
- 
+
 ## [0.4.20]
  - Fixed recent activities E-tag/caching bug.
  - Fixed bugs with error handling of batch operations.
