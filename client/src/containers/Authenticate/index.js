@@ -1,4 +1,10 @@
-import React, { useMemo, useReducer, useCallback, useEffect } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useReducer,
+  useCallback,
+  useEffect,
+} from 'react';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -37,23 +43,23 @@ export default function Authenticate({ children }) {
     }
   }
 
-  let auth2;
+  const auth2Ref = useRef();
 
   useEffect(() => {
     // adapted from https://developers.google.com/identity/sign-in/web/build-button
     const gapi = window.gapi;
     gapi.load('auth2', () => {
       // Retrieve the singleton for the GoogleAuth library and set up the client.
-      auth2 = gapi.auth2.init({
+      auth2Ref.current = gapi.auth2.init({
         client_id:
           '514830196757-8464k0qoaqlb4i238t8o6pc6t9hnevv0.apps.googleusercontent.com',
         cookiepolicy: 'single_host_origin',
         // Request scopes in addition to 'profile' and 'email'
         //scope: 'additional_scope'
       });
-      auth2.isSignedIn.listen((isSignedIn) => {
+      auth2Ref.current.isSignedIn.listen((isSignedIn) => {
         if (isSignedIn) {
-          const googleUser = auth2.currentUser.get();
+          const googleUser = auth2Ref.current.currentUser.get();
           const googleUserProfile = googleUser.getBasicProfile();
           const name = googleUserProfile.getName();
           const email = googleUserProfile.getEmail();
@@ -72,8 +78,8 @@ export default function Authenticate({ children }) {
           dispatch({ type: 'ACCESS_REVOKED' });
         }
       });
-      auth2.then(() => {
-        if (!auth2.isSignedIn.get()) {
+      auth2Ref.current.then(() => {
+        if (!auth2Ref.current.isSignedIn.get()) {
           // now we know for certain the user isn't signed in, instead of auth initialization taking a while
           dispatch({ type: 'ACCESS_REVOKED' });
         }
@@ -82,14 +88,14 @@ export default function Authenticate({ children }) {
   }, []);
 
   const handleLogin = useCallback(() => {
-    auth2.signIn().catch((error) => {
+    auth2Ref.current.signIn().catch((error) => {
       dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
     });
   }, []);
 
   const handleLogout = useCallback(() => {
-    auth2.disconnect(); // revoke scopes
-    auth2.signOut();
+    auth2Ref.current.disconnect(); // revoke scopes
+    auth2Ref.current.signOut();
   }, []);
 
   const authorizedFetch = useCallback(

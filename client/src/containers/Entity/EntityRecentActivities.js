@@ -20,7 +20,7 @@ function EntityRecentActivities(props) {
       authorizedFetch(`/api/recent/${entityType}`, {
         method: 'GET',
       }),
-    [entityType]
+    [entityType, authorizedFetch]
   );
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
