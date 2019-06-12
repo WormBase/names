@@ -25,7 +25,7 @@ function EntityRecentActivities(props) {
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
   const { activities = [], from, until } = data;
-  return isLoading ? null : activities.length && false ? (
+  return isLoading ? null : activities.length ? (
     <EntityHistory activities={activities} entityType={entityType} />
   ) : (
     <NoData>
