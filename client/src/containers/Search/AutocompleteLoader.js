@@ -39,7 +39,7 @@ export default function AutocompleteLoader({
       onSuggestionChange && onSuggestionChange(suggestions);
       suggestinsRef.current = suggestions;
     },
-    [suggestions]
+    [suggestions, onSuggestionChange]
   );
 
   useEffect(
@@ -56,7 +56,7 @@ export default function AutocompleteLoader({
         });
       }
     },
-    [entityType, inputValue]
+    [entityType, inputValue, authorizedFetch, setFetchFunc]
   );
 
   return children({

@@ -69,94 +69,95 @@ function EntityEdit({
 
   const { authorizedFetch } = useContext(AuthorizationContext);
 
-  const fetchFunc = () => {
-    return mockFetchOrNot(
-      (mockFetch) => {
-        const historyMock = [
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/merge-genes',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
+  const memoizedFetchFunc = useCallback(
+    () => () => {
+      return mockFetchOrNot(
+        (mockFetch) => {
+          const historyMock = [
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/merge-genes',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-08-09T22:09:16Z',
+              'provenance/merged-from': {
+                'gene/id': 'WBGene00303223',
+              },
+              'provenance/merged-into': {
+                'gene/id': id,
+              },
             },
-            'provenance/when': '2018-08-09T22:09:16Z',
-            'provenance/merged-from': {
-              'gene/id': 'WBGene00303223',
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/update-gene',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-08-08T17:27:31Z',
             },
-            'provenance/merged-into': {
-              'gene/id': wbId,
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/update-gene',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-08-08T17:27:22Z',
             },
-          },
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/update-gene',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/split-gene',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-08-08T16:50:46Z',
+              'provenance/split-from': {
+                'gene/id': id,
+              },
+              'provenance/split-into': {
+                'gene/id': 'WBGene00303222',
+              },
             },
-            'provenance/when': '2018-08-08T17:27:31Z',
-          },
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/update-gene',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/split-gene',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-08-08T15:21:07Z',
+              'provenance/split-from': {
+                'gene/id': id,
+              },
+              'provenance/split-into': {
+                'gene/id': 'WBGene00303219',
+              },
             },
-            'provenance/when': '2018-08-08T17:27:22Z',
-          },
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/split-gene',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
+            {
+              'provenance/how': 'agent/web',
+              'provenance/what': 'event/new-gene',
+              'provenance/who': {
+                'person/id': 'WBPerson12346',
+              },
+              'provenance/when': '2018-07-23T15:25:17Z',
             },
-            'provenance/when': '2018-08-08T16:50:46Z',
-            'provenance/split-from': {
-              'gene/id': wbId,
-            },
-            'provenance/split-into': {
-              'gene/id': 'WBGene00303222',
-            },
-          },
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/split-gene',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
-            },
-            'provenance/when': '2018-08-08T15:21:07Z',
-            'provenance/split-from': {
-              'gene/id': wbId,
-            },
-            'provenance/split-into': {
-              'gene/id': 'WBGene00303219',
-            },
-          },
-          {
-            'provenance/how': 'agent/web',
-            'provenance/what': 'event/new-gene',
-            'provenance/who': {
-              'person/id': 'WBPerson12346',
-            },
-            'provenance/when': '2018-07-23T15:25:17Z',
-          },
-        ];
+          ];
 
-        return mockFetch.get('*', {
-          'gene/species': 'Caenorhabditis elegans',
-          'gene/cgc-name': 'abi-1',
-          'gene/status': 'gene.status/live',
-          'gene/biotype': 'biotype/cds',
-          'gene/id': wbId,
-          history: historyMock,
-        });
-      },
-      () => {
-        return authorizedFetch(`/api/${entityType}/${id}`);
-      }
-    );
-  };
-
-  const memoizedFetchFunc = useCallback(() => fetchFunc, [entityType, id]);
+          return mockFetch.get('*', {
+            'gene/species': 'Caenorhabditis elegans',
+            'gene/cgc-name': 'abi-1',
+            'gene/status': 'gene.status/live',
+            'gene/biotype': 'biotype/cds',
+            'gene/id': id,
+            history: historyMock,
+          });
+        },
+        () => {
+          return authorizedFetch(`/api/${entityType}/${id}`);
+        }
+      );
+    },
+    [entityType, id, authorizedFetch]
+  );
 
   const {
     data: responseContent,
@@ -197,13 +198,13 @@ function EntityEdit({
         }
       }
     },
-    [isSuccess, getPermanentUrl]
+    [isSuccess, getPermanentUrl, history]
   );
 
   useEffect(
     () => {
       if (isSubmitSuccess) {
-        setFetchFunc(() => fetchFunc);
+        setFetchFunc(memoizedFetchFunc);
         dispatch({
           type: 'MESSAGE_SHOW',
           payload: {
@@ -213,7 +214,7 @@ function EntityEdit({
         });
       }
     },
-    [isSubmitSuccess]
+    [isSubmitSuccess, setFetchFunc, memoizedFetchFunc]
   );
 
   return isError ? (
@@ -338,7 +339,7 @@ function EntityEdit({
                       shortMessageVariant: 'success',
                     },
                   });
-                  setFetchFunc(() => fetchFunc);
+                  setFetchFunc(memoizedFetchFunc);
                 },
               }),
               // from BaseForm
