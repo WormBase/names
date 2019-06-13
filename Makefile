@@ -96,7 +96,7 @@ eb-setenv: $(call print-help,eb-env,\
 eb-local: docker-ecr-login $(call print-help,eb-local,\
 			     "Runs the ElasticBeanStalk/docker \
 			      build and run locally.")
-	eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI}
+	eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI} --profile ${AWS_EB_PROFILE}
 
 .PHONY: run
 run: $(call print-help,run,"Run the application in docker (locally).")
