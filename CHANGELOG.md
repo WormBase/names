@@ -1,5 +1,9 @@
 # Change-log
 
+## [0.5.2]
+ - UI fix for recent activities.
+ - Added --profile flag for command for running awsebcli commands in Makefile.
+
 ## [0.5.1]
  - Redeploy of 0.5.0 to fix broken jar within container.
 
