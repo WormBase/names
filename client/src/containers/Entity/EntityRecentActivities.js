@@ -4,7 +4,7 @@ import AuthorizationContext, {
   useDataFetch,
 } from '../Authenticate/AuthorizationContext';
 import EntityHistory from './EntityHistory';
-import { NoData } from '../../components/elements';
+import { NoData, CircularProgress } from '../../components/elements';
 
 function formatTime(timestamp) {
   return moment(timestamp).calendar(null, {
@@ -25,7 +25,9 @@ function EntityRecentActivities(props) {
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
   const { activities = [], from, until } = data;
-  return isLoading ? null : activities.length && false ? (
+  return isLoading ? (
+    <CircularProgress />
+  ) : activities.length ? (
     <EntityHistory activities={activities} entityType={entityType} />
   ) : (
     <NoData>
