@@ -78,6 +78,7 @@
 
 (def coll-resources
   (sweet/context "/variation" []
+
     :tags ["variation"]
     (sweet/resource
      {:get
@@ -142,11 +143,7 @@
                   (summary request identifier))}})
     (sweet/context "/resurrect" []
       (sweet/resource
-       {:get
-        {:summary "Find variations by ID or name."
-         :x-name ::find-variations
-         :handler find-variations}
-        :post
+       {:post
         {:summary "Resurrect a variation."
          :x-name ::resurrect-variation
          :respones status-changed-responses
