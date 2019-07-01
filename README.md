@@ -32,19 +32,8 @@ which is modelled as attributes on the "transaction entity".
 cd /tmp
 lein upgrade
 ```
+
 Ensure you've installed the following software on your system:
-
-#### Docker credentials
-
-The Makefile target `ecr-login` command will, by default, store the
-authentication token un-encrypted in the file: `~/.docker/config.json`.
-
-There is a plugin that can be used to use a store to save these tokens encrypted,
-but varies depending on operating system.
-
-For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
-which uses a GPG2 key to encrypt tokens.
-
 
 [clojure 1.9][4]
 
@@ -59,6 +48,18 @@ which uses a GPG2 key to encrypt tokens.
 [awscli][9]
 
 [awsebcli][10]
+
+#### Docker credentials
+
+The Makefile target `ecr-login` command will, by default, store the
+authentication token un-encrypted in the file: `~/.docker/config.json`.
+
+There is a plugin that can be used to use a store to save these tokens encrypted,
+but varies depending on operating system.
+
+For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
+which uses a GPG2 key to encrypt tokens.
+
 
 ### Setup client app
 Setup client app **either by [making a production build of the client app](#building-the-client-app) or running a client development server**, as show here:
@@ -108,6 +109,17 @@ To allow the UI webpackDevServer to proxy to the ring server, the ring server ha
 
 
 ### Tools
+
+#### Running a Clojure REPL
+If using Emacs + CIDER:
+```bash
+clj -A:datomic-pro:aws-java-sdk-dynamodb -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.0-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
+```
+Otherwise, for a plain REPL use:
+```bash
+clj -A:datomic-pro:aws-java-sdk-dynamodb -m nrepl.cmdline
+```
+
 From time to time it is good to check for outdated dependencies.
 This can be done via the following command:
 ```
