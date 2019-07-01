@@ -107,6 +107,14 @@ Run with `lein ring server [port]` or `lein ring server-headless [port]`.
 To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json).
 
 
+### Tools
+From time to time it is good to check for outdated dependencies.
+This can be done via the following command:
+```
+clj -A:outdated
+```
+
+
 ### Testing
 Use built-in testing utilities as provided by leiningen.
 Please run all tests before committing/submitting new pull requests.
