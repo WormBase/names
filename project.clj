@@ -5,11 +5,11 @@
    [lein-ring "0.12.0"]
    [lein-tools-deps "0.4.1"]]
   :lein-tools-deps/config {:config-files [:install :user :project]}
+  :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
   :uberjar-name "app.jar"
   :ring {:handler wormbase.names.service/app
          :host "0.0.0.0"
          :init wormbase.names.service/init}
-  :source-paths ["src"]
   :resource-paths ["resources" "client/build"]
   :target-path "target/%s"
   :main ^:skip-aot wormbase.names.importer
