@@ -93,4 +93,7 @@
           :name "Todd William Harris"}
  #:person{:id "WBPerson101",
           :email "wen@wormbase.org",
-          :name "Wen Joanna Chen"}]
+          :name "Wen Joanna Chen"}
+ #:person{:id "WBPerson1823"
+          :email "juancarlos@wormbase.org"
+          :name "Juancarlos Chan"}]
