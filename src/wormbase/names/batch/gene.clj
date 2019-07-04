@@ -77,8 +77,7 @@
        :x-name ::batch-kill-genes
        :responses (wnu/response-map ok {:schema ::wsb/status-changed})
        :parameters {:body-params {:data ::wsg/kill-batch
-                                  :prov ::prov
-                                  :batch-size ::wsb/size}}
+                                  :prov ::prov}}
        :handler (partial wnbg/change-entity-statuses
                          :gene/id
                          :event/kill-gene
