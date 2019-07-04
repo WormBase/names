@@ -38,7 +38,6 @@
   [request payload what & {:keys [tz]
                            :or {tz (jt/zone-id)}}]
   (let [auth-identity (:identity request)
-        person-email (-> auth-identity :person :person/email)
         prov (get payload :prov {})
         who (if-let [plur (person-lur-from-provenance prov)]
               (-> request :db (d/pull [:db/id] plur))
