@@ -7,6 +7,7 @@
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch.generic :as wnbg]
+   [wormbase.names.gene :as wng]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
@@ -67,6 +68,7 @@
                   (let [event-type :event/new-gene
                         data (get-in request [:body-params])]
                     (wnbg/new-entities :gene/id
+                                       wng/summary-pull-expr
                                        event-type
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels

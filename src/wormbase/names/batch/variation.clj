@@ -21,6 +21,7 @@
                                   :prov ::wsp/provenance}}
        :handler (fn handle-update [request]
                   (wnbg/update-entities :variation/id
+                                        wnv/summary-pull-expr
                                         :event/update-variation
                                         ::wsv/update-batch
                                         wnu/conform-data

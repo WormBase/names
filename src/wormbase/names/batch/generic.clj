@@ -31,7 +31,7 @@
     (map #(assoc % status-ident to-status) data)))
 
 (defn batch-size [payload coll]
-  (let [bsize (:batch-size payload)
+  (let [bsize (get payload :batch-size 0)
         coll-size (count coll)
         cbsize (int (/ coll-size 10))]
     (if (or (zero? cbsize) (> cbsize default-batch-size))
@@ -89,9 +89,13 @@
     (created (str "/api/batch/" (:batch/id result)) result)))
 
 (defn update-entities
-  [uiident event-type spec conformer validator request]
+  [uiident item-pull-expr event-type spec conformer validator request]
   (let [data-transform (fn valdiating-conformer [_ data]
-                         (conformer spec (validator data)))
+                         (let [{db :db} request
+                               db-data (map #(wdb/pull db item-pull-expr (find % uiident))
+                                            data)
+                               data* (map #(merge %1 %2) db-data data)
+                         (conformer spec (validator data*)))))
         result (batcher wbids-batch/update
                         uiident
                         event-type
