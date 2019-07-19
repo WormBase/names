@@ -53,7 +53,8 @@
                           []
                           mm)]
     (when (seq result)
-      [result (d/entity db result)])))
+      (when-let [ent (d/entity db result)]
+        [result ent]))))
 
 (def name-matching-rules
   '[[(gene-name ?pattern ?name ?eid ?attr)
