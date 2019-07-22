@@ -31,7 +31,8 @@
   (export-data out-path
                db
                :gene/id
-               '[:gene/cgc-name
+               '[:gene/id
+                 :gene/cgc-name
                  :gene/sequence-name
                  {:gene/status [[:db/ident]]
                   :gene/biotype [[:db/ident]]}]
