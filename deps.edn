@@ -45,13 +45,19 @@
  ;;   make-classpath aliases (-C) affect the classpath generation, options:
  ;;     :extra-paths - vector of additional paths to add to the classpath
  ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
- :aliases {:prod
+ :aliases {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
+           :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
+           :prod
            {:extra-deps
             {wormbase/ids {:mvn/version "0.1.2"}}}
            :test
-           {:extra-deps
-            {vvvvalvalval/datomock {:mvn/version "0.2.2"}}
-            :extra-paths ["ids/src" "test"]}
+           {:extra-paths ["test" "test/resources" "ids/src"]
+            :extra-deps
+            {vvvvalvalval/datomock {:mvn/version "0.2.2"}
+             com.cognitect/transcriptor {:mvn/version "0.1.5"}
+             com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                                        :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
+            :main-opts ["-m" "cognitect.test-runner"]}
            :dev
            {:extra-deps
             {org.clojure/test.check {:mvn/version  "0.9.0"}
@@ -65,7 +71,7 @@
              ring/ring-devel {:mvn/version "1.6.3"}
              peridot {:mvn/version "0.5.0"}
              vvvvalvalval/datomock {:mvn/version "0.2.2"}}
-            :extra-paths ["ids/src"]}
+            :extra-paths ["ids/src" "test"]}
            :datomic-pro
            {:extra-deps
             {com.datomic/datomic-pro {:mvn/version "0.9.5703"
