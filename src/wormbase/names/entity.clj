@@ -126,9 +126,8 @@
   (fn handle-summary [request identifier]
     (let [{db :db conn :conn} request
           log (d/log conn)
-          [lur _] (identify-fn request identifier)]
-      (when lur
-        (let [info (wdb/pull db pull-expr lur)]
-          (when (:db/id info)
-            (let [prov (wnp/query-provenance db log lur #{:gene/splits :gene/merges})]
-              (-> info (assoc :history prov) ok))))))))
+          [lur ent] (identify-fn request identifier)]
+      (when (and lur ent)
+        (let [info (wdb/pull db pull-expr lur)
+              prov (wnp/query-provenance db log lur #{:gene/splits :gene/merges})]
+          (-> info (assoc :history prov) ok))))))
