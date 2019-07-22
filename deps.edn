@@ -1,5 +1,4 @@
 {:paths ["src" "resources"]
-
  ;; TODO: figure out how to configure logging
  ;; When this package is added, no logging statements appear in
  ;; console by default (compojure-api integration)
@@ -36,92 +35,57 @@
   ring/ring-jetty-adapter {:mvn/version "1.6.3"}
   semantic-csv {:mvn/version "0.2.1-alpha1"}
   com.taoensso/encore {:mvn/version "2.97.0"}}
-
- ;; aliases
- ;;   resolve-deps aliases (-R) affect dependency resolution, options:
- ;;     :extra-deps - specifies extra deps to add to :deps
- ;;     :override-deps - specifies a coordinate to use instead of that in :deps
- ;;     :default-deps - specifies a coordinate to use for a lib if one isn't found
- ;;   make-classpath aliases (-C) affect the classpath generation, options:
- ;;     :extra-paths - vector of additional paths to add to the classpath
- ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
- :aliases {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
-           :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
-           :prod
-           {:extra-deps
-            {wormbase/ids {:mvn/version "0.1.2"}}}
-           :test
-           {:extra-paths ["test" "test/resources" "ids/src"]
-            :extra-deps
-            {vvvvalvalval/datomock {:mvn/version "0.2.2"}
-             com.cognitect/transcriptor {:mvn/version "0.1.5"}
-             com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                                        :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
-            :main-opts ["-m" "cognitect.test-runner"]}
-           :dev
-           {:extra-deps
-            {org.clojure/test.check {:mvn/version  "0.9.0"}
-             org.clojure/tools.trace {:mvn/version  "0.7.9"}
-             org.clojure/tools.nrepl {:mvn/version "0.2.13"}
-             acyclic/squiggly-clojure {:mvn/version "0.1.9-SNAPSHOT"
-                                       :exclusions [org.clojure/tools.reader]}
-             com.velisco/strgen {:mvn/version "0.1.5"
-                                 :exclusions [org.clojure/test.check]}
-             javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
-             ring/ring-devel {:mvn/version "1.6.3"}
-             peridot {:mvn/version "0.5.0"}
-             vvvvalvalval/datomock {:mvn/version "0.2.2"}}
-            :extra-paths ["ids/src" "test"]}
-           :datomic-pro
-           {:extra-deps
-            {com.datomic/datomic-pro {:mvn/version "0.9.5703"
-                                      :exclusions [org.slf4j/slf4j-nop
-                                                   org.slf4j/slf4j-log4j12]}
-             com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.82"
-                                                  :exclusions [joda-time]}}}
-           :logging
-           {:extra-deps
-            ;; Use Logback as the main logging implementation:
-            {ch.qos.logback/logback-classic {:mvn/version "1.1.9"
-                                             :exclusions
-                                             [;; Exclude transitive dependencies on all other logging
-                                              ;; implementations, including other SLF4J bridges.
-                                              commons-logging
-                                              log4j
-                                              org.apache.logging.log4j/log4j
-                                              org.slf4j/simple
-                                              org.slf4j/slf4j-jcl
-                                              org.slf4j/slf4j-nop
-                                              org.slf4j/slf4j-log4j12
-                                              org.slf4j/slf4j-log4j13]}
-             ch.qos.logback/logback-core {:mvn/version "1.1.7"}}}
-
-           ;;   ;; Logback implements the SLF4J API:
-           ;;   org.slf4j/slf4j-api {:mvn/version "1.7.22"}
-
-           ;;   ;; Redirect Apache Commons Logging to Logback via the
-           ;;   ;; SLF4J API:
-           ;;   org.slf4j/jcl-over-slf4j {:mvn/version "1.7.22"}
-
-           ;;   ;; Redirect Log4j 1.x to Logback via the SLF4J API:
-           ;;   org.slf4j/log4j-over-slf4j {:mvn/version "1.7.22"}
-
-           ;;   ;; Redirect Log4j 2.x to Logback via the SLF4J API:
-           ;;   org.apache.logging.log4j/log4j-to-slf4j {:mvn/version "2.7"}
-
-           ;;   ;; Redirect OSGI LogService to Logback via the SLF4J API
-           ;;   org.slf4j/osgi-over-slf4j {:mvn/version "1.7.22"}
-
-
-           ;;  ;; Redirect java.util.logging to Logback via the SLF4J API.
-           ;;  ;; Requires installing the bridge handler, see README:
-           ;;  org.slf4j/jul-to-slf4j {:mvn/version "1.7.22"}}}
-           }
-
- ;; Provider attributes
-
-  ;; :mvn/repos {
-  ;;   "central" {:url "https://repo1.maven.org/maven2/"}
-  ;;   "clojars" {:url "https://repo.clojars.org/"}
-  ;; }
-}
+ :aliases
+ {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
+  :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
+  :prod
+  {:extra-deps
+   {wormbase/ids {:mvn/version "0.1.2"}}}
+  :test
+  {:extra-paths ["test" "test/resources" "ids/src"]
+   :extra-deps
+   {vvvvalvalval/datomock {:mvn/version "0.2.2"}
+    com.cognitect/transcriptor {:mvn/version "0.1.5"}
+    com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                               :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
+   :main-opts ["-m" "cognitect.test-runner"]}
+  :dev
+  {:extra-deps
+   {org.clojure/test.check {:mvn/version  "0.9.0"}
+    org.clojure/tools.trace {:mvn/version  "0.7.9"}
+    org.clojure/tools.nrepl {:mvn/version "0.2.13"}
+    acyclic/squiggly-clojure {:mvn/version "0.1.9-SNAPSHOT"
+                              :exclusions [org.clojure/tools.reader]}
+    com.velisco/strgen {:mvn/version "0.1.5"
+                        :exclusions [org.clojure/test.check]}
+    javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
+    ring/ring-devel {:mvn/version "1.6.3"}
+    peridot {:mvn/version "0.5.0"}
+    vvvvalvalval/datomock {:mvn/version "0.2.2"}}
+   :extra-paths ["ids/src" "export/src" "test"]}
+  :export
+  {:extra-paths ["export/src" "ids/src"]
+   :main-opts []}
+  :datomic-pro
+  {:extra-deps
+   {com.datomic/datomic-pro {:mvn/version "0.9.5703"
+                             :exclusions [org.slf4j/slf4j-nop
+                                          org.slf4j/slf4j-log4j12]}
+    com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.82"
+                                         :exclusions [joda-time]}}}
+  :logging
+  {:extra-deps
+   ;; Use Logback as the main logging implementation:
+   {ch.qos.logback/logback-classic {:mvn/version "1.1.9"
+                                    :exclusions
+                                    [;; Exclude transitive dependencies on all other logging
+                                     ;; implementations, including other SLF4J bridges.
+                                     commons-logging
+                                     log4j
+                                     org.apache.logging.log4j/log4j
+                                     org.slf4j/simple
+                                     org.slf4j/slf4j-jcl
+                                     org.slf4j/slf4j-nop
+                                     org.slf4j/slf4j-log4j12
+                                     org.slf4j/slf4j-log4j13]}
+    ch.qos.logback/logback-core {:mvn/version "1.1.7"}}}}
