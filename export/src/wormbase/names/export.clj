@@ -10,11 +10,18 @@
   (:import
    (java.util.concurrent ExecutionException)))
 
-(defn abbrev-ident [entity]
+(defn abbrev-ident
+  "For a given `entity`, abbreviate a datomic `ident`.
+  An `ident` is a namespaced keyword.
+  Return the `name` component of the keyword,
+  iif the `ident` is present in the database."
+  [entity]
   (when-let [ident (:db/ident entity)]
     (name ident)))
 
-(defn export-data [out-path db ident pull-expr cast-with]
+(defn export-data
+  "Export data from database to a CSV file."
+  [out-path db ident pull-expr cast-with]
   (with-open [out-file (io/writer out-path)]
     (->> (d/q '[:find [(pull ?e pattern) ...]
                 :in $ ?ident pattern
@@ -27,7 +34,9 @@
          (sc/vectorize)
          (cd-csv/write-csv out-file))))
 
-(defn export-genes [out-path db]
+(defn export-genes
+  "Export all genes to a CSV file."
+  [out-path db]
   (export-data out-path
                db
                :gene/id
@@ -39,7 +48,9 @@
                {:gene/biotype abbrev-ident
                 :gene/status abbrev-ident}))
 
-(defn anonymous-variations [out-path db]
+(defn anonymous-variations
+  "Exports variations that have no name only to a CSV file."
+  [out-path db]
   (with-open [out-file (io/writer out-path)]
     (->> (d/q '[:find [(pull ?e pattern) ...]
                 :in $ ?ident pattern
@@ -54,7 +65,9 @@
          (sc/vectorize)
          (cd-csv/write-csv out-file))))
 
-(defn export-variations [out-path db]
+(defn export-variations
+  "Export all variations to a CSV file."
+  [out-path db]
   (export-data out-path
                db
                :variation/id
@@ -64,7 +77,7 @@
 
 (def dispatch {:genes export-genes
                :variations export-variations
-               :vnpn anonymous-variations})
+               :variations-anonymous anonymous-variations})
 
 (def cli-options [])
 
