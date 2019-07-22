@@ -23,15 +23,14 @@
      {:post
       {:summary "Create new sequence-features."
        :x-name ::batch-new-sequence-feature
-       :parameters {:body-params {:data ::wssf/new-batch
-                                  ;:prov ::wsp/provenance
-                                  }}
+       :parameters {:body-params {:data ::wssf/new-batch}}
        :handler (fn handle-new [request]
                   (wnbg/new-entities :sequence-feature/id
                                      :event/new-sequence-feature
                                      ::wssf/new-batch
                                      conform
                                      identity
+                                     [:sequence-feature/id]
                                      request))}
       :delete
       {:summary "Kill sequence features."

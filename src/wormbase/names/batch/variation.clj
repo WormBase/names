@@ -3,6 +3,7 @@
    [clojure.spec.alpha :as s]
    [compojure.api.sweet :as sweet]
    [ring.util.http-response :refer [created ok]]
+   [wormbase.names.variation :as wnv]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.variation :as wsv]
@@ -41,6 +42,7 @@
                                        ::wsv/new-batch
                                        wnu/conform-data
                                        identity
+                                       [:variation/name]
                                        request)))}
       :delete
       {:summary "Kill variations."

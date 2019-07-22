@@ -60,7 +60,9 @@
                   :gene/species elegans-ln}]
           response (new-genes {:data bdata :prov basic-prov :force false})]
       (t/is (ru-hp/created? response))
-      (let [bid (get-in response [:body :batch/id] "")]
+      (let [bid (get-in response [:body :batch/id] "")
+            ids-created (get-in response [:body :ids])]
+        (t/is (every? (juxt :gene/cgc-name :gene/sequence-name :gene/id) ids-created))
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
@@ -82,11 +84,12 @@
       (t/is (ru-hp/created? response))
       (let [bid (get-in response [:body :batch/id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
-        (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
-              xs (map #(get-in % [:gene/status :db/ident]) batch)
-              response (api-tc/summary "batch" bid)]
-          (t/is (seq xs))
-          (t/is (every? (partial = :gene.status/live) xs))
-          (t/is (ru-hp/ok? response))
-          (t/is (= (some-> response :body :provenance/what keyword)
-                   :event/new-gene)))))))
+        (when bid
+          (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
+                xs (map #(get-in % [:gene/status :db/ident]) batch)
+                response (api-tc/summary "batch" bid)]
+            (t/is (seq xs))
+            (t/is (every? (partial = :gene.status/live) xs))
+            (t/is (ru-hp/ok? response))
+            (t/is (= (some-> response :body :provenance/what keyword)
+                     :event/new-gene))))))))

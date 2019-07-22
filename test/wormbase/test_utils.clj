@@ -356,7 +356,12 @@
                         (keep-indexed (fn [idx sample-id]
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
-        gene-recs (map species->ref (gen-sample gsg/payload n))
+        gene-recs (->> (gen-sample gsg/payload n)
+                       (map species->ref)
+                       (map (fn make-names-valid [gr]
+                              (assoc gr
+                                     :gene/sequence-name (seq-name-for-sample gr)
+                                     :gene/cgc-name (cgc-name-for-sample gr)))))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)

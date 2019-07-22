@@ -53,6 +53,7 @@
                                   :prov ::prov}}
        :handler (fn update-handler [request]
                   (wnbg/update-entities :gene/id
+                                        wng/summary-pull-expr
                                         :event/update-gene
                                         ::wsg/update-batch
                                         wnu/conform-data
@@ -68,11 +69,11 @@
                   (let [event-type :event/new-gene
                         data (get-in request [:body-params])]
                     (wnbg/new-entities :gene/id
-                                       wng/summary-pull-expr
                                        event-type
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels
                                        (partial names-validator request)
+                                       [:gene/cgc-name :gene/sequence-name]
                                        request)))}
       :delete
       {:summary "Kill genes."

@@ -10,6 +10,7 @@
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
+   [wormbase.names.provenance :as wnp]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
@@ -59,19 +60,22 @@
                          (fn [v] (jt/zoned-date-time v (jt/zone-id)))))
            (first)))
 
-(defn ids-created [db uiident batch-id]
-  (sort (d/q '[:find [?identifier ...]
-               :in $ ?bid ?ident
-               :where
-               [?tx :batch/id ?bid]
-               [?e ?ident ?identifier ?tx]]
-             db
-             batch-id
-             uiident)))
+(defn ids-created [log db uiident batch-id name-attrs]
+  (->> (d/q '[:find ?tx .
+              :in $ ?bid
+              :where
+              [?tx :batch/id ?bid]]
+            db
+            batch-id)
+       (wnp/tx-changes db log)
+       (filter #((-> name-attrs (conj uiident) set) (:attr %)))
+       (map #(select-keys % [:attr :value]))
+       (mapcat vals)
+       (apply assoc {})))
 
 (defn new-entities
   "Create a batch of new entities."
-  [uiident event-type spec conformer validator request]
+  [uiident event-type spec conformer validator name-attrs request]
   (let [entity-type (namespace uiident)
         data-transform (fn set-live [_ data]
                          (let [live-status (keyword (str entity-type ".status") "live")]
@@ -84,7 +88,12 @@
                               spec
                               data-transform
                               request)
-        new-ids (ids-created (-> request :conn d/db) uiident (:batch/id batch-result))
+        {conn :conn} request
+        new-ids (ids-created (d/log conn)
+                             (d/db conn)
+                             uiident
+                             (:batch/id batch-result)
+                             name-attrs)
         result (assoc batch-result :ids new-ids :id-key uiident)]
     (created (str "/api/batch/" (:batch/id result)) result)))
 
