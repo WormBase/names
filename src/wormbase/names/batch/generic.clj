@@ -103,8 +103,8 @@
                          (let [{db :db} request
                                db-data (map #(wdb/pull db item-pull-expr (find % uiident))
                                             data)
-                               data* (map #(merge %1 %2) db-data data)
-                         (conformer spec (validator data*)))))
+                               data* (map #(merge %1 %2) db-data data)]
+                         (conformer spec (validator data*))))
         result (batcher wbids-batch/update
                         uiident
                         event-type
