@@ -102,8 +102,7 @@
      (throw exc)))
   ([exc]
    (log/fatal "Unexpected errror" exc)
-   (throw exc)
-   (internal-server-error "Ooops, something went really wrong!")))
+   (throw exc)))
 
 (defn handle-txfn-error [^Exception exc data request]
   (let [txfn-err? (instance? ExecutionException exc)
