@@ -37,5 +37,3 @@
                                   {:invalid
                                    {:name gname :ident name-ident}}}})))))))))
   data)
-
-
