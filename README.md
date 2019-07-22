@@ -169,7 +169,8 @@ This import pipeline takes two files:
 
 
 ```bash
-lein run import gene <current_status_tsv> <actions.tsv>
+clojure -A:dev:datomic-pro -m wormbase.names.importer \
+ gene <current_status_tsv> <actions.tsv>
 ```
 At time of writing (as of WormBase release WS270), the gene import pipeline takes ~5 hours to run.
 
@@ -178,7 +179,7 @@ At time of writing (as of WormBase release WS270), the gene import pipeline take
 The variations export data is provided in a single file (no provenance is attached).
 
 ```bash
-lein import variations <variations_tsv>
+clojure -A:dev:datomic-pro -m wormbase.names.importer variation <variations_tsv>
 ```
 
 At time of writing (as of WormBase release WS270), the variations
@@ -226,6 +227,33 @@ After the process concludes, restore the `write-capacity` back to its original v
 
 Ensure to configure the application via the `.ebextensions/app-env.config` file to match $REMOTE_DATOMIC_URI.
 After deploying a release, verify that the URI has changed in the ElasticBeanStalk configuration section.
+
+### Exporting names data to CSV
+The primary function of the export is for reconcilation of the datomic
+names db against an ACeDB database.
+The IDs, names and status of each entity in the database are output as CSV.
+
+A jar file is deployed to the WormBase S3 account for convenience.
+
+```bash
+# export genes
+java -cp <path-to-worrmbase-names-export.jar> clojure.main -m wormbase.names.export genes  /tmp/genes.csv
+
+# export variations
+java -cp <path-to-worrmbase-names-export.jar> clojure.main -m wormbase.names.export variations  /tmp/variations.csv
+```
+
+The exporter can also be run from a checkout of this repository:
+
+```bash
+cd <wormbase-names_checkout>/export
+
+# export genes
+clojure -A:dev:datomic-pro -m wormbase.names.export genes  /tmp/genes.csv
+
+# export variations
+clojure -A:dev:datomic-pro -m wormbase.names.export variations  /tmp/variations.csv
+```
 
 ## License
 EPL (Eclipse Public License)
