@@ -33,8 +33,8 @@
   [& args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)
         db-uri (env :wb-db-uri)
-        importer-ns-name (-> arguments rest first)
-        tsv-paths (take 2 (nnext arguments))]
+        importer-ns-name (first arguments)
+        tsv-paths (take 2 (rest arguments))]
     (mount/start)
     (wdbs/apply-updates!)
     (wdbs/import-people wdb/conn)
@@ -43,14 +43,15 @@
 
       (nil? (get importers importer-ns-name))
       (exit 1 (str "Please specifiy the importer to run, one of: "
-                   (str/join "," (-> importers keys sort))))
+                   (str/join "," (-> importers keys sort))
+                   "args: " (pr-str arguments)))
 
       (empty? tsv-paths)
       (exit 1 "Pass the 2 .tsv files as first 2 parameters")
 
       (not (every? #(.exists (io/file %)) tsv-paths))
       (let [non-existant (filter #(not (.exists (io/file %))) tsv-paths)]
-        (exit 2 (str "A .tsv file did not exist, check paths supplied"
+        (exit 2 (str "A .tsv file did not exist, check paths supplied: "
                      (str/join ", " non-existant))))
 
       (nil? (env :wb-db-uri))
