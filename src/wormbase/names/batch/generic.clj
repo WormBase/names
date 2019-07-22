@@ -120,7 +120,7 @@
         entity-type (namespace uiident)
         data-transform (fn txform-assign-status [_ data]
                          (->> (conformer spec data)
-                              (map (partial array-map uiident))
+                              (map (partial assoc {} uiident))
                               (assign-status entity-type to-status)))
         entity-type (namespace uiident)
         resp-key (-> to-status name keyword)
