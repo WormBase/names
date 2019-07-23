@@ -408,11 +408,7 @@
         :x-name ::summary
         :responses (wnu/response-map ok {:schema ::wsg/summary})
         :handler (fn [request]
-                   (try
-                     (summary request identifier)
-                     (catch Exception e
-                       (prn e)
-                       (throw e))))}
+                     (summary request identifier))}
        :put
        {:summary "Update an existing gene."
         :x-name ::update-gene
