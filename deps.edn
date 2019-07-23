@@ -46,20 +46,22 @@
   :test
   {:extra-paths ["test" "test/resources" "ids/src"]
    :extra-deps
-   {vvvvalvalval/datomock {:mvn/version "0.2.2"}
+   {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                               :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}
     com.cognitect/transcriptor {:mvn/version "0.1.5"}
-    com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                               :sha "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
-   :main-opts ["-m" "cognitect.test-runner"]}
+    com.velisco/strgen {:mvn/version "0.1.5"
+                        :exclusions [org.clojure/test.check]}
+    vvvvalvalval/datomock {:mvn/version "0.2.2"}}
+   :main-opts ["-m" "cognitect.test-runner" "-r" "integration.*"]}
   :dev
   {:extra-deps
-   {org.clojure/test.check {:mvn/version  "0.9.0"}
+   {com.velisco/strgen {:mvn/version "0.1.5"
+                        :exclusions [org.clojure/test.check]}
+    org.clojure/test.check {:mvn/version  "0.9.0"}
     org.clojure/tools.trace {:mvn/version  "0.7.9"}
     org.clojure/tools.nrepl {:mvn/version "0.2.13"}
     acyclic/squiggly-clojure {:mvn/version "0.1.9-SNAPSHOT"
                               :exclusions [org.clojure/tools.reader]}
-    com.velisco/strgen {:mvn/version "0.1.5"
-                        :exclusions [org.clojure/test.check]}
     javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
     ring/ring-devel {:mvn/version "1.6.3"}
     peridot {:mvn/version "0.5.0"}
