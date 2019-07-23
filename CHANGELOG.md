@@ -1,5 +1,10 @@
 # Change-log
 
+## [1.0]
+ - Species listing API
+ - Fixed species-specifix regular expression pattern for gene names.
+ - Match up gene identifiers with names in batch creation endpoints.
+ 
 ## [0.5.2]
  - UI fix for recent activities.
  - Added --profile flag for command for running awsebcli commands in Makefile.
