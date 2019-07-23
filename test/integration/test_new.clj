@@ -172,7 +172,7 @@
                 :species/cgc-name-pattern "^Q[a-z]{3}-[0-9]+"
                 :species/sequence-name-pattern "^QSEQNAME_[0-9\\]+"}
           response (new-species {:data data :prov basic-prov})]
-      (t/is (ru-hp/created? response))
+      (t/is (ru-hp/created? response) (pr-str response))
       (let [dba (d/db wdb/conn)]
         (t/is (= (:species/id (d/pull dba [:species/id] (find data :species/latin-name)))
                  :species/q-squirmito))))))
