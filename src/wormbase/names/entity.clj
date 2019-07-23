@@ -17,7 +17,6 @@
   (let [lookup-ref (s/conform identitfy-spec identifier)]
     (when (s/invalid? lookup-ref)
       (not-found! {:message "Malformed identifier"
-                   :type :user/validation-error
                    :spec identitfy-spec
                    :data identifier}))
     (let [db (:db request)
