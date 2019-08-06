@@ -15,7 +15,8 @@
 
 (s/def ::success-response  (s/keys :req [:batch/id]))
 
-(s/def ::ids (s/and map? seq))
+(s/def ::ids (s/and (s/coll-of map?)))
+
 (s/def ::id-key sts/keyword?)
 
 (s/def ::created (s/merge ::success-response (s/keys :req-un [::ids ::id-key])))

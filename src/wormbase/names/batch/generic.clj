@@ -69,9 +69,13 @@
             batch-id)
        (wnp/tx-changes db log)
        (filter #((-> name-attrs (conj uiident) set) (:attr %)))
-       (map #(select-keys % [:attr :value]))
-       (mapcat vals)
-       (apply assoc {})))
+       (group-by :eid)
+       (vals)
+       (map (fn [xs]
+              (->> xs
+                   (map (fn [item]
+                          {(:attr item) (:value item)}))
+                   (apply merge))))))
 
 (defn new-entities
   "Create a batch of new entities."

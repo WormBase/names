@@ -63,6 +63,7 @@
       (let [bid (get-in response [:body :batch/id] "")
             ids-created (get-in response [:body :ids])]
         (t/is (every? (juxt :gene/cgc-name :gene/sequence-name :gene/id) ids-created))
+        (t/is (= (count ids-created) (count bdata)))
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
