@@ -348,7 +348,7 @@
 (def status-changed-responses (wnu/response-map ok {:schema ::wsg/status-changed}))
 
 (def coll-resources
-  (sweet/context "/gene/" []
+  (sweet/context "/gene" []
     :tags ["gene"]
     (sweet/resource
      {:get
