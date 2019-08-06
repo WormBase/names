@@ -194,7 +194,7 @@
   "Examples of each invokation flavour"
   (in-ns 'wormbase.names.recent)
 
-  Then define `conn` d/connect and db with d/db.
+  ;; Then define `conn` d/connect and db with d/db.
   (binding [db (d/db conn) log (d/log conn)
             pull-prov-only (prov-only-puller db log)
             pull-changes-and-prov (changes-and-prov-puller db log)
@@ -206,7 +206,7 @@
     (activities db log entity-rules pull-changes-and-prov "variation")
     (activities db log entity-rules-rules pull-changes-and-prov "variation" from until)
 
-    (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org")
+    (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.russell@wormbase.org")
     (activities db (d/log conn) person-rules pull-changes-and-prov "matthew.rustsell@wormbase.org" from until)
 
     (activities db (d/log conn) batch-rules pull-prov-only)
