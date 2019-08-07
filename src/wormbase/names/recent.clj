@@ -132,7 +132,7 @@
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
-                 (handle request batch-rules (prov-only-puller request) "" from until))
+                 (handle request batch-rules (changes-and-prov-puller request) "" from until))
                (sweet/GET "/person/:id" request
                  :tags ["recent" "person"]
                  :path-params [id :- :person/id]
