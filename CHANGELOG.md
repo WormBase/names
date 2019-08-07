@@ -1,6 +1,6 @@
 # Change-log
 
-## [1.0]
+## [0.5.3]
  - Species listing API
  - Fixed species-specifix regular expression pattern for gene names.
  - Match up gene identifiers with names in batch creation endpoints.
