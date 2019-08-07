@@ -131,6 +131,11 @@ clj -A:outdated
 Use built-in testing utilities as provided by leiningen.
 Please run all tests before committing/submitting new pull requests.
 
+```bash
+
+clj -A:datomic-pro:dev:test
+```
+
 ## Releases
 
 ```bash
