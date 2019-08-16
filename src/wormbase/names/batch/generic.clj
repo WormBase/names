@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [compojure.api.sweet :as sweet]
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [java-time :as jt]
@@ -169,3 +170,72 @@
                                      (when v
                                        (jt/zoned-date-time v (jt/zone-id)))))
           (ok)))))
+
+;;; TODO:
+;; (def routes
+;;   (sweet/context "/:entity-type" []
+;;     :tags ["batch" "variation"]
+;;     :path-params [entity-type string?]
+;;     (sweet/resource
+;;      {:put
+;;       {:summary "Update variation records."
+;;        :x-name ::batch-update-variations
+;;        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
+;;        :parameters {:body-params {:data ::wsv/update-batch
+;;                                   :prov ::wsp/provenance}}
+;;        :handler (fn handle-update [request]
+;;                   (update-entities :variation/id
+;;                                    wnv/summary-pull-expr
+;;                                    :event/update-variation
+;;                                    ::wsv/update-batch
+;;                                    wnu/conform-data
+;;                                    identity
+;;                                    request))}
+;;       :post
+;;       {:summary "Assign identifiers and associate names, creating new variations."
+;;        :x-name ::batch-new-variations
+;;        :responses (wnu/response-map created {:schema ::wsb/created})
+;;        :parameters {:body-params {:data ::wsv/new-batch
+;;                                   :prov ::wsp/provenance}}
+;;        :handler (fn handle-new [request]
+;;                   (let [event-type :event/new-variation
+;;                         data (get-in request [:body-params])]
+;;                     (new-entities :variation/id
+;;                                   event-type
+;;                                   ::wsv/new-batch
+;;                                   wnu/conform-data
+;;                                   identity
+;;                                   [:variation/name]
+;;                                   request)))}
+;;       :delete
+;;       {:summary "Kill variations."
+;;        :x-name ::batch-kill-variations
+;;        :responses (wnu/response-map ok {:schema ::wsb/status-changed})
+;;        :parameters {:body-params {:data ::wsv/kill-batch}}
+;;        :handler (fn handle-kill [request]
+;;                   (change-entity-statuses :variation/id
+;;                                           :event/kill-variation
+;;                                           :variation.status/dead
+;;                                           ::wsv/kill-batch
+;;                                           map-conform-data-drop-labels
+;;                                           request))}})
+;;     (sweet/POST "/resurrect" request
+;;       :summary "Resurrect a batch of dead variations."
+;;       :body [data {:data ::wsv/resurrect-batch}
+;;              prov {:prov :wsp/provenance}]
+;;       (change-entity-statuses :variation/id
+;;                               :event/resurrect-variation
+;;                               :variation.status/live
+;;                               ::wsv/resurrect-batch
+;;                               map-conform-data-drop-labels
+;;                               request))
+;;     (sweet/DELETE "/name" request
+;;       :summary "Remove names from a batch of variations."
+;;       :body [data {:data ::wsv/names}
+;;              prov {:prov ::wsp/provenance}]
+;;       (retract-attr-vals :variation/name
+;;                          :variation/name
+;;                          :event/remove-variation-name
+;;                          ::wsv/names
+;;                          wnu/conform-data
+;;                          request))))

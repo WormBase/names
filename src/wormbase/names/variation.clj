@@ -25,42 +25,10 @@
 
 (def identify (partial wne/identify ::wsv/identifier))
 
-(def name-matching-rules
-  '[[(variation-name ?pattern ?name ?eid ?attr)
-     (matches-name :variation/name ?pattern ?name ?eid ?attr)]
-    [(variation-name ?pattern ?name ?eid ?attr)
-     (matches-name :variation/id ?pattern ?name ?eid ?attr)]])
-
 (def status-changed-responses
   (-> wnu/default-responses
       (assoc ok {:schema ::wsv/status-changed})
       (wnu/response-map)))
-
-(defn find-variations
-  "Perform a prefix search against names in the DB.
-  Match any unique variation identifier (name or id)."
-  [request]
-  (when-let [pattern (some-> request :query-params :pattern str/trim)]
-    (let [db (:db request)
-          matching-rules (concat wnm/name-matching-rules name-matching-rules)
-          term (stc/conform ::wsc/find-term pattern)
-          q-result (d/q '[:find ?vid ?vname
-                          :in $ % ?term
-                          :where
-                          (variation-name ?term ?name ?eid ?attr)
-                          [?eid :variation/id ?vid]
-                          [(get-else $ ?eid :variation/name "") ?vname]]
-                        db
-                        matching-rules
-                        (re-pattern (str "^" term)))
-          res {:matches (or (some->> q-result
-                                     (map (fn matched [[vid vname]]
-                                            (merge {:variation/id vid}
-                                                   (when (s/valid? :variation/name vname)
-                                                     {:variation/name vname}))))
-                                     (vec))
-                            [])}]
-      (ok res))))
 
 (def summary-pull-expr '[* {:variation/status [:db/ident]}])
 
@@ -85,8 +53,7 @@
       {:summary "Find variations by any unique identifier."
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-variation
-       :handler (fn find-by-any-identifier [request]
-                  (find-variations request))}
+       :handler (wne/finder "variation")}
       :post
       {:summary "Create a new variation."
        :x-name ::new-variation

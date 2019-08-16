@@ -76,12 +76,12 @@
                 (t/is (ru-hp/ok? {:status status :body body}))
                 (t/is (seq matches)
                       (str "No matches found for " valid-prefix))
-                (t/is (some (fn [match] (= (:variation/id match) id)) matches)
+                (t/is (some (fn [match] (= (:id match) id)) matches)
                       (str "Could not find any Variation ID matching " id
                            " matches:" (pr-str matches)))
                 (t/is (some (fn [match]
                               (assert (not (nil? match)))
-                              (str/starts-with? (:variation/name match) valid-prefix))
+                              (str/starts-with? (:name match) valid-prefix))
                             matches)
                       (str "Could not verify and match startswith prefix "
                            (pr-str valid-prefix) ""

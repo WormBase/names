@@ -57,12 +57,12 @@
         [result ent]))))
 
 (def name-matching-rules
-  '[[(gene-name ?pattern ?name ?eid ?attr)
-     (matches-name :gene/cgc-name ?pattern ?name ?eid ?attr)]
-    [(gene-name ?pattern ?name ?eid ?attr)
-     (matches-name :gene/sequence-name ?pattern ?name ?eid ?attr)]
-    [(gene-name ?pattern ?name ?eid ?attr)
-     (matches-name :gene/id ?pattern ?name ?eid ?attr)]])
+  '[[(gene-name ?pattern ?name ?eid)
+     (matches-name :gene/cgc-name ?pattern ?name ?eid)]
+    [(gene-name ?pattern ?name ?eid)
+     (matches-name :gene/sequence-name ?pattern ?name ?eid)]
+    [(gene-name ?pattern ?name ?eid)
+     (matches-name :gene/id ?pattern ?name ?eid)]])
 
 (defn find-gene
   "Perform a prefix search against names in the DB.
@@ -75,7 +75,7 @@
           q-result (d/q '[:find ?gid ?cgc-name ?sequence-name
                           :in $ % ?term
                           :where
-                          (gene-name ?term ?name ?eid ?attr)
+                          (gene-name ?term ?name ?eid)
                           [?eid :gene/id ?gid]
                           [(get-else $ ?eid :gene/cgc-name "") ?cgc-name]
                           [(get-else $ ?eid :gene/sequence-name "") ?sequence-name]]

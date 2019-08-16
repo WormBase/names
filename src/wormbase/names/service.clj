@@ -14,6 +14,7 @@
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
    [wormbase.names.coercion] ;; coercion scheme
+   [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
@@ -100,7 +101,8 @@
        wn-variation/routes
        wn-batch/routes
        wn-recent/routes
-       wn-stats/routes))))
+       wn-stats/routes
+       wne/routes))))
 
 (defn init
   "Entry-point for ring server initialization."
