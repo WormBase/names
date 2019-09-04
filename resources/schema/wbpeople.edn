@@ -37,39 +37,49 @@
           :name "Christian Andrew Grove"}
  #:person{:id "WBPerson736",
           :email "daniel.wang@wormbase.org",
-          :name "Qinghua Wang"}
+          :name "Qinghua Wang"
+          :active? true}
  #:person{:id "WBPerson36183",
           :email "faye.rodgers@wormbase.org",
-          :name "Faye Rodgers"}
+          :name "Faye Rodgers"
+          :active? true}
  #:person{:id "WBPerson4025",
           :email "gary.williams@wormbase.org",
           :name "Gareth W Williams"
-          :roles #{:person.role/sequence-curator}}
+          :roles #{:person.role/sequence-curator}
+          :active? true}
  #:person{:id "WBPerson28994",
           :email "jane.lomax@wormbase.org",
-          :name "Jane Lomax"}
+          :name "Jane Lomax"
+          :active? false}
  #:person{:id "WBPerson19730",
           :email "jdmswong@wormbase.org",
           :name "Jean-Daniel M Wong"}
  #:person{:id "WBPerson21471",
           :email "joachim.baran@wormbase.org",
-          :name "Joachim Baran"}
+          :name "Joachim Baran"
+          :active? true}
  #:person{:id "WBPerson712",
           :email "karen@wormbase.org",
-          :name "Karen J Yook"}
+          :name "Karen J Yook"
+          :active? true}
  #:person{:id "WBPerson3111",
           :email "kevin.howe@wormbase.org",
-          :name "Kevin L Howe"}
+          :name "Kevin L Howe"
+          :active? true}
  #:person{:id "WBPerson11187",
           :email "liyuling@wormbase.org",
-          :name "Yuling Li"}
+          :name "Yuling Li"
+          :active? true}
  #:person{:id "WBPerson33035",
           :email "matthew.russell@wormbase.org",
           :name "Matthew Russell"
-          :roles #{:person.role/admin}}
+          :roles #{:person.role/admin}
+          :active? true}
  #:person{:id "WBPerson4055",
           :email "michael.paulini@wormbase.org",
-          :name "Michael Paulini"}
+          :name "Michael Paulini"
+          :active? true}
  #:person{:id "WBPerson36074",
           :email "myriam.shafie@wormbase.org",
           :name "Myriam Shafie"
@@ -77,23 +87,41 @@
  #:person{:id "WBPerson1983",
           :email "paul.davis@wormbase.org",
           :name "Paul Anthony Davis"
-          :roles #{:person.role/sequence-curator}}
+          :roles #{:person.role/sequence-curator}
+          :active? true}
  #:person{:id "WBPerson26085",
           :email "sibyl@wormbase.org",
-          :name "Sibyl Gao"}
+          :name "Sibyl Gao"
+          :active? true}
  #:person{:id "WBPerson12884",
           :email "snehalvk@wormbase.org",
-          :name "Snehalata Kadam"}
+          :name "Snehalata Kadam"
+          :active? true}
  #:person{:id "WBPerson12021",
           :email "thomas.down@wormbase.org",
           :name "Thomas A Down"
           :active? false}
  #:person{:id "WBPerson241",
           :email "todd@wormbase.org",
-          :name "Todd William Harris"}
+          :name "Todd William Harris"
+          :active? true}
  #:person{:id "WBPerson101",
           :email "wen@wormbase.org",
-          :name "Wen Joanna Chen"}
+          :name "Wen Joanna Chen"
+          :active? true}
  #:person{:id "WBPerson1823"
           :email "juancarlos@wormbase.org"
-          :name "Juancarlos Chan"}]
+          :name "Juancarlos Chan"
+          :active? true}
+ #:person{:id "WBPerson12028"
+          :email "daniela@wormbase.org"
+          :active? true}
+ #:person{:id "WBPerson363"
+          :email "raymond@wormbase.org"
+          :active? true}
+ #:person{:id "WBPerson324"
+          :email "ranjana@wormbase.org"
+          :active? true}
+ #:person{:id "WBPerson2987"
+          :email "chris@wormbase.org"
+          :active? true}]
