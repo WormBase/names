@@ -16,14 +16,14 @@ function Home({ classes }) {
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {ENTITY_TYPES.map((entityType) => (
+          {ENTITY_TYPES.map(({ entityType, path }) => (
             <Paper elevation={1} className={classes.row}>
               <div className={classes.cell}>
                 <Button
                   variant="raised"
                   color="secondary"
                   component={({ ...props }) => (
-                    <Link to={`/${entityType}/new`} {...props} />
+                    <Link to={`${path}/new`} {...props} />
                   )}
                 >
                   Add {entityType}
@@ -32,9 +32,7 @@ function Home({ classes }) {
               <div className={classes.cell}>
                 <Button
                   color="primary"
-                  component={({ ...props }) => (
-                    <Link to={`/${entityType}`} {...props} />
-                  )}
+                  component={({ ...props }) => <Link to={path} {...props} />}
                 >
                   Browse {entityType}s
                 </Button>
