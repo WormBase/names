@@ -1,7 +1,8 @@
-import blue from '@material-ui/core/colors/blue';
-import lightBlue from '@material-ui/core/colors/lightBlue';
-import yellow from '@material-ui/core/colors/yellow';
-import red from '@material-ui/core/colors/red';
+import {
+  blueGrey as primaryColor,
+  blueGrey as secondaryColor,
+  red,
+} from '@material-ui/core/colors';
 
 import {
   MuiThemeProvider,
@@ -73,21 +74,21 @@ export const Dialog = withMobileDialog()(
   }))(MuiDialog)
 );
 
-export const colors = {
-  blue,
-  lightBlue,
-  yellow,
-  red,
-};
+// export const colors = {
+//   blue,
+//   lightBlue,
+//   yellow,
+//   red,
+// };
 // All the following keys are optional.
 // We try our best to provide a great default value.
 export const theme = createMuiTheme({
   palette: {
     primary: {
-      main: blue[700],
+      main: primaryColor[700],
     },
     secondary: {
-      main: yellow['A700'],
+      main: secondaryColor['A700'],
     },
     error: red,
     // Used by `getContrastText()` to maximize the contrast between the background and
@@ -100,4 +101,4 @@ export const theme = createMuiTheme({
   },
 });
 
-export { MuiThemeProvider, withStyles };
+export { MuiThemeProvider, createMuiTheme, withStyles };

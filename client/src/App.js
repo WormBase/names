@@ -4,6 +4,7 @@ import { Route, Redirect, Switch, matchPath } from 'react-router-dom';
 import 'typeface-roboto';
 import {
   withStyles,
+  MuiThemeProvider,
   CircularProgress,
   Page,
   DocumentTitle,
@@ -26,7 +27,7 @@ import {
   EntityProfile,
   EntityCreate,
 } from './containers/Entity';
-import { ENTITY_TYPES } from '../src/utils/entityTypes';
+import { ENTITY_TYPES, getEntityTypeTheme } from '../src/utils/entityTypes';
 // import {
 //   Directory as VariationDirectory,
 //   Create as VariationCreate,
@@ -97,31 +98,35 @@ class App extends Component {
                                 ];
                             }
                             return (
-                              <Switch>
-                                <Route
-                                  path={`${match.url}`}
-                                  exact={true}
-                                  component={() => (
-                                    <Directory entityType={entityType} />
-                                  )}
-                                />
-                                <Route
-                                  path={`${match.url}/new`}
-                                  component={() => (
-                                    <Create entityType={entityType} />
-                                  )}
-                                />
-                                <Route
-                                  path={`${match.url}/id/:id`}
-                                  component={({ match }) => (
-                                    <Profile
-                                      wbId={match.params.id}
-                                      entityType={entityType}
-                                    />
-                                  )}
-                                />
-                                <Route component={NotFound} />
-                              </Switch>
+                              <MuiThemeProvider
+                                theme={getEntityTypeTheme(entityType)}
+                              >
+                                <Switch>
+                                  <Route
+                                    path={`${match.url}`}
+                                    exact={true}
+                                    component={() => (
+                                      <Directory entityType={entityType} />
+                                    )}
+                                  />
+                                  <Route
+                                    path={`${match.url}/new`}
+                                    component={() => (
+                                      <Create entityType={entityType} />
+                                    )}
+                                  />
+                                  <Route
+                                    path={`${match.url}/id/:id`}
+                                    component={({ match }) => (
+                                      <Profile
+                                        wbId={match.params.id}
+                                        entityType={entityType}
+                                      />
+                                    )}
+                                  />
+                                  <Route component={NotFound} />
+                                </Switch>
+                              </MuiThemeProvider>
                             );
                           }}
                         />

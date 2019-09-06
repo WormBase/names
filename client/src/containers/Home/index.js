@@ -5,6 +5,7 @@ import {
   PageMain,
   Paper,
   Button,
+  MuiThemeProvider,
   withStyles,
 } from '../../components/elements';
 import { Link } from 'react-router-dom';
@@ -16,18 +17,20 @@ function Home({ classes }) {
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {ENTITY_TYPES.map(({ entityType, path }) => (
+          {ENTITY_TYPES.map(({ entityType, path, theme }) => (
             <Paper elevation={1} className={classes.row}>
               <div className={classes.cell}>
-                <Button
-                  variant="raised"
-                  color="secondary"
-                  component={({ ...props }) => (
-                    <Link to={`${path}/new`} {...props} />
-                  )}
-                >
-                  Add {entityType}
-                </Button>
+                <MuiThemeProvider theme={theme}>
+                  <Button
+                    variant="raised"
+                    color="secondary"
+                    component={({ ...props }) => (
+                      <Link to={`${path}/new`} {...props} />
+                    )}
+                  >
+                    Add {entityType}
+                  </Button>
+                </MuiThemeProvider>
               </div>
               <div className={classes.cell}>
                 <Button
