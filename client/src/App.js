@@ -19,6 +19,7 @@ import Authenticate, {
   Profile,
 } from './containers/Authenticate';
 import Footer from './containers/Footer';
+import Home from './containers/Home';
 import { GeneDirectory, GeneProfile, GeneCreate } from './containers/Gene';
 import {
   EntityDirectory,
@@ -61,11 +62,7 @@ class App extends Component {
                   <div key="content" className={this.props.classes.content}>
                     <ErrorBoundary>
                       <Switch>
-                        <Route
-                          exact
-                          path="/"
-                          component={() => <Redirect to="/gene" />}
-                        />
+                        <Route exact path="/" component={() => <Home />} />
                         <Route
                           path="/me"
                           component={() => (
