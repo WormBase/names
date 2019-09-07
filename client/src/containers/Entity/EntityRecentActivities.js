@@ -4,6 +4,7 @@ import AuthorizationContext, {
   useDataFetch,
 } from '../Authenticate/AuthorizationContext';
 import EntityHistory from './EntityHistory';
+import ActivitiesCopy from './ActivitiesCopy';
 import { NoData, CircularProgress } from '../../components/elements';
 
 function formatTime(timestamp) {
@@ -28,7 +29,12 @@ function EntityRecentActivities(props) {
   return isLoading ? (
     <CircularProgress />
   ) : activities.length ? (
-    <EntityHistory activities={activities} entityType={entityType} />
+    <div>
+      <ActivitiesCopy activities={activities} entityType={entityType}>
+        zzzz
+      </ActivitiesCopy>
+      <EntityHistory activities={activities} entityType={entityType} />
+    </div>
   ) : (
     <NoData>
       No activities between <strong>{formatTime(from)}</strong> and{' '}
