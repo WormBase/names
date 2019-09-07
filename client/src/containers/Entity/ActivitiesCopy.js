@@ -6,7 +6,7 @@ import { Button } from '../../components/elements';
 
 function ActivitiesCopy({ entityType, activities, children }) {
   const generate = () => {
-    const [activitiesToday] = [...activities].reverse().reduce(
+    const [activitiesToday] = [...activities].reduce(
       ([activitiesAccumulator, isTodayAccumulator], activity) => {
         if (isTodayAccumulator) {
           if (moment(activity['provenance/when']).isSame(moment(), 'day')) {

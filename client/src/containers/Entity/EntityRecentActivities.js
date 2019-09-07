@@ -25,7 +25,8 @@ function EntityRecentActivities(props) {
   );
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
-  const { activities = [], from, until } = data;
+  const { activities: activitiesRaw = [], from, until } = data;
+  const activities = [...activitiesRaw].reverse();
   return isLoading ? (
     <CircularProgress />
   ) : activities.length ? (
