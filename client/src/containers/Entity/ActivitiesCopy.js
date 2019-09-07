@@ -1,11 +1,27 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import copy from 'copy-to-clipboard';
+import moment from 'moment';
 import { Button } from '../../components/elements';
 
 function ActivitiesCopy({ entityType, activities, children }) {
   const generate = () => {
-    return activities
+    const [activitiesToday] = [...activities].reverse().reduce(
+      ([activitiesAccumulator, isTodayAccumulator], activity) => {
+        if (isTodayAccumulator) {
+          if (moment(activity['provenance/when']).isSame(moment(), 'day')) {
+            activitiesAccumulator.push(activity);
+            return [activitiesAccumulator, true];
+          } else {
+            return [activitiesAccumulator, false];
+          }
+        } else {
+          return [activitiesAccumulator, false];
+        }
+      },
+      [[], true]
+    );
+    return activitiesToday
       .filter((activity) =>
         activity['provenance/what'].match(/^event\/(new|update)-.+/)
       )
