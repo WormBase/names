@@ -39,7 +39,11 @@ function ActivitiesCopy({ entityType, activities, children }) {
   const onClick = () => {
     copy(generate());
   };
-  return <Button onClick={onClick}>{children}</Button>;
+  return (
+    <Button variant="raised" color="primary" onClick={onClick}>
+      {children}
+    </Button>
+  );
 }
 
 ActivitiesCopy.propTypes = {

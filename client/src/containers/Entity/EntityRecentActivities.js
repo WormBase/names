@@ -31,9 +31,12 @@ function EntityRecentActivities(props) {
     <CircularProgress />
   ) : activities.length ? (
     <div>
-      <ActivitiesCopy activities={activities} entityType={entityType}>
-        zzzz
-      </ActivitiesCopy>
+      <p>
+        Need to enter {entityType} IDs into OA? Copy the name-ID pairs{' '}
+        <ActivitiesCopy activities={activities} entityType={entityType}>
+          here
+        </ActivitiesCopy>
+      </p>
       <EntityHistory activities={activities} entityType={entityType} />
     </div>
   ) : (
