@@ -1,4 +1,4 @@
-import React, { useContext, useCallback } from 'react';
+import React, { useContext, useCallback, useMemo } from 'react';
 import moment from 'moment';
 import AuthorizationContext, {
   useDataFetch,
@@ -26,17 +26,14 @@ function EntityRecentActivities(props) {
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
   const { activities: activitiesRaw = [], from, until } = data;
-  const activities = [...activitiesRaw].reverse();
+  const activities = useMemo(() => [...activitiesRaw].reverse(), [
+    activitiesRaw,
+  ]);
   return isLoading ? (
     <CircularProgress />
   ) : activities.length ? (
     <div>
-      <p>
-        Need to enter {entityType} IDs into OA? Copy the name-ID pairs{' '}
-        <ActivitiesCopy activities={activities} entityType={entityType}>
-          here
-        </ActivitiesCopy>
-      </p>
+      <ActivitiesCopy activities={activities} entityType={entityType} />
       <EntityHistory activities={activities} entityType={entityType} />
     </div>
   ) : (

@@ -61,6 +61,8 @@ export { default as Timestamp } from './Timestamp';
 export { default as Humanize } from './Humanize';
 export { default as ValidationError } from './ValidationError';
 
+export { default as useClipboard } from './useClipboard';
+
 export const Dialog = withMobileDialog()(
   withStyles((theme) => ({
     paper: {
