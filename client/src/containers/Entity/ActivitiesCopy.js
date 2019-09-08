@@ -39,7 +39,7 @@ function ActivitiesCopy({ entityType, activities }) {
           const [{ value: name }] = changes.filter(
             ({ attr, added }) => added && attr.match(/.+\/(cgc-)?name/)
           );
-          return `${name}\t${id}`;
+          return `${name} ${id}`;
         })
         .join('\n');
     },
