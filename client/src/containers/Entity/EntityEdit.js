@@ -7,6 +7,7 @@ import {
   BaseForm,
   PROGRESS_BUTTON_PENDING,
   PROGRESS_BUTTON_READY,
+  useClipboard,
 } from '../../components/elements';
 
 import EntityNotFound from './EntityNotFound';
@@ -217,6 +218,10 @@ function EntityEdit({
     [isSubmitSuccess, setFetchFunc, memoizedFetchFunc]
   );
 
+  const { copied, handleCopy } = useClipboard(
+    `${renderDisplayName(data)} ${wbId}`
+  );
+
   return isError ? (
     <EntityNotFound entityType="gene" wbId={id} />
   ) : isLoading && dataTimestamp === 0 ? (
@@ -246,6 +251,10 @@ function EntityEdit({
                 message: state.shortMessage,
                 messageVariant: state.shortMessageVariant,
                 onMessageClose: () => dispatch({ type: 'MESSAGE_DISMISS' }),
+                buttonCopyProps: {
+                  onClick: handleCopy,
+                  children: copied ? 'Copied' : 'Copy',
+                },
                 buttonResetProps: {
                   onClick: resetData,
                   disabled: disabled,

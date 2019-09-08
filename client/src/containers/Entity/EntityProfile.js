@@ -113,6 +113,7 @@ class EntityProfile extends Component {
             dirtinessContext,
             dataCommitted: data = {},
             changes = [],
+            buttonCopyProps,
             buttonResetProps,
             buttonSubmitProps,
             errorMessage = null,
@@ -158,7 +159,12 @@ class EntityProfile extends Component {
                 </PageLeft>
                 <PageMain>
                   <Typography variant="headline" gutterBottom>
-                    {entityType} <em>{wbId}</em>
+                    {entityType} <em>{wbId}</em>{' '}
+                    <Button
+                      variant="raised"
+                      color="primary"
+                      {...buttonCopyProps}
+                    />
                   </Typography>
                   <ValidationError {...errorMessage} />
                   {this.props.status === 'LOADING' ? (
