@@ -7,7 +7,7 @@ import { ENTITY_TYPES } from '../../utils/entityTypes';
 const EntityTypeSelect = (props) => {
   return (
     <TextField select className={props.classes.root} {...props}>
-      {ENTITY_TYPES.map((item) => (
+      {ENTITY_TYPES.map(({ entityType: item }) => (
         <MenuItem key={item} value={item}>
           {item}
         </MenuItem>
