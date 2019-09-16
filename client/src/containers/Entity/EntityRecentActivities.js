@@ -1,9 +1,10 @@
-import React, { useContext, useCallback } from 'react';
+import React, { useContext, useCallback, useMemo } from 'react';
 import moment from 'moment';
 import AuthorizationContext, {
   useDataFetch,
 } from '../Authenticate/AuthorizationContext';
 import EntityHistory from './EntityHistory';
+import ActivitiesCopy from './ActivitiesCopy';
 import { NoData, CircularProgress } from '../../components/elements';
 
 function formatTime(timestamp) {
@@ -24,11 +25,17 @@ function EntityRecentActivities(props) {
   );
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});
-  const { activities = [], from, until } = data;
+  const { activities: activitiesRaw = [], from, until } = data;
+  const activities = useMemo(() => [...activitiesRaw].reverse(), [
+    activitiesRaw,
+  ]);
   return isLoading ? (
     <CircularProgress />
   ) : activities.length ? (
-    <EntityHistory activities={activities} entityType={entityType} />
+    <div>
+      <ActivitiesCopy activities={activities} entityType={entityType} />
+      <EntityHistory activities={activities} entityType={entityType} />
+    </div>
   ) : (
     <NoData>
       No activities between <strong>{formatTime(from)}</strong> and{' '}
