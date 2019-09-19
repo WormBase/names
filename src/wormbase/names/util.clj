@@ -123,11 +123,8 @@
   ([k v & kvs]
    (response-map (apply (partial assoc default-responses k v) kvs))))
 
-(defn conform-data [spec data & [names-validator]]
-  (let [conformed (s/conform spec
-                             (if names-validator
-                               (names-validator data)
-                               data))]
+(defn conform-data [spec data]
+  (let [conformed (s/conform spec data)]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
@@ -136,8 +133,9 @@
                          :data data})))
       conformed)))
 
-(defn conform-data-drop-label [spec data & [names-validator]]
-  (second (conform-data spec data names-validator)))
+(defn conform-data-drop-label [spec data]
+  (let [cdata (conform-data spec data)]
+    (second cdata)))
 
 (defn query-batch [db bid pull-expr]
   (map (partial d/pull db pull-expr)
@@ -162,3 +160,33 @@
   (if (seq etag)
     (header response "etag" etag)
     response))
+
+(defn qualify-keys
+  "Transform `mapping` such all non-qualfiied keys have the namespace `entity-type` applied."
+  [mapping entity-type & {:keys [skip-keys]
+                          :or {skip-keys #{}}}]
+  (reduce-kv (fn [m k v]
+               (if (skip-keys k)
+                 m
+                 (if (simple-keyword? k)
+                   (assoc m (keyword entity-type (name k)) v)
+                   (if-not (contains? m k)
+                     (assoc m k v)
+                     m))))
+             (empty mapping)
+             mapping))
+
+(defn unqualify-keys
+  "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
+  [mapping entity-type]
+  (reduce-kv (fn [m k v]
+               (if (and (qualified-keyword? k)
+                        (= (namespace k) entity-type))
+                 (assoc m (-> k name keyword) v)
+                 (assoc m k v)))
+             (empty mapping)
+             mapping))
+
+(defn transform-ident-ref [k m kw-ns]
+  (update m k (fn [short-name]
+                (keyword kw-ns short-name))))

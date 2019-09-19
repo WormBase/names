@@ -11,6 +11,7 @@
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -24,10 +25,10 @@
 
 (defn make-samples [n]
   (map (fn [id]
-         (merge
-          (first (gen/sample gsv/payload 1))
-          {:variation/id id
-           :variation/status :variation.status/live}))
+         (-> (first (gen/sample gsv/payload 1))
+             (merge {:id id
+                     :status :variation.status/live})
+             (wnu/qualify-keys "variation")))
        (gen/sample gsv/id n)))
 
 (t/deftest batch-empty
@@ -47,7 +48,7 @@
           (let [data [id id]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
-            (t/is (-> response :body :dead (get :batch/id "") uuid/uuid-string?))))))))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
 
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
@@ -87,7 +88,7 @@
                                             :resurrect :live}]
             (let [response (send-change-status-request to-status {:data ids :prov basic-prov})]
               (t/is (ru-hp/ok? response))
-              (t/is (some-> response :body exp-resp-key :batch/id uuid/uuid-string?)
+              (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
                     (pr-str response))
               (doseq [id ids]
                 (let [ent (d/entity (d/db conn) [:variation/id id])]

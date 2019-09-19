@@ -38,7 +38,7 @@
           (let [data [gid gid]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
-            (t/is (-> response :body :dead (get :batch/id "") uuid/uuid-string?))))))))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
 
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
@@ -78,7 +78,7 @@
                                             :resurrect :live}]
             (let [response (send-change-status-request to-status {:data gids :prov basic-prov})]
               (t/is (ru-hp/ok? response))
-              (t/is (some-> response :body exp-resp-key :batch/id uuid/uuid-string?)
+              (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
                     (pr-str response))
               (doseq [gid gids]
                 (let [ent (d/entity (d/db conn) [:gene/id gid])]

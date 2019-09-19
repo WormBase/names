@@ -8,6 +8,7 @@
    [wormbase.db.schema :as wdbs]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
+   [wormbase.names.util :as wnu]
    [wormbase.specs.person :as wsp]
    [clojure.test :as t]))
 
@@ -38,8 +39,11 @@
   [request payload what & {:keys [tz]
                            :or {tz (jt/zone-id)}}]
   (let [auth-identity (:identity request)
-        prov (get payload :prov {})
-        who (if-let [plur (person-lur-from-provenance prov)]
+        prov (wnu/qualify-keys (get payload :prov {}) "provenance")
+        who (if-let [plur (person-lur-from-provenance (update prov
+                                                              :provenance/who
+                                                              (fn [x]
+                                                                (wnu/qualify-keys x "person"))))]
               (-> request :db (d/pull [:db/id] plur))
               (-> auth-identity :person :db/id))
         whence (-> (get prov :provenance/when (jt/instant))
@@ -110,13 +114,13 @@
 (def ^:private exclude-nses (conj wdbs/datomic-internal-namespaces "importer"))
 
 (defn tx-changes [db log tx]
-  (->> (d/q '[:find ?e ?a ?v ?added
+  (->> tx
+       (d/q '[:find ?e ?a ?v ?added
               :in $ ?log ?tx
               :where
               [(tx-data ?log ?tx) [[?e ?a ?v _ ?added]]]]
             db
-            log
-            tx)
+            log)
        (map (partial zipmap [:eid :attr :value :added]))
        (map #(update % :attr (partial d/ident db)))
        (remove #(exclude-nses (-> % :attr namespace)))))

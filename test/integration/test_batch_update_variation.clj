@@ -8,6 +8,7 @@
    [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -34,9 +35,10 @@
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures
-                bdata [(select-keys f1 [:variation/id :variation/name])
-                       (merge (select-keys f2 [:variation/id])
-                              (select-keys f1 [:variation/name]))]
+                bdata (map #(wnu/unqualify-keys % "variation")
+                           [(select-keys f1 [:variation/id :variation/name])
+                            (merge (select-keys f2 [:variation/id])
+                                   (select-keys f1 [:variation/name]))])
                 response (update-variations {:data bdata :prov basic-prov})]
             (t/is (ru-hp/conflict? response))))))))
 
@@ -47,10 +49,10 @@
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures
-                bdata [(select-keys f1 [:variation/id :variation/name])
-                       (merge (select-keys f2 [:variation/id])
-                              (select-keys f1 [:variation/name]))]
+                bdata (map #(wnu/unqualify-keys % "variation")
+                           [(select-keys f1 [:variation/id :variation/name])
+                            (merge (select-keys f2 [:variation/id])
+                                   (select-keys f1 [:variation/name]))])
                 response (update-variations {:data bdata :prov basic-prov})]
             (t/is (ru-hp/conflict? response))))))))
-
 

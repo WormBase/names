@@ -33,27 +33,33 @@
         {data :data prov :prov} payload]
     (when-not (s/valid? ::wss/new data)
       (bad-request! data))
-    (let [cdata (wnu/conform-data ::wss/new data)
+    (let [cdata (wnu/qualify-keys (wnu/conform-data ::wss/new data) "species")
           id (-> cdata :species/latin-name latin-name->id)
           prov (wnp/assoc-provenance request payload :event/new-species)
           tx-data [(assoc cdata :species/id id) prov]
           tx-res @(d/transact-async conn tx-data)]
       (when-let [dba (:db-after tx-res)]
-        (created (str "/species/" id)
-                 (d/pull dba [:species/latin-name] [:species/id id]))))))
+        (created (str "/species/" (name id))
+                 (-> dba
+                     (d/pull [:species/latin-name] [:species/id id])
+                     (wnu/unqualify-keys "species")))))))
 
 (defn update-item
   [request identifier]
   (let [{payload :body-params db :db conn :conn} request
         {data :data prov :prov} payload
         species-id (keyword "species" identifier)
-        cdata (wnu/conform-data ::wss/update data)
+        cdata* (wnu/conform-data ::wss/update data) 
+        cdata (wnu/qualify-keys cdata* "species")
         prov (wnp/assoc-provenance request payload :event/update-species)
         tx-data [['wormbase.ids.core/cas-batch [:species/id species-id] cdata]
                  prov]
         tx-res @(d/transact-async conn tx-data)]
     (when-let [dba (:db-after tx-res)]
-      (ok (d/pull dba [:species/latin-name] [:species/id species-id])))))
+      (ok
+       (wnu/unqualify-keys
+        (d/pull dba [:species/latin-name] [:species/id species-id])
+        "species")))))
 
 (defn list-items
   [request]

@@ -10,6 +10,7 @@
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.variation :as gsv]
    [wormbase.names.service :as service]
+   [wormbase.names.util :as wnu]
    [wormbase.specs.agent :as wsa]
    [wormbase.test-utils :as tu]))
 
@@ -33,9 +34,10 @@
                             :or {current-status :variation.status/live}}]
   (let [[sample] (gen/sample gsv/payload 1)
         id (first (gen/sample gsv/id 1))
-        data-sample (assoc sample
-                           :variation/id id
-                           :variation/status current-status)]
+        data-sample (-> sample
+                        (assoc :id id
+                               :status current-status)
+                        (wnu/qualify-keys "variation"))]
     [id data-sample]))
 
 (defn change-status

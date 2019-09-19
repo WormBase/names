@@ -28,10 +28,9 @@
 (s/def ::identifier (stc/spec {:spec (s/or :id ::id
                                            :name ::name)}))
 
-(s/def ::status (stc/spec {:spec (s/and sts/keyword?)
-                           :swagger/example "strain.status/live"
-                           :description "The entity status."}))
-
+(s/def ::status (stc/spec {:spec string?
+                           :swagger/example "live"
+                           :description "The status of the entity."}))
 
 (s/def ::summary (stc/spec {:spec (s/merge ::wsp/provenance
                                            (s/keys :req-un [::id ::status]

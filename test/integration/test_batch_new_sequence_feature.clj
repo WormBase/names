@@ -26,14 +26,14 @@
   (t/testing "Batch with oen item accepted, returns batch id."
     (let [response (new-sequence-features {:data {:n 1} :prov basic-prov})]
       (t/is (ru-hp/created? response))
-      (t/is (get-in response [:body :batch/id] "") (pr-str response)))))
+      (t/is (get-in response [:body :id] "") (pr-str response)))))
 
 (t/deftest batch-success
   (t/testing "Batch of new sequence-features is processed successfully."
     (let [bdata {:n 20}
           response (new-sequence-features {:data bdata :prov basic-prov})]
       (t/is (ru-hp/created? response))
-      (let [bid (get-in response [:body :batch/id] "")]
+      (let [bid (get-in response [:body :id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [db (d/db wdb/conn)              
               batch (wnu/query-batch db (uuid/as-uuid bid) wnbsf/summary-pull-expr)
@@ -42,7 +42,7 @@
           (t/is (seq xs))
           (t/is (every? (partial = :sequence-feature.status/live) xs))
           (t/is (ru-hp/ok? response))
-          (t/is (= (some-> response :body :provenance/what keyword)
+          (t/is (= (some-> response :body :what keyword)
                    :event/new-sequence-feature)))))))
 
 

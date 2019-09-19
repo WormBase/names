@@ -47,5 +47,5 @@
           (let [response (summary bid)]
             (t/is (ru-hp/ok? response))
             (t/is (some-> response :body map?))
-            (t/is (str/includes? (get-in response [:body :provenance/who] "") "@")
+            (t/is (str/includes? (get-in response [:body :who] "") "@")
                   (pr-str response))))))))

@@ -20,6 +20,7 @@
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.person :as gsp]
    [wormbase.gen-specs.species :as gss]
+   [wormbase.names.entity :as wne]
    [wormbase.names.gene :as wng]
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.service :as wns]
@@ -196,11 +197,19 @@
 (defn species->ref
   "Updates the value corresponding to `:gene/species` to be a lookup reference. "
   [data]
-  (update data
-          :gene/species
-          (fn use-latin-name [sname]
-            (let [lur (s/conform ::wss/identifier sname)]
-              [:species/latin-name (species->latin-name lur)]))))
+  (let [species-value (:gene/species data)]
+    (cond
+      (keyword? species-value) (update data
+                                       :gene/species
+                                       (fn [sv]
+                                         [:species/latin-name
+                                          (species->latin-name [:species/id sv])]))
+      (vector? species-value) data
+      :otherwise (update data
+                         :gene/species
+                         (fn use-latin-name [sname]
+                           (let [lur (s/conform ::wss/identifier sname)]
+                             [:species/latin-name (species->latin-name lur)]))))))
 
 (defn species-ref->latin-name
   "Retrive the name of the gene species from a mapping."
@@ -310,7 +319,7 @@
                                 (second v)
                                 v))]
     (-> sample
-        :gene/species
+        :species
         select-species-name
         generator
         (gen/sample 1)
@@ -350,18 +359,28 @@
        (map #(into {} %))
        (map #(dissoc % :history))))
 
+(defn transform-ident-ref-values
+  [m]
+  (wne/transform-ident-ref-values m
+                                  :skip-keys (if (-> m :gene/status qualified-keyword?)
+                                               #{:gene/status}
+                                               #{})))
+
 (defn gene-samples [n]
   (assert (int? n))
   (let [gene-refs (into {}
                         (keep-indexed (fn [idx sample-id]
                                         [idx {:gene/id sample-id}])
                                       (gen/sample gsg/id n)))
-        gene-recs (->> (gen-sample gsg/payload n)
-                       (map species->ref)
+        gene-recs (->> n
+                       (gen-sample gsg/payload)
                        (map (fn make-names-valid [gr]
                               (assoc gr
-                                     :gene/sequence-name (seq-name-for-sample gr)
-                                     :gene/cgc-name (cgc-name-for-sample gr)))))
+                                     :sequence-name (seq-name-for-sample gr)
+                                     :cgc-name (cgc-name-for-sample gr))))
+                       (map #(wnu/qualify-keys % "gene"))
+                       (map species->ref)
+                       (map transform-ident-ref-values))
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)

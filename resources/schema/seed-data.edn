@@ -85,6 +85,7 @@
  #:db{:ident :event/merge-genes}
  #:db{:ident :event/undo-merge-genes}
  #:db{:ident :event/split-gene}
+ #:db{:ident :event/split-genes} 
  #:db{:ident :event/undo-split-gene}
  #:db{:ident :event/kill-gene}
  #:db{:ident :event/resurrect-gene}

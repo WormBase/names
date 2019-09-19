@@ -32,18 +32,6 @@
 
 (def summary-pull-expr '[* {:variation/status [:db/ident]}])
 
-(def summary (wne/summarizer identify summary-pull-expr #{}))
-
-(def status-changer (partial wne/status-changer ::wsv/identifier :variation/status))
-
-(def kill-variation (status-changer :variation.status/dead :event/kill-variation
-                                    :fail-precondition? wnu/dead?
-                                    :precondition-failure-msg "Variation to be killed is already dead."))
-
-(def resurrect-variation (status-changer :variation.status/live :event/resurrect-variation
-                                         :fail-precondition? wnu/live?
-                                         :precondition-failure-msg "Variation is already live."))
-
 (def coll-resources
   (sweet/context "/variation" []
 
@@ -83,7 +71,14 @@
        :parameters {:body-params {:prov ::wsp/provenance}}
        :responses status-changed-responses
        :handler (fn [request]
-                  (kill-variation request identifier))}
+                  (let [kill (wne/status-changer
+                              :variation/id
+                              :variation/status
+                              :variation.status/dead
+                              :event/kill-variation
+                              :fail-precondition? wnu/dead?
+                              :precondition-failure-msg "Variation to be killed is already dead.")]
+                  (kill request identifier)))}
       :put
       {:summary "Update an existing variation."
        :x-name ::update-variation
@@ -107,7 +102,8 @@
                       (wnu/response-map))
        
        :handler (fn [request]
-                  (summary request identifier))}})
+                  (let [hs (wne/summarizer identify summary-pull-expr #{})]
+                    (hs request identifier)))}})
     (sweet/context "/resurrect" []
       (sweet/resource
        {:post
@@ -115,7 +111,14 @@
          :x-name ::resurrect-variation
          :respones status-changed-responses
          :handler (fn [request]
-                    (resurrect-variation request identifier))}}))))
+                    (let [resurrect (wne/status-changer
+                                     :variation/id
+                                     :variation/status
+                                     :variation.status/live
+                                     :event/resurrect-variation
+                                     :fail-precondition? wnu/live?
+                                     :precondition-failure-msg "Variation is already live.")]
+                      (resurrect request identifier)))}}))))
 
 (def routes (sweet/routes coll-resources
                           item-resources))

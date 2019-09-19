@@ -9,6 +9,7 @@
    [java-time :as jt]
    [ring.util.http-response :refer [ok
                                     bad-request
+                                    bad-request!
                                     conflict conflict!
                                     created
                                     internal-server-error
@@ -25,6 +26,15 @@
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
    [wormbase.ids.core :as wbids]))
+
+(defmethod wne/transform-ident-ref-value :gene/biotype [_ m]
+  (wnu/transform-ident-ref :gene/biotype m "biotype"))
+
+(defmethod wne/transform-ident-ref-value :into-biotype [_ m]
+  (wnu/transform-ident-ref :into-biotype m "biotype"))
+
+(defmethod wne/transform-ident-ref-value :gene/status [_ m]
+  (wnu/transform-ident-ref :gene/status m "gene.status"))
 
 (def delete-responses (assoc wnu/default-responses ok {:schema {:updated ::wsg/updated}}))
 
@@ -89,6 +99,7 @@
                                                      {:gene/cgc-name cgc-name})
                                                    (when (s/valid? :gene/sequence-name seq-name)
                                                      {:gene/sequence-name seq-name}))))
+                                     (map #(wnu/unqualify-keys % "gene"))
                                      (vec))
                             [])}]
       (ok res))))
@@ -126,15 +137,13 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(def summary (wne/summarizer identify summary-pull-expr #{:gene/splits :gene/merges}))
-
 (defn new-unnamed-gene [request]
   (let [{payload :body-params conn :conn} request
         prov (wnp/assoc-provenance request payload :event/new-gene)
         data (:data payload)
         spec ::wsg/new-unnamed
         names-validator (partial validate-names request)
-        cdata (wnu/conform-data spec data names-validator)
+        cdata (wnu/conform-data spec data)
         tx-data [cdata prov]]
     @(d/transact-async conn tx-data)))
 
@@ -143,7 +152,8 @@
   [db data]
   (let [species-lur (-> data :gene/species vec)
         species-entid (d/entid db species-lur)
-        biotype-ident (get data :gene/biotype)
+        biotype-ident (when-let [bt (get data :gene/biotype)]
+                        (keyword "biotype" ))
         biotype-entid (d/entid db biotype-ident)
         res (vec (merge data
                        (when biotype-entid
@@ -175,7 +185,7 @@
                       {:type ::validation-error
                        :problems (expound-str :gene/biotype into-biotype)}))
 
-      (not (wdb/ident-exists? db into-biotype))
+      (not (wdb/ident-exists? db (keyword "biotype" into-biotype)))
       (throw (ex-info "Biotype does not exist"
                       {:type ::wdb/missing
                        :entity [:db/ident into-biotype]
@@ -215,18 +225,18 @@
   (let [{conn :conn db :db payload :body-params} request
         data (:data payload)
         prov (wnp/assoc-provenance request data :event/merge-genes)
-        into-biotype (:gene/biotype data)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
                                                into-id
                                                from-id
-                                               into-biotype)
+                                               (:biotype data))
+        into-biotype (keyword "biotype" (:biotype data))
         txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
       (let [[into-gid from-gid] (map :gene/id [into-g from-g])
             [from-gene into-gene] (merged-info dba from-gid into-gid)]
-        (ok {:updated into-gene
+        (ok {:updated (wnu/unqualify-keys into-gene "gene")
              :merges (:gene/merges from-gene)
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
@@ -265,7 +275,15 @@
     (when (wnu/not-live? from-gene-status)
       (conflict! {:message "Gene must be live."
                   :gene/status from-gene-status}))
-    (let [cdata (stc/conform spec data)
+    (let [product (-> data
+                      :product
+                      (wnu/qualify-keys "gene")
+                      (wne/transform-ident-ref-values))
+          cdata (-> data
+                    (dissoc :product)
+                    (wnu/qualify-keys "gene")
+                    (assoc :product product)
+                    (wne/transform-ident-ref-values))
           {biotype :gene/biotype product :product} cdata
           {p-seq-name :gene/sequence-name
            p-biotype :gene/biotype} product
@@ -275,6 +293,7 @@
           new-data (merge {:gene/species (s/conform :gene/species species)}
                           (assoc product
                                  :db/id p-seq-name
+                                 :gene/biotype p-biotype
                                  :gene/status :gene.status/live))
           curr-bt (d/entid db (:gene/biotype from-gene))
           new-bt (d/entid db biotype)
@@ -291,6 +310,8 @@
           p-gene-id (:gene/id p-gene)
           p-gene-lur* [:gene/id p-gene-id]]
       (->> [p-gene-lur* from-gene-lur]
+           (map (fn [x]
+                  (cons (-> x first name keyword) (rest x))))
            (map (partial apply array-map))
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
@@ -329,21 +350,6 @@
           tx-result @(d/transact-async conn compensating-txes)]
       (ok {:live from-id :dead into-id}))
     (not-found {:message "No transaction to undo"})))
-
-(def status-changer (partial wne/status-changer ::wsg/identifier :gene/status))
-
-
-(def resurrect-gene (status-changer :gene.status/live :event/resurrect-gene
-                                    :fail-precondition? wnu/live?
-                                    :precondition-failure-msg "Gene is already live."))
-
-(def suppress-gene (status-changer :gene.status/suppressed :event/suppress-gene
-                                   :fail-precondition? wnu/not-live?
-                                   :precondition-failure-msg "Gene must be live."))
-
-(def kill-gene (status-changer :gene.status/dead :event/kill-gene
-                               :fail-precondition? wnu/dead?
-                               :precondition-failure-msg "Gene to be killed is already dead."))
 
 (def status-changed-responses (wnu/response-map ok {:schema ::wsg/status-changed}))
 
@@ -384,7 +390,14 @@
           :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
-                     (resurrect-gene request identifier))}}))
+                     (let [resurrect (wne/status-changer
+                                      :gene/id
+                                      :gene/status
+                                      :gene.status/live
+                                      :event/resurrect-gene
+                                      :fail-precondition? wnu/live?
+                                      :precondition-failure-msg "Gene is already live.")]
+                     (resurrect request identifier)))}}))
      (sweet/context "/suppress" []
        (sweet/resource
         {:post
@@ -393,22 +406,38 @@
           :parameters {:body-params {:prov ::wsp/provenance}}
           :responses status-changed-responses
           :handler (fn [request]
-                     (suppress-gene request identifier))}}))
+                     (let [suppress (wne/status-changer
+                                     :gene/id
+                                     :gene/status
+                                     :gene.status/suppressed
+                                     :event/suppress-gene
+                                     :fail-precondition? wnu/not-live?
+                                     :precondition-failure-msg "Gene must be live.")]
+                     (suppress request identifier)))}}))
      (sweet/resource
       {:delete
        {:summary "Kill a gene"
         :x-name ::kill-gene
         :parameters {:body-params {:prov ::wsp/provenance}}
         :responses status-changed-responses
-        :handler (fn [request]
-                   (kill-gene request identifier))}})
+        :handler
+        (fn [request]
+          (let [kill (wne/status-changer :gene/id
+                                         :gene/status
+                                         :gene.status/dead
+                                         :event/kill-gene
+                                         :fail-precondition? wnu/dead?
+                                         :precondition-failure-msg "Gene to be killed is already dead.")]
+            (kill request identifier)))}})
      (sweet/resource
       {:get
        {:summary "Information about a given gene."
         :x-name ::summary
         :responses (wnu/response-map ok {:schema ::wsg/summary})
         :handler (fn [request]
-                     (summary request identifier))}
+                   ((wne/summarizer identify summary-pull-expr #{:gene/splits :gene/merges})
+                    request
+                    identifier))}
        :put
        {:summary "Update an existing gene."
         :x-name ::update-gene

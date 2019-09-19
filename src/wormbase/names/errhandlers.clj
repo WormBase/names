@@ -63,15 +63,20 @@
 (defmethod parse-exc-message :default [exc]
   (throw exc))
 
+(defn- prettify-spec-error-maybe [spec data]
+  (try
+    (expound/expound-str spec (:value data))
+    (catch Exception ex
+      {:data (pr-str (:value data))
+       :message "Unable to determine spec error."})))
+
 (defn handle-validation-error
   [^Exception exc data request & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if (s/spec? spec)
                (if-let [problems (some-> data* :problems)]
-                 (assoc data*
-                        :problems
-                        (expound/expound-str spec (:value data*)))
+                 (assoc data* :problems (prettify-spec-error-maybe spec data*))
                  data*)
                data*)
         body (assoc-error-message info exc :message message)]

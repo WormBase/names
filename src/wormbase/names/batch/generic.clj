@@ -6,11 +6,12 @@
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [java-time :as jt]
-   [ring.util.http-response :refer [bad-request created ok]]
+   [ring.util.http-response :refer [bad-request created not-found! ok]]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
+   [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.provenance :as wsp]
@@ -84,8 +85,11 @@
   (let [entity-type (namespace uiident)
         data-transform (fn set-live [_ data]
                          (let [live-status (keyword (str entity-type ".status") "live")]
-                           (some->> (validator data)
+                           (some->> data
                                     (conformer spec)
+                                    (map #(wnu/qualify-keys % entity-type))
+                                    (map wne/transform-ident-ref-values)
+                                    (validator)
                                     (assign-status entity-type live-status))))
         batch-result (batcher wbids-batch/new
                               uiident
@@ -97,19 +101,26 @@
         new-ids (ids-created (d/log conn)
                              (d/db conn)
                              uiident
-                             (:batch/id batch-result)
+                             (:id batch-result)
                              name-attrs)
-        result (assoc batch-result :ids new-ids :id-key uiident)]
-    (created (str "/api/batch/" (:batch/id result)) result)))
+        result (-> batch-result
+                   (assoc :ids (map #(wnu/unqualify-keys % entity-type) new-ids)
+                          :id-key uiident)
+                   (wnu/unqualify-keys "batch"))]
+    (created (str "/api/batch/" (:id result)) result)))
 
 (defn update-entities
   [uiident item-pull-expr event-type spec conformer validator request]
-  (let [data-transform (fn valdiating-conformer [_ data]
+  ;; TODO: conformer no longer applied. Is it needeed?
+  (let [ent-ns (namespace uiident)
+        data-transform (fn valdiating-conformer [_ data]
                          (let [{db :db} request
-                               db-data (map #(wdb/pull db item-pull-expr (find % uiident))
-                                            data)
-                               data* (map #(merge %1 %2) db-data data)]
-                         (conformer spec (validator data*))))
+                               qdata (->> data
+                                          (map #(wnu/qualify-keys % ent-ns))
+                                          (map wne/transform-ident-ref-values)
+                                          (validator))
+                               db-data (map #(wdb/pull db item-pull-expr (find % uiident)) qdata)]
+                           (map #(merge %1 %2) db-data qdata)))
         result (batcher wbids-batch/update
                         uiident
                         event-type
@@ -127,7 +138,6 @@
                          (->> (conformer spec data)
                               (map (partial assoc {} uiident))
                               (assign-status entity-type to-status)))
-        entity-type (namespace uiident)
         resp-key (-> to-status name keyword)
         result (batcher wbids-batch/update
                         uiident
@@ -141,14 +151,15 @@
   "Retract values associated with attributes for a matching set of entities."
   [uiident attr event-type spec conformer request]
   (let [{payload :body-params conn :conn} request
-        {prov :prov data :data} payload
+        data (:data payload)
+        prov (wnp/assoc-provenance request payload :event/remove-cgc-names)
         conformed (conformer spec data)]
     (if (s/invalid? conformed)
       (bad-request {:data data})
       (let [cdata (some->> conformed
                            (filter (fn remove-any-nils [[_ value]]
-                                     ((comp not nil?) value)))
-                           (map (partial apply array-map)))
+                                     (not (nil? value))))
+                           (map (partial apply assoc {})))
             bsize (batch-size payload cdata)
             result (wbids-batch/retract
                     conn
@@ -163,13 +174,18 @@
   (let [{db :db} request
         batch-id (uuid/as-uuid bid)
         b-prov-summary (query-provenance db batch-id pull-expr)]
-    (when b-prov-summary
-      (-> b-prov-summary
-          (assoc :batch/id batch-id)
-          (update :provenance/when (fn [v]
-                                     (when v
-                                       (jt/zoned-date-time v (jt/zone-id)))))
-          (ok)))))
+    (when-not b-prov-summary
+      (not-found!))
+    (-> b-prov-summary
+        (assoc :id batch-id)
+        (update :provenance/when (fn [v]
+                                   (when v
+                                     (jt/zoned-date-time v (jt/zone-id)))))
+        (wnu/unqualify-keys "batch")
+        (wnu/unqualify-keys "provenance")
+        (update :who (fn [who]
+                       (wnu/unqualify-keys who "person")))
+        (ok))))
 
 ;;; TODO:
 ;; (def routes

@@ -71,12 +71,12 @@
                 (t/is (ru-hp/ok? {:status status :body body}))
                 (t/is (seq matches)
                       (str "No matches found for " valid-prefix))
-                (t/is (some (fn [match] (= (:gene/id match) gid)) matches)
+                (t/is (some (fn [match] (= (:id match) gid)) matches)
                       (str "Could not find any GeneID matching " gid
                            " matches:" (pr-str matches)))
                 (t/is (some (fn [match]
                               (assert (not (nil? match)))
-                              (str/starts-with? (attr match) valid-prefix))
+                              (str/starts-with? (-> attr name keyword match) valid-prefix))
                             matches)
                       (str "Could not verify and match startswith prefix "
                            (pr-str valid-prefix) ""

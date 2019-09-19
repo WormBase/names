@@ -3,6 +3,7 @@
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.walk :as w]
+   [datomic.api :as d]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request!
@@ -22,42 +23,26 @@
    [wormbase.specs.entity :as wse]
    [wormbase.specs.provenance :as wsp]))
 
+(defmulti transform-ident-ref-value (fn [k m]
+                                      k))
+
+(defmethod transform-ident-ref-value :default [_ m]
+  m)
+
+(defn transform-ident-ref-values
+  [data & {:keys [skip-keys]
+           :or {skip-keys #{}}}]
+  (reduce-kv (fn [m k _]
+               (if (skip-keys k)
+                 m
+                 (transform-ident-ref-value k m)))
+             data
+             data))
 
 (defn make-summary-pull-expr [entity-type]
   (let [pe '[*]
         attr-spec {(keyword entity-type "status") [:db/ident]}]
     (conj pe attr-spec)))
-
-(defn qualfiy-keys
-  "Transform `mapping` such all non-qualfiied keys have the namespace `entity-type` applied."
-  [mapping entity-type]
-  (w/postwalk (fn qual-keys [x]
-                (cond
-                  (map? x)
-                  (reduce-kv (fn [m k v]
-                               (if (simple-keyword? k)
-                                 (assoc m (keyword entity-type (name k)) v)
-                                 (assoc m k v)))
-                             (empty x)
-                             x)
-                  :default x))
-              mapping))
-
-(defn unqualify-keys
-  "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
-  [mapping entity-type]
-  (w/postwalk (fn unqual-keys [x]
-                (cond
-                  (map? x)
-                  (reduce-kv (fn [m k v]
-                               (if (and (qualified-keyword? k)
-                                        (= (namespace k) entity-type))
-                                 (assoc m (-> k name keyword) v)
-                                 (assoc m k v)))
-                             (empty x)
-                             x)
-                  :default x))
-              mapping))
 
 (defn identify
   "Return an lookup ref and entity for a given identifier.
@@ -82,7 +67,7 @@
   (select-keys data (filter (partial d/entid db) (keys data))))
 
 (defn creator
- "Return an endpoint handler for new entity creation."
+  "Return an endpoint handler for new entity creation."
   ;; [uiident data-spec event summary-pull-expr & [validate-names]]
   [uiident conform-spec-fn event summary-pull-expr & [validate-names]]
   (fn handle-new [request]
@@ -91,12 +76,15 @@
           live-status-attr (keyword ent-ns "status")
           live-status-val (keyword (str ent-ns ".status") "live")
           template (wbids/identifier-format db uiident)
-          data (-> payload
-                   :data
-                   (qualfiy-keys ent-ns)
+          names-validator (if validate-names
+                            (partial validate-names request)
+                            identity)
+          data (-> (:data payload)
+                   (conform-spec-fn)
+                   (wnu/qualify-keys ent-ns)
+                   (names-validator)
                    (update live-status-attr (fnil identity live-status-val)))
-          names-validator (or validate-names (constantly (identity data)))
-          cdata (prepare-data-for-transact db (conform-spec-fn data (partial names-validator request)))
+          cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
           tx-res @(d/transact-async conn tx-data)
@@ -104,8 +92,11 @@
       (when dba
         (let [new-id (wdb/extract-id tx-res uiident)
               emap (wdb/pull dba summary-pull-expr [uiident new-id])
-              result {:created (unqualify-keys emap ent-ns)}]
+              result {:created (wnu/unqualify-keys emap ent-ns)}]
           (created (str "/" ent-ns "/") result))))))
+
+(defn merge-into-ent-data [data ent-data]
+  (merge ent-data data))
 
 (defn updater
   [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate-names ref-resolver-fn]]
@@ -115,24 +106,31 @@
           [lur entity] (identify-fn request identifier)]
       (when entity
         (let [ent-data (wdb/pull db summary-pull-expr lur)
-              data (merge ent-data (-> payload :data (qualfiy-keys ent-ns)))
               names-validator (if validate-names
-                                (partial validate-names request))]
-          (let [resolve-refs-to-db-ids (or ref-resolver-fn
-                                           (fn passthru-resolver [_ data]
-                                             data))
-                cdata (->> (conform-spec-fn data names-validator)
-                           (resolve-refs-to-db-ids db)
-                           (into {})
-                           (prepare-data-for-transact db))
-                prov (wnp/assoc-provenance request payload event)
-                txes [['wormbase.ids.core/cas-batch lur cdata] prov]
-                tx-result @(d/transact-async conn txes)]
-            (when-let [db-after (:db-after tx-result)]
-              (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
-                (ok {:updated (unqualify-keys updated ent-ns)})
-                (not-found
-                 (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
+                                (partial validate-names request)
+                                identity)
+              data (-> payload
+                       :data
+                       (conform-spec-fn)
+                       (wnu/qualify-keys ent-ns)
+                       (merge-into-ent-data ent-data)
+                       (names-validator)
+                       (transform-ident-ref-values))
+              resolve-refs-to-db-ids (or ref-resolver-fn
+                                         (fn noop-resolver [_ data]
+                                           data))
+              cdata (->> data
+                         (resolve-refs-to-db-ids db)
+                         (into {})
+                         (prepare-data-for-transact db))
+              prov (wnp/assoc-provenance request payload event)
+              txes [['wormbase.ids.core/cas-batch lur cdata] prov]
+              tx-result @(d/transact-async conn txes)]
+          (when-let [db-after (:db-after tx-result)]
+            (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
+              (ok {:updated (wnu/unqualify-keys updated ent-ns)})
+              (not-found
+               (format "%s '%s' does not exist" ent-ns (last lur))))))))))
 
 (defn status-changer
   "Return a handler to change the status of an entity to `to-status`.
@@ -145,14 +143,14 @@
                          to indicate if request processing should continue.
   `predcondition-failure-msg` - An optional message to send back in the
   case where fail-precondition? returns true."
-  [identifier-spec status-ident to-status event-type
+  [uiident status-ident to-status event-type
    & {:keys [fail-precondition? precondition-failure-msg]
       :or {precondition-failure-msg "status cannot be updated."}}]
   (fn change-status
     [request identifier]
     (let [{conn :conn db :db payload :body-params} request
-          lur (s/conform identifier-spec identifier)
-          pull-status #(d/pull % [{status-ident [:db/ident]}] lur)
+          lur [uiident identifier]
+          pull-status #(wdb/pull % [{status-ident [:db/ident]}] lur)
           {status status-ident} (pull-status db)]
       (when (and status
                  fail-precondition?
@@ -160,28 +158,46 @@
         (bad-request! {:message precondition-failure-msg
                        :info (wu/elide-db-internals db status)}))
       (let [prov (wnp/assoc-provenance request payload event-type)
+            ent-ns (-> lur first namespace)
             tx-res @(d/transact-async
                      conn [[:db/cas
                             lur
                             status-ident
-                            (d/entid db (:db/ident status))
+                            (d/entid db status)
                             (d/entid db to-status)]
                            prov])
             dba (:db-after tx-res)]
-        (->> dba
-             pull-status
-             (wu/elide-db-internals dba)
-             ok)))))
+        (-> (pull-status dba)
+            (wnu/unqualify-keys ent-ns)
+            (update :status name)
+            (ok))))))
 
 (defn summarizer [identify-fn pull-expr ref-attrs]
   (fn handle-summary [request identifier]
     (let [{db :db conn :conn} request
           log (d/log conn)
           [lur ent] (identify-fn request identifier)]
-      (when (and lur ent)
-        (let [info (unqualify-keys (wdb/pull db pull-expr lur) (namespace lur))
-              prov (wnp/query-provenance db log lur ref-attrs)]
-          (-> info (assoc :history prov) ok))))))
+      (when-not (and lur ent)
+        (not-found! {:message "Unable to find any entity for given identifier."
+                     :identifier identifier}))
+      (let [ent-ns (-> lur first namespace)
+            info (reduce-kv (fn unqalify-idents [m k v]
+                              (cond
+                                (qualified-keyword? v) (assoc m k (name v))
+                                :default (assoc m k v)))
+                            {}
+                            (-> (wdb/pull db pull-expr lur)
+                                (wnu/unqualify-keys ent-ns)))
+            prov (map
+                  (fn [prov-data]
+                    (-> prov-data
+                        (wnu/unqualify-keys "provenance")
+                        (update :who (fn [who]
+                                       (wnu/unqualify-keys who "person")))))
+                  (wnp/query-provenance db log lur ref-attrs))]
+        (-> info
+            (assoc :history prov)
+            (ok))))))
 
 (defn finder [entity-type]
   (fn handle-find [request]
@@ -202,7 +218,7 @@
                           id-ident
                           name-ident)
             res {:matches (if (seq q-result)
-                            (unqualify-keys q-result ent-ns)
+                            (map #(wnu/unqualify-keys % ent-ns) q-result)
                             [])}]
         (ok res)))))
 

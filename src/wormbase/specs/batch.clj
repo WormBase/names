@@ -13,7 +13,7 @@
 
 (s/def ::size pos-int?)
 
-(s/def ::success-response  (s/keys :req [:batch/id]))
+(s/def ::success-response  (s/keys :req-un [:batch/id]))
 
 (s/def ::ids (s/and (s/coll-of map?)))
 

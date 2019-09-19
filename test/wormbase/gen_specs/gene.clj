@@ -23,14 +23,13 @@
 (def biotype-overrides
   {:gene/biotype #(s/gen (->> (util/load-enum-samples "biotype")
                               (map :db/ident)
+                              (map name)
                               set))})
 
 (def biotype (s/gen :gene/biotype biotype-overrides))
 
 
-(def all-statuses #{:gene.status/dead
-                    :gene.status/live
-                    :gene.status/suppressed})
+(def all-statuses #{"dead" "live" "suppressed"})
 
 (def status-overrides {:gene/status (constantly (s/gen all-statuses))})
 

@@ -30,24 +30,24 @@
 
 (t/deftest single-item
   (t/testing "Batch with one item accepted, returns batch id."
-    (let [bdata [{:variation/name "abc1"}]
+    (let [bdata [{:name "abc1"}]
           response (new-variations {:data bdata :prov basic-prov})]
       (t/is (ru-hp/created? response))
-      (t/is (get-in response [:body :batch/id] "") (pr-str response)))))
+      (t/is (get-in response [:body :id] "") (pr-str response)))))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items, unique names is rejected."
-    (let [bdata [{:variation/name "abc1"}
-                 {:variation/name "abc1"}]
+    (let [bdata [{:name "abc1"}
+                 {:name "abc1"}]
           response (new-variations {:data bdata :prov basic-prov})]
       (t/is (ru-hp/conflict? response)))))
 
 (t/deftest batch-success
   (t/testing "Batch of new vaiations successful"
-    (let [bdata (map #(array-map :variation/name (str "okay" %)) (range 1 21))
+    (let [bdata (map #(array-map :name (str "okay" %)) (range 1 21))
           response (new-variations {:data bdata :prov basic-prov})]
       (t/is (ru-hp/created? response) (-> response :status str))
-      (let [bid (get-in response [:body :batch/id] "")]
+      (let [bid (get-in response [:body :id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:variation/status :db/ident]) batch)
@@ -55,5 +55,5 @@
           (t/is (seq xs))
           (t/is (every? (partial = :variation.status/live) xs))
           (t/is (ru-hp/ok? response2))
-          (t/is (= (some-> response2 :body :provenance/what keyword)
+          (t/is (= (some-> response2 :body :what keyword)
                    :event/new-variation)))))))

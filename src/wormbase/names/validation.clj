@@ -3,13 +3,22 @@
    [clojure.spec.alpha :as s]
    [datomic.api :as d]))
 
+;;; TODO: THIS CAUSES a lot of breakage due to qualiified/unqualified keys and
+;; where validation is done in conjunction with spec conforming.
 (defmulti validate-names (fn [request data]
-                           (some-> data keys first namespace keyword)))
+                           (some->> data
+                                    (keys)
+                                    (filter qualified-keyword?)
+                                    (first)
+                                    (namespace)
+                                    (keyword))))
+
 
 (defmethod validate-names :gene [request data]
-  (when-not (some-> request :body-params :force)
+  (if (some-> request :body-params :force)
+    data
     (let [db (:db request)
-          species (s/conform :gene/species (:gene/species data))
+          species (:gene/species data)
           species-lur (cond
                         (string? species) [:species/latin-name species]
                         (keyword? species) [:species/id species]
@@ -35,5 +44,5 @@
                           {:type :user/validation-error
                            :data {:problems
                                   {:invalid
-                                   {:name gname :ident name-ident}}}})))))))))
-  data)
+                                   {:name gname :ident name-ident}}}}))))))
+        (assoc data :gene/species species-lur)))))

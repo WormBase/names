@@ -11,6 +11,7 @@
    [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
    [wormbase.names.service :as service]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.db :as wdb]))
@@ -75,13 +76,13 @@
       []
       (fn new-uncloned [conn]
         (let [response (new-gene
-                        {:data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
-                                :gene/species elegans-ln}
+                        {:data {:cgc-name (tu/cgc-name-for-species elegans-ln)
+                                :species elegans-ln}
                          :prov nil})
               expected-id "WBGene00000001"]
           (t/is (ru-hp/created? response))
           (let [db (d/db conn)
-                identifier (some-> response :body :created :gene/id)]
+                identifier (some-> response :body :created :id)]
             (t/is (= identifier expected-id))
             (check-db db :gene/id identifier)
             (tu/query-provenance conn identifier :event/new-gene)))))))
@@ -93,7 +94,9 @@
                   :gene/species elegans-ln
                   :gene/status :gene.status/live
                   :gene/id (first (gen/sample gsg/id 1))}
-          data {:data (select-keys sample [:gene/cgc-name :gene/species])
+          data {:data (-> sample
+                          (select-keys [:gene/cgc-name :gene/species])
+                          (wnu/unqualify-keys "gene"))
                 :prov basic-prov}]
       (tu/with-gene-fixtures
         sample
@@ -103,21 +106,21 @@
 
 (t/deftest naming-gene-with-provenance
   (t/testing "Naming some genes providing provenance."
-    (let [data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
-                :gene/species elegans-ln}
-          prov {:provenance/who {:person/email "tester@wormbase.org"}}
+    (let [data {:cgc-name (tu/cgc-name-for-species elegans-ln)
+                :species elegans-ln}
+          prov {:who {:email "tester@wormbase.org"}}
           response (new-gene {:data data :prov prov})]
       (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :gene/id) (pr-str response)))))
+      (t/is (some-> response :body :created :id) (pr-str response)))))
 
 (t/deftest naming-gene-bypass-nomenclature
   (t/testing "Bypassing nomenclature validation when creating gene is ok."
-    (let [data {:gene/cgc-name "AnythingILike123"
-                :gene/species elegans-ln}
-          prov {:provenace/who {:person/email "tester@wormbase.org"}}
+    (let [data {:cgc-name "AnythingILike123"
+                :species elegans-ln}
+          prov {:who {:email "tester@wormbase.org"}}
           response (new-gene {:data data :prov prov :force true})]
       (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :gene/id) (pr-str response)))))
+      (t/is (some-> response :body :created :id) (pr-str response)))))
 
 (t/deftest variation-data-must-meet-spec
   (t/testing "Empty gene data payload is a bad request."
@@ -139,7 +142,7 @@
           sample {:variation/name vname
                   :variation/id (first (gen/sample gsv/id 1))
                   :variation/status :variation.status/live}
-          data {:data (select-keys sample [:variation/name])
+          data {:data {:name vname}
                 :prov basic-prov}]
       (tu/with-fixtures
         sample
@@ -149,10 +152,10 @@
 
 (t/deftest naming-variation-with-provenance
   (t/testing "Naming a variation providing provenance."
-    (let [data {:variation/name (first (gen/sample gsv/name 1))}
+    (let [data {:name (first (gen/sample gsv/name 1))}
           response (new-variation {:data data :prov basic-prov})]
       (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :variation/id) (pr-str response)))))
+      (t/is (some-> response :body :created :id) (pr-str response)))))
 
 (t/deftest species-data-must-meet-spec
   (t/testing "Empty species data payload is a bad request."
@@ -171,7 +174,8 @@
     (let [data {:species/latin-name "Quantum squirmito"
                 :species/cgc-name-pattern "^Q[a-z]{3}-[0-9]+"
                 :species/sequence-name-pattern "^QSEQNAME_[0-9\\]+"}
-          response (new-species {:data data :prov basic-prov})]
+          response (new-species {:data (wnu/unqualify-keys data "species")
+                                 :prov basic-prov})]
       (t/is (ru-hp/created? response) (pr-str response))
       (let [dba (d/db wdb/conn)]
         (t/is (= (:species/id (d/pull dba [:species/id] (find data :species/latin-name)))

@@ -8,6 +8,7 @@
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
+   [wormbase.names.util :as wnu]
    [wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)

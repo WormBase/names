@@ -17,6 +17,7 @@
   (:refer-clojure :exclude [update])
   (:require
    [clojure.core :as cc]
+   [clojure.set :as set]
    [datomic.api :as d]
    [wormbase.ids.core :refer [attr-schema-unique? identifier-format]]))
 
@@ -87,7 +88,9 @@
                              (map->BatchResult {:tx-result {:db-after db}})
                              batch)]
         (when (get-in b-result [:tx-result :db-after])
-          (apply array-map (find sp :batch/id)))))))
+          (-> sp
+              (select-keys [:batch/id])
+              (set/rename-keys {:batch/id :id})))))))
 
 (defn merge-genes
   "Merge genes.
