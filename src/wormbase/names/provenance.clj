@@ -19,14 +19,14 @@
                   :provenance/who [:person/name :person/email :person/id]
                   :provenance/how [:db/ident]}])
 
-(defn- person-lur-from-provenance
+(defn person-lur-from-provenance
   "Return a datomic `lookup ref` from the provenance data."
   [prov]
   (when-let [who (:provenance/who prov)]
-    (if (string? who)
-      (when (s/valid? ::wsp/identifier who)
-        (s/conform ::wsp/identifier who))
-      (first (vec who)))))
+    (when (s/valid? ::wsp/identifier who)
+      (s/conform ::wsp/identifier who)
+      (throw (ex-info "Invalid provenance identifier."
+                      {:type :user/validation-errror})))))
 
 (defn assoc-provenance
   "Associate provenance data with the request.
