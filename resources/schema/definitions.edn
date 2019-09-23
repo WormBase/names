@@ -148,5 +148,9 @@
  #:db{:ident :sequence-feature/status
       :valueType :db.type/ref
       :cardinality :db.cardinality/one
-      :doc "The status of the sequence feature."}]
+      :doc "The status of the sequence feature."}
+ #:db{:ident :wormbase.names/entity-type-enabled?
+      :valueType :db.type/boolean
+      :cardinality :db.cardinality/one
+      :doc "Indicates if an entity type should be used."}]
 

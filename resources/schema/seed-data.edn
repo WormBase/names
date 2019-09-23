@@ -101,6 +101,8 @@
  #:db{:ident :event/resurrect-sequence-feature}
  #:db{:ident :event/new-species}
  #:db{:ident :event/update-species}
+ #:db{:ident :event/new-entity-type}
+ #:db{:ident :event/disable-entity-type}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version

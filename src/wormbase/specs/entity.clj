@@ -6,17 +6,24 @@
    [spec-tools.core :as stc]
    [wormbase.specs.provenance :as wsp]))
 
-(s/def ::id-prefix (stc/spec {:spec (s/and string? #(str/starts-with? % "WB"))
-                              :swagger/example "WBGene"
-                              :description "The string that will be the prefix for all primary identifiers."}))
+(s/def ::id-template (stc/spec
+                      {:spec (s/and string?
+                                    #(str/starts-with? % "WB")
+                                    #(str/includes? % "%"))
+                       :swagger/example "WBGene%08d"
+                       :description (str "A sprintf-style format string "
+                                         "that will be used to generate for identifiers.")}))
 
-(s/def ::type-name (stc/spec {:spec (s/and string? #(every?
-                                                     (fn [^Character ch]
-                                                       (and
-                                                        (Character/isLetter ch)
-                                                        (Character/isLowerCase ch))) %))
-                              :swagger/example "'variation'"
-                              :description "The name of the entity type."}))
+(s/def ::entity-type (stc/spec {:spec (s/and string? #(every?
+                                                       (fn [^Character ch]
+                                                         (and
+                                                          (Character/isLetter ch)
+                                                          (Character/isLowerCase ch))) %))
+                                :swagger/example "variation"
+                                :description "The name of the entity type."}))
+
+(s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template ::entity-type])
+                               :description "Parameters required to install a new entity schema."}))
 
 (s/def ::id qualified-keyword?)
 

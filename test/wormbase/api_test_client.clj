@@ -19,14 +19,16 @@
    :headers response-headers})
 
 (defn send-request
-  [entity-kind method data & {:keys [current-user sub-path]
+  [entity-kind method data & {:keys [current-user sub-path uri]
                               :or {current-user default-user
                                    sub-path ""}}]
   (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
                                                     :current-user
                                                     current-user)]
     (let [data (tu/->json data)
-          path (str "/api/" entity-kind "/" sub-path)]
+          path (if uri
+                 uri
+                 (str "/api/" entity-kind "/" sub-path))]
       (parsed-response
        (tu/raw-put-or-post*
         service/app
