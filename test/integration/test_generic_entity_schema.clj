@@ -72,7 +72,7 @@
           (let [response (disable-entity-type "apple")
                 body (:body response)]
             (t/is (ru-hp/ok? response)))))))
-  (t/testing "Disabling an already diabled schema entity"
+  (t/testing "Disabling an already disabled schema entity"
     (let [schemas (wne/generic-attrs :apple/id "WBApple%01d")]
       (tu/with-fixtures
         schemas
