@@ -15,13 +15,15 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
-   [wormbase.names.matching :as wnm]   
+   [wormbase.names.matching :as wnm]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.ids.core :as wbids]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.entity :as wse]
    [wormbase.specs.provenance :as wsp]))
+
+(def enabled-ident :wormbase.names/entity-type-enabled?)
 
 (defmulti transform-ident-ref-value (fn [k m]
                                       k))
@@ -247,7 +249,7 @@
   (let [id-ident (keyword entity-type "id")
         tx-data (conj (generic-attrs id-ident id-template) prov)
         tx-res @(d/transact-async conn tx-data)
-        enabled-tx-data [[:db/add id-ident :wormbase.names/entity-type-enabled? true]]]
+        enabled-tx-data [[:db/add id-ident enabled-ident true]]]
     (when (:db-after tx-res)
       @(d/transact-async conn enabled-tx-data)
       true)))
@@ -284,32 +286,60 @@
                           (into []))]
     (ok {:entity-types entity-types})))
 
-(defn disable-entity-type [request entity-type]
+(defn check-enabled! [request entity-type test-fn err-msgs]
   (let [{db :db conn :conn} request
-        enabled-ident :wormbase.names/entity-type-enabled?
         ent-type-ident (keyword entity-type "id")
-        prov (wnp/assoc-provenance request {} :event/disable-entity-type)
-        {curr-enabled enabled-ident et-ident :db/ident} (d/pull db '[*] ent-type-ident)]
+        {curr-enabled? enabled-ident et-ident :db/ident} (d/pull db '[*] ent-type-ident)]
     (when-not et-ident
-      (not-found! {:message "Entity type is not installed."}))
-    (when (false? curr-enabled)
-      (conflict! {:entity-type entity-type
-                  :message "Entity type already disabled."}))
-    (let [txes [[:db/cas ent-type-ident enabled-ident curr-enabled false]
-                prov]
-          tx-res @(d/transact-async conn txes)]
-      (when (:db-after tx-res)
-        (ok {:message  (format "Entity type %s was disabled." entity-type)})))))
+      (not-found! (-> err-msgs
+                      (select-keys [:not-found-message])
+                      (assoc :entity-type entity-type))))
+    (when (test-fn curr-enabled?)
+      (conflict! (-> err-msgs
+                     (select-keys [:conflict-message])
+                     (assoc :entity-type entity-type))))
+    {:ident ent-type-ident :enabled curr-enabled?}))
 
-;;; TODO: in progress
-;;;      Generic entity: a set of attributes that any generic entity can have:
-;;;          - :<entity>/name
-;;;          - :<entity>/id
-;;;          - :<entity>/status
-;;;          (Maybe :<entity>/other-names)
-;;;      Make a generic entity collection (use variation as a test case, remove old endpoint definitions)
-;;;      Add a new colllection endpoint to create a new generic entity
-;;; **DO THE SAME FOR BATCH**
+(defn enabled-handler
+  [request ent-type-ident curr-enabled? enable? event-ident]
+  (let [prov (wnp/assoc-provenance request {} event-ident)
+        txes [[:db/cas ent-type-ident enabled-ident curr-enabled? enable?] prov]
+        tx-res @(d/transact-async (:conn request) txes)]
+    (when (:db-after tx-res)
+      (ok {:message (format "Entity type %s was %s."
+                            (namespace ent-type-ident)
+                            (if enable?
+                              "enabled"
+                              "disabled"))}))))
+
+(defn disable-entity-type [request entity-type]
+  (let [{:keys [ident enabled]} (check-enabled!
+                                 request
+                                 entity-type
+                                 false?
+                                 {:not-found-message "Entity type is not installed."
+                                  :conflict-message "Entity type is already disabled."})]
+    (enabled-handler request ident enabled false :event/disable-entity-type)))
+
+(defn enable-entity-type [request entity-type]
+  (let [{:keys [ident enabled]} (check-enabled!
+                                   request
+                                   entity-type
+                                   true?
+                                   {:not-found-message "Entity type is already installed."
+                                    :conflict-message "Entity type is already enabled."})]
+    (enabled-handler request ident enabled true :event/enable-entity-type)))
+
+(defn entity-enabled-checker
+  "Middleware to check if an entity is enabled given information in the URL."
+  [request-handler]
+  (fn enabled-checker [request]
+    (check-enabled! request
+                    (-> request :params :entity-type)
+                    false?
+                    {:not-found-message "Entity type not installed."
+                     :conflict-message "Entity type has been disabled and cannot be used."})
+    (request-handler request)))
 
 (def status-changed-responses
   (-> wnu/default-responses
@@ -318,94 +348,102 @@
 
 (def coll-resources
   (sweet/context "" []
+    :tags ["entity"]
     (sweet/resource
      {:get
       {:summary "List all simple entity types."
        :responses (wnu/response-map wnu/default-responses)
-       :tags ["entity"]
        :handler (fn handle-list-entity-schemas [request]
                   (list-entity-schemas request))}
       :post
       {:summary "Add a new simple entity to the system."
        :parameters {:body-params {:data ::wse/new-schema
                                   :prov ::wsp/provenance}}
-       :handler handle-new-entity-schema}})))
+       :handler (fn handle-new [request]
+                  (handle-new-entity-schema request))}})))
 
 (def item-resources
   (sweet/context "/:entity-type" []
+    :tags ["entity"]
+    :middleware [entity-enabled-checker]
+    :path-params [entity-type :- ::wse/entity-type]
+    (sweet/resource
+     {:delete
+      {:summary "Mark an entity type as disabled."
+       :x-name ::disable-entity-type
+       :responses (wnu/response-map wnu/default-responses)
+       :parameters {:body-params {:prov ::wsp/provenance}}
+       :handler (fn handle-disable-ent-type [request]
+                  (disable-entity-type request entity-type))}
+      :put
+      {:summary "Update the schema for an entity type (enable/disable only)."
+       :parameters {:body-params {:prov ::wsp/provenance}}
+       :responses (wnu/response-map wnu/default-responses)
+       :handler (fn handle-enable-entity-type [request]
+                  (enable-entity-type request entity-type))}})
+    (sweet/context "/:entity-type/:identifier" []
       :tags ["entity"]
-      :path-params [entity-type :- ::wse/entity-type]
+      :path-params [identifier :- ::wse/identifier]
       (sweet/resource
        {:delete
-        {:summary "Mark an entity type as disabled."
-         :x-name ::disable-entity-type
-         :responses (wnu/response-map wnu/default-responses)
-         :handler (fn handle-disable-ent-type [request]
-                    (disable-entity-type request entity-type))}})
-      (sweet/context "/:entity-type/:identifier" []
-        :tags ["entity"]
-        :path-params [identifier :- ::wse/identifier]
+        {:summary "Kill an entity."
+         :x-name ::kill-entity
+         :parameters {:body-params {:prov ::wsp/provenance}}
+         :responses status-changed-responses
+         :handler (fn handle-kill [request]
+                    (let [status-ident (keyword (str entity-type ".status") "dead")
+                          event-ident (keyword "event" (str "kill-" entity-type))
+                          precond-failure-msg (format "%s to be killed is already dead." entity-type)
+                          kill (status-changer status-ident
+                                               event-ident
+                                               :fail-precondition? wnu/dead?
+                                               :precondition-failure-msg precond-failure-msg)]
+                      (kill request identifier)))}
+        :put
+        {:summary "Update an existing entity."
+         :x-name ::update-entity
+         :parameters {:body-params {:data ::wse/update
+                                    :prov ::wsp/provenance}}
+         :responses (-> wnu/default-responses
+                        (dissoc conflict)
+                        (wnu/response-map))
+         :handler (fn handle-update [request]
+                    (let [id-ident (keyword entity-type "id")
+                          update-spec ::wse/update
+                          event-ident (keyword "event" (str "update-" entity-type))
+                          summary-pull-expr (make-summary-pull-expr entity-type)
+                          update-handler (updater identify
+                                                  id-ident
+                                                  (partial wnu/conform-data update-spec)
+                                                  event-ident
+                                                  summary-pull-expr)]
+                      (update-handler request identifier)))}
+        :get
+        {:summary "Summarise an entity."
+         :x-name ::about-entity
+         :responses (-> wnu/default-responses
+                        (assoc ok {:schema ::wse/summary})
+                        (wnu/response-map))
+         :handler (fn handle-entity-summary [request]
+                    (let [summary-pull-expr (make-summary-pull-expr entity-type)]
+                      ((summarizer identify summary-pull-expr #{})
+                       request
+                       identifier)))}})
+      (sweet/context "/resurrect" []
         (sweet/resource
-         {:delete
-          {:summary "Kill an entity."
-           :x-name ::kill-entity
-           :parameters {:body-params {:prov ::wsp/provenance}}
-           :responses status-changed-responses
-           :handler (fn handle-kill [request]
-                      (let [status-ident (keyword (str entity-type ".status") "dead")
-                            event-ident (keyword "event" (str "kill-" entity-type))
-                            precond-failure-msg (format "%s to be killed is already dead." entity-type)
-                            kill (status-changer status-ident
-                                                 event-ident
-                                                 :fail-precondition? wnu/dead?
-                                                 :precondition-failure-msg precond-failure-msg)]
-                        (kill request identifier)))}
-          :put
-          {:summary "Update an existing entity."
-           :x-name ::update-entity
-           :parameters {:body-params {:data ::wse/update
-                                      :prov ::wsp/provenance}}
-           :responses (-> wnu/default-responses
-                          (dissoc conflict)
-                          (wnu/response-map))
-           :handler (fn handle-update [request]
-                      (let [id-ident (keyword entity-type "id")
-                            update-spec ::wse/update
-                            event-ident (keyword "event" (str "update-" entity-type))
-                            summary-pull-expr (make-summary-pull-expr entity-type)
-                            update-handler (updater identify
-                                                    id-ident
-                                                    (partial wnu/conform-data update-spec)
-                                                    event-ident
-                                                    summary-pull-expr)]
-                        (update-handler request identifier)))}
-          :get
-          {:summary "Summarise an entity."
-           :x-name ::about-entity
-           :responses (-> wnu/default-responses
-                          (assoc ok {:schema ::wse/summary})
-                          (wnu/response-map))
-           
-           :handler (fn [request]
-                      (let [summary-pull-expr (make-summary-pull-expr entity-type)]
-                        ((summarizer identify summary-pull-expr #{})
-                         request
-                         identifier)))}})
-        (sweet/context "/resurrect" []
-          (sweet/resource
-           {:post
-            {:summary "Resurrect an entity."
-             :x-name ::resurrect-entity
-             :respones status-changed-responses
-             :handler (fn handle-resurrect [request]
-                        (let [status-ident (keyword (str entity-type ".status") "live")
-                              event-ident (keyword "event" (str "resurrect-" entity-type))
-                              precond-fail-msg (format "%s is already live." entity-type)
-                              resurrect (status-changer status-ident
-                                                        event-ident
-                                                        :fail-precondition? wnu/live?
-                                                        :precondition-failure-msg precond-fail-msg)]
-                          (resurrect request identifier)))}})))))
+         {:post
+          {:summary "Resurrect an entity."
+           :x-name ::resurrect-entity
+           :respones status-changed-responses
+           :handler (fn handle-resurrect [request]
+                      (let [status-ident (keyword (str entity-type ".status") "live")
+                            event-ident (keyword "event" (str "resurrect-" entity-type))
+                            precond-fail-msg (format "%s is already live." entity-type)
+                            resurrect (status-changer status-ident
+                                                      event-ident
+                                                      :fail-precondition? wnu/live?
+                                                      :precondition-failure-msg precond-fail-msg)]
+                        (resurrect request identifier)))}})))))
 
 
 (def routes (sweet/routes coll-resources

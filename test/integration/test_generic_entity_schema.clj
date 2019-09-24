@@ -1,4 +1,4 @@
-(ns integration.test-new-generic-entity
+(ns integration.test-generic-entity-schema
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
@@ -19,14 +19,29 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn new-entity-type [data]
-  (api-tc/send-request nil :post data :uri "/api"))
+(defn send-coll-request [method payload]
+  (api-tc/send-request nil
+                       method
+                       (or payload  {:prov nil :data nil})
+                       :uri "/api"))
+
+(defn send-item-request [method payload ent-type-id]
+  (api-tc/send-request nil
+                       method
+                       (or payload  {:prov nil :data {}})
+                       :uri (str "/api/" ent-type-id)))
+
+(defn new-entity-type [payload]
+  (send-coll-request :post payload))
 
 (defn list-entity-types []
-  (api-tc/send-request nil :get {} :uri "/api"))
+  (send-coll-request :get {}))
 
 (defn disable-entity-type [ent-type-id]
-  (api-tc/send-request nil :delete {} :uri (str "/api/" ent-type-id)))
+  (send-item-request :delete nil ent-type-id))
+
+(defn enable-entity-type [ent-type-id]
+  (send-item-request :put nil ent-type-id))
 
 (t/deftest test-add-new-schema
   (t/testing "Adding a new 'entity type' dynamically to the system"
@@ -59,7 +74,7 @@
               (t/is (not-empty ent-type-info) (pr-str body))
               (t/is (ent-types "orange")))))))))
 
-(t/deftest test-disable-schema-entity
+(t/deftest test-disable-entity-type
   (t/testing "Attempt to disable entity type that does not exist."
     (let [response (disable-entity-type "plum")
           body (:body response)]
@@ -77,7 +92,16 @@
       (tu/with-fixtures
         schemas
         (fn [conn]
-          @(d/transact conn [[:db/add :apple/id :wormbase.names/entity-type-enabled? false]])
+          @(d/transact conn [[:db/add :apple/id wne/enabled-ident false]])
           (let [response (disable-entity-type "apple")
                 body (:body response)]
             (t/is (ru-hp/conflict? response))))))))
+
+(t/deftest test-enable-entity-type-schema
+  (t/testing "Marking an entity-type as disabled and its effects."
+    (let [schemas (wne/generic-attrs :pear/id "WBPear%01d")]
+      (tu/with-fixtures
+        schemas
+        (fn [conn]
+          (let [response (enable-entity-type "pear")]
+            (t/is (ru-hp/ok? response))))))))

@@ -85,7 +85,7 @@
  #:db{:ident :event/merge-genes}
  #:db{:ident :event/undo-merge-genes}
  #:db{:ident :event/split-gene}
- #:db{:ident :event/split-genes} 
+ #:db{:ident :event/split-genes}
  #:db{:ident :event/undo-split-gene}
  #:db{:ident :event/kill-gene}
  #:db{:ident :event/resurrect-gene}
@@ -103,6 +103,7 @@
  #:db{:ident :event/update-species}
  #:db{:ident :event/new-entity-type}
  #:db{:ident :event/disable-entity-type}
+ #:db{:ident :event/enable-entity-type}
 
  ;; nonce schema for import only
  #:db{:ident :importer/historical-gene-version
