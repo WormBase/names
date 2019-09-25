@@ -10,6 +10,7 @@
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.entity :as wne]
    [wormbase.names.service :as service]
    [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
@@ -133,8 +134,12 @@
 
 (t/deftest wrong-variation-data-shape
   (t/testing "Non-conformant variation data should result in HTTP Bad Request 400"
-    (let [response (new-variation {})]
-      (t/is (ru-hp/bad-request? response)))))
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
+      (fn [_]
+        (let [response (new-variation {})]
+          (t/is (ru-hp/bad-request? response)))))))
 
 (t/deftest variation-naming-conflict
   (t/testing "When a variation already exists with the requested name."

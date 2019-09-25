@@ -13,6 +13,7 @@
    [wormbase.db.schema :as wdbs]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
+   [wormbase.names.batch.generic :as wn-batch-generic]
    [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
@@ -95,10 +96,10 @@
      (sweet/context "/api" []
        :middleware [wna/restrict-to-authenticated]
        wn-batch/routes
+       wn-batch-generic/routes
        wn-species/routes
        wn-person/routes
        wn-gene/routes
-       wn-variation/routes
        wn-recent/routes
        wn-stats/routes
        wne/routes))))

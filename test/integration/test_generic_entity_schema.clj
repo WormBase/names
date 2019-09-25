@@ -62,7 +62,7 @@
 
 (t/deftest test-list-schema-entities
   (t/testing "We can list the 'entity types' stored in the system."
-    (let [schemas (wne/generic-attrs :orange/id "WBOrange%01d")]
+    (let [schemas (wne/register-entity-schema :orange/id)]
       (tu/with-fixtures
         schemas
         (fn [conn]
@@ -75,22 +75,24 @@
               (t/is (ent-types "orange")))))))))
 
 (t/deftest test-disable-entity-type
-  (t/testing "Attempt to disable entity type that does not exist."
-    (let [response (disable-entity-type "plum")
-          body (:body response)]
-      (t/is (ru-hp/not-found? response))))
-  (t/testing "We can mark a schema entity as disabled."
-    (let [schemas (wne/generic-attrs :apple/id "WBApple%01d")]
-      (tu/with-fixtures
-        schemas
+  (let [apple-id-template "WBApple%08d"
+        plum-id-template "WBPlum%08d"
+        pear-id-template "WBPear%08d"]
+    (t/testing "Attempt to disable entity type that does not exist."
+      (let [response (disable-entity-type "plum")]
+        (t/is (ru-hp/not-found? response))))
+    (t/testing "We can mark a schema entity as disabled."
+      (tu/with-installed-generic-entity
+        :apple/id
+        "WBApple%08d"
         (fn [conn]
           (let [response (disable-entity-type "apple")
                 body (:body response)]
-            (t/is (ru-hp/ok? response)))))))
-  (t/testing "Disabling an already disabled schema entity"
-    (let [schemas (wne/generic-attrs :apple/id "WBApple%01d")]
-      (tu/with-fixtures
-        schemas
+            (t/is (ru-hp/ok? response))))))
+    (t/testing "Disabling an already disabled schema entity"
+      (tu/with-installed-generic-entity
+        :apple/id
+        "WBApple%03d"
         (fn [conn]
           @(d/transact conn [[:db/add :apple/id wne/enabled-ident false]])
           (let [response (disable-entity-type "apple")
@@ -99,9 +101,9 @@
 
 (t/deftest test-enable-entity-type-schema
   (t/testing "Marking an entity-type as disabled and its effects."
-    (let [schemas (wne/generic-attrs :pear/id "WBPear%01d")]
-      (tu/with-fixtures
-        schemas
-        (fn [conn]
+    (tu/with-installed-generic-entity
+      :pear/id
+      "WBPear%08d"
+      (fn [conn]
           (let [response (enable-entity-type "pear")]
-            (t/is (ru-hp/ok? response))))))))
+            (t/is (ru-hp/ok? response)))))))

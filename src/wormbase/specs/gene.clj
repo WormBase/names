@@ -112,14 +112,16 @@
 
 (s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
 
-(s/def ::new-batch (stc/spec {:spec (s/coll-of ::new :min-count 1)
-                              :description "A collection of mapppings describing the genes to be created."}))
+(s/def ::new-batch (stc/spec
+                    {:spec (s/coll-of ::new :min-count 1)
+                     :description "A collection of mapppings describing the genes to be created."}))
 
-(s/def ::update-batch (stc/spec {:spec (s/coll-of
-                                        (s/merge
-                                         (s/keys :req-un [:gene/id]) ::update)
-                                        :min-count 1)
-                                 :description "A collection of mappings describing the genes to be updated."}))
+(s/def ::update-batch (stc/spec
+                       {:spec (s/coll-of
+                               (s/merge
+                                (s/keys :req-un [:gene/id]) ::update)
+                               :min-count 1)
+                        :description "A collection of mappings describing the genes to be updated."}))
 
 (s/def ::change-status-batch (stc/spec {:spec (s/coll-of ::identifier :min-count 1)
                                         :description "A collection of one or more identifiers."}))
@@ -136,16 +138,18 @@
 (s/def ::into-gene (s/or :gene/id :gene/id))
 (s/def ::into-biotype :gene/biotype)
 (s/def ::batch-merge-item (s/keys :req-un [::from-gene ::into-gene ::into-biotype]))
-(s/def ::merge-gene-batch (stc/spec {:spec (s/coll-of ::batch-merge-item :min-count 1)
-                                     :description "A collection of mapping describing the genes to be merged."}))
+(s/def ::merge-gene-batch (stc/spec
+                           {:spec (s/coll-of ::batch-merge-item :min-count 1)
+                            :description "A collection of mapping describing the genes to be merged."}))
 
 (s/def ::from-id (s/or :gene/id :gene/id))
 (s/def ::new-biotype (s/nilable :gene/biotype))
 (s/def ::product-biotype :gene/biotype)
 (s/def ::product-sequence-name :gene/sequence-name)
 (s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]))
-(s/def ::split-gene-batch (stc/spec {:spec (s/coll-of ::batch-split-item :min-count 1)
-                                     :description "A collection of mappings describing the genes to be split."}))
+(s/def ::split-gene-batch (stc/spec
+                           {:spec (s/coll-of ::batch-split-item :min-count 1)
+                            :description "A collection of mappings describing the genes to be split."}))
 
 
 (s/def ::find-match (stc/spec {:spec (s/keys :req-un [:gene/id]

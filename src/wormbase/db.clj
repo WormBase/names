@@ -6,8 +6,7 @@
    [datomic.api :as d]
    [environ.core :as environ]
    [mount.core :as mount]
-   [wormbase.util :as wu]
-   [wormbase.db.schema :as db-schema]))
+   [wormbase.util :as wu]))
 
 (def ^:dynamic *wb-db-uri* nil)
 
@@ -16,11 +15,9 @@
   schema-version 1)
 
 (defn connect
-  "Connects to the datomic database and transacts schema if required."
+  "Connects to the datomic database."
   [uri]
-  (let [conn (d/connect uri)]
-    (db-schema/install conn)
-    conn))
+  (d/connect uri))
 
 (defn checked-connect
   "Version of connect that checks that the datomic URI matches prefixes.

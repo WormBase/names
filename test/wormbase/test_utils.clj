@@ -276,6 +276,14 @@
                             (d/db conn))]
        (test-fn conn)))))
 
+(defn with-installed-generic-entity
+  ([entity-type id-template provenance-fn test-fn]
+   (let [conn (db-testing/fixture-conn)]
+     (wne/register-entity-schema conn entity-type id-template (provenance-fn {}))
+     (test-fn conn)))
+  ([entity-type id-template test-fn]
+   (with-installed-generic-entity entity-type id-template provenance test-fn)))
+
 (defn with-batch-fixtures
   [sample-transform provenance-fn data-samples test-fn]
   (let [conn (db-testing/fixture-conn)

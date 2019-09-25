@@ -13,16 +13,16 @@
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
-   [wormbase.specs.batch :as wsb]
-   [wormbase.specs.provenance :as wsp]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
-   [wormbase.specs.variation :as wsv]
+   [wormbase.specs.batch :as wsb]
+   [wormbase.specs.entity :as wse]
+   [wormbase.specs.provenance :as wsp]
    [java-time :as jt]))
 
 (s/def ::entity-type sts/string?)
 
-(s/def ::prov ::wsp/provenance)
+(s/def ::prov map?)
 
 (defn map-conform-data-drop-labels [spec data]
   (map second (wnu/conform-data spec data)))
@@ -187,71 +187,82 @@
                        (wnu/unqualify-keys who "person")))
         (ok))))
 
-;;; TODO:
-;; (def routes
-;;   (sweet/context "/:entity-type" []
-;;     :tags ["batch" "variation"]
-;;     :path-params [entity-type string?]
-;;     (sweet/resource
-;;      {:put
-;;       {:summary "Update variation records."
-;;        :x-name ::batch-update-variations
-;;        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
-;;        :parameters {:body-params {:data ::wsv/update-batch
-;;                                   :prov ::wsp/provenance}}
-;;        :handler (fn handle-update [request]
-;;                   (update-entities :variation/id
-;;                                    wnv/summary-pull-expr
-;;                                    :event/update-variation
-;;                                    ::wsv/update-batch
-;;                                    wnu/conform-data
-;;                                    identity
-;;                                    request))}
-;;       :post
-;;       {:summary "Assign identifiers and associate names, creating new variations."
-;;        :x-name ::batch-new-variations
-;;        :responses (wnu/response-map created {:schema ::wsb/created})
-;;        :parameters {:body-params {:data ::wsv/new-batch
-;;                                   :prov ::wsp/provenance}}
-;;        :handler (fn handle-new [request]
-;;                   (let [event-type :event/new-variation
-;;                         data (get-in request [:body-params])]
-;;                     (new-entities :variation/id
-;;                                   event-type
-;;                                   ::wsv/new-batch
-;;                                   wnu/conform-data
-;;                                   identity
-;;                                   [:variation/name]
-;;                                   request)))}
-;;       :delete
-;;       {:summary "Kill variations."
-;;        :x-name ::batch-kill-variations
-;;        :responses (wnu/response-map ok {:schema ::wsb/status-changed})
-;;        :parameters {:body-params {:data ::wsv/kill-batch}}
-;;        :handler (fn handle-kill [request]
-;;                   (change-entity-statuses :variation/id
-;;                                           :event/kill-variation
-;;                                           :variation.status/dead
-;;                                           ::wsv/kill-batch
-;;                                           map-conform-data-drop-labels
-;;                                           request))}})
-;;     (sweet/POST "/resurrect" request
-;;       :summary "Resurrect a batch of dead variations."
-;;       :body [data {:data ::wsv/resurrect-batch}
-;;              prov {:prov :wsp/provenance}]
-;;       (change-entity-statuses :variation/id
-;;                               :event/resurrect-variation
-;;                               :variation.status/live
-;;                               ::wsv/resurrect-batch
-;;                               map-conform-data-drop-labels
-;;                               request))
-;;     (sweet/DELETE "/name" request
-;;       :summary "Remove names from a batch of variations."
-;;       :body [data {:data ::wsv/names}
-;;              prov {:prov ::wsp/provenance}]
-;;       (retract-attr-vals :variation/name
-;;                          :variation/name
-;;                          :event/remove-variation-name
-;;                          ::wsv/names
-;;                          wnu/conform-data
-;;                          request))))
+(def routes
+  (sweet/context "/:entity-type" []
+    :tags ["batch"]
+    :path-params [entity-type string?]
+    (sweet/resource
+     {:put
+      {:summary "Update records."
+       :x-name ::batch-update
+       :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
+       :parameters {:body-params {:data ::wse/update-batch
+                                  :prov ::wsp/provenance}}
+       :handler (fn handle-update [request]
+                  (let [ent-ident (keyword entity-type "id")
+                        event-ident (keyword "event" (str "update-" entity-type))
+                        pull-expr (wne/make-summary-pull-expr entity-type)]
+                    (update-entities ent-ident
+                                     pull-expr
+                                     event-ident
+                                     ::wse/update-batch
+                                     wnu/conform-data
+                                     identity
+                                     request)))}
+      :post
+      {:summary "Assign identifiers and associate names, creating new variations."
+       :x-name ::batch-new
+       :responses (wnu/response-map created {:schema ::wsb/created})
+       :parameters {:body-params {:data ::wse/new-batch
+                                  :prov ::wsp/provenance}}
+       :handler (fn handle-new [request]
+                  (let [ent-ident (keyword entity-type "id")
+                        event-ident (keyword "event" (str "new-" entity-type))
+                        data (get-in request [:body-params])
+                        name-attrs [(keyword entity-type "name")]]
+                    (new-entities ent-ident
+                                  event-ident
+                                  ::wse/new-batch
+                                  wnu/conform-data
+                                  identity
+                                  name-attrs
+                                  request)))}
+      :delete
+      {:summary "Kill a batch of entities."
+       :x-name ::batch-kill-entities
+       :responses (wnu/response-map ok {:schema ::wsb/status-changed})
+       :parameters {:body-params {:data ::wse/kill-batch}}
+       :handler (fn handle-kill [request]
+                  (let [ent-ident (keyword entity-type "id")
+                        event-ident (keyword "event" (str "kill-" entity-type))
+                        dead-status (keyword (str entity-type ".status" "dead"))]
+                    (change-entity-statuses ent-ident
+                                            event-ident
+                                            dead-status
+                                            ::wse/kill-batch
+                                            map-conform-data-drop-labels
+                                            request)))}})
+    (sweet/POST "/resurrect" request
+      :summary "Resurrect a batch of dead entities."
+      :body [data {:data ::wse/resurrect-batch}
+             prov {:prov ::wsp/provenance}]
+      (let [ent-ident (keyword entity-type "id")
+            event-ident (keyword "event" (str "resurrect-" entity-type))
+            status (keyword (str entity-type ".status" "live"))]
+        (change-entity-statuses ent-ident
+                                event-ident
+                                status
+                                ::wse/resurrect-batch
+                                map-conform-data-drop-labels
+                                request)))
+    (sweet/DELETE "/name" request
+      :summary "Remove names from a batch of entities."
+      :body [data {:data ::wse/names}
+             prov {:prov ::wsp/provenance}]
+      (let [name-attr (keyword entity-type "name")
+            event-ident (keyword "event" (str "remove-" entity-type "-name"))]
+        (retract-attr-vals name-attr
+                           name-attr
+                           ::wse/names
+                           wnu/conform-data
+                           request)))))

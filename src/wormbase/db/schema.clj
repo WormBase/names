@@ -5,11 +5,9 @@
    [cognitect.transcriptor :as xr]
    [datomic.api :as d]
    [io.rkn.conformity :as c]
-   [wormbase.util :refer [read-edn]])
+   [wormbase.names.entity :as wne]
+   [wormbase.util :refer [read-edn datomic-internal-namespaces]])
   (:import (java.io PushbackReader)))
-
-(def datomic-internal-namespaces
-  #{"db" "db.alter" "db.install" "db.excise" "db.sys" "conformity" "fressian"})
 
 (defn definitions [db]
   (d/q '[:find [?attr ...]
@@ -21,7 +19,7 @@
          (not
           [(contains? ?excludes ?ns)])]
        db
-       datomic-internal-namespaces))
+       (datomic-internal-namespaces)))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]
@@ -46,19 +44,19 @@
                        {:people {:txes [people]}}
                        [:people])))
 
-;; TODO: conformity uses `schema-ident` to uniquely identity idempotent
-;;       schema transactions.
-;;       find a way to version the schema by passing this in.
-;;       e.g: could be release number (WS\d+), or a timestamp-ed string
 (defn install [conn]
   (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
         schema-txes (read-edn (io/resource "schema/definitions.edn"))
         seed-data (read-edn (io/resource "schema/seed-data.edn"))
+        entity-registry (read-edn (io/resource "schema/generic-entity-registry.edn"))
         init-schema [(concat db-fns schema-txes)]]
-    ;; NOTE: datomic-schema-grapher.core/graph-datomic won't show the
-    ;;       relations without some data installed.
-    ;;       i.e schema alone will not draw the  between refs.
-    ;;           (arrows on digagrea)
     (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
     (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
+    (doseq [{:keys [:entity-type :id-format :generic?]} entity-registry]
+      (wne/register-entity-schema conn
+                                  entity-type
+                                  id-format
+                                  {:provenance/why "initial system registration"}
+                                  generic?
+                                  true))
     (import-people conn)))

@@ -12,7 +12,7 @@
    [wormbase.util :as wu])
   (:import (java.util Date)))
 
-(def conf (:recent (wnu/read-app-config)))
+(def conf (:recent (wu/read-app-config)))
 
 (defn- find-max-imported-date [db]
   (let [max-tx-inst (d/q '[:find (max ?inst) .

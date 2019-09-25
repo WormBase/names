@@ -1,12 +1,10 @@
 (ns wormbase.names.util
   (:require
-   [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.walk :as w]
-   [aero.core :as aero]
    [buddy.core.codecs :as codecs]
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
@@ -15,12 +13,6 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
-
-(defn read-app-config
-  ([]
-   (read-app-config "config.edn"))
-  ([resource-filename]
-   (aero/read-config (io/resource resource-filename))))
 
 (defn- nsify [domain kw]
   (if (namespace kw)

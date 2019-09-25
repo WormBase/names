@@ -4,7 +4,8 @@
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.fake-auth :as fake-auth]
-   [wormbase.gen-specs.variation :as gsv]   
+   [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.entity :as wne]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.service :as service]
@@ -13,13 +14,14 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn- gen-sample []
-  (let [id (first  (gen/sample gsv/id 1))
+  (let [schema (wne/register-entity-schema "variation")
+        id (first (gen/sample gsv/id 1))
         name (first (gen/sample gsv/name 1))
         status :variation.status/live
         sample {:variation/status status
                 :variation/name name
                 :variation/id id}]
-    [id sample]))
+    [id (conj schema sample)]))
 
 (def summary (partial api-tc/summary "variation"))
 

@@ -224,10 +224,9 @@
                             [])}]
         (ok res)))))
 
-(defn generic-attrs [id-ident id-template]
+(defn generic-attrs [id-ident]
   (let [entity-type (namespace id-ident)]
-    [#:template{:describes id-ident :format id-template}
-     #:db{:ident id-ident
+    [#:db{:ident id-ident
           :valueType :db.type/string
           :cardinality :db.cardinality/one
           :unique :db.unique/identity
@@ -245,16 +244,21 @@
      #:db{:ident (keyword (str entity-type ".status") "live")}
      #:db{:ident (keyword (str entity-type ".status") "suppressed")}]))
 
-(defn new-entity-schema [conn entity-type id-template prov]
-  (let [id-ident (keyword entity-type "id")
-        tx-data (conj (generic-attrs id-ident id-template) prov)
-        tx-res @(d/transact-async conn tx-data)
-        enabled-tx-data [[:db/add id-ident enabled-ident true]]]
-    (when (:db-after tx-res)
-      @(d/transact-async conn enabled-tx-data)
-      true)))
+(defn register-entity-schema
+  ([conn id-ident id-template prov generic? enabled?]
+   (let [attrs-tx-data (conj (generic-attrs id-ident) prov)
+         tx-res @(d/transact-async conn attrs-tx-data)
+         temp-id (str id-ident)
+         reg-tx-data [[:db/add id-ident :wormbase.names/id-template-format id-template]
+                      [:db/add id-ident :wormbase.names/entity-type-generic? generic?]
+                      [:db/add id-ident :wormbase.names/entity-type-enabled? enabled?]]]
+     (when (:db-after tx-res)
+       @(d/transact-async conn reg-tx-data)
+       attrs-tx-data)))
+  ([conn id-ident id-template prov]
+   (register-entity-schema conn id-ident id-template prov true true)))
 
-(defn handle-new-entity-schema [request]
+(defn handle-register-entity-schema [request]
   (let [{db :db conn :conn payload :body-params} request
         {data :data} payload
         {entity-type :entity-type id-template :id-template} data
@@ -266,20 +270,19 @@
       (conflict! {:message (format "Schema %s already exists! (:%s/id)"
                                    entity-type
                                    entity-type)}))
-    (when (new-entity-schema conn entity-type id-template prov)
+    (when (register-entity-schema conn id-attr id-template prov)
       (created (str "/api/" entity-type)
                {:message (format "Created generic schema for %s"
                                  entity-type)}))))
 
 (defn list-entity-schemas [request]
-  (let [entity-types (->> (d/q '[:find [(pull ?e pattern) ...]
-                                 :in $ pattern
-                                 :where
-                                 [_ :template/describes ?e]
-                                 [?e _ _]]
-                               (:db request)
-                               '[[:db/ident :as :entity-type]
-                                 [:wormbase.names/entity-type-enabled? :as :enabled]])
+  (let [entity-types (->> (d/q '[:find ?entity-type ?generic ?enabled
+                                 :keys entity-type generic? enabled?
+                                 :in $
+                                 :where 
+                                 [?et :wormbase.names/entity-type-enabled? ?enabled]
+                                 [?et :wormbase.names/entity-type-generic? ?generic]]
+                               (:db request))
                           (map #(update % :entity-type namespace))
                           (map #(update % :enabled (fnil identity true)))
                           (sort-by :entity-type)
@@ -360,7 +363,7 @@
        :parameters {:body-params {:data ::wse/new-schema
                                   :prov ::wsp/provenance}}
        :handler (fn handle-new [request]
-                  (handle-new-entity-schema request))}})))
+                  (handle-register-entity-schema request))}})))
 
 (def item-resources
   (sweet/context "/:entity-type" []
@@ -444,7 +447,6 @@
                                                       :fail-precondition? wnu/live?
                                                       :precondition-failure-msg precond-fail-msg)]
                         (resurrect request identifier)))}})))))
-
 
 (def routes (sweet/routes coll-resources
                           item-resources))

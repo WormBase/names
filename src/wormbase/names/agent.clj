@@ -2,13 +2,13 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.walk :as w]
-   [wormbase.specs.agent :as wsa]
-   [wormbase.names.util :as wnu])
+   [wormbase.util :as wu]
+   [wormbase.specs.agent :as wsa])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload
                                                  GoogleIdToken)))
 
-(def gapps-conf (:google-apps (wnu/read-app-config)))
+(def gapps-conf (:google-apps (wu/read-app-config)))
 
 (defprotocol AgentIdentity
   (-identify [token]))

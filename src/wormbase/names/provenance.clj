@@ -5,7 +5,6 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
-   [wormbase.db.schema :as wdbs]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
    [wormbase.names.util :as wnu]
@@ -111,7 +110,7 @@
        (d/history db)
        entity-id))
 
-(def ^:private exclude-nses (conj wdbs/datomic-internal-namespaces "importer"))
+(def ^:private exclude-nses (conj (wu/datomic-internal-namespaces) "importer"))
 
 (defn tx-changes [db log tx]
   (->> tx

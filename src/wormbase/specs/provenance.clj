@@ -14,9 +14,11 @@
                       :description "The server-local system time when the event was proccessed."}))
 
 ;; clients are requried to provide their time zone when specifying dates.
-(s/def :provenance/when (stc/spec {:spec (s/nilable wu/zoned-date-time?)
-                                   :swagger/example (jt/format :iso-date-time (jt/zoned-date-time (jt/instant) (jt/zone-id)))
-                                   :description "The date-time the curator performed the action."}))
+(s/def :provenance/when (stc/spec
+                         {:spec (s/nilable wu/zoned-date-time?)
+                          :swagger/example (jt/format :iso-date-time
+                                                      (jt/zoned-date-time (jt/instant) (jt/zone-id)))
+                          :description "The date-time the curator performed the action."}))
 
 (s/def :provenance/what  (stc/spec {:spec sts/keyword?
                                     :swagger/example "event/new-gene"

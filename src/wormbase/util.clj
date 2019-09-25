@@ -4,18 +4,25 @@
    [clojure.java.io :as io]
    [clojure.walk :as w]
    [datomic.api :as d]
+   [aero.core :as aero]
    [java-time :as jt]
    [wormbase.ids.core :as wic])
   (:import
    (java.io PushbackReader)
    (java.util Date)))
 
- (defn read-edn [readable]
+(defn read-edn [readable]
   (let [edn-read (partial edn/read {:readers *data-readers*})]
     (-> readable
         io/reader
         (PushbackReader.)
         (edn-read))))
+
+(defn read-app-config
+  ([]
+   (read-app-config "config.edn"))
+  ([resource-filename]
+   (aero/read-config (io/resource resource-filename))))
 
 (defn elide-db-internals
   "Remove datomic internal attribute/value pairs from a seq of maps."
@@ -67,3 +74,6 @@
               #(compare %2 %1)
               #(compare %1 %2))]
     (sort-by k cmp events)))
+
+(defn datomic-internal-namespaces []
+  (-> (read-app-config) :datomic :internal-namespaces set))

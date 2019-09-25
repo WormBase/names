@@ -46,12 +46,6 @@
            :cgc-name-pattern "^Tmu-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
            :sequence-name-pattern "^TMUE_[0123M]\\d{9}$"}
 
-
- ;; templates for identifiers
- #:template{:format "WBGene%08d", :describes :gene/id}
- #:template{:format "WBsf%d", :describes :sequence-feature/id}
- #:template{:format "WBVar%08d", :describes :variation/id}
-
  ;; agent
  #:db{:ident :agent/importer}
  #:db{:ident :agent/web}
@@ -61,10 +55,6 @@
  #:db{:ident :gene.status/dead}
  #:db{:ident :gene.status/live}
  #:db{:ident :gene.status/suppressed}
-
- ;; variation status
- #:db{:ident :variation.status/dead}
- #:db{:ident :variation.status/live}
 
  ;; sequence-feature status
  #:db{:ident :sequence-feature.status/dead}
@@ -110,3 +100,4 @@
       :valueType :db.type/long
       :cardinality :db.cardinality/one
       :doc "A temporary attribute used only for import."}]
+

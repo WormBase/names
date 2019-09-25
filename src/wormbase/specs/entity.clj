@@ -52,8 +52,9 @@
 (s/def ::update (stc/spec {:spec ::new
                            :description "The data required to update a entity."}))
 
-(s/def ::new-batch (stc/spec {:spec (s/coll-of ::new :min-count 1)
-                              :description "A collection of mappings specifying new entitys to be created.."}))
+(s/def ::new-batch (stc/spec
+                    {:spec (s/coll-of ::new :min-count 1)
+                     :description "A collection of mappings specifying new entitys to be created.."}))
 
 (s/def ::update-batch (stc/spec
                        {:spec (s/coll-of

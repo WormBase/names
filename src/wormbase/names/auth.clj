@@ -13,8 +13,8 @@
    [datomic.api :as d]
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response]
-   [wormbase.names.agent :as wn-agent]
-   [wormbase.names.util :as wnu])
+   [wormbase.util :as wu]
+   [wormbase.names.agent :as wn-agent])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder
                                                  GoogleIdToken)
@@ -26,7 +26,7 @@
 
 (def ^:private json-factory (JacksonFactory.))
 
-(def ^:private app-conf (wnu/read-app-config))
+(def ^:private app-conf (wu/read-app-config))
 
 (def ^:private gapps-conf (:google-apps app-conf))
 
