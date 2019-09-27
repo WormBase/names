@@ -1,4 +1,4 @@
-(ns integration.test-change-status
+(ns integration.change-status-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]

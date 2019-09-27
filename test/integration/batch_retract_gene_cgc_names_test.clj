@@ -1,4 +1,4 @@
-(ns integration.test-batch-retract-gene-cgc-names
+(ns integration.batch-retract-gene-cgc-names-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]

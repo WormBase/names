@@ -1,4 +1,4 @@
-(ns integration.test-service
+(ns integration.service-test
   (:require
    [clojure.string :as str]
    [clojure.test :as t]

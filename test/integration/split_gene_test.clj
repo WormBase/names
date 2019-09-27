@@ -1,4 +1,4 @@
-(ns integration.test-split-gene
+(ns integration.split-gene-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]

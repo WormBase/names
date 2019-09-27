@@ -1,4 +1,4 @@
-(ns integration.test-batch-new-variations
+(ns integration.batch-new-entities-test
   (:require
    [clj-uuid :as uuid]
    [clojure.test :as t]
@@ -18,7 +18,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn new-variations [data]
-  (api-tc/send-request "batch" :post data :sub-path "variation"))
+  (api-tc/send-request "batch" :post data :sub-path "generic/variation"))
 
 (defn query-batch [db bid]
   (wnu/query-batch db bid wnv/summary-pull-expr))

@@ -1,4 +1,4 @@
-(ns integration.test-gene-summary
+(ns integration.gene-summary-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]

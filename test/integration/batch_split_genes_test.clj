@@ -1,4 +1,4 @@
-(ns integration.test-batch-split-genes
+(ns integration.batch-split-genes-test
   (:require
    [clj-uuid :as uuid]
    [clojure.spec.alpha :as s]

@@ -1,4 +1,4 @@
-(ns integration.test-merge-genes
+(ns integration.merge-genes-test
   (:require
    [clojure.string :as str]
    [clojure.test :as t]

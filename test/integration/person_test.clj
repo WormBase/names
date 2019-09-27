@@ -1,4 +1,4 @@
-(ns integration.test-person
+(ns integration.person-test
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]

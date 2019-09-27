@@ -1,4 +1,4 @@
-(ns integration.test-stats
+(ns integration.stats-test
   (:require
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]

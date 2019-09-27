@@ -1,4 +1,4 @@
-(ns integration.test-batch-update-variation
+(ns integration.batch-update-entities-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
@@ -14,7 +14,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn update-variations [data]
-  (api-tc/send-request "batch" :put data :sub-path "variation"))
+  (api-tc/send-request "batch" :put data :sub-path "generic/variation"))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -31,7 +31,7 @@
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items containing non-unique names is rejected."
     (let [fixtures (make-fixtures)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures
@@ -45,7 +45,7 @@
 (t/deftest invalid-name
   (t/testing "Batch containing invlaid name is rejected."
     (let [fixtures (make-fixtures)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures

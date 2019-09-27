@@ -1,4 +1,4 @@
-(ns integration.test-find-gene-by-any-name
+(ns integration.find-gene-test
   (:require
    [clojure.string :as str]
    [clojure.test :as t]

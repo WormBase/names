@@ -1,4 +1,4 @@
-(ns integration.test-batch-update-gene
+(ns integration.batch-update-gene-test
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]

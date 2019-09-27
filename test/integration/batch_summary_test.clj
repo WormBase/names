@@ -1,4 +1,4 @@
-(ns integration.test-batch-summary
+(ns integration.batch-summary-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]

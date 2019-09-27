@@ -1,4 +1,4 @@
-(ns integration.test-generic-entity-schema
+(ns integration.generic-entity-schema-test
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]

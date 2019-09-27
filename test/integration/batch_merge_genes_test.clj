@@ -1,4 +1,4 @@
-(ns integration.test-batch-merge-genes
+(ns integration.batch-merge-genes-test
   (:require
    [clj-uuid :as uuid]
    [clojure.spec.alpha :as s]

@@ -1,4 +1,4 @@
-(ns integration.test-batch-new-gene
+(ns integration.batch-new-gene-test
   (:require
    [clojure.test :as t]
    [clj-uuid :as uuid]
