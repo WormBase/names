@@ -26,7 +26,6 @@
 (defmethod wne/transform-ident-ref-value :product-biotype [_ m]
   (wnu/transform-ident-ref :product-biotype m "biotype"))
 
-
 (defn merge-genes [event-type spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov-data :prov} payload
