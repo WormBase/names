@@ -73,10 +73,10 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (doseq [[to-status exp-resp-key] {:kill :dead
-                                            :suppress :suppressed
-                                            :resurrect :live}]
-            (let [response (send-change-status-request to-status {:data gids :prov basic-prov})]
+          (doseq [[op exp-resp-key] {:kill :dead
+                                     :suppress :suppressed
+                                     :resurrect :live}]
+            (let [response (send-change-status-request op {:data gids :prov basic-prov})]
               (t/is (ru-hp/ok? response))
               (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
                     (pr-str response))
