@@ -310,6 +310,9 @@
 (defn with-variation-fixtures [fixtures test-fn]
   (with-installed-generic-entity :variation/id "WBVar%08d" fixtures test-fn))
 
+(defn with-sequence-feature-fixtures [fixtures test-fn]
+  (with-installed-generic-entity :sequence-feature/id "WBsf%d" fixtures test-fn))
+
 (def with-gene-fixtures (partial with-fixtures gene-sample-to-txes provenance nil))
 
 (defn query-provenance [conn gene-id event]
