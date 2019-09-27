@@ -48,8 +48,7 @@
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
                  (jt/to-millis-from-epoch (jt/instant)))]
-    (let [conn (fixture-conn)
-          tx-reqort-queue (d/tx-report-queue conn)]
+    (let [conn (fixture-conn)]
       (mount/start-with {#'wdb/conn conn})
       (f)
       (wdb/checked-delete uri)
