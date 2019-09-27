@@ -20,14 +20,19 @@
 
 (defn retract-variation-name [data]
   (let [data* (assoc data :batch-size 1)]
-    (api-tc/send-request "batch" :delete data* :sub-path "variation/name")))
+    (api-tc/send-request "batch" :delete data* :sub-path "generic/variation/name")))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
-    (doseq [retract-fn [retract-gene-cgc-name
-                        retract-variation-name]]
-      (let [response (retract-fn {:data [] :prov nil})]
-        (t/is (ru-hp/bad-request? response))))))
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
+      (fn [__]
+        (doseq [retract-fn [retract-gene-cgc-name
+                            retract-variation-name
+                            ]]
+          (let [response (retract-fn {:data [] :prov nil})]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (defn qualify-ident [kw-ns ident m]
   (if (ident m)
@@ -56,7 +61,9 @@
     (let [fixtures (->> (gen/sample gsv/payload 2)
                         (map #(wnu/qualify-keys % "variation")))
           names (map :variation/name fixtures)]
-     (tu/with-fixtures
+      (tu/with-installed-generic-entity
+        :variation/id
+        "WBVar&08d"
         fixtures
         (fn [conn]
           (let [response (retract-variation-name {:data names :prov basic-prov})]

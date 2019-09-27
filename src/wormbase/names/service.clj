@@ -13,7 +13,6 @@
    [wormbase.db.schema :as wdbs]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
-   [wormbase.names.batch.generic :as wn-batch-generic]
    [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
@@ -23,7 +22,6 @@
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.stats :as wn-stats]
-   [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
@@ -95,12 +93,11 @@
    (sweet/context "" []
      (sweet/context "/api" []
        :middleware [wna/restrict-to-authenticated]
-       wn-batch/routes
-       wn-batch-generic/routes
        wn-species/routes
-       wn-person/routes
        wn-gene/routes
+       wn-person/routes
        wn-recent/routes
+       wn-batch/routes
        wn-stats/routes
        wne/routes))))
 

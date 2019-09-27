@@ -422,12 +422,13 @@
         :responses status-changed-responses
         :handler
         (fn [request]
-          (let [kill (wne/status-changer :gene/id
-                                         :gene/status
-                                         :gene.status/dead
-                                         :event/kill-gene
-                                         :fail-precondition? wnu/dead?
-                                         :precondition-failure-msg "Gene to be killed is already dead.")]
+          (let [kill (wne/status-changer
+                      :gene/id
+                      :gene/status
+                      :gene.status/dead
+                      :event/kill-gene
+                      :fail-precondition? wnu/dead?
+                      :precondition-failure-msg "Gene to be killed is already dead.")]
             (kill request identifier)))}})
      (sweet/resource
       {:get
@@ -435,7 +436,9 @@
         :x-name ::summary
         :responses (wnu/response-map ok {:schema ::wsg/summary})
         :handler (fn [request]
-                   ((wne/summarizer identify summary-pull-expr #{:gene/splits :gene/merges})
+                   ((wne/summarizer identify
+                                    summary-pull-expr
+                                    #{:gene/splits :gene/merges})
                     request
                     identifier))}
        :put

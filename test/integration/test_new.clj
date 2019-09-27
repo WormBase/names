@@ -21,11 +21,12 @@
 
 (def new-gene (partial api-tc/new "gene"))
 
-(def new-variation (partial api-tc/new "variation"))
-
 (def new-species (partial api-tc/new "species"))
 
 (def not-nil? (complement nil?))
+
+(defn new-variation [& args]
+  (apply api-tc/new "generic/variation" args))
 
 (defn check-db [db ident id]
   (let [status-ident (keyword (namespace ident) "status")
@@ -157,10 +158,14 @@
 
 (t/deftest naming-variation-with-provenance
   (t/testing "Naming a variation providing provenance."
-    (let [data {:name (first (gen/sample gsv/name 1))}
-          response (new-variation {:data data :prov basic-prov})]
-      (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :id) (pr-str response)))))
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
+      (fn [_]
+        (let [data {:name (first (gen/sample gsv/name 1))}
+              response (new-variation {:data data :prov basic-prov})]
+          (t/is (ru-hp/created? response))
+          (t/is (some-> response :body :created :id) (pr-str response)))))))
 
 (t/deftest species-data-must-meet-spec
   (t/testing "Empty species data payload is a bad request."

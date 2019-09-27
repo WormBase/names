@@ -113,7 +113,7 @@
 
 (def routes
   (sweet/routes
-   (sweet/context "/person/" []
+   (sweet/context "/person" []
      :tags ["person"]
      (sweet/resource
       {:post

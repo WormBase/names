@@ -151,6 +151,7 @@
   "Retract values associated with attributes for a matching set of entities."
   [uiident attr event-type spec conformer request]
   (let [{payload :body-params conn :conn} request
+        ent-type (namespace uiident)
         data (:data payload)
         prov (wnp/assoc-provenance request payload :event/remove-cgc-names)
         conformed (conformer spec data)]
@@ -159,7 +160,8 @@
       (let [cdata (some->> conformed
                            (filter (fn remove-any-nils [[_ value]]
                                      (not (nil? value))))
-                           (map (partial apply assoc {})))
+                           (map (partial apply assoc {}))
+                           (map #(wnu/qualify-keys % ent-type)))
             bsize (batch-size payload cdata)
             result (wbids-batch/retract
                     conn
@@ -169,6 +171,16 @@
                     prov
                     :batch-size bsize)]
         (ok {:retracted result})))))
+
+(defn retract-names [request entity-type]
+  (let [name-attr (keyword entity-type "name")
+        event-ident (keyword "event" (str "remove-" entity-type "-name"))]
+    (retract-attr-vals name-attr
+                       name-attr
+                       event-ident
+                       ::wse/names
+                       wnu/conform-data
+                       request)))
 
 (defn summary [request bid pull-expr]
   (let [{db :db} request
@@ -188,13 +200,13 @@
         (ok))))
 
 (def routes
-  (sweet/context "/:entity-type" []
-    :tags ["batch"]
-    :path-params [entity-type string?]
+  (sweet/context "/generic/:entity-type" []
+    :tags ["batch" "entities"]
+    :path-params [entity-type :- string?]
     (sweet/resource
      {:put
       {:summary "Update records."
-       :x-name ::batch-update
+       :x-name ::batch-update-entities
        :responses (wnu/response-map ok {:schema {:updated ::wsb/updated}})
        :parameters {:body-params {:data ::wse/update-batch
                                   :prov ::wsp/provenance}}
@@ -211,7 +223,7 @@
                                      request)))}
       :post
       {:summary "Assign identifiers and associate names, creating new variations."
-       :x-name ::batch-new
+       :x-name ::batch-new-entities
        :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wse/new-batch
                                   :prov ::wsp/provenance}}
@@ -235,7 +247,7 @@
        :handler (fn handle-kill [request]
                   (let [ent-ident (keyword entity-type "id")
                         event-ident (keyword "event" (str "kill-" entity-type))
-                        dead-status (keyword (str entity-type ".status" "dead"))]
+                        dead-status (keyword (str entity-type ".status") "dead")]
                     (change-entity-statuses ent-ident
                                             event-ident
                                             dead-status
@@ -248,7 +260,7 @@
              prov {:prov ::wsp/provenance}]
       (let [ent-ident (keyword entity-type "id")
             event-ident (keyword "event" (str "resurrect-" entity-type))
-            status (keyword (str entity-type ".status" "live"))]
+            status (keyword (str entity-type ".status") "live")]
         (change-entity-statuses ent-ident
                                 event-ident
                                 status
@@ -259,10 +271,4 @@
       :summary "Remove names from a batch of entities."
       :body [data {:data ::wse/names}
              prov {:prov ::wsp/provenance}]
-      (let [name-attr (keyword entity-type "name")
-            event-ident (keyword "event" (str "remove-" entity-type "-name"))]
-        (retract-attr-vals name-attr
-                           name-attr
-                           ::wse/names
-                           wnu/conform-data
-                           request)))))
+      (retract-names request entity-type))))

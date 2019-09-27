@@ -257,9 +257,13 @@
 
 (defn with-fixtures
   ([data-samples test-fn]
-   (with-fixtures identity provenance data-samples test-fn))
-  ([sample-transform provenance-fn data-samples test-fn]
-   (let [conn (db-testing/fixture-conn)
+   (with-fixtures nil data-samples test-fn))
+  ([connection data-samples test-fn]
+   (with-fixtures identity provenance connection data-samples test-fn))
+  ([sample-transform provenance-fn connection data-samples test-fn]
+   (let [conn (if connection
+                connection
+                (db-testing/fixture-conn))
          sample-data (if (map? data-samples)
                        [data-samples]
                        data-samples)]
@@ -277,12 +281,14 @@
        (test-fn conn)))))
 
 (defn with-installed-generic-entity
-  ([entity-type id-template provenance-fn test-fn]
+  ([entity-type id-template provenance-fn fixtures test-fn]
    (let [conn (db-testing/fixture-conn)]
      (wne/register-entity-schema conn entity-type id-template (provenance-fn {}))
-     (test-fn conn)))
+     (with-fixtures conn (or fixtures []) test-fn)))
+  ([entity-type id-template fixtures test-fn]
+   (with-installed-generic-entity entity-type id-template provenance fixtures test-fn))
   ([entity-type id-template test-fn]
-   (with-installed-generic-entity entity-type id-template provenance test-fn)))
+   (with-installed-generic-entity entity-type id-template provenance nil test-fn)))
 
 (defn with-batch-fixtures
   [sample-transform provenance-fn data-samples test-fn]
@@ -301,7 +307,10 @@
                   wdb/db (fn [_] (d/db conn))]
       (test-fn conn))))
 
-(def with-gene-fixtures (partial with-fixtures gene-sample-to-txes provenance))
+(defn with-variation-fixtures [fixtures test-fn]
+  (with-installed-generic-entity :variation/id "WBVar%08d" fixtures test-fn))
+
+(def with-gene-fixtures (partial with-fixtures gene-sample-to-txes provenance nil))
 
 (defn query-provenance [conn gene-id event]
   (when-let [tx-ids (d/q '[:find [?tx]

@@ -50,13 +50,20 @@
   "Return an lookup ref and entity for a given identifier.
   Lookups `identifier` (conformed with `identify-spec`) in the database.
   Returns `nil` when the entity cannot be found."
-  [identitfy-spec request identifier]
-  (let [lookup-ref (s/conform identitfy-spec identifier)]
-    (when (s/invalid? lookup-ref)
+  [identitfy-spec ent-ns request identifier]
+  (let [pair (s/conform identitfy-spec identifier)]
+    (when (s/invalid? pair)
       (not-found! {:message "Malformed identifier"
                    :spec identitfy-spec
                    :data identifier}))
     (let [db (:db request)
+          lookup-ref (if (-> pair first simple-keyword?)
+                       [(-> (apply assoc {} pair)
+                            (wnu/qualify-keys ent-ns)
+                            (vec)
+                            (ffirst))
+                        (second pair)]
+                       pair)
           ent (d/entity db lookup-ref)]
       (if (:db/id ent)
         [lookup-ref ent]
@@ -70,7 +77,6 @@
 
 (defn creator
   "Return an endpoint handler for new entity creation."
-  ;; [uiident data-spec event summary-pull-expr & [validate-names]]
   [uiident conform-spec-fn event summary-pull-expr & [validate-names]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
@@ -138,7 +144,7 @@
   "Return a handler to change the status of an entity to `to-status`.
 
   `identfiier` - A identifier string that must uniquely identify an entity.
-  `to-status` - a keyword/ident identifiying an entity status. (e.g: :gene.status/live)
+  `to-status` - a keyword/ident identifying an entity status. (e.g: :gene.status/live)
   `event-type` - keyword/ident
   `fail-precondition?` - A function that takes a single argument of
                          the current entity status, and should return a truth-y value
@@ -173,6 +179,35 @@
             (wnu/unqualify-keys ent-ns)
             (update :status name)
             (ok))))))
+
+(defn handle-kill [request entity-type identifier]
+  (let [id-ident (keyword entity-type "id")
+          status-ident (keyword entity-type "status")
+          to-status (keyword (str entity-type ".status") "dead")
+          event-ident (keyword "event" (str "kill-" entity-type))
+          precond-failure-msg (format "%s to be killed is already dead."
+                                      entity-type)
+          kill (status-changer id-ident
+                               status-ident
+                               to-status
+                               event-ident
+                               :fail-precondition? wnu/dead?
+                               :precondition-failure-msg precond-failure-msg)]
+      (kill request identifier)))
+
+(defn handle-resurrect [request entity-type identifier]
+  (let [id-ident (keyword entity-type "id")
+        status-ident (keyword entity-type "status")
+        to-status-ident (keyword (str entity-type ".status") "live")
+        event-ident (keyword "event" (str "resurrect-" entity-type))
+        precond-fail-msg (format "%s is already live." entity-type)
+        resurrect (status-changer id-ident
+                                  status-ident
+                                  to-status-ident
+                                  event-ident
+                                  :fail-precondition? wnu/live?
+                                  :precondition-failure-msg precond-fail-msg)]
+    (resurrect request identifier)))
 
 (defn summarizer [identify-fn pull-expr ref-attrs]
   (fn handle-summary [request identifier]
@@ -281,10 +316,11 @@
                                  :in $
                                  :where 
                                  [?et :wormbase.names/entity-type-enabled? ?enabled]
-                                 [?et :wormbase.names/entity-type-generic? ?generic]]
+                                 [?et :wormbase.names/entity-type-generic? ?generic]
+                                 [?et :db/ident ?entity-type]]
                                (:db request))
                           (map #(update % :entity-type namespace))
-                          (map #(update % :enabled (fnil identity true)))
+                          (map #(update % :enabled? (fnil identity true)))
                           (sort-by :entity-type)
                           (into []))]
     (ok {:entity-types entity-types})))
@@ -297,7 +333,9 @@
       (not-found! (-> err-msgs
                       (select-keys [:not-found-message])
                       (assoc :entity-type entity-type))))
-    (when (test-fn curr-enabled?)
+    (when (and (test-fn curr-enabled?)
+               (:conflict-message err-msgs)
+               (not (::ignore-enabled-conflict request)))
       (conflict! (-> err-msgs
                      (select-keys [:conflict-message])
                      (assoc :entity-type entity-type))))
@@ -320,29 +358,27 @@
                                  request
                                  entity-type
                                  false?
-                                 {:not-found-message "Entity type is not installed."
-                                  :conflict-message "Entity type is already disabled."})]
+                                 {:not-found-message "Entity type is not installed."})]
     (enabled-handler request ident enabled false :event/disable-entity-type)))
 
 (defn enable-entity-type [request entity-type]
   (let [{:keys [ident enabled]} (check-enabled!
-                                   request
-                                   entity-type
-                                   true?
-                                   {:not-found-message "Entity type is already installed."
-                                    :conflict-message "Entity type is already enabled."})]
+                                 (assoc request ::skip-enabled-mw-check true)
+                                 entity-type
+                                 true?
+                                 {:not-found-message "Entity type is already installed."})]
     (enabled-handler request ident enabled true :event/enable-entity-type)))
 
 (defn entity-enabled-checker
   "Middleware to check if an entity is enabled given information in the URL."
-  [request-handler]
+  [handler]
   (fn enabled-checker [request]
-    (check-enabled! request
+    (check-enabled! (assoc request ::ignore-enabled-conflict true)
                     (-> request :params :entity-type)
                     false?
                     {:not-found-message "Entity type not installed."
                      :conflict-message "Entity type has been disabled and cannot be used."})
-    (request-handler request)))
+    (handler request)))
 
 (def status-changed-responses
   (-> wnu/default-responses
@@ -350,7 +386,7 @@
       (wnu/response-map)))
 
 (def coll-resources
-  (sweet/context "" []
+  (sweet/context "/generic" []
     :tags ["entity"]
     (sweet/resource
      {:get
@@ -362,13 +398,12 @@
       {:summary "Add a new simple entity to the system."
        :parameters {:body-params {:data ::wse/new-schema
                                   :prov ::wsp/provenance}}
-       :handler (fn handle-new [request]
+       :handler (fn register-entity-schema [request]
                   (handle-register-entity-schema request))}})))
 
 (def item-resources
-  (sweet/context "/:entity-type" []
+  (sweet/context "/generic/:entity-type" []
     :tags ["entity"]
-    :middleware [entity-enabled-checker]
     :path-params [entity-type :- ::wse/entity-type]
     (sweet/resource
      {:delete
@@ -380,12 +415,29 @@
                   (disable-entity-type request entity-type))}
       :put
       {:summary "Update the schema for an entity type (enable/disable only)."
+       :x-name ::enable-entity-type
        :parameters {:body-params {:prov ::wsp/provenance}}
        :responses (wnu/response-map wnu/default-responses)
        :handler (fn handle-enable-entity-type [request]
-                  (enable-entity-type request entity-type))}})
-    (sweet/context "/:entity-type/:identifier" []
+                  (enable-entity-type request entity-type))}
+      :post
+      {:summary "Create a new entity."
+       :x-name ::new-entity
+       :parameters {:body-params {:data ::wse/new
+                                  :prov ::wsp/provenance}}
+       :responses (-> wnu/default-responses
+                      (assoc created {:schema {:created ::wse/created}})
+                      (wnu/response-map))
+       :handler (fn new-entity [request]
+                 (let [id-ident (keyword entity-type "id")
+                       event-ident (keyword "event" (str "new-" entity-type))
+                       conformer (partial wnu/conform-data ::wse/new)
+                       spe (make-summary-pull-expr entity-type)
+                       new-entity (creator id-ident conformer event-ident spe)]
+                   (new-entity request)))}})
+    (sweet/context "/:identifier" []
       :tags ["entity"]
+      :middleware [entity-enabled-checker]
       :path-params [identifier :- ::wse/identifier]
       (sweet/resource
        {:delete
@@ -393,15 +445,8 @@
          :x-name ::kill-entity
          :parameters {:body-params {:prov ::wsp/provenance}}
          :responses status-changed-responses
-         :handler (fn handle-kill [request]
-                    (let [status-ident (keyword (str entity-type ".status") "dead")
-                          event-ident (keyword "event" (str "kill-" entity-type))
-                          precond-failure-msg (format "%s to be killed is already dead." entity-type)
-                          kill (status-changer status-ident
-                                               event-ident
-                                               :fail-precondition? wnu/dead?
-                                               :precondition-failure-msg precond-failure-msg)]
-                      (kill request identifier)))}
+         :handler (fn [request]
+                    (handle-kill request entity-type identifier))}
         :put
         {:summary "Update an existing entity."
          :x-name ::update-entity
@@ -415,7 +460,7 @@
                           update-spec ::wse/update
                           event-ident (keyword "event" (str "update-" entity-type))
                           summary-pull-expr (make-summary-pull-expr entity-type)
-                          update-handler (updater identify
+                          update-handler (updater (partial identify ::wse/identifier entity-type)
                                                   id-ident
                                                   (partial wnu/conform-data update-spec)
                                                   event-ident
@@ -429,7 +474,9 @@
                         (wnu/response-map))
          :handler (fn handle-entity-summary [request]
                     (let [summary-pull-expr (make-summary-pull-expr entity-type)]
-                      ((summarizer identify summary-pull-expr #{})
+                      ((summarizer (partial identify ::wse/identifier entity-type)
+                                   summary-pull-expr
+                                   #{})
                        request
                        identifier)))}})
       (sweet/context "/resurrect" []
@@ -438,15 +485,8 @@
           {:summary "Resurrect an entity."
            :x-name ::resurrect-entity
            :respones status-changed-responses
-           :handler (fn handle-resurrect [request]
-                      (let [status-ident (keyword (str entity-type ".status") "live")
-                            event-ident (keyword "event" (str "resurrect-" entity-type))
-                            precond-fail-msg (format "%s is already live." entity-type)
-                            resurrect (status-changer status-ident
-                                                      event-ident
-                                                      :fail-precondition? wnu/live?
-                                                      :precondition-failure-msg precond-fail-msg)]
-                        (resurrect request identifier)))}})))))
+           :handler (fn handle-resurrect-entity [request]
+                      (handle-resurrect request entity-type identifier))}})))))
 
 (def routes (sweet/routes coll-resources
                           item-resources))

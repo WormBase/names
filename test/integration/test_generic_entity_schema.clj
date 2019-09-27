@@ -23,13 +23,13 @@
   (api-tc/send-request nil
                        method
                        (or payload  {:prov nil :data nil})
-                       :uri "/api"))
+                       :uri "/api/generic"))
 
 (defn send-item-request [method payload ent-type-id]
   (api-tc/send-request nil
                        method
                        (or payload  {:prov nil :data {}})
-                       :uri (str "/api/" ent-type-id)))
+                       :uri (str "/api/generic/" ent-type-id)))
 
 (defn new-entity-type [payload]
   (send-coll-request :post payload))
@@ -62,17 +62,17 @@
 
 (t/deftest test-list-schema-entities
   (t/testing "We can list the 'entity types' stored in the system."
-    (let [schemas (wne/register-entity-schema :orange/id)]
-      (tu/with-fixtures
-        schemas
-        (fn [conn]
-          (let [response (list-entity-types)
-                body (:body response)]
-            (t/is (ru-hp/ok? response))
-            (let [ent-type-info (-> :entity-types body)
-                  ent-types (into #{} (map :entity-type ent-type-info))]
-              (t/is (not-empty ent-type-info) (pr-str body))
-              (t/is (ent-types "orange")))))))))
+    (tu/with-installed-generic-entity
+      :orange/id
+      "WBOrange%d"
+      (fn [conn]
+        (let [response (list-entity-types)
+              body (:body response)]
+          (t/is (ru-hp/ok? response))
+          (let [ent-type-info (:entity-types body)
+                ent-types (into #{} (map :entity-type ent-type-info))]
+            (t/is (not-empty ent-type-info) (pr-str body))
+            (t/is (ent-types "orange"))))))))
 
 (t/deftest test-disable-entity-type
   (let [apple-id-template "WBApple%08d"
@@ -89,7 +89,7 @@
           (let [response (disable-entity-type "apple")
                 body (:body response)]
             (t/is (ru-hp/ok? response))))))
-    (t/testing "Disabling an already disabled schema entity"
+    (t/testing "Disabling an already disabled schema entity is ok."
       (tu/with-installed-generic-entity
         :apple/id
         "WBApple%03d"
@@ -97,13 +97,22 @@
           @(d/transact conn [[:db/add :apple/id wne/enabled-ident false]])
           (let [response (disable-entity-type "apple")
                 body (:body response)]
-            (t/is (ru-hp/conflict? response))))))))
+            (t/is (ru-hp/ok? response))))))))
 
 (t/deftest test-enable-entity-type-schema
-  (t/testing "Marking an entity-type as disabled and its effects."
+  (t/testing "Doesn't matter if already enabled."
     (tu/with-installed-generic-entity
       :pear/id
       "WBPear%08d"
       (fn [conn]
-          (let [response (enable-entity-type "pear")]
-            (t/is (ru-hp/ok? response)))))))
+        (let [response (enable-entity-type "pear")]
+          (t/is (ru-hp/ok? response))))))
+  (t/testing "Succeed if entity type is disabled."
+    (tu/with-installed-generic-entity
+      :orange/id
+      "WBOrange08d"
+      (fn [conn]
+        @(d/transact conn
+                     [[:db/cas :orange/id :wormbase.names/entity-type-enabled? true false]])
+        (let [response (enable-entity-type "orange")]
+          (t/is (ru-hp/ok? response)))))))

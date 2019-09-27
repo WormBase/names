@@ -23,7 +23,7 @@
 
 (def update-gene (partial api-tc/update "gene"))
 
-(def update-variation (partial api-tc/update "variation"))
+(def update-variation (partial api-tc/update "generic/variation"))
 
 (def update-species (partial api-tc/update "species"))
 
@@ -181,7 +181,9 @@
         sample {:variation/name (first (gen/sample gsv/name 1))
                 :variation/status :variation.status/live}
         sample-data (merge sample {:variation/id identifier})]
-    (tu/with-fixtures
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
       sample-data
       (fn [conn]
         (t/testing (str "Updating name for existing variation requires "
@@ -217,7 +219,9 @@
                           :variation/status :variation.status/live})
                        v-names)
           subject-identifier (-> samples last :variation/id)]
-      (tu/with-fixtures
+      (tu/with-installed-generic-entity
+        :variation/id
+        "WBVar&08d"
         samples
         (fn [conn]
           (let [data {:name (-> samples first :variation/name)}

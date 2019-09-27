@@ -40,28 +40,45 @@
                         (wnu/qualify-keys "variation"))]
     [id data-sample]))
 
-(defn change-status
-  [entity-type endpoint id & {:keys [current-user method payload]
-                              :or {current-user "tester@wormbase.org"
-                                   method :post
-                                   payload {:prov nil}}}]
-  (api-tc/send-request entity-type
+(defn change-gene-status
+  [id & {:keys [current-user method payload uri]
+         :or {current-user "tester@wormbase.org"
+              method :post
+              payload {:prov nil}}}]
+  (api-tc/send-request "gene"
                        method
                        payload
-                       :sub-path (str id endpoint)
+                       :sub-path id
                        :current-user current-user))
 
+(defn change-entity-status
+  [entity-type id & {:keys [current-user method payload endpoint uri]
+                     :or {current-user "tester@wormbase.org"
+                          method :post
+                          endpoint nil
+                          payload {:prov nil}}}]
+  (let [uri* (str "/api/generic/" entity-type "/" id )]
+    (api-tc/send-request nil
+                         method
+                         payload
+                         :uri (if endpoint
+                                (str uri* "/" endpoint)
+                                uri*))))
+
 (defn kill-gene [gene-id]
-  (change-status "gene" "" gene-id :method :delete))
+  (change-gene-status gene-id :method :delete))
 
-(def resurrect-gene (partial change-status "gene" "/resurrect"))
+(defn resurrect-gene [gene-id]
+  (change-gene-status (str gene-id "/resurrect")))
 
-(def suppress-gene (partial change-status "gene" "/suppress"))
+(defn suppress-gene [gene-id]
+  (change-gene-status (str gene-id "/suppress")))
 
 (defn kill-variation [var-id]
-  (change-status "variation" "" var-id :method :delete))
+  (change-entity-status "variation" var-id :method :delete))
 
-(def resurrect-variation (partial change-status "variation" "/resurrect"))
+(defn resurrect-variation [id]
+  (change-entity-status "variation" id :endpoint "resurrect"))
 
 (defn status-info [ident ^String status]
   (let [ent-ns (namespace ident)]
@@ -171,13 +188,13 @@
 (t/deftest killing-varation
   (t/testing "kill variation and check right status in db after."
     (let [[id sample] (variation-sample)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         sample
         (fn check-dead-after-kill [conn]
           (check-killed-dead conn kill-variation :variation/id sample id)))))
   (t/testing "killed variation ok and provenance recorded."
     (let [[id sample] (variation-sample)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         sample
         (fn check-dead-after-kill [conn]
           (check-prov-for-killed conn kill-variation :variation/id sample))))))
@@ -185,14 +202,14 @@
 (t/deftest ressurecting-variation
   (t/testing "Resurrecting a dead variation succesfully"
     (let [[id sample] (variation-sample :current-status :variation.status/dead)]
-      (tu/with-fixtures
-        (assoc sample :variation/id id)
+      (tu/with-variation-fixtures
+        [(assoc sample :variation/id id)]
         (fn [conn]
           (let [response (resurrect-variation id)]
             (t/is (ru-hp/ok? response)))))))
-  (t/testing "Cannot resurrect live gene"
+  (t/testing "Cannot resurrect live variation"
     (let [[id sample] (variation-sample)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         (assoc sample :variation/id id)
         (fn [conn]
           (let [response (resurrect-variation id)]
