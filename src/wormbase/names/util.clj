@@ -165,8 +165,9 @@
                    (if-not (contains? m k)
                      (assoc m k v)
                      m))))
-             (empty mapping)
+             {}
              mapping))
+
 
 (defn unqualify-keys
   "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
@@ -176,7 +177,7 @@
                         (= (namespace k) entity-type))
                  (assoc m (-> k name keyword) v)
                  (assoc m k v)))
-             (empty mapping)
+             {}
              mapping))
 
 (defn transform-ident-ref [k m kw-ns]
