@@ -1,0 +1,3 @@
+[{:entity-type :gene/id :id-format "WBGene%08d" :generic? false}
+ {:entity-type :sequence-feature/id :id-format "WBsf%d" :generic? true}
+ {:entity-type :variation/id :id-format "WBVar%08d" :generic? true}]
