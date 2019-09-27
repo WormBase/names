@@ -395,7 +395,7 @@
        :handler (fn handle-list-entity-schemas [request]
                   (list-entity-schemas request))}
       :post
-      {:summary "Add a new simple entity to the system."
+      {:summary "Add a new simple entity type to the system."
        :parameters {:body-params {:data ::wse/new-schema
                                   :prov ::wsp/provenance}}
        :handler (fn register-entity-schema [request]
@@ -413,6 +413,11 @@
        :parameters {:body-params {:prov ::wsp/provenance}}
        :handler (fn handle-disable-ent-type [request]
                   (disable-entity-type request entity-type))}
+      :get
+      {:summary "Find variations by any unique identifier."
+       :parameters {:query-params ::wsc/find-request}
+       :x-name ::find-entities
+       :handler (finder entity-type)}
       :put
       {:summary "Update the schema for an entity type (enable/disable only)."
        :x-name ::enable-entity-type
