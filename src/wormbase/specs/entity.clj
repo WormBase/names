@@ -12,7 +12,7 @@
                                     #(str/includes? % "%"))
                        :swagger/example "WBGene%08d"
                        :description (str "A sprintf-style format string "
-                                         "that will be used to generate for identifiers.")}))
+                                         "that will be used for generating identifiers.")}))
 
 (s/def ::entity-type (stc/spec {:spec (s/and string? #(every?
                                                        (fn [^Character ch]
@@ -25,10 +25,13 @@
 (s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template ::entity-type])
                                :description "Parameters required to install a new entity schema."}))
 
-(s/def ::id qualified-keyword?)
+(s/def ::id (stc/spec {:spec (s/and string?
+                                    #(str/starts-with? % "WB"))
+                       :description "An entity identifier."
+                       :swagger/example "WBVar12345678"}))
 
 (s/def ::name (stc/spec {:spec (s/and string?
-                                      (partial re-seq "^[A-Za-z]")
+                                      (partial re-seq #"^[A-Za-z]")
                                       #(not (str/includes? % " ")))
                          :description "Entity name. (AKA \"public name\""}))
 
