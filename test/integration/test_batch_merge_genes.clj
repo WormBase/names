@@ -46,7 +46,7 @@
       (tu/with-gene-fixtures
         fixtures**
         (fn [conn]
-          (let [response (merge-genes {:data (wnu/unqualify-keys data "gene")
+          (let [response (merge-genes {:data (map #(wnu/unqualify-keys % "gene") data)
                                        :prov basic-prov})]
             (t/is (ru-hp/ok? response))))))))
 
