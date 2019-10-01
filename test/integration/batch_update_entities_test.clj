@@ -26,7 +26,7 @@
         names (gen/sample gsv/name 2)
         stati (repeat 2 :variation.status/live)]
     (map #(zipmap [:variation/id :variation/name :variation/status] [%1 %2 %3])
-                      ids names stati)))
+         ids names stati)))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items containing non-unique names is rejected."
