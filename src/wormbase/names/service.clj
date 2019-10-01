@@ -104,4 +104,5 @@
 (defn init
   "Entry-point for ring server initialization."
   []
-  (mount/start))
+  (mount/start)
+  (wdbs/install wdb/conn))
