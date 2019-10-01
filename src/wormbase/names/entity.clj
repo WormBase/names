@@ -122,8 +122,8 @@
                        (conform-spec-fn)
                        (wnu/qualify-keys ent-ns)
                        (merge-into-ent-data ent-data)
-                       (names-validator)
-                       (transform-ident-ref-values))
+                       (transform-ident-ref-values)
+                       (names-validator))
               resolve-refs-to-db-ids (or ref-resolver-fn
                                          (fn noop-resolver [_ data]
                                            data))

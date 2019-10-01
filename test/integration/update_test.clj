@@ -94,6 +94,68 @@
               (t/is (= (:cgc-name updated) new-cgc-name))
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
+(t/deftest update-name-of-dead-gene
+  (t/testing "Can still update names of dead genes (provided they remain unique in the system."
+    (let [gid (first (gen/sample gsg/id 1))
+          sample* (first (tu/gen-sample gsg/uncloned 1))
+          sample (-> sample*
+                     (wnu/qualify-keys "gene")
+                     (tu/species->ref)
+                     (select-keys [:gene/cgc-name :gene/species]))
+          species (tu/species-ref->latin-name sample)
+          init-cgc-name (tu/cgc-name-for-sample sample*)
+          sample-data (assoc sample
+                             :gene/id gid
+                             :gene/biotype :biotype/cds
+                             :gene/status :gene.status/dead
+                             :gene/cgc-name init-cgc-name)]
+      (tu/with-gene-fixtures
+        [sample-data]
+        (fn do-update [conn]
+          (let [new-cgc-name (tu/cgc-name-for-species species)
+                payload {:data (-> sample-data
+                                   (dissoc :gene/status)
+                                   (wnu/unqualify-keys "gene")
+                                   (update :biotype name)
+                                   (assoc :species species)
+                                   (dissoc :id)
+                                   (assoc :cgc-name new-cgc-name))
+                         :prov nil}
+                response (update-gene gid payload)]
+            (t/is (ru-hp/ok? response))
+            (let [updated (-> response :body :updated)]
+              (t/is (= (:cgc-name updated) new-cgc-name)
+                    (format "EXP:%s!= ACT: %s - INTITIAL: %s"
+                            new-cgc-name
+                            (:cgc-name updated)
+                            init-cgc-name)))))))))
+
+(t/deftest removing-cgc-name-from-uncloned-gene
+  (t/testing "Attempts to remove the CGC name from an uncloned gene is not allowed."
+    (let [gid (first (gen/sample gsg/id 1))
+          sample* (first (tu/gen-sample gsg/uncloned 1))
+          sample (-> sample*
+                     (wnu/qualify-keys "gene")
+                     (tu/species->ref)
+                     (select-keys [:gene/cgc-name :gene/species]))
+          species (tu/species-ref->latin-name sample)
+          sample-data (assoc sample
+                             :gene/id gid
+                             :gene/biotype :biotype/cds
+                             :gene/cgc-name (tu/cgc-name-for-sample sample*))]
+      (tu/with-gene-fixtures
+        [sample-data]
+        (fn do-update [conn]
+          (let [payload {:data (-> sample-data
+                                   (wnu/unqualify-keys "gene")
+                                   (update :biotype name)
+                                   (assoc :species species)
+                                   (dissoc :id)
+                                   (assoc :cgc-name nil))
+                         :prov nil}
+                response (update-gene gid payload)]
+            (t/is (ru-hp/bad-request? response))))))))
+
 (t/deftest removing-cgc-name-from-cloned-gene
   (t/testing "Allow CGC name to be removed from a cloned gene."
     (let [gid (first (gen/sample gsg/id 1))
@@ -125,6 +187,7 @@
                   updated (-> response :body :updated)]
               (t/is (empty? (some-> response :body :cgc-name)))
               (tu/query-provenance conn identifier :event/update-gene))))))))
+
 
 (t/deftest gene-provenance
   (t/testing "Provenance is recorded for successful transactions"

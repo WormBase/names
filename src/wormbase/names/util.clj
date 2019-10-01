@@ -181,5 +181,7 @@
              mapping))
 
 (defn transform-ident-ref [k m kw-ns]
-  (update m k (fn [short-name]
-                (keyword kw-ns short-name))))
+  (update m k (fn [old]
+                (keyword kw-ns (if (keyword old)
+                                 (name old)
+                                 old)))))

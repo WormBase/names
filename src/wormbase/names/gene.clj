@@ -456,7 +456,13 @@
                                                   :event/update-gene
                                                   summary-pull-expr
                                                   validate-names
-                                                  resolve-refs-to-dbids)]
+                                                  resolve-refs-to-dbids)
+                         data (some-> request :body-params :data)]
+                     (when (and
+                            (not (s/valid? ::wsg/cloned data))
+                            (s/valid? ::wsg/uncloned data)
+                            (nil? (:cgc-name data)))
+                       (bad-request! {:message "CGC name cannot be removed from an uncloned gene."}))
                      (update-gene request identifier)))}})
      (sweet/context "/merge/:from-identifier" [from-identifier]
        (sweet/resource
