@@ -57,7 +57,7 @@
                           method :post
                           endpoint nil
                           payload {:prov nil}}}]
-  (let [uri* (str "/api/generic/" entity-type "/" id )]
+  (let [uri* (str "/api/entity/" entity-type "/" id )]
     (api-tc/send-request nil
                          method
                          payload

@@ -26,7 +26,7 @@
 (def not-nil? (complement nil?))
 
 (defn new-variation [& args]
-  (apply api-tc/new "generic/variation" args))
+  (apply api-tc/new "entity/variation" args))
 
 (defn check-db [db ident id]
   (let [status-ident (keyword (namespace ident) "status")

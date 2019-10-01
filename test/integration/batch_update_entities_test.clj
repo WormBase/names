@@ -14,7 +14,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn update-variations [data]
-  (api-tc/send-request "batch" :put data :sub-path "generic/variation"))
+  (api-tc/send-request "batch" :put data :sub-path "entity/variation"))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

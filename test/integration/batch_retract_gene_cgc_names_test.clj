@@ -20,7 +20,7 @@
 
 (defn retract-variation-name [data]
   (let [data* (assoc data :batch-size 1)]
-    (api-tc/send-request "batch" :delete data* :sub-path "generic/variation/name")))
+    (api-tc/send-request "batch" :delete data* :sub-path "entity/variation/name")))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

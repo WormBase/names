@@ -26,7 +26,7 @@
                    "authorization" "Token IsTotallyMadeUp"}
           [status body] (tu/get*
                          service/app
-                         "/api/generic/variation"
+                         "/api/entity/variation"
                          params
                          headers)]
       [status (tu/parse-body body)])))

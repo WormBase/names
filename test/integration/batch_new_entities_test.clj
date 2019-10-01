@@ -18,7 +18,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn new-variations [data]
-  (api-tc/send-request "batch" :post data :sub-path "generic/variation"))
+  (api-tc/send-request "batch" :post data :sub-path "entity/variation"))
 
 (defn query-batch [db bid]
   (wnu/query-batch db bid wnv/summary-pull-expr))

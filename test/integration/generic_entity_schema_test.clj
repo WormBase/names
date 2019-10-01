@@ -23,13 +23,13 @@
   (api-tc/send-request nil
                        method
                        (or payload  {:prov nil :data nil})
-                       :uri "/api/generic"))
+                       :uri "/api/entity"))
 
 (defn send-item-request [method payload ent-type-id]
   (api-tc/send-request nil
                        method
                        (or payload  {:prov nil :data {}})
-                       :uri (str "/api/generic/" ent-type-id)))
+                       :uri (str "/api/entity/" ent-type-id)))
 
 (defn new-entity-type [payload]
   (send-coll-request :post payload))

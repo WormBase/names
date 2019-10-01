@@ -20,9 +20,9 @@
 (defn send-change-status-request [op data]
   (let [data* (assoc data :batch-size 1)]
     (if (= op :kill)
-      (api-tc/send-request "batch/generic" :delete data* :sub-path entity-type)
+      (api-tc/send-request "batch/entity" :delete data* :sub-path entity-type)
       (let [sub-path (str entity-type "/" (name op))]
-        (api-tc/send-request "batch/generic" :post data* :sub-path sub-path)))))
+        (api-tc/send-request "batch/entity" :post data* :sub-path sub-path)))))
 
 (defn make-samples [n]
   (map (fn [id]

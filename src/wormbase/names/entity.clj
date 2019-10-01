@@ -386,7 +386,7 @@
       (wnu/response-map)))
 
 (def coll-resources
-  (sweet/context "/generic" []
+  (sweet/context "/entity" []
     :tags ["entity"]
     (sweet/resource
      {:get
@@ -402,7 +402,7 @@
                   (handle-register-entity-schema request))}})))
 
 (def item-resources
-  (sweet/context "/generic/:entity-type" []
+  (sweet/context "/entity/:entity-type" []
     :tags ["entity"]
     :path-params [entity-type :- ::wse/entity-type]
     (sweet/resource

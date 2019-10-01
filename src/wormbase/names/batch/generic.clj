@@ -200,7 +200,7 @@
         (ok))))
 
 (def routes
-  (sweet/context "/generic/:entity-type" []
+  (sweet/context "/entity/:entity-type" []
     :tags ["batch"]
     :path-params [entity-type :- string?]
     (sweet/resource

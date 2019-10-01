@@ -23,7 +23,7 @@
 
 (def update-gene (partial api-tc/update "gene"))
 
-(def update-variation (partial api-tc/update "generic/variation"))
+(def update-variation (partial api-tc/update "entity/variation"))
 
 (def update-species (partial api-tc/update "species"))
 

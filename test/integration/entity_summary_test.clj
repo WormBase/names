@@ -22,7 +22,7 @@
                 :variation/id id}]
     [id sample]))
 
-(def summary (partial api-tc/summary "generic/variation"))
+(def summary (partial api-tc/summary "entity/variation"))
 
 (t/deftest test-summary
   (t/testing "Summary of a live variation can be retrieved by WBVar ID."
