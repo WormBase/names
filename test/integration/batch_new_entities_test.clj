@@ -12,7 +12,6 @@
    [wormbase.names.batch :as wnb]
    [wormbase.names.service :as service]
    [wormbase.names.util :as wnu]
-   [wormbase.names.variation :as wnv]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -20,8 +19,10 @@
 (defn new-variations [data]
   (api-tc/send-request "batch" :post data :sub-path "entity/variation"))
 
+(def summary-pull-expr '[* {:variation/status [:db/ident]}])
+
 (defn query-batch [db bid]
-  (wnu/query-batch db bid wnv/summary-pull-expr))
+  (wnu/query-batch db bid summary-pull-expr))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
