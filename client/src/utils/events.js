@@ -2,23 +2,8 @@ export function pastTense(eventText = '') {
   return eventText.replace(/(creat|merg|kill|resurrect|suppress)e?/g, '$1ed');
 }
 
-function activityEntityType(activityItem = {}) {
-  return Object.keys(activityItem).reduce((result, key) => {
-    if (result) {
-      return result;
-    }
-    const match = key.match(/(.+)\/id/);
-    if (match) {
-      return match[1];
-    } else {
-      return null;
-    }
-  }, null);
-}
-
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   const what = activityItem['what'];
-  const entityType = activityEntityType(activityItem);
   const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
     (result, change) => {
       const { attr, value, added } = change || {};
