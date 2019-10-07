@@ -31,7 +31,7 @@ class EntityDialogKill extends Component {
         }
       },
       () => {
-        return authorizedFetch(`/api/${entityType}/${this.props.wbId}`, {
+        return authorizedFetch(`/api/entity/${entityType}/${this.props.wbId}`, {
           method: 'DELETE',
           body: JSON.stringify({
             ...data,

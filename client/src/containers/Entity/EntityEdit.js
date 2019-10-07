@@ -19,6 +19,7 @@ import { mockFetchOrNot } from '../../mock';
 function EntityEdit({
   entityType,
   wbId: id,
+  apiPrefix,
   renderDisplayName,
   history,
   children,
@@ -82,10 +83,10 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-09T22:09:16Z',
               'provenance/merged-from': {
-                'gene/id': 'WBGene00303223',
+                id: 'WBGene00303223',
               },
               'provenance/merged-into': {
-                'gene/id': id,
+                id: id,
               },
             },
             {
@@ -112,10 +113,10 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-08T16:50:46Z',
               'provenance/split-from': {
-                'gene/id': id,
+                id: id,
               },
               'provenance/split-into': {
-                'gene/id': 'WBGene00303222',
+                id: 'WBGene00303222',
               },
             },
             {
@@ -126,37 +127,37 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-08T15:21:07Z',
               'provenance/split-from': {
-                'gene/id': id,
+                id: id,
               },
               'provenance/split-into': {
-                'gene/id': 'WBGene00303219',
+                id: 'WBGene00303219',
               },
             },
             {
               'provenance/how': 'agent/web',
               'provenance/what': 'event/new-gene',
               'provenance/who': {
-                'person/id': 'WBPerson12346',
+                id: 'WBPerson12346',
               },
               'provenance/when': '2018-07-23T15:25:17Z',
             },
           ];
 
           return mockFetch.get('*', {
-            'gene/species': 'Caenorhabditis elegans',
-            'gene/cgc-name': 'abi-1',
-            'gene/status': 'gene.status/live',
-            'gene/biotype': 'biotype/cds',
-            'gene/id': id,
+            species: 'Caenorhabditis elegans',
+            'cgc-name': 'abi-1',
+            status: 'gene.status/live',
+            biotype: 'biotype/cds',
+            id: id,
             history: historyMock,
           });
         },
         () => {
-          return authorizedFetch(`/api/${entityType}/${id}`);
+          return authorizedFetch(`${apiPrefix}/${id}`);
         }
       );
     },
-    [entityType, id, authorizedFetch]
+    [apiPrefix, id, authorizedFetch]
   );
 
   const {
@@ -176,7 +177,7 @@ function EntityEdit({
   } = useDataFetch(null, {});
 
   const { history: changes, ...data } = responseContent;
-  const wbId = data[`${entityType}/id`];
+  const wbId = data.id;
   const disabled =
     isLoading ||
     isSubmitInProgress ||
@@ -218,7 +219,7 @@ function EntityEdit({
   );
 
   return isError ? (
-    <EntityNotFound entityType="gene" wbId={id} />
+    <EntityNotFound entityType={entityType} wbId={id} />
   ) : isLoading && dataTimestamp === 0 ? (
     /* initial render only, don't clear page if refetching after submit */
     <CircularProgress />
@@ -294,16 +295,13 @@ function EntityEdit({
                               },
                               {}
                             );
-                            return authorizedFetch(
-                              `/api/${entityType}/${wbId}`,
-                              {
-                                method: 'PUT',
-                                body: JSON.stringify({
-                                  data: dataSubmit,
-                                  prov: provenance,
-                                }),
-                              }
-                            );
+                            return authorizedFetch(`${apiPrefix}/${wbId}`, {
+                              method: 'PUT',
+                              body: JSON.stringify({
+                                data: dataSubmit,
+                                prov: provenance,
+                              }),
+                            });
                           }
                         );
                       },
@@ -326,6 +324,7 @@ function EntityEdit({
               }),
               getDialogProps: (operation) => ({
                 entityType: entityType,
+                apiPrefix: apiPrefix,
                 wbId: wbId,
                 name: renderDisplayName(data),
                 data: data,

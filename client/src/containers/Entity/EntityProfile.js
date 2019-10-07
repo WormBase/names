@@ -34,23 +34,22 @@ const OPERATION_RESURRECT = 'resurrect';
 
 class EntityProfile extends Component {
   renderStatus({ data, entityType }) {
-    return data[`${entityType}/status`] !== `${entityType}.status/live` ? (
+    return data['status'] !== 'live' ? (
       <Typography variant="display1" gutterBottom>
-        <Humanize capitalized>{data[`${entityType}/status`]}</Humanize>
+        <Humanize capitalized>{data['status']}</Humanize>
       </Typography>
     ) : null;
   }
 
   renderDisplayName = (data = {}) => {
-    const { entityType } = this.props;
-    return data[`${entityType}/name`] || data[`${entityType}/id`];
+    return data['name'] || data['id'];
   };
 
   renderForm = (formProps) => <EntityForm {...formProps} />;
 
   renderOperations = ({ data, changes, getOperationProps, getDialogProps }) => {
     const { entityType } = this.props;
-    const live = data[`${entityType}/status`] === `${entityType}.status/live`;
+    const live = data['status'] === 'live';
     return (
       <React.Fragment>
         {live ? (
@@ -88,6 +87,7 @@ class EntityProfile extends Component {
       classes = {},
       wbId,
       entityType,
+      apiPrefix = `/api/entity/${entityType}`,
       renderDisplayName = this.renderDisplayName,
       renderForm = this.renderForm,
       renderChanges = this.renderChanges,
@@ -100,6 +100,7 @@ class EntityProfile extends Component {
       <EntityEdit
         wbId={wbId}
         entityType={entityType}
+        apiPrefix={apiPrefix}
         renderDisplayName={renderDisplayName}
       >
         {({
@@ -232,6 +233,7 @@ EntityProfile.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
   wbId: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string.isRequired,
   withFieldData: PropTypes.func.isRequired,
   dirtinessContext: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,

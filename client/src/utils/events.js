@@ -17,7 +17,7 @@ function activityEntityType(activityItem = {}) {
 }
 
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
-  const what = activityItem['provenance/what'];
+  const what = activityItem['what'];
   const entityType = activityEntityType(activityItem);
   const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
     (result, change) => {
@@ -64,11 +64,11 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   const descriptor = {
     eventLabel: eventType || activityItem['provenance/what'],
     entity: {
-      [`${entityType}/id`]: selfGeneId || activityItem[`${entityType}/id`],
+      id: selfGeneId || activityItem.id,
     },
     relatedEntity: relatedGeneId
       ? {
-          [`${entityType}/id`]: relatedGeneId,
+          id: relatedGeneId,
         }
       : null,
   };

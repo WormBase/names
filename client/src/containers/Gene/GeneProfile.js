@@ -71,6 +71,7 @@ class GeneProfile extends Component {
       <EntityProfile
         wbId={wbId}
         entityType={entityType}
+        apiPrefix="/api/gene"
         renderDisplayName={this.getDisplayName}
         renderStatus={this.renderStatus}
         renderOperations={({

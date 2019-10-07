@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route, Redirect, Switch, matchPath } from 'react-router-dom';
+import { Route, Switch, matchPath } from 'react-router-dom';
 import 'typeface-roboto';
 import {
   withStyles,

@@ -25,7 +25,7 @@ class EntityDialogResurrect extends Component {
       },
       () => {
         return authorizedFetch(
-          `/api/${entityType}/${this.props.wbId}/resurrect`,
+          `/api/entity/${entityType}/${this.props.wbId}/resurrect`,
           {
             method: 'POST',
             body: JSON.stringify({

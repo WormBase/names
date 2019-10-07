@@ -40,3 +40,7 @@ const ENTITY_TYPE_SET = new Set(
 export function existsEntitiyType(entityType) {
   return ENTITY_TYPE_SET.has(entityType);
 }
+
+export function getAPIPrefix(entityType, wbId) {
+  return `/api/entity/${entityType}/${wbId}`;
+}
