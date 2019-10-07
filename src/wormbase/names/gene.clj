@@ -156,10 +156,10 @@
                         (keyword "biotype" ))
         biotype-entid (d/entid db biotype-ident)
         res (vec (merge data
-                       (when biotype-entid
-                         {:gene/biotype biotype-entid})
-                       (when species-entid
-                         {:gene/species species-entid})))]
+                        (when biotype-entid
+                          {:gene/biotype biotype-entid})
+                        (when species-entid
+                          {:gene/species species-entid})))]
     res))
 
 (defn- validate-merge-request
@@ -380,140 +380,140 @@
 
 (def item-resources
   (sweet/context "/gene/:identifier" []
-     :tags ["gene"]
-     :path-params [identifier :- ::wsg/identifier]
-     (sweet/context "/resurrect" []
-       (sweet/resource
-        {:post
-         {:summary "Resurrect a gene."
-          :x-name ::resurrect-gene
-          :parameters {:body-params {:prov ::wsp/provenance}}
-          :responses status-changed-responses
-          :handler (fn [request]
-                     (let [resurrect (wne/status-changer
-                                      :gene/id
-                                      :gene/status
-                                      :gene.status/live
-                                      :event/resurrect-gene
-                                      :fail-precondition? wnu/live?
-                                      :precondition-failure-msg "Gene is already live.")]
-                     (resurrect request identifier)))}}))
-     (sweet/context "/suppress" []
-       (sweet/resource
-        {:post
-         {:summary "Suppress a gene."
-          :x-name ::suppress-gene
-          :parameters {:body-params {:prov ::wsp/provenance}}
-          :responses status-changed-responses
-          :handler (fn [request]
-                     (let [suppress (wne/status-changer
+    :tags ["gene"]
+    :path-params [identifier :- ::wsg/identifier]
+    (sweet/context "/resurrect" []
+      (sweet/resource
+       {:post
+        {:summary "Resurrect a gene."
+         :x-name ::resurrect-gene
+         :parameters {:body-params {:prov ::wsp/provenance}}
+         :responses status-changed-responses
+         :handler (fn [request]
+                    (let [resurrect (wne/status-changer
                                      :gene/id
                                      :gene/status
-                                     :gene.status/suppressed
-                                     :event/suppress-gene
-                                     :fail-precondition? wnu/not-live?
-                                     :precondition-failure-msg "Gene must be live.")]
-                     (suppress request identifier)))}}))
-     (sweet/resource
-      {:delete
-       {:summary "Kill a gene"
-        :x-name ::kill-gene
-        :parameters {:body-params {:prov ::wsp/provenance}}
-        :responses status-changed-responses
-        :handler
-        (fn [request]
-          (let [kill (wne/status-changer
-                      :gene/id
-                      :gene/status
-                      :gene.status/dead
-                      :event/kill-gene
-                      :fail-precondition? wnu/dead?
-                      :precondition-failure-msg "Gene to be killed is already dead.")]
-            (kill request identifier)))}})
-     (sweet/resource
-      {:get
-       {:summary "Information about a given gene."
-        :x-name ::summary
-        :responses (wnu/response-map ok {:schema ::wsg/summary})
-        :handler (fn [request]
-                   ((wne/summarizer identify
-                                    summary-pull-expr
-                                    #{:gene/splits :gene/merges})
-                    request
-                    identifier))}
-       :put
-       {:summary "Update an existing gene."
-        :x-name ::update-gene
-        :parameters {:body-params {:data ::wsg/update
-                                   :prov ::wsp/provenance}}
-        :responses (-> wnu/default-responses
-                       (dissoc conflict)
-                       (wnu/response-map))
-        :handler (fn [request]
-                   (let [update-gene (wne/updater identify
-                                                  :gene/id
-                                                  (partial wnu/conform-data ::wsg/update)
-                                                  :event/update-gene
-                                                  summary-pull-expr
-                                                  validate-names
-                                                  resolve-refs-to-dbids)
-                         data (some-> request :body-params :data)]
-                     (when (and
-                            (not (s/valid? ::wsg/cloned data))
-                            (s/valid? ::wsg/uncloned data)
-                            (nil? (:cgc-name data)))
-                       (bad-request! {:message "CGC name cannot be removed from an uncloned gene."}))
-                     (update-gene request identifier)))}})
-     (sweet/context "/merge/:from-identifier" [from-identifier]
-       (sweet/resource
-        {:post
-         {:summary "Merge one gene with another."
-          :x-name ::merge-gene
-          :path-params [from-identifier ::wsg/identifier]
-          :parameters {:body-params {:data ::wsg/merge
-                                     :prov ::wsp/provenance}}
-          :responses (wnu/response-map delete-responses)
-          :handler
-          (fn [request]
-            (merge-genes request identifier from-identifier))}
-         :delete
-         {:summary "Undo a merge operation."
-          :x-name ::undo-merge-gene
-          :path-params [from-identifier ::wsg/identifier]
-          :parameters {:body-params {:prov ::wsp/provenance}}
-          :responses (-> delete-responses
-                         (assoc ok {:schema ::wsg/undone})
-                         (wnu/response-map))
-          :handler (fn [request]
-                     (undo-merge-gene request
-                                      identifier
-                                      from-identifier))}}))
-     (sweet/context "/split" []
-       (sweet/resource
-        {:post
-         {:summary "Split a gene."
-          :x-name ::split-gene
-          :parameters {:body-params {:data ::wsg/split :prov ::wsp/provenance}}
-          :responses (-> (dissoc wnu/default-responses ok)
-                         (assoc created
-                                {:schema ::wsg/split-response})
-                         (wnu/response-map))
-          :handler
-          (fn [request]
-            (split-gene request identifier))}}))
-     (sweet/context "/split/:into-identifier" [into-identifier]
-       (sweet/resource
-        {:delete
-         {:summary "Undo a split gene operation."
-          :x-name ::undo-split-gene
-          :path-params [into-identifier :- ::wsg/identifier]
-          :responses (-> delete-responses
-                         (assoc ok {:schema ::wsg/undone})
-                         (wnu/response-map))
-          :handler (fn [request]
-                     (undo-split-gene request
-                                      identifier
-                                      into-identifier))}}))))
+                                     :gene.status/live
+                                     :event/resurrect-gene
+                                     :fail-precondition? wnu/live?
+                                     :precondition-failure-msg "Gene is already live.")]
+                      (resurrect request identifier)))}}))
+    (sweet/context "/suppress" []
+      (sweet/resource
+       {:post
+        {:summary "Suppress a gene."
+         :x-name ::suppress-gene
+         :parameters {:body-params {:prov ::wsp/provenance}}
+         :responses status-changed-responses
+         :handler (fn [request]
+                    (let [suppress (wne/status-changer
+                                    :gene/id
+                                    :gene/status
+                                    :gene.status/suppressed
+                                    :event/suppress-gene
+                                    :fail-precondition? wnu/not-live?
+                                    :precondition-failure-msg "Gene must be live.")]
+                      (suppress request identifier)))}}))
+    (sweet/resource
+     {:delete
+      {:summary "Kill a gene"
+       :x-name ::kill-gene
+       :parameters {:body-params {:prov ::wsp/provenance}}
+       :responses status-changed-responses
+       :handler
+       (fn [request]
+         (let [kill (wne/status-changer
+                     :gene/id
+                     :gene/status
+                     :gene.status/dead
+                     :event/kill-gene
+                     :fail-precondition? wnu/dead?
+                     :precondition-failure-msg "Gene to be killed is already dead.")]
+           (kill request identifier)))}})
+    (sweet/resource
+     {:get
+      {:summary "Information about a given gene."
+       :x-name ::summary
+       :responses (wnu/response-map ok {:schema ::wsg/summary})
+       :handler (fn [request]
+                  ((wne/summarizer identify
+                                   summary-pull-expr
+                                   #{:gene/splits :gene/merges})
+                   request
+                   identifier))}
+      :put
+      {:summary "Update an existing gene."
+       :x-name ::update-gene
+       :parameters {:body-params {:data ::wsg/update
+                                  :prov ::wsp/provenance}}
+       :responses (-> wnu/default-responses
+                      (dissoc conflict)
+                      (wnu/response-map))
+       :handler (fn [request]
+                  (let [update-gene (wne/updater identify
+                                                 :gene/id
+                                                 (partial wnu/conform-data ::wsg/update)
+                                                 :event/update-gene
+                                                 summary-pull-expr
+                                                 validate-names
+                                                 resolve-refs-to-dbids)
+                        data (some-> request :body-params :data)]
+                    (when (and
+                           (not (s/valid? ::wsg/cloned data))
+                           (s/valid? ::wsg/uncloned data)
+                           (nil? (:cgc-name data)))
+                      (bad-request! {:message "CGC name cannot be removed from an uncloned gene."}))
+                    (update-gene request identifier)))}})
+    (sweet/context "/merge/:from-identifier" [from-identifier]
+      (sweet/resource
+       {:post
+        {:summary "Merge one gene with another."
+         :x-name ::merge-gene
+         :path-params [from-identifier ::wsg/identifier]
+         :parameters {:body-params {:data ::wsg/merge
+                                    :prov ::wsp/provenance}}
+         :responses (wnu/response-map delete-responses)
+         :handler
+         (fn [request]
+           (merge-genes request identifier from-identifier))}
+        :delete
+        {:summary "Undo a merge operation."
+         :x-name ::undo-merge-gene
+         :path-params [from-identifier ::wsg/identifier]
+         :parameters {:body-params {:prov ::wsp/provenance}}
+         :responses (-> delete-responses
+                        (assoc ok {:schema ::wsg/undone})
+                        (wnu/response-map))
+         :handler (fn [request]
+                    (undo-merge-gene request
+                                     identifier
+                                     from-identifier))}}))
+    (sweet/context "/split" []
+      (sweet/resource
+       {:post
+        {:summary "Split a gene."
+         :x-name ::split-gene
+         :parameters {:body-params {:data ::wsg/split :prov ::wsp/provenance}}
+         :responses (-> (dissoc wnu/default-responses ok)
+                        (assoc created
+                               {:schema ::wsg/split-response})
+                        (wnu/response-map))
+         :handler
+         (fn [request]
+           (split-gene request identifier))}}))
+    (sweet/context "/split/:into-identifier" [into-identifier]
+      (sweet/resource
+       {:delete
+        {:summary "Undo a split gene operation."
+         :x-name ::undo-split-gene
+         :path-params [into-identifier :- ::wsg/identifier]
+         :responses (-> delete-responses
+                        (assoc ok {:schema ::wsg/undone})
+                        (wnu/response-map))
+         :handler (fn [request]
+                    (undo-split-gene request
+                                     identifier
+                                     into-identifier))}}))))
 
 (def routes (sweet/routes coll-resources
                           item-resources))

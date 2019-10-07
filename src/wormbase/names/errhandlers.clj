@@ -80,7 +80,7 @@
                  data*)
                data*)
         body (assoc-error-message info exc :message message)]
-   (respond-bad-request request body)))
+    (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
   (when (some-> data :entity keyword?)

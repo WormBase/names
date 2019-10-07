@@ -104,7 +104,7 @@
 (defn entire-history [db entity-id]
   (d/q '[:find ?e ?aname ?v ?tx ?added
          :in $h ?e
-        :where
+         :where
          [$h ?e ?a ?v ?tx ?added]
          [$h ?a :db/ident ?aname]]
        (d/history db)
@@ -139,11 +139,11 @@
   "Return a sequence of tx ids that involve `entity-id`."
   [db entity-id ref-idents]
   (let [ent-txes (d/q '[:find [?tx ...]
-                      :in $h ?e
-                      :where
-                      [$h ?e _ _ ?tx _]]
-                    (d/history db)
-                    entity-id)
+                        :in $h ?e
+                        :where
+                        [$h ?e _ _ ?tx _]]
+                      (d/history db)
+                      entity-id)
         ref-txes (mapcat #(d/q '[:find [?tx ...]
                                  :in $h ?e ?ref-attr
                                  :where

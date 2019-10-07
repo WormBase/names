@@ -3,8 +3,6 @@
    [clojure.spec.alpha :as s]
    [datomic.api :as d]))
 
-;;; TODO: THIS CAUSES a lot of breakage due to qualiified/unqualified keys and
-;; where validation is done in conjunction with spec conforming.
 (defmulti validate-names (fn [request data]
                            (some->> data
                                     (keys)
@@ -12,7 +10,6 @@
                                     (first)
                                     (namespace)
                                     (keyword))))
-
 
 (defmethod validate-names :gene [request data]
   (if (some-> request :body-params :force)

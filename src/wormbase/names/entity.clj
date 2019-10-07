@@ -182,18 +182,18 @@
 
 (defn handle-kill [request entity-type identifier]
   (let [id-ident (keyword entity-type "id")
-          status-ident (keyword entity-type "status")
-          to-status (keyword (str entity-type ".status") "dead")
-          event-ident (keyword "event" (str "kill-" entity-type))
-          precond-failure-msg (format "%s to be killed is already dead."
-                                      entity-type)
-          kill (status-changer id-ident
-                               status-ident
-                               to-status
-                               event-ident
-                               :fail-precondition? wnu/dead?
-                               :precondition-failure-msg precond-failure-msg)]
-      (kill request identifier)))
+        status-ident (keyword entity-type "status")
+        to-status (keyword (str entity-type ".status") "dead")
+        event-ident (keyword "event" (str "kill-" entity-type))
+        precond-failure-msg (format "%s to be killed is already dead."
+                                    entity-type)
+        kill (status-changer id-ident
+                             status-ident
+                             to-status
+                             event-ident
+                             :fail-precondition? wnu/dead?
+                             :precondition-failure-msg precond-failure-msg)]
+    (kill request identifier)))
 
 (defn handle-resurrect [request entity-type identifier]
   (let [id-ident (keyword entity-type "id")
@@ -434,12 +434,12 @@
                       (assoc created {:schema {:created ::wse/created}})
                       (wnu/response-map))
        :handler (fn new-entity [request]
-                 (let [id-ident (keyword entity-type "id")
-                       event-ident (keyword "event" (str "new-" entity-type))
-                       conformer (partial wnu/conform-data ::wse/new)
-                       spe (make-summary-pull-expr entity-type)
-                       new-entity (creator id-ident conformer event-ident spe)]
-                   (new-entity request)))}})
+                  (let [id-ident (keyword entity-type "id")
+                        event-ident (keyword "event" (str "new-" entity-type))
+                        conformer (partial wnu/conform-data ::wse/new)
+                        spe (make-summary-pull-expr entity-type)
+                        new-entity (creator id-ident conformer event-ident spe)]
+                    (new-entity request)))}})
     (sweet/context "/:identifier" []
       :tags ["entity"]
       :middleware [entity-enabled-checker]

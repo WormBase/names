@@ -95,8 +95,8 @@
                        {:tx tx
                         :type ::invert-tx-problem
                         :range (d/tx-range log t (inc t))})))))
-    ([log tx provenance]
-     (invert-tx log tx provenance (constantly nil))))
+  ([log tx provenance]
+   (invert-tx log tx provenance (constantly nil))))
 
 (defn extract-id [tx-result identity-kw]
   (some->> (:tx-data tx-result)

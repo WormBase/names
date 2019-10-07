@@ -145,7 +145,7 @@
   (some-> latest-t str b64/encode codecs/bytes->str))
 
 (defn decode-etag [^String etag]
- {:pre [(not (str/blank? etag))]}
+  {:pre [(not (str/blank? etag))]}
   (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]

@@ -66,5 +66,3 @@
           (mount/stop)
           (exit 0 "Finished"))
         (exit 1 (str "Invalid importer specified:" importer-ns-name))))))
-
-

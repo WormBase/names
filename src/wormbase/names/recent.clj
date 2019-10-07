@@ -48,9 +48,9 @@
                   from
                   import-date)
          until-t (or until (jt/to-java-date (jt/instant)))]
-         ;; Timings for the `tx-ids` query below with default configured time window (60 days)
-         ;; (excluding pull expressions)
-         ;; jvm (cold): 107.266427 msecs
+     ;; Timings for the `tx-ids` query below with default configured time window (60 days)
+     ;; (excluding pull expressions)
+     ;; jvm (cold): 107.266427 msecs
      ;; jvm (warm): 30.054339 msecs
      (d/q query db rules log from-t until-t needle how))))
 

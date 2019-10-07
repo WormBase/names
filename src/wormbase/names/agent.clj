@@ -33,6 +33,5 @@
           aud (:aud token)]
       (get client-id-map aud))))
 
-
 (defn identify [token]
   (-identify token))

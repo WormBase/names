@@ -108,7 +108,7 @@
        :parameters {:body-params {:data ::wss/update
                                   :prov ::wsp/provenance}}
        :handler (fn handle-update [request]
-                    (update-item request identifier))}})))
+                  (update-item request identifier))}})))
 
 (def routes (sweet/routes coll-resources item-resources))
 

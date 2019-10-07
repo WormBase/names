@@ -41,7 +41,7 @@
                                            :person/id ::id)
                                :swagger/example "WBPerson33035"
                                :description "An identifier uniquely identifing a WormBase person."}))
- 
+
 (s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email
                                                    :person/id]
                                           :opt-un [:person/roles
