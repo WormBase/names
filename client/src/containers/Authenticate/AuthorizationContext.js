@@ -21,7 +21,7 @@ const AuthorizationContext = React.createContext({
 // https://overreacted.io/a-complete-guide-to-useeffect/
 // https://www.robinwieruch.de/react-hooks-fetch-data/
 
-export function useDataFetch(initialFetchFunc, initialData) {
+export function useDataFetch(initialFetchFuncMemoized, initialData) {
   const [state, dispatch] = useReducer(dataFetchReducer, {
     data: initialData,
     dataTimestamp: 0,
@@ -29,7 +29,7 @@ export function useDataFetch(initialFetchFunc, initialData) {
     isError: null,
     isNew: true,
   });
-  const [fetchFunc, setFetchFunc] = useState(initialFetchFunc);
+  const [fetchFunc, setFetchFunc] = useState(initialFetchFuncMemoized);
 
   function dataFetchReducer(state, action) {
     console.log(action);
