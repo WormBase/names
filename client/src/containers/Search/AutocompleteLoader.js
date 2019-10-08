@@ -5,32 +5,17 @@ import {
   AuthorizationContext,
 } from '../../containers/Authenticate';
 
-function getSuggestionFromMatches(match) {
-  return Object.keys(match).reduce((result, key) => {
-    const value = match[key];
-    const [namespace, keyName] = key.split('/');
-    let newPairs = keyName === 'id' ? { entityType: namespace } : {};
-    return {
-      ...result,
-      [keyName]: value,
-      ...newPairs,
-    };
-  }, {});
-}
-
 export default function AutocompleteLoader({
   children,
   entityType,
+  apiPrefix = `/api/entity/${entityType}/`,
   inputValue,
   selectedValue,
   onSuggestionChange,
 }) {
   const { authorizedFetch } = useContext(AuthorizationContext);
   const { isLoading, data, setFetchFunc } = useDataFetch(null, {}); // can't provide fetchFunc now, because it depends on suggestions
-  const suggestions = useMemo(
-    () => (data.matches || []).map(getSuggestionFromMatches),
-    [data]
-  );
+  const suggestions = useMemo(() => data.matches || [], [data]);
   const suggestinsRef = useRef(suggestions); // for accessing the current suggestions from effect
 
   useEffect(
@@ -48,15 +33,15 @@ export default function AutocompleteLoader({
         (item) => item.id === inputValue
       );
 
-      if (entityType && inputValue && !resultItem) {
+      if (apiPrefix && inputValue && !resultItem) {
         setFetchFunc(() => () => {
-          return authorizedFetch(`/api/${entityType}/?pattern=${inputValue}`, {
+          return authorizedFetch(`${apiPrefix}/?pattern=${inputValue}`, {
             method: 'GET',
           });
         });
       }
     },
-    [entityType, inputValue, authorizedFetch, setFetchFunc]
+    [entityType, apiPrefix, inputValue, authorizedFetch, setFetchFunc]
   );
 
   return children({
@@ -67,6 +52,7 @@ export default function AutocompleteLoader({
 
 AutocompleteLoader.propTypes = {
   entityType: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string.isRequired,
   inputValue: PropTypes.string,
   selectedValue: PropTypes.string,
   onSuggestionChange: PropTypes.func,
