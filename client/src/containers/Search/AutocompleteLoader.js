@@ -1,9 +1,6 @@
-import { useEffect, useMemo, useContext, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  useDataFetch,
-  AuthorizationContext,
-} from '../../containers/Authenticate';
+import { useDataFetch } from '../../containers/Authenticate';
 
 export default function AutocompleteLoader({
   children,
@@ -13,7 +10,6 @@ export default function AutocompleteLoader({
   selectedValue,
   onSuggestionChange,
 }) {
-  const { authorizedFetch } = useContext(AuthorizationContext);
   const { isLoading, data, setFetchFunc } = useDataFetch(null, {}); // can't provide fetchFunc now, because it depends on suggestions
   const suggestions = useMemo(() => data.matches || [], [data]);
   const suggestinsRef = useRef(suggestions); // for accessing the current suggestions from effect
@@ -34,14 +30,14 @@ export default function AutocompleteLoader({
       );
 
       if (apiPrefix && inputValue && !resultItem) {
-        setFetchFunc(() => () => {
+        setFetchFunc(() => (authorizedFetch) => {
           return authorizedFetch(`${apiPrefix}/?pattern=${inputValue}`, {
             method: 'GET',
           });
         });
       }
     },
-    [entityType, apiPrefix, inputValue, authorizedFetch, setFetchFunc]
+    [entityType, apiPrefix, inputValue, setFetchFunc]
   );
 
   return children({

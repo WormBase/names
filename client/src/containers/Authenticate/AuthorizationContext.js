@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer, useContext } from 'react';
 
 export const DEFAULT_AUTHENTICATION_STATE = {
   isAuthenticated: undefined,
@@ -22,6 +22,7 @@ const AuthorizationContext = React.createContext({
 // https://www.robinwieruch.de/react-hooks-fetch-data/
 
 export function useDataFetch(initialFetchFuncMemoized, initialData) {
+  const { authorizedFetch } = useContext(AuthorizationContext);
   const [state, dispatch] = useReducer(dataFetchReducer, {
     data: initialData,
     dataTimestamp: 0,
@@ -65,12 +66,12 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
       let didCancel = false;
 
       function fetchData() {
-        if (!fetchFunc) {
+        if (!fetchFunc || !authorizedFetch) {
           return;
         }
         dispatch({ type: 'FETCH_INIT' });
 
-        return fetchFunc()
+        return fetchFunc(authorizedFetch)
           .then((response) => {
             return Promise.all([response, response.json()]);
           })
@@ -102,7 +103,7 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
         didCancel = true;
       };
     },
-    [dispatch, fetchFunc]
+    [dispatch, fetchFunc, authorizedFetch]
   );
 
   return {

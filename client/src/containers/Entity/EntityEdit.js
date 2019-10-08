@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer, useContext, useEffect } from 'react';
+import React, { useCallback, useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import { Prompt } from 'react-router';
@@ -10,10 +10,7 @@ import {
 } from '../../components/elements';
 
 import EntityNotFound from './EntityNotFound';
-import {
-  AuthorizationContext,
-  useDataFetch,
-} from '../../containers/Authenticate';
+import { useDataFetch } from '../../containers/Authenticate';
 import { mockFetchOrNot } from '../../mock';
 
 function EntityEdit({
@@ -68,10 +65,8 @@ function EntityEdit({
     }
   }
 
-  const { authorizedFetch } = useContext(AuthorizationContext);
-
   const memoizedFetchFunc = useCallback(
-    () => () => {
+    () => (authorizedFetch) => {
       return mockFetchOrNot(
         (mockFetch) => {
           const historyMock = [
@@ -157,7 +152,7 @@ function EntityEdit({
         }
       );
     },
-    [apiPrefix, id, authorizedFetch]
+    [apiPrefix, id]
   );
 
   const {
@@ -271,7 +266,7 @@ function EntityEdit({
                       return;
                     }
                     setSubmitFetchFunc(
-                      () => () => {
+                      () => (authorizedFetch) => {
                         return mockFetchOrNot(
                           (mockFetch) => {
                             return mockFetch.put('*', {
