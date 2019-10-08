@@ -7,7 +7,7 @@ import { useDataFetch } from '../../containers/Authenticate';
 
 const SpeciesSelect = (props) => {
   const memoizedFetchFunc = useCallback(
-    () => (authorizedFetch) =>
+    (authorizedFetch) =>
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', [

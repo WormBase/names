@@ -13,7 +13,7 @@ function formatTime(timestamp) {
 function EntityRecentActivities(props) {
   const { entityType } = props;
   const memoizedFetchFunc = useCallback(
-    () => (authorizedFetch) =>
+    (authorizedFetch) =>
       authorizedFetch(`/api/recent/${entityType}`, {
         method: 'GET',
       }),

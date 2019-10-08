@@ -66,7 +66,7 @@ function EntityEdit({
   }
 
   const memoizedFetchFunc = useCallback(
-    () => (authorizedFetch) => {
+    (authorizedFetch) => {
       return mockFetchOrNot(
         (mockFetch) => {
           const historyMock = [
@@ -265,43 +265,40 @@ function EntityEdit({
                       });
                       return;
                     }
-                    setSubmitFetchFunc(
-                      () => (authorizedFetch) => {
-                        return mockFetchOrNot(
-                          (mockFetch) => {
-                            return mockFetch.put('*', {
-                              updated: {
-                                ...data,
-                              },
-                            });
-                          },
-                          () => {
-                            const dataSubmit = Object.keys(data).reduce(
-                              (result, key) => {
-                                if (
-                                  key !== 'split-from' &&
-                                  key !== 'split-into' &&
-                                  key !== 'merged-from' &&
-                                  key !== 'merged-into'
-                                ) {
-                                  result[key] = data[key];
-                                }
-                                return result;
-                              },
-                              {}
-                            );
-                            return authorizedFetch(`${apiPrefix}/${wbId}`, {
-                              method: 'PUT',
-                              body: JSON.stringify({
-                                data: dataSubmit,
-                                prov: provenance,
-                              }),
-                            });
-                          }
-                        );
-                      },
-                      {}
-                    );
+                    setSubmitFetchFunc((authorizedFetch) => {
+                      return mockFetchOrNot(
+                        (mockFetch) => {
+                          return mockFetch.put('*', {
+                            updated: {
+                              ...data,
+                            },
+                          });
+                        },
+                        () => {
+                          const dataSubmit = Object.keys(data).reduce(
+                            (result, key) => {
+                              if (
+                                key !== 'split-from' &&
+                                key !== 'split-into' &&
+                                key !== 'merged-from' &&
+                                key !== 'merged-into'
+                              ) {
+                                result[key] = data[key];
+                              }
+                              return result;
+                            },
+                            {}
+                          );
+                          return authorizedFetch(`${apiPrefix}/${wbId}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                              data: dataSubmit,
+                              prov: provenance,
+                            }),
+                          });
+                        }
+                      );
+                    }, {});
                   },
                   disabled: isSubmitInProgress || disabled,
                 },

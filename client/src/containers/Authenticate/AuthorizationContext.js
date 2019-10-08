@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useContext } from 'react';
+import React, { useEffect, useReducer, useContext, useCallback } from 'react';
 
 export const DEFAULT_AUTHENTICATION_STATE = {
   isAuthenticated: undefined,
@@ -24,13 +24,23 @@ const AuthorizationContext = React.createContext({
 export function useDataFetch(initialFetchFuncMemoized, initialData) {
   const { authorizedFetch } = useContext(AuthorizationContext);
   const [state, dispatch] = useReducer(dataFetchReducer, {
+    fetchFunc: initialFetchFuncMemoized,
     data: initialData,
     dataTimestamp: 0,
     isLoading: false,
     isError: null,
     isNew: true,
   });
-  const [fetchFunc, setFetchFunc] = useState(initialFetchFuncMemoized);
+  const { fetchFunc } = state;
+  const setFetchFunc = useCallback(
+    (newFetchFuncMemoized) => {
+      dispatch({
+        type: 'SET_FETCH_FUNCTION',
+        payload: newFetchFuncMemoized,
+      });
+    },
+    [dispatch]
+  );
 
   function dataFetchReducer(state, action) {
     console.log(action);
@@ -55,6 +65,11 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
           ...state,
           isLoading: false,
           isError: action.payload,
+        };
+      case 'SET_FETCH_FUNCTION':
+        return {
+          ...state,
+          fetchFunc: action.payload,
         };
       default:
         throw new Error();

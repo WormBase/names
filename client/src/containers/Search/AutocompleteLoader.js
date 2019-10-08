@@ -30,7 +30,7 @@ export default function AutocompleteLoader({
       );
 
       if (apiPrefix && inputValue && !resultItem) {
-        setFetchFunc(() => (authorizedFetch) => {
+        setFetchFunc((authorizedFetch) => {
           return authorizedFetch(`${apiPrefix}/?pattern=${inputValue}`, {
             method: 'GET',
           });
