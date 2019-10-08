@@ -18,13 +18,11 @@ class SplitGeneDialog extends Component {
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
-        const emptyFields = [
-          'provenance/why',
-          'gene/biotype',
-          'product',
-        ].filter((fieldId) => {
-          return !data[fieldId];
-        });
+        const emptyFields = ['provenance/why', 'biotype', 'product'].filter(
+          (fieldId) => {
+            return !data[fieldId];
+          }
+        );
         let errorMessage;
         switch (emptyFields.length) {
           case 0:
@@ -48,11 +46,11 @@ class SplitGeneDialog extends Component {
         } else {
           return mockFetch.post('*', {
             updated: {
-              'gene/id': this.props.wbId,
+              id: this.props.wbId,
             },
             created: {
-              'gene/id': 'WB3',
-              'gene/status': 'gene.status/live',
+              id: 'WB3',
+              status: 'live',
             },
           });
         }
@@ -74,7 +72,7 @@ class SplitGeneDialog extends Component {
     return (
       <AjaxDialog
         title="Split gene"
-        data={{ 'gene/biotype': biotypeOriginal }}
+        data={{ biotype: biotypeOriginal }}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Split {name}</ProgressButton>
@@ -84,16 +82,16 @@ class SplitGeneDialog extends Component {
         {({ withFieldData, errorMessage }) => {
           const BiotypeSelectOriginalField = withFieldData(
             BiotypeSelect,
-            'gene/biotype'
+            'biotype'
           );
           const ReasonField = withFieldData(TextField, 'provenance/why');
           const SequenceNameField = withFieldData(
             TextField,
-            'product:gene/sequence-name'
+            'product:sequence-name'
           );
           const BiotypeSelectField = withFieldData(
             BiotypeSelect,
-            'product:gene/biotype'
+            'product:biotype'
           );
           return (
             <DialogContent>

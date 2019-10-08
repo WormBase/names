@@ -65,7 +65,7 @@ class MergeGeneDialog extends Component {
             GeneAutocomplete,
             'geneIdMergeInto'
           );
-          const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
+          const BiotypeField = withFieldData(BiotypeSelect, 'biotype');
           return (
             <DialogContent>
               <DialogContentText>
