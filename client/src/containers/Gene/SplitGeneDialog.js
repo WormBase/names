@@ -58,10 +58,13 @@ class SplitGeneDialog extends Component {
         }
       },
       () => {
-        return authorizedFetch(`/api/gene/${this.props.wbId}/split`, {
-          method: 'POST',
-          body: JSON.stringify(data),
-        });
+        return authorizedFetch(
+          `${this.props.apiPrefix}/${this.props.wbId}/split`,
+          {
+            method: 'POST',
+            body: JSON.stringify(data),
+          }
+        );
       }
     );
   };
@@ -133,6 +136,7 @@ SplitGeneDialog.propTypes = {
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   biotypeOriginal: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({

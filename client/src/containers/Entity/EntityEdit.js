@@ -363,6 +363,7 @@ function EntityEdit({
 EntityEdit.propTypes = {
   wbId: PropTypes.string.isRequired,
   entityType: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string.isRequired,
   renderDisplayName: PropTypes.func,
   history: PropTypes.shape({
     replace: PropTypes.func.isRequired,

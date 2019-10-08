@@ -15,7 +15,7 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class EntityDialogKill extends Component {
   submitData = (data, authorizedFetch) => {
-    const { entityType } = this.props;
+    const { wbId, entityType, apiPrefix } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
@@ -31,7 +31,7 @@ class EntityDialogKill extends Component {
         }
       },
       () => {
-        return authorizedFetch(`/api/entity/${entityType}/${this.props.wbId}`, {
+        return authorizedFetch(`${apiPrefix}/${wbId}`, {
           method: 'DELETE',
           body: JSON.stringify({
             ...data,
@@ -81,6 +81,7 @@ EntityDialogKill.propTypes = {
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   entityType: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({

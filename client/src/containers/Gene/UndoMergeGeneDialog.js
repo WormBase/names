@@ -23,7 +23,9 @@ class UndoMergeGeneDialog extends Component {
       },
       () => {
         return authorizedFetch(
-          `/api/gene/${this.props.wbId}/merge/${this.props.wbFromId}`,
+          `${this.props.apiPrefix}/${this.props.wbId}/merge/${
+            this.props.wbFromId
+          }`,
           {
             method: 'DELETE',
           }
@@ -79,6 +81,7 @@ UndoMergeGeneDialog.propTypes = {
   wbFromId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneFromName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({});

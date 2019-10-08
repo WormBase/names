@@ -29,12 +29,15 @@ class SuppressGeneDialog extends Component {
         }
       },
       () => {
-        return authorizedFetch(`/api/gene/${this.props.wbId}/suppress`, {
-          method: 'POST',
-          body: JSON.stringify({
-            ...data,
-          }),
-        });
+        return authorizedFetch(
+          `${this.props.apiPrefix}/${this.props.wbId}/suppress`,
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              ...data,
+            }),
+          }
+        );
       }
     );
   };
@@ -77,6 +80,7 @@ class SuppressGeneDialog extends Component {
 SuppressGeneDialog.propTypes = {
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({

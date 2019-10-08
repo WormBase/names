@@ -23,7 +23,9 @@ class UndoSplitGeneDialog extends Component {
       },
       () => {
         return authorizedFetch(
-          `/api/gene/${this.props.wbId}/split/${this.props.wbIntoId}`,
+          `${this.props.apiPrefix}/${this.props.wbId}/split/${
+            this.props.wbIntoId
+          }`,
           {
             method: 'DELETE',
           }
@@ -79,6 +81,7 @@ UndoSplitGeneDialog.propTypes = {
   wbIntoId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   geneIntoName: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({});
