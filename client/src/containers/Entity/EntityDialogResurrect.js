@@ -14,7 +14,6 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class EntityDialogResurrect extends Component {
   submitData = (data, authorizedFetch) => {
-    const { entityType } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.post('*', {

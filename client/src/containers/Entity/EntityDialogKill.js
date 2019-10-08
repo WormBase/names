@@ -15,7 +15,7 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class EntityDialogKill extends Component {
   submitData = (data, authorizedFetch) => {
-    const { wbId, entityType, apiPrefix } = this.props;
+    const { wbId, apiPrefix } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
