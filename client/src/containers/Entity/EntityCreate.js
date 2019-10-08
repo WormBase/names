@@ -93,7 +93,7 @@ class EntityCreate extends Component {
 EntityCreate.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
-  apiPrefix: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string,
   renderForm: PropTypes.func,
 };
 

@@ -233,7 +233,7 @@ EntityProfile.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
   wbId: PropTypes.string.isRequired,
-  apiPrefix: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string,
   withFieldData: PropTypes.func.isRequired,
   dirtinessContext: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
