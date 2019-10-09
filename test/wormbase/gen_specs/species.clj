@@ -12,20 +12,24 @@
 
 (def id (s/gen (->> (species-seed-data)
                     (map :species/id)
+                    (map name)
                     (set))))
 
 (def latin-name (s/gen (->> (species-seed-data)
                             (map :species/latin-name)
                             (set))))
 
+(defn matching-species? [ident species value]
+  (when-let [iv (ident value)]
+    (= (name iv) species)))
+
 (defn- valid-name-for-species [pattern-ident species]
   (let [[ident species*] (s/conform :gene/species species)]
     (->> (species-seed-data)
-         (filter #(= (ident %) species*))
+         (filter (partial matching-species? ident species*))
          (map pattern-ident)
          (first)
          (sg/string-generator))))
-
 
 (s/def ::name-patterns #{:species/cgc-name-pattern
                          :species/sequence-name-pattern})

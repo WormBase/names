@@ -16,6 +16,7 @@
   (->> (util/load-seed-data)
        (filter species-kw)
        (map species-kw)
+       (map name)
        set))
 
 (def id (sg/string-generator wsg/gene-id-regexp))
@@ -68,8 +69,7 @@
 
 (def overrides
   {:gene/biotype (constantly biotype)
-   :species/latin-name (constantly species)
-   :species/id (constantly species)
+   :gene/species (constantly (s/gen ::species-latin-name))
    :gene/cgc-name (constantly cgc-name)
    :gene/id (constantly id)
    :gene/status (constantly status)

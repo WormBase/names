@@ -47,7 +47,7 @@
   (t/testing "Empty gene data payload is a bad request."
     (check-empty new-gene))
   (t/testing "Species should always be required when creating gene name."
-    (let [cgc-name (tu/cgc-name-for-species :species/c-elegans)
+    (let [cgc-name (tu/cgc-name-for-species "c-elegans")
           response (new-gene {:gene/cgc-name cgc-name})]
       (t/is (ru-hp/bad-request? response)))))
 

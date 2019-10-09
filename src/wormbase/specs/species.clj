@@ -16,9 +16,8 @@
 (s/def :species/sequence-name-pattern (s/and string?
                                              (complement str/blank?)))
 
-(s/def :species/id (stc/spec {:spec (s/and sts/keyword?
-                                           #(= (namespace %) "species")
-                                           #(re-matches id-regexp (name %)))
+(s/def :species/id (stc/spec {:spec (s/and string?
+                                           #(re-matches id-regexp %))
                               :swagger/example "species/c-elegans"
                               :description "The identifier for a species."}))
 

@@ -189,7 +189,7 @@
         res (if (= ident :species/latin-name)
               value
               (->> (gss/load-seed-data)
-                   (filter #(= (ident %) value))
+                   (filter (partial gss/matching-species? ident value))
                    (first)
                    :species/latin-name))]
     res))
