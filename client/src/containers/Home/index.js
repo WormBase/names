@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Page,
@@ -8,40 +8,42 @@ import {
   MuiThemeProvider,
   withStyles,
 } from '../../components/elements';
+import { EntityTypesContext } from '../Entity';
 import { Link } from 'react-router-dom';
-import { ENTITY_TYPES } from '../../utils/entityTypes';
-console.log(ENTITY_TYPES);
 
 function Home({ classes }) {
+  const entityTypesMap = useContext(EntityTypesContext);
   return (
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {ENTITY_TYPES.map(({ entityType, path, theme }) => (
-            <Paper elevation={1} className={classes.row}>
-              <div className={classes.cell}>
-                <MuiThemeProvider theme={theme}>
+          {[...entityTypesMap].map(
+            ([, { entityType, path, theme, displayName }]) => (
+              <Paper elevation={1} className={classes.row}>
+                <div className={classes.cell}>
+                  <MuiThemeProvider theme={theme}>
+                    <Button
+                      variant="raised"
+                      color="secondary"
+                      component={({ ...props }) => (
+                        <Link to={`${path}/new`} {...props} />
+                      )}
+                    >
+                      Add {displayName}
+                    </Button>
+                  </MuiThemeProvider>
+                </div>
+                <div className={classes.cell}>
                   <Button
-                    variant="raised"
-                    color="secondary"
-                    component={({ ...props }) => (
-                      <Link to={`${path}/new`} {...props} />
-                    )}
+                    color="primary"
+                    component={({ ...props }) => <Link to={path} {...props} />}
                   >
-                    Add {entityType}
+                    Browse {displayName}s
                   </Button>
-                </MuiThemeProvider>
-              </div>
-              <div className={classes.cell}>
-                <Button
-                  color="primary"
-                  component={({ ...props }) => <Link to={path} {...props} />}
-                >
-                  Browse {entityType}s
-                </Button>
-              </div>
-            </Paper>
-          ))}
+                </div>
+              </Paper>
+            )
+          )}
         </div>
       </PageMain>
     </Page>

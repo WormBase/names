@@ -26,9 +26,9 @@ import {
   EntityDirectory,
   EntityProfile,
   EntityCreate,
+  EntityTypesContext,
   EntityTypesContextProvider,
 } from './containers/Entity';
-import { ENTITY_TYPES, getEntityTypeTheme } from '../src/utils/entityTypes';
 // import {
 //   Directory as VariationDirectory,
 //   Create as VariationCreate,
@@ -76,62 +76,70 @@ class App extends Component {
                               </DocumentTitle>
                             )}
                           />
-                          <Route
-                            path={ENTITY_TYPES.map(({ path }) => path)}
-                            component={({ match }) => {
-                              const entityType = matchPath(match.url, {
-                                path: '/:entityType',
-                              }).params.entityType;
+                          <EntityTypesContext.Consumer>
+                            {(entityTypesMap) => (
+                              <Route
+                                path={[...entityTypesMap].map(
+                                  ([, { path }]) => path
+                                )}
+                                component={({ match }) => {
+                                  const entityType = matchPath(match.url, {
+                                    path: '/:entityType',
+                                  }).params.entityType;
 
-                              let Directory, Create, Profile;
-                              switch (entityType) {
-                                case 'gene':
-                                  [Directory, Create, Profile] = [
-                                    GeneDirectory,
-                                    GeneCreate,
-                                    GeneProfile,
-                                  ];
-                                  break;
-                                default:
-                                  [Directory, Create, Profile] = [
-                                    EntityDirectory,
-                                    EntityCreate,
-                                    EntityProfile,
-                                  ];
-                              }
-                              return (
-                                <MuiThemeProvider
-                                  theme={getEntityTypeTheme(entityType)}
-                                >
-                                  <Switch>
-                                    <Route
-                                      path={`${match.url}`}
-                                      exact={true}
-                                      component={() => (
-                                        <Directory entityType={entityType} />
-                                      )}
-                                    />
-                                    <Route
-                                      path={`${match.url}/new`}
-                                      component={() => (
-                                        <Create entityType={entityType} />
-                                      )}
-                                    />
-                                    <Route
-                                      path={`${match.url}/id/:id`}
-                                      component={({ match }) => (
-                                        <Profile
-                                          wbId={match.params.id}
-                                          entityType={entityType}
+                                  let Directory, Create, Profile;
+                                  switch (entityType) {
+                                    case 'gene':
+                                      [Directory, Create, Profile] = [
+                                        GeneDirectory,
+                                        GeneCreate,
+                                        GeneProfile,
+                                      ];
+                                      break;
+                                    default:
+                                      [Directory, Create, Profile] = [
+                                        EntityDirectory,
+                                        EntityCreate,
+                                        EntityProfile,
+                                      ];
+                                  }
+                                  return (
+                                    <MuiThemeProvider
+                                      theme={entityTypesMap[entityType]}
+                                    >
+                                      <Switch>
+                                        <Route
+                                          path={`${match.url}`}
+                                          exact={true}
+                                          component={() => (
+                                            <Directory
+                                              entityType={entityType}
+                                            />
+                                          )}
                                         />
-                                      )}
-                                    />
-                                    <Route component={NotFound} />
-                                  </Switch>
-                                </MuiThemeProvider>
-                              );
-                            }}
-                          />
+                                        <Route
+                                          path={`${match.url}/new`}
+                                          component={() => (
+                                            <Create entityType={entityType} />
+                                          )}
+                                        />
+                                        <Route
+                                          path={`${match.url}/id/:id`}
+                                          component={({ match }) => (
+                                            <Profile
+                                              wbId={match.params.id}
+                                              entityType={entityType}
+                                            />
+                                          )}
+                                        />
+                                        <Route component={NotFound} />
+                                      </Switch>
+                                    </MuiThemeProvider>
+                                  );
+                                }}
+                              />
+                            )}
+                          </EntityTypesContext.Consumer>
                           <Route component={NotFound} />
                         </Switch>
                       </ErrorBoundary>
