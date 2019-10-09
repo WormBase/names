@@ -44,7 +44,7 @@
                                               :provenance/why]))
                       :description "A mapping describing provenance of names service events."}))
 
-(s/def ::attr sts/keyword?)
+(s/def ::attr string?)
 
 (s/def ::value any?)
 

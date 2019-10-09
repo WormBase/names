@@ -168,7 +168,6 @@
              {}
              mapping))
 
-
 (defn unqualify-keys
   "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
   [mapping entity-type]

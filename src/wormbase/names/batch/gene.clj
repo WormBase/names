@@ -100,7 +100,7 @@
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels
                                        (partial names-validator request)
-                                       [:gene/cgc-name :gene/sequence-name]
+                                       ["cgc-name" "sequence-name"]
                                        request)))}
       :delete
       {:summary "Kill genes."
