@@ -20,14 +20,6 @@
          (str (first head) "-")
          (keyword "species"))))
 
-(def summary-pull-expr '[*])
-
-(def ^:private ref-attrs #{})
-
-(def summarize-item (wne/summarizer (partial wne/identify ::wss/identifier)
-                                    summary-pull-expr
-                                    ref-attrs))
-
 (defn new-item [request]
   (let [{payload :body-params db :db conn :conn} request
         {data :data prov :prov} payload]
@@ -100,7 +92,10 @@
        :x-name ::species-summary
        :responses (wnu/response-map ok {:schema ::wss/item})
        :handler (fn handle-summary [request]
-                  (summarize-item request identifier))}
+                  (let [summarize (wne/summarizer (partial wne/identify ::wss/identifier "species")
+                                                  '[*]
+                                                  #{})]
+                    (summarize request identifier)))}
       :put
       {:summary "Update species details."
        :x-name ::species-update
