@@ -106,6 +106,3 @@
                   (update-item request identifier))}})))
 
 (def routes (sweet/routes coll-resources item-resources))
-
-(comment
-  (latin-name->id "Canhasbite chocolate"))
