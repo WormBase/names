@@ -79,7 +79,8 @@
       {:summary "Retrieve of attributes held for each species in system."
        :x-name ::list-species
        :responses (wnu/response-map ok {:schema ::wss/listing})
-       :handler list-items}
+       :handler (fn li [request]
+                  (list-items request))}
       :post
       {:summary "Add a new species to the system."
        :x-name ::new-species

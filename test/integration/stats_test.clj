@@ -1,5 +1,6 @@
 (ns integration.stats-test
   (:require
+   [clojure.set :as set]
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.db-testing :as db-testing]
@@ -18,6 +19,7 @@
     (let [response (stats-summary)
           etag (get-in response [:headers "etag"])]
       (t/is (ru-hp/ok? response))
+      (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response)))
       (t/testing "Not-modified response when nothing has changed."
         (let [extra-headers {"if-none-match" etag}
               response2 (stats-summary extra-headers)]

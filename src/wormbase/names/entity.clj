@@ -478,12 +478,11 @@
                         (assoc ok {:schema ::wse/summary})
                         (wnu/response-map))
          :handler (fn handle-entity-summary [request]
-                    (let [summary-pull-expr (make-summary-pull-expr entity-type)]
-                      ((summarizer (partial identify ::wse/identifier entity-type)
-                                   summary-pull-expr
-                                   #{})
-                       request
-                       identifier)))}})
+                    (let [summary-pull-expr (make-summary-pull-expr entity-type)
+                          summarize (summarizer (partial identify ::wse/identifier entity-type)
+                                                summary-pull-expr
+                                                #{})]
+                      (summarize request identifier)))}})
       (sweet/context "/resurrect" []
         (sweet/resource
          {:post
