@@ -14,18 +14,17 @@ import { createOpenOnlyTypeChecker } from '../../utils/types';
 
 class EntityDialogResurrect extends Component {
   submitData = (data, authorizedFetch) => {
-    const { entityType } = this.props;
     return mockFetchOrNot(
       (mockFetch) => {
         return mockFetch.post('*', {
           updated: {
-            'gene/id': this.props.wbId,
+            id: this.props.wbId,
           },
         });
       },
       () => {
         return authorizedFetch(
-          `/api/${entityType}/${this.props.wbId}/resurrect`,
+          `${this.props.apiPrefix}/${this.props.wbId}/resurrect`,
           {
             method: 'POST',
             body: JSON.stringify({
@@ -76,6 +75,7 @@ EntityDialogResurrect.propTypes = {
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   entityType: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({

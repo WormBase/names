@@ -1,17 +1,13 @@
-import React, { useContext, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { MenuItem, withStyles } from '@material-ui/core';
 import TextField from './TextField';
 import { mockFetchOrNot } from '../../mock';
-import {
-  AuthorizationContext,
-  useDataFetch,
-} from '../../containers/Authenticate';
+import { useDataFetch } from '../../containers/Authenticate';
 
 const SpeciesSelect = (props) => {
-  const { authorizedFetch } = useContext(AuthorizationContext);
   const memoizedFetchFunc = useCallback(
-    () => () =>
+    (authorizedFetch) =>
       mockFetchOrNot(
         (mockFetch) => {
           return mockFetch.get('*', [
@@ -36,7 +32,7 @@ const SpeciesSelect = (props) => {
             method: 'GET',
           })
       ),
-    [authorizedFetch]
+    []
   );
 
   const { data } = useDataFetch(memoizedFetchFunc, []);

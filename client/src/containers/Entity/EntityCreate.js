@@ -25,11 +25,12 @@ class EntityCreate extends Component {
     const {
       classes = {},
       entityType,
+      apiPrefix = `/api/entity/${entityType}`,
       renderForm = this.renderForm,
     } = this.props;
 
     return (
-      <EntityEditNew entityType={entityType}>
+      <EntityEditNew entityType={entityType} apiPrefix={apiPrefix}>
         {({ profileContext, formContext }) => {
           const {
             errorMessage = null,
@@ -92,6 +93,7 @@ class EntityCreate extends Component {
 EntityCreate.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string,
   renderForm: PropTypes.func,
 };
 

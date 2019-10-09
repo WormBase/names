@@ -10,3 +10,8 @@ export { default as EntityDialogKill } from './EntityDialogKill';
 export { default as EntityDialogResurrect } from './EntityDialogResurrect';
 
 export { default as EntityHistory } from './EntityHistory';
+
+export {
+  default as EntityTypesContextProvider,
+  EntityTypesContext,
+} from './EntityTypesContextProvider';

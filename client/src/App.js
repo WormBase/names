@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Route, Redirect, Switch, matchPath } from 'react-router-dom';
+import { Route, Switch, matchPath } from 'react-router-dom';
 import 'typeface-roboto';
 import {
   withStyles,
@@ -26,6 +26,7 @@ import {
   EntityDirectory,
   EntityProfile,
   EntityCreate,
+  EntityTypesContextProvider,
 } from './containers/Entity';
 import { ENTITY_TYPES, getEntityTypeTheme } from '../src/utils/entityTypes';
 // import {
@@ -39,109 +40,111 @@ class App extends Component {
   render() {
     return (
       <Authenticate>
-        <AuthorizationContext.Consumer>
-          {({
-            isAuthenticated,
-            errorMessage,
-            user,
-            handleLogin,
-            handleLogout,
-          }) => (
-            <div className={this.props.classes.root}>
-              <Header isAuthenticated={isAuthenticated}>
-                <ProfileButton name={user.name} />
-              </Header>
-              {isAuthenticated === undefined ? (
-                <div className={this.props.classes.content}>
-                  <Page>
-                    <CircularProgress />
-                  </Page>
-                </div>
-              ) : isAuthenticated ? (
-                [
-                  <NavBar key="nav-bar" />,
-                  <div key="content" className={this.props.classes.content}>
-                    <ErrorBoundary>
-                      <Switch>
-                        <Route exact path="/" component={() => <Home />} />
-                        <Route
-                          path="/me"
-                          component={() => (
-                            <DocumentTitle title="Your profile">
-                              <Profile {...user}>
-                                <Logout onLogout={handleLogout} />
-                              </Profile>
-                            </DocumentTitle>
-                          )}
-                        />
-                        <Route
-                          path={ENTITY_TYPES.map(({ path }) => path)}
-                          component={({ match }) => {
-                            const entityType = matchPath(match.url, {
-                              path: '/:entityType',
-                            }).params.entityType;
+        <EntityTypesContextProvider>
+          <AuthorizationContext.Consumer>
+            {({
+              isAuthenticated,
+              errorMessage,
+              user,
+              handleLogin,
+              handleLogout,
+            }) => (
+              <div className={this.props.classes.root}>
+                <Header isAuthenticated={isAuthenticated}>
+                  <ProfileButton name={user.name} />
+                </Header>
+                {isAuthenticated === undefined ? (
+                  <div className={this.props.classes.content}>
+                    <Page>
+                      <CircularProgress />
+                    </Page>
+                  </div>
+                ) : isAuthenticated ? (
+                  [
+                    <NavBar key="nav-bar" />,
+                    <div key="content" className={this.props.classes.content}>
+                      <ErrorBoundary>
+                        <Switch>
+                          <Route exact path="/" component={() => <Home />} />
+                          <Route
+                            path="/me"
+                            component={() => (
+                              <DocumentTitle title="Your profile">
+                                <Profile {...user}>
+                                  <Logout onLogout={handleLogout} />
+                                </Profile>
+                              </DocumentTitle>
+                            )}
+                          />
+                          <Route
+                            path={ENTITY_TYPES.map(({ path }) => path)}
+                            component={({ match }) => {
+                              const entityType = matchPath(match.url, {
+                                path: '/:entityType',
+                              }).params.entityType;
 
-                            let Directory, Create, Profile;
-                            switch (entityType) {
-                              case 'gene':
-                                [Directory, Create, Profile] = [
-                                  GeneDirectory,
-                                  GeneCreate,
-                                  GeneProfile,
-                                ];
-                                break;
-                              default:
-                                [Directory, Create, Profile] = [
-                                  EntityDirectory,
-                                  EntityCreate,
-                                  EntityProfile,
-                                ];
-                            }
-                            return (
-                              <MuiThemeProvider
-                                theme={getEntityTypeTheme(entityType)}
-                              >
-                                <Switch>
-                                  <Route
-                                    path={`${match.url}`}
-                                    exact={true}
-                                    component={() => (
-                                      <Directory entityType={entityType} />
-                                    )}
-                                  />
-                                  <Route
-                                    path={`${match.url}/new`}
-                                    component={() => (
-                                      <Create entityType={entityType} />
-                                    )}
-                                  />
-                                  <Route
-                                    path={`${match.url}/id/:id`}
-                                    component={({ match }) => (
-                                      <Profile
-                                        wbId={match.params.id}
-                                        entityType={entityType}
-                                      />
-                                    )}
-                                  />
-                                  <Route component={NotFound} />
-                                </Switch>
-                              </MuiThemeProvider>
-                            );
-                          }}
-                        />
-                        <Route component={NotFound} />
-                      </Switch>
-                    </ErrorBoundary>
-                  </div>,
-                ]
-              ) : (
-                <Login onSignIn={handleLogin} errorMessage={errorMessage} />
-              )}
-              <Footer />
-            </div>
-          )}
-        </AuthorizationContext.Consumer>
+                              let Directory, Create, Profile;
+                              switch (entityType) {
+                                case 'gene':
+                                  [Directory, Create, Profile] = [
+                                    GeneDirectory,
+                                    GeneCreate,
+                                    GeneProfile,
+                                  ];
+                                  break;
+                                default:
+                                  [Directory, Create, Profile] = [
+                                    EntityDirectory,
+                                    EntityCreate,
+                                    EntityProfile,
+                                  ];
+                              }
+                              return (
+                                <MuiThemeProvider
+                                  theme={getEntityTypeTheme(entityType)}
+                                >
+                                  <Switch>
+                                    <Route
+                                      path={`${match.url}`}
+                                      exact={true}
+                                      component={() => (
+                                        <Directory entityType={entityType} />
+                                      )}
+                                    />
+                                    <Route
+                                      path={`${match.url}/new`}
+                                      component={() => (
+                                        <Create entityType={entityType} />
+                                      )}
+                                    />
+                                    <Route
+                                      path={`${match.url}/id/:id`}
+                                      component={({ match }) => (
+                                        <Profile
+                                          wbId={match.params.id}
+                                          entityType={entityType}
+                                        />
+                                      )}
+                                    />
+                                    <Route component={NotFound} />
+                                  </Switch>
+                                </MuiThemeProvider>
+                              );
+                            }}
+                          />
+                          <Route component={NotFound} />
+                        </Switch>
+                      </ErrorBoundary>
+                    </div>,
+                  ]
+                ) : (
+                  <Login onSignIn={handleLogin} errorMessage={errorMessage} />
+                )}
+                <Footer />
+              </div>
+            )}
+          </AuthorizationContext.Consumer>
+        </EntityTypesContextProvider>
       </Authenticate>
     );
   }

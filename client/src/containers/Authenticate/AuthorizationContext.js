@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useContext, useCallback } from 'react';
 
 export const DEFAULT_AUTHENTICATION_STATE = {
   isAuthenticated: undefined,
@@ -21,15 +21,26 @@ const AuthorizationContext = React.createContext({
 // https://overreacted.io/a-complete-guide-to-useeffect/
 // https://www.robinwieruch.de/react-hooks-fetch-data/
 
-export function useDataFetch(initialFetchFunc, initialData) {
+export function useDataFetch(initialFetchFuncMemoized, initialData) {
+  const { authorizedFetch } = useContext(AuthorizationContext);
   const [state, dispatch] = useReducer(dataFetchReducer, {
+    fetchFunc: initialFetchFuncMemoized,
     data: initialData,
     dataTimestamp: 0,
     isLoading: false,
     isError: null,
     isNew: true,
   });
-  const [fetchFunc, setFetchFunc] = useState(initialFetchFunc);
+  const { fetchFunc } = state;
+  const setFetchFunc = useCallback(
+    (newFetchFuncMemoized) => {
+      dispatch({
+        type: 'SET_FETCH_FUNCTION',
+        payload: newFetchFuncMemoized,
+      });
+    },
+    [dispatch]
+  );
 
   function dataFetchReducer(state, action) {
     console.log(action);
@@ -55,6 +66,11 @@ export function useDataFetch(initialFetchFunc, initialData) {
           isLoading: false,
           isError: action.payload,
         };
+      case 'SET_FETCH_FUNCTION':
+        return {
+          ...state,
+          fetchFunc: action.payload,
+        };
       default:
         throw new Error();
     }
@@ -65,12 +81,12 @@ export function useDataFetch(initialFetchFunc, initialData) {
       let didCancel = false;
 
       function fetchData() {
-        if (!fetchFunc) {
+        if (!fetchFunc || !authorizedFetch) {
           return;
         }
         dispatch({ type: 'FETCH_INIT' });
 
-        return fetchFunc()
+        return fetchFunc(authorizedFetch)
           .then((response) => {
             return Promise.all([response, response.json()]);
           })
@@ -102,7 +118,7 @@ export function useDataFetch(initialFetchFunc, initialData) {
         didCancel = true;
       };
     },
-    [dispatch, fetchFunc]
+    [dispatch, fetchFunc, authorizedFetch]
   );
 
   return {

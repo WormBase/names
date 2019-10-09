@@ -9,10 +9,10 @@ import {
 class GeneForm extends Component {
   render() {
     const { withFieldData, cloned = false } = this.props;
-    const CgcNameField = withFieldData(TextField, 'gene/cgc-name');
-    const SequenceNameField = withFieldData(TextField, 'gene/sequence-name');
-    const SpeciesSelectField = withFieldData(SpeciesSelect, 'gene/species');
-    const BiotypeSelectField = withFieldData(BiotypeSelect, 'gene/biotype');
+    const CgcNameField = withFieldData(TextField, 'cgc-name');
+    const SequenceNameField = withFieldData(TextField, 'sequence-name');
+    const SpeciesSelectField = withFieldData(SpeciesSelect, 'species');
+    const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
 
     return (
       <React.Fragment>

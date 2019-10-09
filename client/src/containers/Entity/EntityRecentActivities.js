@@ -1,8 +1,6 @@
-import React, { useContext, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import moment from 'moment';
-import AuthorizationContext, {
-  useDataFetch,
-} from '../Authenticate/AuthorizationContext';
+import { useDataFetch } from '../Authenticate/AuthorizationContext';
 import EntityHistory from './EntityHistory';
 import { NoData, CircularProgress } from '../../components/elements';
 
@@ -14,13 +12,12 @@ function formatTime(timestamp) {
 
 function EntityRecentActivities(props) {
   const { entityType } = props;
-  const { authorizedFetch } = useContext(AuthorizationContext);
   const memoizedFetchFunc = useCallback(
-    () => () =>
+    (authorizedFetch) =>
       authorizedFetch(`/api/recent/${entityType}`, {
         method: 'GET',
       }),
-    [entityType, authorizedFetch]
+    [entityType]
   );
 
   const { data, isLoading } = useDataFetch(memoizedFetchFunc, {});

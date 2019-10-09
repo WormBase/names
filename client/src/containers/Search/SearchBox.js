@@ -106,6 +106,9 @@ const SearchBox = (props) => {
         <div className={classes.root}>
           <AutocompleteLoader
             entityType={entityType}
+            apiPrefix={
+              entityType === 'gene' ? `/api/gene` : `/api/entity/${entityType}`
+            }
             inputValue={inputValue}
             selectedValue={selectedItem && selectedItem.id}
           >

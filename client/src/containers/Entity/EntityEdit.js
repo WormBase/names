@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer, useContext, useEffect } from 'react';
+import React, { useCallback, useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import { Prompt } from 'react-router';
@@ -10,15 +10,13 @@ import {
 } from '../../components/elements';
 
 import EntityNotFound from './EntityNotFound';
-import {
-  AuthorizationContext,
-  useDataFetch,
-} from '../../containers/Authenticate';
+import { useDataFetch } from '../../containers/Authenticate';
 import { mockFetchOrNot } from '../../mock';
 
 function EntityEdit({
   entityType,
   wbId: id,
+  apiPrefix,
   renderDisplayName,
   history,
   children,
@@ -67,10 +65,8 @@ function EntityEdit({
     }
   }
 
-  const { authorizedFetch } = useContext(AuthorizationContext);
-
   const memoizedFetchFunc = useCallback(
-    () => () => {
+    (authorizedFetch) => {
       return mockFetchOrNot(
         (mockFetch) => {
           const historyMock = [
@@ -82,10 +78,10 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-09T22:09:16Z',
               'provenance/merged-from': {
-                'gene/id': 'WBGene00303223',
+                id: 'WBGene00303223',
               },
               'provenance/merged-into': {
-                'gene/id': id,
+                id: id,
               },
             },
             {
@@ -112,10 +108,10 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-08T16:50:46Z',
               'provenance/split-from': {
-                'gene/id': id,
+                id: id,
               },
               'provenance/split-into': {
-                'gene/id': 'WBGene00303222',
+                id: 'WBGene00303222',
               },
             },
             {
@@ -126,37 +122,37 @@ function EntityEdit({
               },
               'provenance/when': '2018-08-08T15:21:07Z',
               'provenance/split-from': {
-                'gene/id': id,
+                id: id,
               },
               'provenance/split-into': {
-                'gene/id': 'WBGene00303219',
+                id: 'WBGene00303219',
               },
             },
             {
               'provenance/how': 'agent/web',
               'provenance/what': 'event/new-gene',
               'provenance/who': {
-                'person/id': 'WBPerson12346',
+                id: 'WBPerson12346',
               },
               'provenance/when': '2018-07-23T15:25:17Z',
             },
           ];
 
           return mockFetch.get('*', {
-            'gene/species': 'Caenorhabditis elegans',
-            'gene/cgc-name': 'abi-1',
-            'gene/status': 'gene.status/live',
-            'gene/biotype': 'biotype/cds',
-            'gene/id': id,
+            species: 'Caenorhabditis elegans',
+            'cgc-name': 'abi-1',
+            status: 'gene.status/live',
+            biotype: 'biotype/cds',
+            id: id,
             history: historyMock,
           });
         },
         () => {
-          return authorizedFetch(`/api/${entityType}/${id}`);
+          return authorizedFetch(`${apiPrefix}/${id}`);
         }
       );
     },
-    [entityType, id, authorizedFetch]
+    [apiPrefix, id]
   );
 
   const {
@@ -176,7 +172,7 @@ function EntityEdit({
   } = useDataFetch(null, {});
 
   const { history: changes, ...data } = responseContent;
-  const wbId = data[`${entityType}/id`];
+  const wbId = data.id;
   const disabled =
     isLoading ||
     isSubmitInProgress ||
@@ -218,7 +214,7 @@ function EntityEdit({
   );
 
   return isError ? (
-    <EntityNotFound entityType="gene" wbId={id} />
+    <EntityNotFound entityType={entityType} wbId={id} />
   ) : isLoading && dataTimestamp === 0 ? (
     /* initial render only, don't clear page if refetching after submit */
     <CircularProgress />
@@ -269,46 +265,40 @@ function EntityEdit({
                       });
                       return;
                     }
-                    setSubmitFetchFunc(
-                      () => () => {
-                        return mockFetchOrNot(
-                          (mockFetch) => {
-                            return mockFetch.put('*', {
-                              updated: {
-                                ...data,
-                              },
-                            });
-                          },
-                          () => {
-                            const dataSubmit = Object.keys(data).reduce(
-                              (result, key) => {
-                                if (
-                                  key !== 'split-from' &&
-                                  key !== 'split-into' &&
-                                  key !== 'merged-from' &&
-                                  key !== 'merged-into'
-                                ) {
-                                  result[key] = data[key];
-                                }
-                                return result;
-                              },
-                              {}
-                            );
-                            return authorizedFetch(
-                              `/api/${entityType}/${wbId}`,
-                              {
-                                method: 'PUT',
-                                body: JSON.stringify({
-                                  data: dataSubmit,
-                                  prov: provenance,
-                                }),
+                    setSubmitFetchFunc((authorizedFetch) => {
+                      return mockFetchOrNot(
+                        (mockFetch) => {
+                          return mockFetch.put('*', {
+                            updated: {
+                              ...data,
+                            },
+                          });
+                        },
+                        () => {
+                          const dataSubmit = Object.keys(data).reduce(
+                            (result, key) => {
+                              if (
+                                key !== 'split-from' &&
+                                key !== 'split-into' &&
+                                key !== 'merged-from' &&
+                                key !== 'merged-into'
+                              ) {
+                                result[key] = data[key];
                               }
-                            );
-                          }
-                        );
-                      },
-                      {}
-                    );
+                              return result;
+                            },
+                            {}
+                          );
+                          return authorizedFetch(`${apiPrefix}/${wbId}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                              data: dataSubmit,
+                              prov: provenance,
+                            }),
+                          });
+                        }
+                      );
+                    }, {});
                   },
                   disabled: isSubmitInProgress || disabled,
                 },
@@ -326,6 +316,7 @@ function EntityEdit({
               }),
               getDialogProps: (operation) => ({
                 entityType: entityType,
+                apiPrefix: apiPrefix,
                 wbId: wbId,
                 name: renderDisplayName(data),
                 data: data,
@@ -364,6 +355,7 @@ function EntityEdit({
 EntityEdit.propTypes = {
   wbId: PropTypes.string.isRequired,
   entityType: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string.isRequired,
   renderDisplayName: PropTypes.func,
   history: PropTypes.shape({
     replace: PropTypes.func.isRequired,

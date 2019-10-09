@@ -67,6 +67,7 @@ class GeneAutocomplete extends Component {
           <div>
             <AutocompleteLoader
               entityType="gene"
+              apiPrefix="/api/gene"
               inputValue={inputValue}
               selectedValue={this.itemToString(selectedItem)}
               onSuggestionChange={(suggestions) => {

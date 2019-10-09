@@ -76,33 +76,25 @@ class EntityHistory extends Component {
                 entity,
                 relatedEntity,
               } = getActivityDescriptor(activityItem, wbId);
-              console.log(relatedEntity);
+              const { who, when, how, why } = activityItem;
               return (
                 <TableRow key={activityIndex}>
                   <TableCell className={classes.time}>
                     <p>
-                      <Timestamp time={activityItem['provenance/when']} />
+                      <Timestamp time={when} />
                     </p>
-                    <em>
-                      {activityItem['provenance/who']
-                        ? activityItem['provenance/who']['person/name']
-                        : 'Unknown'}
-                    </em>
+                    <em>{who ? who['name'] : 'Unknown'}</em>
                     <span className={classes.via}> via </span>
                     <em>
-                      <Humanize>{activityItem['provenance/how']}</Humanize>
+                      <Humanize>{how}</Humanize>
                     </em>
                   </TableCell>
                   <TableCell className={classes.eventCell}>
                     <Typography gutterBottom className={classes.eventLabel}>
                       <span>
                         {wbId ? null : (
-                          <Link
-                            to={`/${entityType}/id/${
-                              entity[`${entityType}/id`]
-                            }`}
-                          >
-                            {entity[`${entityType}/id`]}
+                          <Link to={`/${entityType}/id/${entity.id}`}>
+                            {entity.id}
                           </Link>
                         )}
                         &nbsp;
@@ -111,19 +103,15 @@ class EntityHistory extends Component {
                         </Humanize>{' '}
                       </span>
                       {relatedEntity ? (
-                        <Link
-                          to={`/${entityType}/id/${
-                            relatedEntity[`${entityType}/id`]
-                          }`}
-                        >
-                          {relatedEntity[`${entityType}/id`]}
+                        <Link to={`/${entityType}/id/${relatedEntity.id}`}>
+                          {relatedEntity.id}
                         </Link>
                       ) : null}
                     </Typography>
-                    {activityItem['provenance/why'] && (
+                    {why && (
                       <Typography gutterBottom>
                         <span className={classes.reason}>Reason:</span>{' '}
-                        <em>{activityItem['provenance/why']}</em>
+                        <em>{why}</em>
                       </Typography>
                     )}
                     {this.renderChanges(activityItem.changes)}
