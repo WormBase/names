@@ -9,8 +9,9 @@
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
-   [wormbase.fake-auth]
+   [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.species :as wgsp]
+   [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.species :as wsp]
    [wormbase.test-utils :as tu]))
@@ -73,3 +74,23 @@
           (t/is (ru-hp/ok? response))
           (t/is (= (:latin-name body) elegans-ln))
           (t/is (= (:id body) "c-elegans")))))))
+
+(defn species-list []
+  (api-tc/parsed-response (tu/get* wns/app
+                                   "/api/species"
+                                   {}
+                                   {"content-type" "application/json"
+                                    "authorization" "Token FAKED"})))
+
+(t/deftest test-species-listing
+  (t/testing "List of species is retrievable."
+    (binding [fake-auth/*gapi-verify-token-response* (api-tc/make-auth-payload :current-user tester2)]
+      (let [response (species-list)
+            species (:body response)]
+        (t/is (ru-hp/ok? response))
+        (every? (fn [sp]
+                  ((juxt :latin-name
+                         :id
+                         :cgc-name-pattern
+                         :sequence-name-pattern) sp))
+                species)))))

@@ -55,15 +55,21 @@
 
 (defn list-items
   [request]
-  (ok (d/q '[:find [(pull ?e pattern) ...]
-             :in $ pattern
-             :where
-             [?e :species/id _]]
-           (:db request)
-           [:species/id
-            :species/latin-name
-            :species/cgc-name-pattern
-            :species/sequence-name-pattern])))
+  (ok (->> (d/q '[:find [(pull ?e pattern) ...]
+                  :in $ pattern
+                  :where
+                  [?e :species/id _]]
+                (:db request)
+                [:species/id
+                 :species/latin-name
+                 :species/cgc-name-pattern
+                 :species/sequence-name-pattern])
+           (map #(wnu/unqualify-keys % "species"))
+           (map (fn humanize-vals [sp]
+                  (reduce-kv (fn [m k v]
+                               (assoc m k (wnu/unqualify-maybe v)))
+                             {}
+                             sp))))))
 
 (def coll-resources
   (sweet/context "/species" []

@@ -13,7 +13,7 @@
   [& {:keys [current-user] :or {current-user default-user}}]
   (fake-auth/payload {"email" current-user}))
 
-(defn- parsed-response [[status body response-headers]]
+(defn parsed-response [[status body response-headers]]
   {:status status
    :body (tu/parse-body body)
    :headers response-headers})
