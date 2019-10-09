@@ -184,3 +184,7 @@
                 (keyword kw-ns (if (keyword old)
                                  (name old)
                                  old)))))
+(defn unqualify-maybe [x]
+  (if (qualified-keyword? x)
+    (name x)
+    x))

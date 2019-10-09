@@ -112,11 +112,6 @@
 
 (def ^:private exclude-nses (conj (wu/datomic-internal-namespaces) "importer"))
 
-(defn- unqualify-maybe [x]
-  (if (qualified-keyword? x)
-    (name x)
-    x))
-
 (defn tx-changes [db log tx]
   (->> tx
        (d/q '[:find ?e ?a ?v ?added
@@ -128,8 +123,8 @@
        (map (partial zipmap [:eid :attr :value :added]))
        (map #(update % :attr (partial d/ident db)))
        (remove #(exclude-nses (-> % :attr namespace)))
-       (map #(update % :attr unqualify-maybe))
-       (map #(update % :value unqualify-maybe))))
+       (map #(update % :attr wnu/unqualify-maybe))
+       (map #(update % :value wnu/unqualify-maybe))))
 
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
