@@ -105,7 +105,10 @@ class App extends Component {
                                   }
                                   return (
                                     <MuiThemeProvider
-                                      theme={entityTypesMap[entityType]}
+                                      theme={
+                                        entityTypesMap.get(entityType) &&
+                                        entityTypesMap.get(entityType).theme
+                                      }
                                     >
                                       <Switch>
                                         <Route
