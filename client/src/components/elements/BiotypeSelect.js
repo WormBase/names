@@ -6,22 +6,22 @@ import TextField from './TextField';
 const BiotypeSelect = (props) => {
   const BIOTYPES = [
     {
-      id: 'biotype/cds',
+      id: 'cds',
       label: 'CDS',
       sequenceOntology: 'SO:0000316',
     },
     {
-      id: 'biotype/pseudogene',
+      id: 'pseudogene',
       label: 'Pseudogene',
       sequenceOntology: 'SO:0000336',
     },
     {
-      id: 'biotype/transcript',
+      id: 'transcript',
       label: 'Transcript',
       sequenceOntology: 'SO:0000673',
     },
     {
-      id: 'biotype/transposable-element-gene',
+      id: 'transposable-element-gene',
       label: 'Transposable element gene',
       sequenceOntology: 'SO:0000111',
     },
