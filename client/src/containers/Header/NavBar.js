@@ -3,12 +3,7 @@ import PropTypes from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { matchPath } from 'react-router';
 
-import {
-  Tabs,
-  Tab,
-  MuiThemeProvider,
-  withStyles,
-} from '../../components/elements';
+import { Tabs, Tab, withStyles } from '../../components/elements';
 import { useEntityTypes } from '../Entity';
 import { capitalize } from '../../utils/format';
 
@@ -27,30 +22,26 @@ const NavBar = (props) => {
       .slice(-1)[0] || {};
 
   return (
-    <MuiThemeProvider
-      theme={getEntityType(currentTab) && getEntityType(currentTab).theme}
+    <Tabs
+      value={currentTab ? currentTab : false}
+      centered={true}
+      className={props.classes.root}
     >
-      <Tabs
-        value={currentTab ? currentTab : false}
-        centered={true}
-        className={props.classes.root}
-      >
-        {allTabs.map(({ entityType, displayName, path }) => (
-          <Tab
-            key={entityType}
-            label={displayName || capitalize(entityType)}
-            value={entityType}
-            style={{
-              color:
-                getEntityType(entityType) && getEntityType(entityType).theme
-                  ? getEntityType(entityType).theme.palette.secondary.dark
-                  : '#000',
-            }}
-            component={(props) => <Link {...props} to={path} />}
-          />
-        ))}
-      </Tabs>
-    </MuiThemeProvider>
+      {allTabs.map(({ entityType, displayName, path }) => (
+        <Tab
+          key={entityType}
+          label={displayName || capitalize(entityType)}
+          value={entityType}
+          style={{
+            color:
+              getEntityType(entityType) && getEntityType(entityType).theme
+                ? getEntityType(entityType).theme.palette.secondary.dark
+                : '#000',
+          }}
+          component={(props) => <Link {...props} to={path} />}
+        />
+      ))}
+    </Tabs>
   );
 };
 
