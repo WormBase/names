@@ -1,5 +1,8 @@
 export function pastTense(eventText = '') {
-  return eventText.replace(/(creat|merg|kill|resurrect|suppress)e?/g, '$1ed');
+  return eventText.replace(
+    /(creat|updat|merg|kill|resurrect|suppress)e?/g,
+    '$1ed'
+  );
 }
 
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
