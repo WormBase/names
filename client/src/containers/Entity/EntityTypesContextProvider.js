@@ -47,9 +47,11 @@ const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
 
 export const EntityTypesContext = createContext([]);
 EntityTypesContext.Provider.propTypes = {
-  value: PropTypes.objectOf({
-    'entity-type': PropTypes.string.isRequired,
-  }),
+  value: PropTypes.objectOf(
+    PropTypes.shape({
+      'entity-type': PropTypes.string.isRequired,
+    })
+  ),
 };
 
 export default function EntityTypesContextProvider(props) {

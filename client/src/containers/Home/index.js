@@ -18,7 +18,7 @@ function Home({ classes }) {
       <PageMain>
         <div className={classes.main}>
           {entityTypesAll.map(({ entityType, path, theme, displayName }) => (
-            <Paper elevation={1} className={classes.row}>
+            <Paper key={entityType} levation={1} className={classes.row}>
               <div className={classes.cell}>
                 <MuiThemeProvider theme={theme}>
                   <Button
