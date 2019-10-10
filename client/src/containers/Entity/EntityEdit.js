@@ -161,7 +161,7 @@ function EntityEdit({
     isLoading,
     isError,
     isSuccess,
-    setFetchFunc,
+    refetch,
   } = useDataFetch(memoizedFetchFunc, {});
 
   const {
@@ -200,7 +200,7 @@ function EntityEdit({
   useEffect(
     () => {
       if (isSubmitSuccess) {
-        setFetchFunc(memoizedFetchFunc);
+        refetch();
         dispatch({
           type: 'MESSAGE_SHOW',
           payload: {
@@ -210,7 +210,7 @@ function EntityEdit({
         });
       }
     },
-    [isSubmitSuccess, setFetchFunc, memoizedFetchFunc]
+    [isSubmitSuccess, refetch]
   );
 
   return isError ? (
@@ -330,7 +330,7 @@ function EntityEdit({
                       shortMessageVariant: 'success',
                     },
                   });
-                  setFetchFunc(memoizedFetchFunc);
+                  refetch();
                 },
               }),
               // from BaseForm

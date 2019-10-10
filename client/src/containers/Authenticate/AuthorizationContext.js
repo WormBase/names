@@ -30,8 +30,9 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
     isLoading: false,
     isError: null,
     isNew: true,
+    retryCounter: 0,
   });
-  const { fetchFunc } = state;
+  const { fetchFunc, retryCounter } = state;
   const setFetchFunc = useCallback(
     (newFetchFuncMemoized) => {
       dispatch({
@@ -39,6 +40,13 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
         payload: newFetchFuncMemoized,
       });
     },
+    [dispatch]
+  );
+  const refetch = useCallback(
+    () =>
+      dispatch({
+        type: 'REFETCH',
+      }),
     [dispatch]
   );
 
@@ -70,6 +78,11 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
         return {
           ...state,
           fetchFunc: action.payload,
+        };
+      case 'REFETCH':
+        return {
+          ...state,
+          retryCounter: state.retryCounter + 1,
         };
       default:
         throw new Error();
@@ -118,13 +131,14 @@ export function useDataFetch(initialFetchFuncMemoized, initialData) {
         didCancel = true;
       };
     },
-    [dispatch, fetchFunc, authorizedFetch]
+    [dispatch, fetchFunc, retryCounter, authorizedFetch]
   );
 
   return {
     ...state,
     isSuccess: !state.isNew && !state.isLoading && !state.isError,
     setFetchFunc,
+    refetch,
   };
 }
 
