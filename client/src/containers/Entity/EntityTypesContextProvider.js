@@ -23,6 +23,7 @@ const ENTITY_TYPES_CONFIG_LOCAL = [
 const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
   const entityType = entityTypeConfig['entity-type'] || '';
   return {
+    ...entityTypeConfig,
     entityType: entityType,
     displayName: capitalize(entityType.replace(/-/g, ' ')),
     path: `/${entityType}`,
