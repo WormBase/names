@@ -22,18 +22,16 @@ const OPERATION_SPLIT = 'split';
 
 class GeneProfile extends Component {
   getDisplayName = (data = {}) =>
-    data['gene/cgc-name'] || data['gene/sequence-name'] || data['gene/id'];
+    data['cgc-name'] || data['sequence-name'] || data['id'];
 
   renderStatus = ({ data = {}, changes = [] }) => {
     const killEventDescriptor =
-      data['gene/status'] === 'gene.status/dead'
-        ? getActivityDescriptor(changes[0])
-        : {};
+      data['status'] === 'dead' ? getActivityDescriptor(changes[0]) : {};
 
-    return data['gene/status'] !== 'gene.status/live' ? (
+    return data['status'] !== 'live' ? (
       <Typography variant="display1" gutterBottom>
-        <Humanize capitalized>{data['gene/status']}</Humanize>
-        {data['gene/status'] === 'gene.status/dead' ? (
+        <Humanize capitalized>{data['status']}</Humanize>
+        {data['status'] === 'dead' ? (
           <Typography variant="subheading" component={'i'}>
             (
             <Humanize postProcessor={pastTense}>
@@ -80,8 +78,8 @@ class GeneProfile extends Component {
           getOperationProps,
           getDialogProps,
         }) => {
-          const live = data['gene/status'] === 'gene.status/live';
-          const dead = data['gene/status'] === 'gene.status/dead';
+          const live = data['status'] === 'live';
+          const dead = data['status'] === 'dead';
           return (
             <React.Fragment>
               {!dead && (
@@ -137,11 +135,11 @@ class GeneProfile extends Component {
         renderForm={({ data, changes, ...props }) => (
           <GeneForm
             {...props}
-            cloned={Boolean(data['gene/sequence-name'] || data['gene/biotype'])}
+            cloned={Boolean(data['sequence-name'] || data['biotype'])}
           />
         )}
         renderOperationTip={({ data, Wrapper }) =>
-          data['gene/status'] === 'gene.status/suppressed' ? (
+          data['status'] === 'suppressed' ? (
             <Wrapper>
               <p>To un-suppress the gene, kill then resurrect it.</p>
             </Wrapper>

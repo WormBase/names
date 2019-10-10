@@ -174,9 +174,7 @@ function EntityEdit({
   const { history: changes, ...data } = responseContent;
   const wbId = data.id;
   const disabled =
-    isLoading ||
-    isSubmitInProgress ||
-    (data && data[`${entityType}/status`] === `${entityType}.status/dead`);
+    isLoading || isSubmitInProgress || (data && data['status'] === 'dead');
 
   const getPermanentUrl = useCallback(
     () => {
