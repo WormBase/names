@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useContext } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useDataFetch } from '../../containers/Authenticate';
-import { EntityTypesContext } from '../../containers/Entity';
+import { useEntityTypes } from '../../containers/Entity';
 
 export default function AutocompleteLoader({
   children,
@@ -13,15 +13,13 @@ export default function AutocompleteLoader({
   const { isLoading, data, setFetchFunc } = useDataFetch(null, {}); // can't provide fetchFunc now, because it depends on suggestions
   const suggestions = useMemo(() => data.matches || [], [data]);
   const suggestinsRef = useRef(suggestions); // for accessing the current suggestions from effect
-  const entityTypesMap = useContext(EntityTypesContext);
+  const { getEntityType } = useEntityTypes();
   const apiPrefix = useMemo(
     () => {
-      const entityTypeConfig = entityTypesMap.get(entityType);
-      return entityTypeConfig && entityTypeConfig['generic?']
-        ? `/api/entity/${entityType}`
-        : `/api/${entityType}`;
+      const entityTypeConfig = getEntityType(entityType);
+      return entityTypeConfig && entityTypeConfig.apiPrefix;
     },
-    [entityTypesMap, entityType]
+    [getEntityType, entityType]
   );
 
   useEffect(

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { matchPath } from 'react-router';
@@ -9,15 +9,12 @@ import {
   MuiThemeProvider,
   withStyles,
 } from '../../components/elements';
-import { EntityTypesContext } from '../Entity';
+import { useEntityTypes } from '../Entity';
 import { capitalize } from '../../utils/format';
 
 const NavBar = (props) => {
-  const entityTypesMap = useContext(EntityTypesContext);
-  const allTabs = [
-    { entityType: 'home', path: '/' },
-    ...[...entityTypesMap].map(([, entityTypeConfig]) => entityTypeConfig),
-  ];
+  const { entityTypesAll, getEntityType } = useEntityTypes();
+  const allTabs = [{ entityType: 'home', path: '/' }, ...entityTypesAll];
   const { entityType: currentTab } =
     allTabs
       .filter(({ path }) =>
@@ -31,9 +28,7 @@ const NavBar = (props) => {
 
   return (
     <MuiThemeProvider
-      theme={
-        entityTypesMap.get(currentTab) && entityTypesMap.get(currentTab).theme
-      }
+      theme={getEntityType(currentTab) && getEntityType(currentTab).theme}
     >
       <Tabs
         value={currentTab ? currentTab : false}
@@ -47,9 +42,8 @@ const NavBar = (props) => {
             value={entityType}
             style={{
               color:
-                entityTypesMap.get(entityType) &&
-                entityTypesMap.get(entityType).theme
-                  ? entityTypesMap.get(entityType).theme.palette.secondary.dark
+                getEntityType(entityType) && getEntityType(entityType).theme
+                  ? getEntityType(entityType).theme.palette.secondary.dark
                   : '#000',
             }}
             component={(props) => <Link {...props} to={path} />}

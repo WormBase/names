@@ -14,4 +14,5 @@ export { default as EntityHistory } from './EntityHistory';
 export {
   default as EntityTypesContextProvider,
   EntityTypesContext,
+  useEntityTypes,
 } from './EntityTypesContextProvider';

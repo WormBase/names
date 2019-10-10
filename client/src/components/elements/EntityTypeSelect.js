@@ -1,14 +1,14 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { MenuItem, withStyles } from '@material-ui/core';
 import TextField from './TextField';
-import { EntityTypesContext } from '../../containers/Entity';
+import { useEntityTypes } from '../../containers/Entity';
 
 const EntityTypeSelect = (props) => {
-  const entityTypesMap = useContext(EntityTypesContext);
+  const { entityTypesAll } = useEntityTypes();
   return (
     <TextField select className={props.classes.root} {...props}>
-      {[...entityTypesMap].map(([, { entityType: item, displayName }]) => (
+      {entityTypesAll.map(({ entityType: item, displayName }) => (
         <MenuItem key={item} value={item}>
           {displayName}
         </MenuItem>

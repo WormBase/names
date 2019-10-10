@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useMemo } from 'react';
+import React, { createContext, useCallback, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   createMuiTheme,
@@ -18,7 +18,10 @@ const ENTITY_TYPES_CONFIG_LOCAL = [
     color: geneColor['A400'],
   },
   { 'entity-type': 'variation', color: variationColor['A700'] },
-];
+].map((entityTypeConfig) => ({
+  ...entityTypeConfig,
+  'local?': true,
+}));
 
 const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
   const entityType = entityTypeConfig['entity-type'] || '';
@@ -27,6 +30,9 @@ const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
     entityType: entityType,
     displayName: capitalize(entityType.replace(/-/g, ' ')),
     path: `/${entityType}`,
+    apiPrefix: entityTypeConfig['generic?']
+      ? `/api/entity/${entityType}`
+      : `/api/${entityType}`,
     theme: color
       ? createMuiTheme({
           palette: {
@@ -78,23 +84,12 @@ export default function EntityTypesContextProvider(props) {
   const { data } = useDataFetch(memoizedFetchFunc, []);
   const entityTypesAll = useMemo(
     () => {
-      const entityTypesMapLocal = new Map(
-        ENTITY_TYPES_CONFIG_LOCAL.map((entityTypeConfig) => [
-          entityTypeConfig['entity-type'],
-          entityTypeConfig,
-        ])
-      );
-      const entityTypesMapRemote = new Map(
-        (data['entity-types'] || []).map((entityTypeConfig) => [
-          entityTypeConfig['entity-type'],
-          entityTypeConfig,
-        ])
-      );
       const entityTypesMapCombined = [
-        ...entityTypesMapLocal,
-        ...entityTypesMapRemote,
-      ].reduce((result, [entityType, entityTypeConfig]) => {
+        ...ENTITY_TYPES_CONFIG_LOCAL,
+        ...(data['entity-types'] || []),
+      ].reduce((result, entityTypeConfig) => {
         // merge the local and remote configs, where remote config overrides the local one
+        const entityType = entityTypeConfig['entity-type'];
         const entityTypeConfigPrev = result.get(entityType);
         result.set(
           entityType,
@@ -109,8 +104,7 @@ export default function EntityTypesContextProvider(props) {
           .filter(([entityType, entityTypeConfig]) => {
             return (
               entityTypeConfig['enabled?'] &&
-              (entityTypeConfig['generic?'] ||
-                entityTypesMapLocal.has(entityType))
+              (entityTypeConfig['generic?'] || entityTypeConfig['local?'])
             );
           })
           .map(([entityType, entityTypeConfig]) => [
@@ -123,4 +117,20 @@ export default function EntityTypesContextProvider(props) {
     [data]
   );
   return <EntityTypesContext.Provider value={entityTypesAll} {...props} />;
+}
+
+export function useEntityTypes() {
+  const entityTypesMap = useContext(EntityTypesContext);
+  const entityTypesAll = useMemo(
+    () => [...entityTypesMap].map(([, entityTypeConfig]) => entityTypeConfig),
+    [entityTypesMap]
+  );
+  const getEntityType = useCallback(
+    (entityType) => entityTypesMap.get(entityType),
+    [entityTypesMap]
+  );
+  return {
+    entityTypesAll: entityTypesAll,
+    getEntityType: getEntityType,
+  };
 }

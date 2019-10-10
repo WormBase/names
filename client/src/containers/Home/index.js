@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Page,
@@ -8,42 +8,40 @@ import {
   MuiThemeProvider,
   withStyles,
 } from '../../components/elements';
-import { EntityTypesContext } from '../Entity';
+import { useEntityTypes } from '../Entity';
 import { Link } from 'react-router-dom';
 
 function Home({ classes }) {
-  const entityTypesMap = useContext(EntityTypesContext);
+  const { entityTypesAll } = useEntityTypes();
   return (
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {[...entityTypesMap].map(
-            ([, { entityType, path, theme, displayName }]) => (
-              <Paper elevation={1} className={classes.row}>
-                <div className={classes.cell}>
-                  <MuiThemeProvider theme={theme}>
-                    <Button
-                      variant="raised"
-                      color="secondary"
-                      component={({ ...props }) => (
-                        <Link to={`${path}/new`} {...props} />
-                      )}
-                    >
-                      Add {displayName}
-                    </Button>
-                  </MuiThemeProvider>
-                </div>
-                <div className={classes.cell}>
+          {entityTypesAll.map(({ entityType, path, theme, displayName }) => (
+            <Paper elevation={1} className={classes.row}>
+              <div className={classes.cell}>
+                <MuiThemeProvider theme={theme}>
                   <Button
-                    color="primary"
-                    component={({ ...props }) => <Link to={path} {...props} />}
+                    variant="raised"
+                    color="secondary"
+                    component={({ ...props }) => (
+                      <Link to={`${path}/new`} {...props} />
+                    )}
                   >
-                    Browse {displayName}s
+                    Add {displayName}
                   </Button>
-                </div>
-              </Paper>
-            )
-          )}
+                </MuiThemeProvider>
+              </div>
+              <div className={classes.cell}>
+                <Button
+                  color="primary"
+                  component={({ ...props }) => <Link to={path} {...props} />}
+                >
+                  Browse {displayName}s
+                </Button>
+              </div>
+            </Paper>
+          ))}
         </div>
       </PageMain>
     </Page>

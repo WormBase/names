@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -13,11 +13,11 @@ import { SearchBox } from '../Search';
 import { Route, Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
-import { EntityTypesContext } from '../Entity';
+import { useEntityTypes } from '../Entity';
 
 const Header = (props) => {
   const { classes } = props;
-  const entityTypesMap = useContext(EntityTypesContext);
+  const { getEntityType } = useEntityTypes();
 
   return (
     <div>
@@ -39,7 +39,7 @@ const Header = (props) => {
               component={({ match }) => {
                 const entityType = match.params.entityType;
 
-                return entityTypesMap.has(entityType) ? (
+                return getEntityType(entityType) ? (
                   <SearchBox
                     entityType={entityType}
                     enableEntityTypeSelect={true}
