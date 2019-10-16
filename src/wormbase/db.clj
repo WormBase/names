@@ -128,5 +128,8 @@
 (def txfn-schema (partial edn-definition "tx-fns"))
 
 (defn pull [db expr & args]
-  (let [format-result (comp (partial wu/elide-db-internals db) wu/elide-importer-info)]
+  (let [format-result (fn [result]
+                        (->> result
+                             (wu/elide-importer-info)
+                             (wu/elide-db-internals db)))]
     (format-result (apply d/pull db expr args))))
