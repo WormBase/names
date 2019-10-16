@@ -22,6 +22,7 @@
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.stats :as wn-stats]
+   [ring.adapter.jetty :as raj]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
@@ -101,7 +102,12 @@
        wn-stats/routes
        wne/routes))))
 
-(defn init
+(mount/defstate http-server
+  :start (let [port (read-string (get environ/env :port "3000"))]
+           (raj/run-jetty #'app {:port port :join? false}))
+  :stop (.stop http-server))
+
+(defn -main
   "Entry-point for ring server initialization."
   []
   (mount/start)
