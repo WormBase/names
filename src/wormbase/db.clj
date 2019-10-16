@@ -70,7 +70,7 @@
   [request-handler]
   (fn [request]
     (when-not (connected?)
-      (mount/start))
+      (mount/start #'conn))
     (let [cx (connection)]
       (-> request
           (assoc :conn cx :db (db cx))
