@@ -76,6 +76,11 @@ export default function EntityTypesContextProvider(props) {
                 'generic?': true,
                 'enabled?': true,
               },
+              {
+                'entity-type': 'strain',
+                'generic?': true,
+                'enabled?': true,
+              },
             ],
           }),
         () => authorizedFetch('/api/entity'),
