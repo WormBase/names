@@ -90,6 +90,7 @@
           data (-> (:data payload)
                    (conform-spec-fn)
                    (wnu/qualify-keys ent-ns)
+                   (transform-ident-ref-values)
                    (names-validator)
                    (update live-status-attr (fnil identity live-status-val)))
           cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))

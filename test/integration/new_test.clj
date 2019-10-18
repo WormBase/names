@@ -89,6 +89,24 @@
             (check-db db :gene/id identifier)
             (tu/query-provenance conn identifier :event/new-gene)))))))
 
+(t/deftest naming-cloned-gene
+  (t/testing "Naming one cloned gene succesfully returns ids"
+    (tu/with-gene-fixtures
+      []
+      (fn new-uncloned [conn]
+        (let [response (new-gene
+                        {:data {:sequence-name (tu/seq-name-for-species elegans-ln)
+                                :biotype "cds"
+                                :species elegans-ln}
+                         :prov nil})
+              expected-id "WBGene00000001"]
+          (t/is (ru-hp/created? response))
+          (let [db (d/db conn)
+                identifier (some-> response :body :created :id)]
+            (t/is (= identifier expected-id))
+            (check-db db :gene/id identifier)
+            (tu/query-provenance conn identifier :event/new-gene)))))))
+
 (t/deftest gene-naming-conflict
   (t/testing "When a gene already exists with the requested name."
     (let [cgc-name (tu/cgc-name-for-species elegans-ln)
