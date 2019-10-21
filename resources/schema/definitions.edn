@@ -129,11 +129,8 @@
  #:db{:ident :wormbase.names/entity-type-generic?
       :valueType :db.type/boolean
       :cardinality :db.cardinality/one
-      :doc "Indicates if the entity type is generic."} 
+      :doc "Indicates if the entity type is generic."}
  #:db{:ident :wormbase.names/id-template-format
       :valueType :db.type/string
       :cardinality :db.cardinality/one
       :unique :db.unique/value}]
-
-
-
