@@ -7,31 +7,57 @@
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch.generic :as wnbg]
+   [wormbase.names.entity :as wne]   
    [wormbase.names.gene :as wng]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
+   [wormbase.names.gene] ;; brings in multi-method registration
    [wormbase.names.provenance :as wnp]
    [wormbase.names.validation :as wnv]
    [expound.alpha :as expound]))
 
 (s/def ::prov ::wsp/provenance)
 
+(defmethod wne/transform-ident-ref-value :new-biotype [_ m]
+  (wnu/transform-ident-ref :new-biotype m "biotype"))
+
+(defmethod wne/transform-ident-ref-value :product-biotype [_ m]
+  (wnu/transform-ident-ref :product-biotype m "biotype"))
+
 (defn merge-genes [event-type spec request]
   (let [{conn :conn payload :body-params} request
-        {data :data prov :prov} payload
-        cdata (stc/conform spec data)]
-    (when (s/invalid? cdata)
+        {data :data prov-data :prov} payload
+        prov (wnp/assoc-provenance request
+                                   (wnu/qualify-keys prov-data "provenence")
+                                   :event/merge-genes)]
+    (when (s/invalid? data)
       (bad-request! {:data data
                      :problems (expound/expound-str spec data)}))
-    (let [bsize (wnbg/batch-size payload data)]
+    (let [cdata (->> data
+                     (stc/conform spec)
+                     (map wne/transform-ident-ref-values))
+        bsize (wnbg/batch-size payload cdata)]
       (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
+
+(defn transform-ident-ref-value [k m]
+  (if (k m)
+    (wne/transform-ident-ref-value k m)
+    m))
 
 (defn split-genes [event-type spec request]
   (let [{conn :conn payload :body-params} request
-        {data :data prov :prov} payload
-        cdata (stc/conform spec data)]
+        data (:data payload)
+        {data :data prov-data :prov} payload
+        prov (wnp/assoc-provenance request
+                                   (assoc-in payload
+                                             [:prov]
+                                             (wnu/qualify-keys prov-data "provenence"))
+                                   :event/split-genes)
+        cdata (->> (stc/conform spec data)
+                   (map (partial transform-ident-ref-value :new-biotype))
+                   (map (partial transform-ident-ref-value :product-biotype)))]
     (when (s/invalid? cdata)
       (bad-request! {:data data
                      :problems (expound/expound-str spec data)}))
@@ -39,7 +65,8 @@
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
 (defn names-validator [request data]
-  (map (partial wnv/validate-names request) data))
+  (map (fn [dx]
+         (wnv/validate-names request dx)) data))
 
 (def routes
   (sweet/context "/gene" []
@@ -73,7 +100,7 @@
                                        ::wsg/new-batch
                                        wnbg/map-conform-data-drop-labels
                                        (partial names-validator request)
-                                       [:gene/cgc-name :gene/sequence-name]
+                                       ["cgc-name" "sequence-name"]
                                        request)))}
       :delete
       {:summary "Kill genes."

@@ -1,4 +1,4 @@
-(ns integration.test-batch-split-genes
+(ns integration.batch-split-genes-test
   (:require
    [clj-uuid :as uuid]
    [clojure.spec.alpha :as s]
@@ -36,11 +36,13 @@
                                    :gene/status :gene.status/dead
                                    :gene/species elegans-ln
                                    :gene/sequence-name (tu/seq-name-for-species elegans-ln)
-                                   :gene/biotype (first (gen/sample gsg/biotype 1))))
+                                   :gene/biotype (->> (gen/sample gsg/biotype 1)
+                                                      (first)
+                                                      (keyword "biotype"))))
                           fixtures)
           gene-id (-> fixtures** first :gene/id)
-          new-biotype :biotype/transcript
-          prod-biotype :biotype/cds
+          new-biotype "transcript"
+          prod-biotype "cds"
           data [{:from-id gene-id
                  :new-biotype new-biotype
                  :product-biotype prod-biotype
@@ -64,18 +66,18 @@
                      gene-ids)
           from-seq-name (-> fixtures first :gene/sequence-name)
           bdata [{:from-id (:gene/id (first fixtures))
-                  :new-biotype :biotype/pseudogene
-                  :product-biotype :biotype/transcript
+                  :new-biotype "pseudogene"
+                  :product-biotype "transcript"
                   :product-sequence-name "SEQ1.1"}
                  {:from-id (:gene/id (second fixtures))
                   :new-biotype nil      ;; no change
-                  :product-biotype :biotype/pseudogene
+                  :product-biotype "pseudogene"
                   :product-sequence-name "SEQ2.2"}]]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
           (let [response (split-genes {:data bdata :prov basic-prov})
-                bid (get-in response [:body :batch/id] "")]
+                bid (get-in response [:body :id] "")]
             (t/is (ru-hp/ok? response))
             (t/is (uuid/uuid-string? bid))
             (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
@@ -99,7 +101,7 @@
                   (t/is (some (fn [g]
                                 (= (:gene/id g) (:from-id split-spec-data)))
                               (:gene/_splits product)))
-                  (t/is (= (get-in product [:gene/status :db/ident]) :gene.status/live))
-                  (t/is (= (get-in product [:gene/biotype :db/ident]) expected-prod-bt)
+                  (t/is (= (name (get-in product [:gene/status :db/ident])) "live"))
+                  (t/is (= (name (get-in product [:gene/biotype :db/ident])) expected-prod-bt)
                         (str "PRODUCT:\n"
                              (pr-str product))))))))))))

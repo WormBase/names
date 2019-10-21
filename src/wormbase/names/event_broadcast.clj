@@ -1,5 +1,14 @@
 (ns wormbase.names.event-broadcast
-  "Relay messages for consumption by parties interested (primarily ACeDB clients)."
+  "Relay messages for consumption by parties interested (primarily ACeDB clients).
+
+  DEPREACTED: This module is not currently used.
+              The intent was for \"events\" perfomed via the Web UI to be queued in
+              some external storage for the purpose of relaying in another database (GeneACe).
+              This idea has been superceded by the GeneACe curator querying a rest endpoint periodically.
+
+              The module here is perserved \"just in case\" we want to use it,
+              but the event broadcast facility has been switched off (No events will be relayed to any storage).
+  "
   (:require
    [clojure.tools.logging :as log]
    [datomic.api :as d]

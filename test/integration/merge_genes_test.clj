@@ -1,4 +1,4 @@
-(ns integration.test-merge-genes
+(ns integration.merge-genes-test
   (:require
    [clojure.string :as str]
    [clojure.test :as t]
@@ -75,7 +75,7 @@
 (t/deftest response-codes
   (t/testing "404 for missing gene(s)"
     (let [[status body] (merge-genes
-                         {:data {:gene/biotype :biotype/transposable-element-gene}
+                         {:data {:biotype "transposable-element-gene"}
                           :prov nil}
                          "WBGene20000000"
                          "WBGene10000000")]
@@ -105,7 +105,7 @@
                                       :gene/status
                                       (-> lur entity :gene/status entid)
                                       (entid :gene.status/dead)]]))
-          (let [[status body] (merge-genes {:data {:gene/biotype :biotype/cds}
+          (let [[status body] (merge-genes {:data {:biotype "cds"}
                                             :prov nil}
                                            from-id
                                            into-id)]
@@ -116,7 +116,7 @@
       (tu/with-gene-fixtures
         data-samples
         (fn check-biotype-validation-error [conn]
-          (let [[status body] (merge-genes {:data {:gene/biotype :biotype/godzilla}
+          (let [[status body] (merge-genes {:data {:biotype "godzilla"}
                                             :prov nil}
                                            from-id
                                            into-id)]
@@ -140,7 +140,7 @@
         (fn check-provenance [conn]
           (let [db (d/db conn)
                 [status body] (merge-genes
-                               {:data {:gene/biotype :biotype/transposable-element-gene}
+                               {:data {:biotype "transposable-element-gene"}
                                 :prov nil}
                                from-id
                                into-id)

@@ -79,14 +79,6 @@
  #:db{:ident :species/sequence-name-pattern
       :valueType :db.type/string
       :cardinality :db.cardinality/one}
- #:db{:ident :template/format
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :template/describes
-      :valueType :db.type/keyword
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
  #:db{:ident :person/id
       :valueType :db.type/string
       :cardinality :db.cardinality/one
@@ -122,31 +114,23 @@
       :valueType :db.type/uuid
       :index true
       :doc "A saga identifier for tracking batches of operations."}
- #:db{:ident :variation/id
-      :valueType :db.type/string
+ #:db{:ident :wormbase.names/entity-type-enabled?
+      :valueType :db.type/boolean
       :cardinality :db.cardinality/one
-      :unique :db.unique/identity
-      :doc "The primary identifier of the variation."}
- #:db{:ident :variation/name
-      :valueType :db.type/string
+      :doc "Indicates if an entity type should be used."}
+ #:db{:ident :wormbase.names/name-required?
+      :valueType :db.type/boolean
       :cardinality :db.cardinality/one
-      :unique :db.unique/value
-      :doc "The primary name of the variation."}
- #:db{:ident :variation/status
+      :doc "Indicates if an entity type should have a name."}
+ #:db{:ident :wormbase.names/entity-types
       :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "The status of the variation."}
- #:db{:ident :variation.name/pattern
-      :valueType :db.type/string
       :cardinality :db.cardinality/many
-      :doc "The set of permissiable naming pattern for variations."}
- #:db{:ident :sequence-feature/id
+      :doc "A registry of entity types."}
+ #:db{:ident :wormbase.names/entity-type-generic?
+      :valueType :db.type/boolean
+      :cardinality :db.cardinality/one
+      :doc "Indicates if the entity type is generic."}
+ #:db{:ident :wormbase.names/id-template-format
       :valueType :db.type/string
       :cardinality :db.cardinality/one
-      :unique :db.unique/identity
-      :doc "The primary identifier for a sequence feature."}
- #:db{:ident :sequence-feature/status
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "The status of the sequence feature."}]
-
+      :unique :db.unique/value}]

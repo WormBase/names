@@ -13,28 +13,33 @@
   [& {:keys [current-user] :or {current-user default-user}}]
   (fake-auth/payload {"email" current-user}))
 
-(defn- parsed-response [[status body response-headers]]
+(defn parsed-response [[status body response-headers]]
   {:status status
    :body (tu/parse-body body)
    :headers response-headers})
 
 (defn send-request
-  [entity-kind method data & {:keys [current-user sub-path]
-                              :or {current-user default-user
-                                   sub-path ""}}]
-  (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
-                                                    :current-user
-                                                    current-user)]
-    (let [data (tu/->json data)
-          path (str "/api/" entity-kind "/" sub-path)]
-      (parsed-response
-       (tu/raw-put-or-post*
-        service/app
-        path
-        method
-        data
-        "application/json"
-        {"authorization" "Token FAKED"})))))
+  [entity-kind method data & {:keys [current-user sub-path uri]
+                                :or {current-user default-user sub-path ""}}]
+   (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
+                                                     :current-user
+                                                     current-user)]
+     (let [data (tu/->json data)
+           path (if uri
+                  uri
+                  (str "/api/"
+                       entity-kind
+                       (when-not (str/blank? sub-path)
+                         "/")
+                       sub-path))
+           response (tu/raw-put-or-post*
+                     service/app
+                     path
+                     method
+                     data
+                     "application/json"
+                     {"authorization" "Token FAKED"})]
+       (parsed-response response))))
 
 (defn new
   [entity-kind data & {:keys [current-user]

@@ -3,49 +3,45 @@ import PropTypes from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { matchPath } from 'react-router';
 
-import {
-  Tabs,
-  Tab,
-  MuiThemeProvider,
-  withStyles,
-} from '../../components/elements';
+import { Tabs, Tab, withStyles } from '../../components/elements';
+import { useEntityTypes } from '../Entity';
 import { capitalize } from '../../utils/format';
-import { ENTITY_TYPES, getEntityTypeTheme } from '../../utils/entityTypes';
-
-const ALL_TABS = [{ entityType: 'home', path: '/' }, ...ENTITY_TYPES];
 
 const NavBar = (props) => {
+  const { entityTypesAll, getEntityType } = useEntityTypes();
+  const allTabs = [{ entityType: 'home', path: '/' }, ...entityTypesAll];
   const { entityType: currentTab } =
-    ALL_TABS.filter(({ path }) =>
-      matchPath(props.location.pathname, {
-        path: path,
-        exact: false,
-        strict: false,
-      })
-    ).slice(-1)[0] || {};
+    allTabs
+      .filter(({ path }) =>
+        matchPath(props.location.pathname, {
+          path: path,
+          exact: false,
+          strict: false,
+        })
+      )
+      .slice(-1)[0] || {};
 
   return (
-    <MuiThemeProvider theme={getEntityTypeTheme(currentTab)}>
-      <Tabs
-        value={currentTab ? currentTab : false}
-        centered={true}
-        className={props.classes.root}
-      >
-        {ALL_TABS.map(({ entityType, path }) => (
-          <Tab
-            key={entityType}
-            label={capitalize(entityType)}
-            value={entityType}
-            style={{
-              color: getEntityTypeTheme(entityType)
-                ? getEntityTypeTheme(entityType).palette.secondary.dark
+    <Tabs
+      value={currentTab ? currentTab : false}
+      centered={true}
+      className={props.classes.root}
+    >
+      {allTabs.map(({ entityType, displayName, path }) => (
+        <Tab
+          key={entityType}
+          label={displayName || capitalize(entityType)}
+          value={entityType}
+          style={{
+            color:
+              getEntityType(entityType) && getEntityType(entityType).theme
+                ? getEntityType(entityType).theme.palette.secondary.dark
                 : '#000',
-            }}
-            component={(props) => <Link {...props} to={path} />}
-          />
-        ))}
-      </Tabs>
-    </MuiThemeProvider>
+          }}
+          component={(props) => <Link {...props} to={path} />}
+        />
+      ))}
+    </Tabs>
   );
 };
 

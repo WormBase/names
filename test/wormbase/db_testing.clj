@@ -8,7 +8,7 @@
    [wormbase.db :as wdb]
    [wormbase.db.schema :as schema]
    [wormbase.names.auth :as wna]
-   [wormbase.names.util :as wnu]))
+   [wormbase.util :as wu]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -21,7 +21,7 @@
     @(d/transact-async conn [{:person/email "tester@wormbase.org"
                               :person/id "WBPerson007"
                               :person/auth-token (wna/sign-token
-                                                  (-> (wnu/read-app-config)
+                                                  (-> (wu/read-app-config)
                                                       :auth-token)
                                                   {"email" "tester@wormbase.org"
                                                    "hd" "wormbase.org"})
@@ -48,8 +48,7 @@
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
                  (jt/to-millis-from-epoch (jt/instant)))]
-    (let [conn (fixture-conn)
-          tx-reqort-queue (d/tx-report-queue conn)]
+    (let [conn (fixture-conn)]
       (mount/start-with {#'wdb/conn conn})
       (f)
       (wdb/checked-delete uri)

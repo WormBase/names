@@ -14,15 +14,17 @@
                       :description "The server-local system time when the event was proccessed."}))
 
 ;; clients are requried to provide their time zone when specifying dates.
-(s/def :provenance/when (stc/spec {:spec (s/nilable wu/zoned-date-time?)
-                                   :swagger/example (jt/format :iso-date-time (jt/zoned-date-time (jt/instant) (jt/zone-id)))
-                                   :description "The date-time the curator performed the action."}))
+(s/def :provenance/when (stc/spec
+                         {:spec (s/nilable wu/zoned-date-time?)
+                          :swagger/example (jt/format :iso-date-time
+                                                      (jt/zoned-date-time (jt/instant) (jt/zone-id)))
+                          :description "The date-time the curator performed the action."}))
 
 (s/def :provenance/what  (stc/spec {:spec sts/keyword?
                                     :swagger/example "event/new-gene"
                                     :description "The type of event."}))
 
-(s/def :provenance/who (stc/spec {:spec (s/keys :req [(or :person/id :person/email)])
+(s/def :provenance/who (stc/spec {:spec (s/keys :req-un [(or :person/id :person/email)])
                                   :description "The WormBase person who performed the event."}))
 
 (s/def :provenance/how (stc/spec {:spec ::wsa/id
@@ -35,14 +37,14 @@
 
 (s/def ::provenance (stc/spec
                      {:spec (s/nilable
-                             (s/keys :opt [:provenance/who
-                                           :provenance/how
-                                           :provenance/what
-                                           :provenance/when
-                                           :provenance/why]))
+                             (s/keys :opt-un [:provenance/who
+                                              :provenance/how
+                                              :provenance/what
+                                              :provenance/when
+                                              :provenance/why]))
                       :description "A mapping describing provenance of names service events."}))
 
-(s/def ::attr sts/keyword?)
+(s/def ::attr string?)
 
 (s/def ::value any?)
 

@@ -36,15 +36,12 @@
         importer-ns-name (first arguments)
         tsv-paths (take 2 (rest arguments))]
     (mount/start)
-    (wdbs/apply-updates!)
-    (wdbs/import-people wdb/conn)
     (cond
       (:help options) (exit 0 (usage summary))
 
       (nil? (get importers importer-ns-name))
       (exit 1 (str "Please specifiy the importer to run, one of: "
-                   (str/join "," (-> importers keys sort))
-                   "args: " (pr-str arguments)))
+                   (str/join "," (-> importers keys sort))))
 
       (empty? tsv-paths)
       (exit 1 "Pass the 2 .tsv files as first 2 parameters")
@@ -66,5 +63,3 @@
           (mount/stop)
           (exit 0 "Finished"))
         (exit 1 (str "Invalid importer specified:" importer-ns-name))))))
-
-

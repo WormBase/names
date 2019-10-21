@@ -1,21 +1,15 @@
 (ns wormbase.specs.biotype
   (:require
    [clojure.spec.alpha :as s]
+   [spec-tools.core :as stc]
    [spec-tools.spec :as sts]))
 
-(s/def :biotype/cds sts/keyword?)
+(s/def ::identifier (stc/spec ;; (s/and
+                     {:spec string?}
+                                     ;; (fn lower-case? [bts]
+                                     ;;   (every? #(Character/isLowerCase %) (name bts)))))
+                               ;; )
+  ))
 
-(s/def :biotype/pseudogene sts/keyword?)
-
-(s/def :biotype/transcript sts/keyword?)
-
-(s/def :biotype/transposable-element-gene sts/keyword?)
-
-(def all-biotypes #{:biotype/cds
-                    :biotype/pseudogene
-                    :biotype/transcript
-                    :biotype/transposable-element-gene})
-
-(s/def ::biotypes all-biotypes)
 
   

@@ -16,6 +16,7 @@
   (->> (util/load-seed-data)
        (filter species-kw)
        (map species-kw)
+       (map name)
        set))
 
 (def id (sg/string-generator wsg/gene-id-regexp))
@@ -23,14 +24,13 @@
 (def biotype-overrides
   {:gene/biotype #(s/gen (->> (util/load-enum-samples "biotype")
                               (map :db/ident)
+                              (map name)
                               set))})
 
 (def biotype (s/gen :gene/biotype biotype-overrides))
 
 
-(def all-statuses #{:gene.status/dead
-                    :gene.status/live
-                    :gene.status/suppressed})
+(def all-statuses #{"dead" "live" "suppressed"})
 
 (def status-overrides {:gene/status (constantly (s/gen all-statuses))})
 
@@ -69,8 +69,7 @@
 
 (def overrides
   {:gene/biotype (constantly biotype)
-   :species/latin-name (constantly species)
-   :species/id (constantly species)
+   :gene/species (constantly (s/gen ::species-latin-name))
    :gene/cgc-name (constantly cgc-name)
    :gene/id (constantly id)
    :gene/status (constantly status)

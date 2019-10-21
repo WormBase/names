@@ -12,7 +12,7 @@
    [wormbase.util :as wu])
   (:import (java.util Date)))
 
-(def conf (:recent (wnu/read-app-config)))
+(def conf (:recent (wu/read-app-config)))
 
 (defn- find-max-imported-date [db]
   (let [max-tx-inst (d/q '[:find (max ?inst) .
@@ -48,9 +48,9 @@
                   from
                   import-date)
          until-t (or until (jt/to-java-date (jt/instant)))]
-         ;; Timings for the `tx-ids` query below with default configured time window (60 days)
-         ;; (excluding pull expressions)
-         ;; jvm (cold): 107.266427 msecs
+     ;; Timings for the `tx-ids` query below with default configured time window (60 days)
+     ;; (excluding pull expressions)
+     ;; jvm (cold): 107.266427 msecs
      ;; jvm (warm): 30.054339 msecs
      (d/q query db rules log from-t until-t needle how))))
 
@@ -146,49 +146,28 @@
                            (:person/email person)
                            from
                            until)))
-               (sweet/GET "/gene" request
-                 :tags ["recent" "gene"]
-                 :summary "List recent gene activity."
-                 :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
-                 (handle request
-                         entity-rules
-                         (changes-and-prov-puller request)
-                         "gene"
-                         from
-                         until
-                         how))
-               (sweet/GET "/gene/:agent" request
-                 :tags ["recent" "gene"]
-                 :summary "List recent gene activity performed via a given agent."
-                 :path-params [agent :- ::wsr/agent]
-                 (handle request
-                         entity-rules
-                         (changes-and-prov-puller request)
-                         "gene"
-                         from
-                         until
-                         #{(keyword "agent" agent)}))
-               (sweet/GET "/variation" request
-                 :tags ["recent" "variation"]
-                 :summary "List recent variation activity."
-                 (handle request
-                         entity-rules
-                         (changes-and-prov-puller request)
-                         "variation"
-                         from
-                         until
-                         #{:agent/console :agent/web}))
-               (sweet/GET "/variation/:agent" request
-                 :tags ["recent" "variation"]
-                 :summary "List recent variation activity perfomed via a given agent."
-                 :path-params [agent :- ::wsr/agent]
-                 (handle request
-                         entity-rules
-                         (changes-and-prov-puller request)
-                         "variation"
-                         from
-                         until
-                         #{(keyword "agent" agent)})))))
+               (sweet/context "/:entity-type" []
+                 :path-params [entity-type :- string?]
+                 :summary "List recent activity for a given entity type."
+                 (sweet/GET "/" request
+                   :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
+                   (handle request
+                           entity-rules
+                           (changes-and-prov-puller request)
+                           entity-type
+                           from
+                           until
+                           how))
+                 (sweet/GET "/:agent" request
+                   :summary "List recent entity activity performed via a given agent."
+                   :path-params [agent :- ::wsr/agent]
+                   (handle request
+                           entity-rules
+                           (changes-and-prov-puller request)
+                           entity-type
+                           from
+                           until
+                           #{(keyword "agent" agent)}))))))
 
 (comment
   "Examples of each invokation flavour"

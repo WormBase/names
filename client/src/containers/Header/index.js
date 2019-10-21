@@ -13,10 +13,11 @@ import { SearchBox } from '../Search';
 import { Route, Link } from 'react-router-dom';
 import Logo from './Logo';
 import NavBar from './NavBar';
-import { existsEntitiyType } from '../../utils/entityTypes';
+import { useEntityTypes } from '../Entity';
 
 const Header = (props) => {
   const { classes } = props;
+  const { getEntityType } = useEntityTypes();
 
   return (
     <div>
@@ -38,17 +39,15 @@ const Header = (props) => {
               component={({ match }) => {
                 const entityType = match.params.entityType;
 
-                return (
+                return getEntityType(entityType) ? (
                   <SearchBox
-                    entityType={
-                      existsEntitiyType(entityType) ? entityType : 'gene'
-                    }
+                    entityType={entityType}
                     enableEntityTypeSelect={true}
                     classes={{
                       root: classes.searchBox,
                     }}
                   />
-                );
+                ) : null;
               }}
             />
           ) : null}

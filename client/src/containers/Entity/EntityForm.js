@@ -5,7 +5,7 @@ import { TextField } from '../../components/elements';
 class EntityForm extends Component {
   render() {
     const { withFieldData, entityType } = this.props;
-    const NameField = withFieldData(TextField, `${entityType}/name`);
+    const NameField = withFieldData(TextField, 'name');
     return <NameField label="Name" helperText={`Name of the ${entityType}`} />;
   }
 }

@@ -1,24 +1,12 @@
 export function pastTense(eventText = '') {
-  return eventText.replace(/(creat|merg|kill|resurrect|suppress)e?/g, '$1ed');
-}
-
-function activityEntityType(activityItem = {}) {
-  return Object.keys(activityItem).reduce((result, key) => {
-    if (result) {
-      return result;
-    }
-    const match = key.match(/(.+)\/id/);
-    if (match) {
-      return match[1];
-    } else {
-      return null;
-    }
-  }, null);
+  return eventText.replace(
+    /(creat|updat|merg|kill|resurrect|suppress)e?/g,
+    '$1ed'
+  );
 }
 
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
-  const what = activityItem['provenance/what'];
-  const entityType = activityEntityType(activityItem);
+  const what = activityItem['what'];
   const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
     (result, change) => {
       const { attr, value, added } = change || {};
@@ -64,11 +52,11 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   const descriptor = {
     eventLabel: eventType || activityItem['provenance/what'],
     entity: {
-      [`${entityType}/id`]: selfGeneId || activityItem[`${entityType}/id`],
+      id: selfGeneId || activityItem.id,
     },
     relatedEntity: relatedGeneId
       ? {
-          [`${entityType}/id`]: relatedGeneId,
+          id: relatedGeneId,
         }
       : null,
   };

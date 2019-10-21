@@ -14,6 +14,7 @@
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
    [wormbase.names.coercion] ;; coercion scheme
+   [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
    [wormbase.names.person :as wn-person]
@@ -21,7 +22,6 @@
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.stats :as wn-stats]
-   [wormbase.names.variation :as wn-variation]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
@@ -36,7 +36,7 @@
       response
       (cond
         (str/starts-with? (:uri request) "/api")
-        (http-response/not-found {:message "Resource not found"})
+        (http-response/not-found {:message "Resource not found (fallback)"})
 
         :else
         (-> (http-response/resource-response "client_build/index.html")
@@ -57,7 +57,6 @@
    {:info
     {:title "WormBase name service"
      :description "Provides naming operations for WormBase entities."}
-
     ;; TODO: look up how to define securityDefinitions properly!
     ;;       will likely need to add some middleware such that the info
     ;;       can vary depending on the user-agent...
@@ -95,15 +94,15 @@
      (sweet/context "/api" []
        :middleware [wna/restrict-to-authenticated]
        wn-species/routes
-       wn-person/routes
        wn-gene/routes
-       wn-variation/routes
-       wn-batch/routes
+       wn-person/routes
        wn-recent/routes
-       wn-stats/routes))))
+       wn-batch/routes
+       wn-stats/routes
+       wne/routes))))
 
 (defn init
   "Entry-point for ring server initialization."
   []
   (mount/start)
-  (wdbs/apply-updates!))
+  (wdbs/install wdb/conn))

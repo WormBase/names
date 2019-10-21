@@ -4,8 +4,10 @@
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
+   [wormbase.specs.biotype :as wsb]
    [wormbase.specs.provenance :as wsp]
    [wormbase.specs.species :as wss]))
+
 
 (def gene-id-regexp #"WBGene\d{8}")
 
@@ -23,7 +25,7 @@
                                       :swagger/example "AAH1.1"
                                       :description "The sequence name of the Gene."}))
 
-(s/def :gene/biotype (stc/spec {:spec (s/and sts/keyword? #(= (namespace %) "biotype"))
+(s/def :gene/biotype (stc/spec {:spec ::wsb/identifier
                                 :swagger/example "biotype/cds"
                                 :description "The biotype of gene."}))
 
@@ -31,32 +33,27 @@
                                 :swagger/example "Caenorhabditis elegans"
                                 :description "The species associated with the Gene."}))
 
-(s/def :gene.status/dead sts/boolean?)
 
-(s/def :gene.status/live sts/boolean?)
-
-(s/def :gene.status/suppressed sts/boolean?)
-
-(s/def :gene/status (stc/spec {:spec sts/keyword?
-                               :swagger/example :gene.status/live
+(s/def :gene/status (stc/spec {:spec string?
+                               :swagger/example "live"
                                :description "The status of the Gene."}))
 
-(s/def ::anonymous (stc/spec (s/keys :req [:gene/id
-                                           :gene/species
-                                           :gene/status])))
+(s/def ::anonymous (stc/spec (s/keys :req-un [:gene/id
+                                              :gene/species
+                                              :gene/status])))
 
 (s/def ::cloned (stc/spec
                  (stc/merge
-                  (s/keys :req [:gene/biotype
-                                :gene/sequence-name
-                                :gene/species]
-                          :opt [:gene/cgc-name
-                                :gene/status]))))
+                  (s/keys :req-un [:gene/biotype
+                                   :gene/sequence-name
+                                   :gene/species]
+                          :opt-un [:gene/cgc-name
+                                   :gene/status]))))
 
 (s/def ::uncloned (stc/spec
                    (stc/merge
-                    (s/keys :req [:gene/species :gene/cgc-name]
-                            :opt [:gene/status]))))
+                    (s/keys :req-un [:gene/species :gene/cgc-name]
+                            :opt-un [:gene/status]))))
 
 (s/def ::new (stc/spec {:spec (s/or :cloned ::cloned
                                     :uncloned ::uncloned)
@@ -64,31 +61,30 @@
                                           "This data should be in one two forms: cloned, or "
                                           "uncloned.")}))
 
-(s/def ::new-unnamed (s/keys :req [:gene/id
-                                   :gene/species]))
+(s/def ::new-unnamed (s/keys :req-un [:gene/id
+                                      :gene/species]))
 
-(s/def ::created (stc/spec {:spec (s/keys :req [:gene/id])
+(s/def ::created (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data return from creating a new Gene."}))
 
-(s/def ::update (stc/spec {:spec (s/and (s/keys :opt [:gene/cgc-name
-                                                      :gene/sequence-name
-                                                      :gene/biotype
-                                                      :gene/species])
+(s/def ::update (stc/spec {:spec (s/and (s/keys :opt-un [:gene/cgc-name
+                                                         :gene/sequence-name
+                                                         :gene/biotype
+                                                         :gene/species])
                                         seq)
                            :description "The data requried to update a Gene."}))
 
-(s/def ::updated (stc/spec {:spec (s/keys :req [:gene/id])
+(s/def ::updated (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data from updating a Gene."}))
 
-(s/def ::merge (stc/spec {:spec (s/keys :req [:gene/biotype])
+(s/def ::merge (stc/spec {:spec (s/keys :req-un [:gene/biotype])
                           :description "The data requried to update a Gene."}))
 
 (s/def ::product (stc/spec
-                  {:spec (s/keys :req [:gene/sequence-name :gene/biotype])}))
+                  {:spec (s/keys :req-un [:gene/sequence-name :gene/biotype])}))
 
 (s/def ::split (stc/spec
-                {:spec (s/keys :req [:gene/biotype]
-                               :req-un [::product])
+                {:spec (s/keys :req-un [:gene/biotype ::product])
                  :description "The data required to split a Gene."}))
 
 (s/def ::split-response (stc/spec
@@ -101,7 +97,7 @@
 
 (s/def ::undone (stc/spec (s/keys :req-un [::live ::dead])))
 
-(s/def ::status-changed (stc/spec (s/keys :req [:gene/status])))
+(s/def ::status-changed (stc/spec (s/keys :req-un [:gene/status])))
 
 (s/def ::summary (stc/spec {:spec (s/merge (s/keys :req-un [::wsp/history])
                                            (s/or :cloned ::cloned
@@ -116,11 +112,16 @@
 
 (s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
 
-(s/def ::new-batch (stc/spec {:spec (s/coll-of ::new :min-count 1)
-                              :description "A collection of mapppings describing the genes to be created."}))
+(s/def ::new-batch (stc/spec
+                    {:spec (s/coll-of ::new :min-count 1)
+                     :description "A collection of mapppings describing the genes to be created."}))
 
-(s/def ::update-batch (stc/spec {:spec (s/coll-of (s/merge (s/keys :req [:gene/id]) ::update) :min-count 1)
-                                 :description "A collection of mappings describing the genes to be updated."}))
+(s/def ::update-batch (stc/spec
+                       {:spec (s/coll-of
+                               (s/merge
+                                (s/keys :req-un [:gene/id]) ::update)
+                               :min-count 1)
+                        :description "A collection of mappings describing the genes to be updated."}))
 
 (s/def ::change-status-batch (stc/spec {:spec (s/coll-of ::identifier :min-count 1)
                                         :description "A collection of one or more identifiers."}))
@@ -137,21 +138,23 @@
 (s/def ::into-gene (s/or :gene/id :gene/id))
 (s/def ::into-biotype :gene/biotype)
 (s/def ::batch-merge-item (s/keys :req-un [::from-gene ::into-gene ::into-biotype]))
-(s/def ::merge-gene-batch (stc/spec {:spec (s/coll-of ::batch-merge-item :min-count 1)
-                                     :description "A collection of mapping describing the genes to be merged."}))
+(s/def ::merge-gene-batch (stc/spec
+                           {:spec (s/coll-of ::batch-merge-item :min-count 1)
+                            :description "A collection of mapping describing the genes to be merged."}))
 
 (s/def ::from-id (s/or :gene/id :gene/id))
 (s/def ::new-biotype (s/nilable :gene/biotype))
 (s/def ::product-biotype :gene/biotype)
 (s/def ::product-sequence-name :gene/sequence-name)
 (s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]))
-(s/def ::split-gene-batch (stc/spec {:spec (s/coll-of ::batch-split-item :min-count 1)
-                                     :description "A collection of mappings describing the genes to be split."}))
+(s/def ::split-gene-batch (stc/spec
+                           {:spec (s/coll-of ::batch-split-item :min-count 1)
+                            :description "A collection of mappings describing the genes to be split."}))
 
 
-(s/def ::find-match (stc/spec {:spec (s/keys :req [:gene/id]
-                                             :opt [:gene/cgc-name
-                                                   :gene/sequence-name])
+(s/def ::find-match (stc/spec {:spec (s/keys :req-un [:gene/id]
+                                             :opt-un [:gene/cgc-name
+                                                      :gene/sequence-name])
                                :description "A mappings describing a search result match."}))
 (s/def ::matches (stc/spec {:spec (s/coll-of ::find-match :kind vector?)
                             :description "A collection of search result matches."}))

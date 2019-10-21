@@ -1,22 +1,7 @@
-import { useEffect, useMemo, useContext, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  useDataFetch,
-  AuthorizationContext,
-} from '../../containers/Authenticate';
-
-function getSuggestionFromMatches(match) {
-  return Object.keys(match).reduce((result, key) => {
-    const value = match[key];
-    const [namespace, keyName] = key.split('/');
-    let newPairs = keyName === 'id' ? { entityType: namespace } : {};
-    return {
-      ...result,
-      [keyName]: value,
-      ...newPairs,
-    };
-  }, {});
-}
+import { useDataFetch } from '../../containers/Authenticate';
+import { useEntityTypes } from '../../containers/Entity';
 
 export default function AutocompleteLoader({
   children,
@@ -25,13 +10,17 @@ export default function AutocompleteLoader({
   selectedValue,
   onSuggestionChange,
 }) {
-  const { authorizedFetch } = useContext(AuthorizationContext);
   const { isLoading, data, setFetchFunc } = useDataFetch(null, {}); // can't provide fetchFunc now, because it depends on suggestions
-  const suggestions = useMemo(
-    () => (data.matches || []).map(getSuggestionFromMatches),
-    [data]
-  );
+  const suggestions = useMemo(() => data.matches || [], [data]);
   const suggestinsRef = useRef(suggestions); // for accessing the current suggestions from effect
+  const { getEntityType } = useEntityTypes();
+  const apiPrefix = useMemo(
+    () => {
+      const entityTypeConfig = getEntityType(entityType);
+      return entityTypeConfig && entityTypeConfig.apiPrefix;
+    },
+    [getEntityType, entityType]
+  );
 
   useEffect(
     () => {
@@ -48,15 +37,15 @@ export default function AutocompleteLoader({
         (item) => item.id === inputValue
       );
 
-      if (entityType && inputValue && !resultItem) {
-        setFetchFunc(() => () => {
-          return authorizedFetch(`/api/${entityType}/?pattern=${inputValue}`, {
+      if (apiPrefix && inputValue && !resultItem) {
+        setFetchFunc((authorizedFetch) => {
+          return authorizedFetch(`${apiPrefix}/?pattern=${inputValue}`, {
             method: 'GET',
           });
         });
       }
     },
-    [entityType, inputValue, authorizedFetch, setFetchFunc]
+    [entityType, apiPrefix, inputValue, setFetchFunc]
   );
 
   return children({

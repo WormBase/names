@@ -1,10 +1,10 @@
-(ns integration.test-batch-summary
+(ns integration.batch-summary-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [integration.test-batch-new-gene :refer [new-genes]]
+   [integration.batch-new-gene-test :refer [new-genes]]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
@@ -47,5 +47,5 @@
           (let [response (summary bid)]
             (t/is (ru-hp/ok? response))
             (t/is (some-> response :body map?))
-            (t/is (str/includes? (get-in response [:body :provenance/who] "") "@")
+            (t/is (str/includes? (get-in response [:body :who] "") "@")
                   (pr-str response))))))))

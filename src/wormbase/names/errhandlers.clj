@@ -63,23 +63,29 @@
 (defmethod parse-exc-message :default [exc]
   (throw exc))
 
+(defn- prettify-spec-error-maybe [spec data]
+  (try
+    (expound/expound-str spec (:value data))
+    (catch Exception ex
+      {:data (pr-str (:value data))
+       :message "Unable to determine spec error."})))
+
 (defn handle-validation-error
   [^Exception exc data request & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if (s/spec? spec)
                (if-let [problems (some-> data* :problems)]
-                 (assoc data*
-                        :problems
-                        (expound/expound-str spec (:value data*)))
+                 (assoc data* :problems (prettify-spec-error-maybe spec data*))
                  data*)
                data*)
         body (assoc-error-message info exc :message message)]
-   (respond-bad-request request body)))
+    (respond-bad-request request body)))
 
 (defn handle-missing [^Exception exc data request]
   (when (some-> data :entity keyword?)
-    (throw (ex-info "Schema not installed!" {:ident (:entity data)})))
+    (throw (ex-info (format "Schema %s not installed!" (:entity data))
+                    {:ident (:entity data)})))
   (if-let [lookup-ref (:entity data)]
     (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
       (respond-missing request (assoc-error-message data exc :message msg)))

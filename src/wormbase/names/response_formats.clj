@@ -14,7 +14,3 @@
 
 (defn encode-content [content & [m]]
   (slurp (process-content muuntaja/encode m content)))
-
-
-
-

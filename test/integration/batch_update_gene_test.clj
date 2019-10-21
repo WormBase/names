@@ -1,4 +1,4 @@
-(ns integration.test-batch-update-gene
+(ns integration.batch-update-gene-test
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
@@ -8,6 +8,7 @@
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -66,9 +67,9 @@
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [bdata [{:gene/cgc-name "dup-1"
-                        :gene/species bad-species
-                        :gene/id gid}]
+          (let [bdata [{:cgc-name "dup-1"
+                        :species bad-species
+                        :id gid}]
                 response (update-genes {:data bdata :prov basic-prov})]
             (t/is (ru-hp/bad-request? response))
             (t/is (some (fn [error]
@@ -84,30 +85,30 @@
       (fn [conn]
         (t/testing "Batch with one item accepted, returns batch id."
           (let [species (-> gene-rec :gene/species second)
-                bdata [(merge {:gene/species species
-                               :gene/cgc-name (tu/cgc-name-for-species species)}
-                              (find gene-rec :gene/id))]
+                bdata [(merge {:species species
+                               :cgc-name (tu/cgc-name-for-species species)}
+                              {:id (:gene/id gene-rec)})]
                 payload {:data bdata :prov basic-prov}
                 response (update-genes payload)]
             (t/is (ru-hp/ok? response))
-            (t/is (get-in response [:body :updated :batch/id]) (pr-str response))))))))
+            (t/is (get-in response [:body :updated :id]) (pr-str response))))))))
 
 (t/deftest multi-item
   (t/testing "Batch with a random number of items is successful"
     (let [[g1 g2] (tu/gene-samples 2)
           sp-1 (-> g1 :gene/species second)
           sp-2 (-> g2 :gene/species second)
-          bdata [{:gene/cgc-name (tu/cgc-name-for-species sp-1)
-                  :gene/id (:gene/id g1)
-                  :gene/species sp-1}
-                 {:gene/sequence-name (tu/seq-name-for-species sp-2)
-                  :gene/biotype :biotype/cds
-                  :gene/id (:gene/id g2)
-                  :gene/species sp-2}]]
+          bdata [{:cgc-name (tu/cgc-name-for-species sp-1)
+                  :id (:gene/id g1)
+                  :species sp-1}
+                 {:sequence-name (tu/seq-name-for-species sp-2)
+                  :biotype "cds"
+                  :id (:gene/id g2)
+                  :species sp-2}]]
       (tu/with-gene-fixtures
         [g1 g2]
         (fn [conn]
           (let [response (update-genes {:data bdata :prov basic-prov})]
             (t/is (ru-hp/ok? response) (pr-str response))
-            (let [bid (get-in response [:body :updated :batch/id] "")]
+            (let [bid (get-in response [:body :updated :id] "")]
               (t/is (uuid/uuid-string? bid)))))))))

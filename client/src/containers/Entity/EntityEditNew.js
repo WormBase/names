@@ -33,7 +33,7 @@ class EntityEditNew extends Component {
   getCreateHandler = (getFormData, authorizedFetch) => {
     return () => {
       const { data, prov: provenance } = getFormData() || {};
-      const { entityType } = this.props;
+      const { entityType, apiPrefix } = this.props;
       if (this.state.status === 'SUBMITTED') {
         return;
       }
@@ -45,7 +45,7 @@ class EntityEditNew extends Component {
         () => {
           mockFetchOrNot(
             (mockFetch) => {
-              const filled = ['gene/cgc-name', 'gene/species'].reduce(
+              const filled = ['cgc-name', 'species'].reduce(
                 (result, fieldId) => {
                   return result && data[fieldId];
                 },
@@ -55,8 +55,8 @@ class EntityEditNew extends Component {
                 return mockFetch.post('*', {
                   created: {
                     ...data,
-                    'gene/id': 'WBGene00100001',
-                    'gene/status': 'gene.status/live',
+                    id: 'WBGene00100001',
+                    status: 'live',
                   },
                 });
               } else {
@@ -66,7 +66,7 @@ class EntityEditNew extends Component {
               }
             },
             () => {
-              return authorizedFetch(`/api/${entityType}/`, {
+              return authorizedFetch(apiPrefix, {
                 method: 'POST',
                 body: JSON.stringify({
                   data: data,
@@ -93,9 +93,7 @@ class EntityEditNew extends Component {
                   },
                   () => {
                     this.props.history.push(
-                      `/${entityType}/id/${
-                        response.created[`${entityType}/id`]
-                      }`
+                      `/${entityType}/id/${response.created.id}`
                     );
                   }
                 );
@@ -165,6 +163,7 @@ class EntityEditNew extends Component {
 EntityEditNew.propTypes = {
   classes: PropTypes.object.isRequired,
   entityType: PropTypes.string.isRequired,
+  apiPrefix: PropTypes.string.isRequired,
   data: PropTypes.any,
   disabled: PropTypes.bool,
 };

@@ -4,9 +4,7 @@
    [compojure.api.sweet :as sweet]
    [ring.util.http-response :refer [bad-request bad-request! conflict created ok]]
    [wormbase.names.batch.gene :as wnbg]
-   [wormbase.names.batch.generic :refer [summary query-provenance]]
-   [wormbase.names.batch.variation :as wnbv]
-   [wormbase.names.batch.sequence-feature :as wnbsf]
+   [wormbase.names.batch.generic :as generic]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]))
@@ -18,14 +16,14 @@
        :summary "Summarise a given batch operation."
        :responses (wnu/response-map ok {:schema ::wsb/summary})
        :path-params [batch-id :- :batch/id]
-       (summary request batch-id wnp/pull-expr)))))
+       (generic/summary request batch-id wnp/pull-expr)))))
 
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
-    (sweet/routes wnbg/routes
-                  wnbv/routes
-                  wnbsf/routes
-                  summary-routes)))
+    (sweet/routes
+     generic/routes
+     wnbg/routes
+     summary-routes)))
 
 (def routes (sweet/routes resources))

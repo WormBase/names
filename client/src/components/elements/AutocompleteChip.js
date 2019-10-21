@@ -5,15 +5,8 @@ import { withStyles } from '@material-ui/core/styles';
 
 function AutocompleteChip(props) {
   const { classes = {}, suggestion = {}, ...others } = props;
-  const { entityType } = suggestion;
-  let name;
-  switch (entityType) {
-    case 'gene':
-      name = suggestion['cgc-name'] || suggestion['sequence-name'];
-      break;
-    default:
-      name = suggestion.name;
-  }
+  let name =
+    suggestion.name || suggestion['cgc-name'] || suggestion['sequence-name'];
   const label = (
     <span>
       {name}

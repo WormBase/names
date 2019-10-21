@@ -13,8 +13,8 @@
    [datomic.api :as d]
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response]
-   [wormbase.names.agent :as wn-agent]
-   [wormbase.names.util :as wnu])
+   [wormbase.util :as wu]
+   [wormbase.names.agent :as wn-agent])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder
                                                  GoogleIdToken)
@@ -26,7 +26,7 @@
 
 (def ^:private json-factory (JacksonFactory.))
 
-(def ^:private app-conf (wnu/read-app-config))
+(def ^:private app-conf (wu/read-app-config))
 
 (def ^:private gapps-conf (:google-apps app-conf))
 
@@ -94,18 +94,19 @@
   (let [auth-token-conf (:auth-token app-conf)
         parsed-token (parse-token token)
         db (:db request)]
-    (if-let [person (verified-person db auth-token-conf parsed-token)]
-      (map->Identification {:token-info parsed-token :person person})
-      (when-let [tok (verify-token token)]
-        (if-let [person (query-person db :person/email (:email tok))]
-          (let [auth-token (sign-token auth-token-conf tok)
-                tx-result @(d/transact-async (:conn request)
-                                             [[:db/add
-                                               (:db/id person)
-                                               :person/auth-token
-                                               auth-token]])]
-            (map->Identification {:token-info parsed-token :person person}))
-          (log/warn "NO PERSON FOUND IN DB:" tok))))))
+    (when parsed-token
+      (if-let [person (verified-person db auth-token-conf parsed-token)]
+        (map->Identification {:token-info parsed-token :person person})
+        (when-let [tok (verify-token token)]
+          (if-let [person (query-person db :person/email (:email tok))]
+            (let [auth-token (sign-token auth-token-conf tok)
+                  tx-result @(d/transact-async (:conn request)
+                                               [[:db/add
+                                                 (:db/id person)
+                                                 :person/auth-token
+                                                 auth-token]])]
+              (map->Identification {:token-info parsed-token :person person}))
+            (log/warn "NO PERSON FOUND IN DB:" tok)))))))
 
 (def backend (babt/token-backend {:authfn identify}))
 

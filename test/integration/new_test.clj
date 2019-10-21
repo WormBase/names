@@ -1,4 +1,4 @@
-(ns integration.test-new
+(ns integration.new-test
   (:require
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
@@ -10,7 +10,9 @@
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.entity :as wne]
    [wormbase.names.service :as service]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.db :as wdb]))
@@ -19,11 +21,12 @@
 
 (def new-gene (partial api-tc/new "gene"))
 
-(def new-variation (partial api-tc/new "variation"))
-
 (def new-species (partial api-tc/new "species"))
 
 (def not-nil? (complement nil?))
+
+(defn new-variation [& args]
+  (apply api-tc/new "entity/variation" args))
 
 (defn check-db [db ident id]
   (let [status-ident (keyword (namespace ident) "status")
@@ -44,7 +47,7 @@
   (t/testing "Empty gene data payload is a bad request."
     (check-empty new-gene))
   (t/testing "Species should always be required when creating gene name."
-    (let [cgc-name (tu/cgc-name-for-species :species/c-elegans)
+    (let [cgc-name (tu/cgc-name-for-species "c-elegans")
           response (new-gene {:gene/cgc-name cgc-name})]
       (t/is (ru-hp/bad-request? response)))))
 
@@ -75,13 +78,31 @@
       []
       (fn new-uncloned [conn]
         (let [response (new-gene
-                        {:data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
-                                :gene/species elegans-ln}
+                        {:data {:cgc-name (tu/cgc-name-for-species elegans-ln)
+                                :species elegans-ln}
                          :prov nil})
               expected-id "WBGene00000001"]
           (t/is (ru-hp/created? response))
           (let [db (d/db conn)
-                identifier (some-> response :body :created :gene/id)]
+                identifier (some-> response :body :created :id)]
+            (t/is (= identifier expected-id))
+            (check-db db :gene/id identifier)
+            (tu/query-provenance conn identifier :event/new-gene)))))))
+
+(t/deftest naming-cloned-gene
+  (t/testing "Naming one cloned gene succesfully returns ids"
+    (tu/with-gene-fixtures
+      []
+      (fn new-uncloned [conn]
+        (let [response (new-gene
+                        {:data {:sequence-name (tu/seq-name-for-species elegans-ln)
+                                :biotype "cds"
+                                :species elegans-ln}
+                         :prov nil})
+              expected-id "WBGene00000001"]
+          (t/is (ru-hp/created? response))
+          (let [db (d/db conn)
+                identifier (some-> response :body :created :id)]
             (t/is (= identifier expected-id))
             (check-db db :gene/id identifier)
             (tu/query-provenance conn identifier :event/new-gene)))))))
@@ -93,7 +114,9 @@
                   :gene/species elegans-ln
                   :gene/status :gene.status/live
                   :gene/id (first (gen/sample gsg/id 1))}
-          data {:data (select-keys sample [:gene/cgc-name :gene/species])
+          data {:data (-> sample
+                          (select-keys [:gene/cgc-name :gene/species])
+                          (wnu/unqualify-keys "gene"))
                 :prov basic-prov}]
       (tu/with-gene-fixtures
         sample
@@ -103,21 +126,21 @@
 
 (t/deftest naming-gene-with-provenance
   (t/testing "Naming some genes providing provenance."
-    (let [data {:gene/cgc-name (tu/cgc-name-for-species elegans-ln)
-                :gene/species elegans-ln}
-          prov {:provenance/who {:person/email "tester@wormbase.org"}}
+    (let [data {:cgc-name (tu/cgc-name-for-species elegans-ln)
+                :species elegans-ln}
+          prov {:who {:email "tester@wormbase.org"}}
           response (new-gene {:data data :prov prov})]
       (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :gene/id) (pr-str response)))))
+      (t/is (some-> response :body :created :id) (pr-str response)))))
 
 (t/deftest naming-gene-bypass-nomenclature
   (t/testing "Bypassing nomenclature validation when creating gene is ok."
-    (let [data {:gene/cgc-name "AnythingILike123"
-                :gene/species elegans-ln}
-          prov {:provenace/who {:person/email "tester@wormbase.org"}}
+    (let [data {:cgc-name "AnythingILike123"
+                :species elegans-ln}
+          prov {:who {:email "tester@wormbase.org"}}
           response (new-gene {:data data :prov prov :force true})]
       (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :gene/id) (pr-str response)))))
+      (t/is (some-> response :body :created :id) (pr-str response)))))
 
 (t/deftest variation-data-must-meet-spec
   (t/testing "Empty gene data payload is a bad request."
@@ -130,8 +153,12 @@
 
 (t/deftest wrong-variation-data-shape
   (t/testing "Non-conformant variation data should result in HTTP Bad Request 400"
-    (let [response (new-variation {})]
-      (t/is (ru-hp/bad-request? response)))))
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
+      (fn [_]
+        (let [response (new-variation {})]
+          (t/is (ru-hp/bad-request? response)))))))
 
 (t/deftest variation-naming-conflict
   (t/testing "When a variation already exists with the requested name."
@@ -139,7 +166,7 @@
           sample {:variation/name vname
                   :variation/id (first (gen/sample gsv/id 1))
                   :variation/status :variation.status/live}
-          data {:data (select-keys sample [:variation/name])
+          data {:data {:name vname}
                 :prov basic-prov}]
       (tu/with-fixtures
         sample
@@ -149,10 +176,14 @@
 
 (t/deftest naming-variation-with-provenance
   (t/testing "Naming a variation providing provenance."
-    (let [data {:variation/name (first (gen/sample gsv/name 1))}
-          response (new-variation {:data data :prov basic-prov})]
-      (t/is (ru-hp/created? response))
-      (t/is (some-> response :body :created :variation/id) (pr-str response)))))
+    (tu/with-installed-generic-entity
+      :variation/id
+      "WBVar%08d"
+      (fn [_]
+        (let [data {:name (first (gen/sample gsv/name 1))}
+              response (new-variation {:data data :prov basic-prov})]
+          (t/is (ru-hp/created? response))
+          (t/is (some-> response :body :created :id) (pr-str response)))))))
 
 (t/deftest species-data-must-meet-spec
   (t/testing "Empty species data payload is a bad request."
@@ -171,7 +202,8 @@
     (let [data {:species/latin-name "Quantum squirmito"
                 :species/cgc-name-pattern "^Q[a-z]{3}-[0-9]+"
                 :species/sequence-name-pattern "^QSEQNAME_[0-9\\]+"}
-          response (new-species {:data data :prov basic-prov})]
+          response (new-species {:data (wnu/unqualify-keys data "species")
+                                 :prov basic-prov})]
       (t/is (ru-hp/created? response) (pr-str response))
       (let [dba (d/db wdb/conn)]
         (t/is (= (:species/id (d/pull dba [:species/id] (find data :species/latin-name)))

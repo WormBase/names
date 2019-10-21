@@ -1,4 +1,4 @@
-(ns integration.test-batch-merge-genes
+(ns integration.batch-merge-genes-test
   (:require
    [clj-uuid :as uuid]
    [clojure.spec.alpha :as s]
@@ -12,6 +12,7 @@
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
    [wormbase.util :as wu]))
 
@@ -33,24 +34,29 @@
           fixtures** (map (fn [fixture]
                             (assoc fixture
                                    :gene/biotype
-                                   (first (gen/sample gsg/biotype 1))))
+                                   (->> (gen/sample gsg/biotype 1)
+                                        (first)
+                                        (keyword "biotype"))))
                           fixtures*)
           gene-ids (map :gene/id fixtures**)
           into-biotype (-> fixtures** second :gene/biotype)
           data [{:from-gene (first gene-ids)
                  :into-gene (second gene-ids)
-                 :into-biotype into-biotype}]]
+                 :into-biotype (name into-biotype)}]]
       (tu/with-gene-fixtures
         fixtures**
         (fn [conn]
-          (let [response (merge-genes {:data data :prov basic-prov})]
+          (let [response (merge-genes {:data (map #(wnu/unqualify-keys % "gene") data)
+                                       :prov basic-prov})]
             (t/is (ru-hp/ok? response))))))))
 
 (t/deftest success
   (t/testing "A succesful specification of merge operations."
     (let [gene-ids (gen/sample gsg/id 4)
-          uncloned (tu/gen-sample gsg/uncloned 2)
-          cloned (tu/gen-sample gsg/cloned 2)
+          uncloned (map #(wnu/qualify-keys % "gene") 
+                        (tu/gen-sample gsg/uncloned 2))
+          cloned (map #(wnu/qualify-keys % "gene")
+                      (tu/gen-sample gsg/cloned 2))
           fixtures (keep-indexed
                     (fn [idx fixture]
                       (assoc fixture
@@ -60,15 +66,15 @@
                     (concat (interleave uncloned cloned)))
           bdata [{:from-gene (:gene/id (first fixtures))
                   :into-gene (:gene/id (nth fixtures 2))
-                  :into-biotype :biotype/pseudogene}
+                  :into-biotype "pseudogene"}
                  {:from-gene (:gene/id (second fixtures))
                   :into-gene (:gene/id (nth fixtures 3))
-                  :into-biotype :biotype/transcript}]]
+                  :into-biotype "transcript"}]]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
           (let [response (merge-genes {:data bdata :prov basic-prov})
-                bid (get-in response [:body :batch/id] "")]
+                bid (get-in response [:body :id] "")]
             (t/is (ru-hp/ok? response))
             (t/is (uuid/uuid-string? bid))
             (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
@@ -81,5 +87,5 @@
                       into-gene (get batch-lookup (:into-gene merge-spec-data))]
                   (t/is (= (get-in from-gene [:gene/status :db/ident]) :gene.status/dead))
                   (t/is (= (get-in into-gene [:gene/status :db/ident]) :gene.status/live))
-                  (t/is (= (get-in into-gene [:gene/biotype :db/ident])
+                  (t/is (= (name (get-in into-gene [:gene/biotype :db/ident]))
                            (:into-biotype merge-spec-data))))))))))))

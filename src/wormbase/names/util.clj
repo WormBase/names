@@ -1,12 +1,10 @@
 (ns wormbase.names.util
   (:require
-   [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.walk :as w]
-   [aero.core :as aero]
    [buddy.core.codecs :as codecs]
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
@@ -15,12 +13,6 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
-
-(defn read-app-config
-  ([]
-   (read-app-config "config.edn"))
-  ([resource-filename]
-   (aero/read-config (io/resource resource-filename))))
 
 (defn- nsify [domain kw]
   (if (namespace kw)
@@ -123,11 +115,8 @@
   ([k v & kvs]
    (response-map (apply (partial assoc default-responses k v) kvs))))
 
-(defn conform-data [spec data & [names-validator]]
-  (let [conformed (s/conform spec
-                             (if names-validator
-                               (names-validator data)
-                               data))]
+(defn conform-data [spec data]
+  (let [conformed (s/conform spec data)]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
         (throw (ex-info "Not valid according to spec."
@@ -136,8 +125,9 @@
                          :data data})))
       conformed)))
 
-(defn conform-data-drop-label [spec data & [names-validator]]
-  (second (conform-data spec data names-validator)))
+(defn conform-data-drop-label [spec data]
+  (let [cdata (conform-data spec data)]
+    (second cdata)))
 
 (defn query-batch [db bid pull-expr]
   (map (partial d/pull db pull-expr)
@@ -155,10 +145,46 @@
   (some-> latest-t str b64/encode codecs/bytes->str))
 
 (defn decode-etag [^String etag]
- {:pre [(not (str/blank? etag))]}
+  {:pre [(not (str/blank? etag))]}
   (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]
   (if (seq etag)
     (header response "etag" etag)
     response))
+
+(defn qualify-keys
+  "Transform `mapping` such all non-qualfiied keys have the namespace `entity-type` applied."
+  [mapping entity-type & {:keys [skip-keys]
+                          :or {skip-keys #{}}}]
+  (reduce-kv (fn [m k v]
+               (if (skip-keys k)
+                 m
+                 (if (simple-keyword? k)
+                   (assoc m (keyword entity-type (name k)) v)
+                   (if-not (contains? m k)
+                     (assoc m k v)
+                     m))))
+             {}
+             mapping))
+
+(defn unqualify-keys
+  "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
+  [mapping entity-type]
+  (reduce-kv (fn [m k v]
+               (if (and (qualified-keyword? k)
+                        (= (namespace k) entity-type))
+                 (assoc m (-> k name keyword) v)
+                 (assoc m k v)))
+             {}
+             mapping))
+
+(defn transform-ident-ref [k m kw-ns]
+  (update m k (fn [old]
+                (keyword kw-ns (if (keyword old)
+                                 (name old)
+                                 old)))))
+(defn unqualify-maybe [x]
+  (if (qualified-keyword? x)
+    (name x)
+    x))

@@ -8,17 +8,17 @@ import {
   MuiThemeProvider,
   withStyles,
 } from '../../components/elements';
+import { useEntityTypes } from '../Entity';
 import { Link } from 'react-router-dom';
-import { ENTITY_TYPES } from '../../utils/entityTypes';
-console.log(ENTITY_TYPES);
 
 function Home({ classes }) {
+  const { entityTypesAll } = useEntityTypes();
   return (
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {ENTITY_TYPES.map(({ entityType, path, theme }) => (
-            <Paper elevation={1} className={classes.row}>
+          {entityTypesAll.map(({ entityType, path, theme, displayName }) => (
+            <Paper key={entityType} levation={1} className={classes.row}>
               <div className={classes.cell}>
                 <MuiThemeProvider theme={theme}>
                   <Button
@@ -28,7 +28,7 @@ function Home({ classes }) {
                       <Link to={`${path}/new`} {...props} />
                     )}
                   >
-                    Add {entityType}
+                    Add {displayName}
                   </Button>
                 </MuiThemeProvider>
               </div>
@@ -37,7 +37,7 @@ function Home({ classes }) {
                   color="primary"
                   component={({ ...props }) => <Link to={path} {...props} />}
                 >
-                  Browse {entityType}s
+                  Browse {displayName}s
                 </Button>
               </div>
             </Paper>

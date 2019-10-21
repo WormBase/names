@@ -9,6 +9,7 @@ class GeneCreate extends Component {
     return (
       <EntityCreate
         {...others}
+        apiPrefix="/api/gene"
         renderForm={(props) => <GeneForm {...props} />}
       />
     );

@@ -92,9 +92,9 @@
   (->> (latest-id-number db ident) inc (format template)))
 
 (defn identifier-format [db uiident]
-  (let [{template :template/format} (d/pull db
-                                            '[:template/format]
-                                            [:template/describes uiident])]
+  (let [{template :format} (d/pull db
+                                   '[[:wormbase.names/id-template-format :as :format]]
+                                   [:db/ident uiident])]
     template))
 
 (defn new

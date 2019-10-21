@@ -35,7 +35,7 @@ class MergeGeneDialog extends Component {
       },
       () => {
         return authorizedFetch(
-          `/api/gene/${geneIdMergeInto}/merge/${this.props.wbId}`,
+          `${this.props.apiPrefix}/${geneIdMergeInto}/merge/${this.props.wbId}`,
           {
             method: 'POST',
             body: JSON.stringify({
@@ -65,7 +65,7 @@ class MergeGeneDialog extends Component {
             GeneAutocomplete,
             'geneIdMergeInto'
           );
-          const BiotypeField = withFieldData(BiotypeSelect, 'gene/biotype');
+          const BiotypeField = withFieldData(BiotypeSelect, 'biotype');
           return (
             <DialogContent>
               <DialogContentText>
@@ -107,6 +107,7 @@ class MergeGeneDialog extends Component {
 MergeGeneDialog.propTypes = {
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
+  apiPrefix: PropTypes.string.isRequired,
 };
 
 const styles = (theme) => ({});

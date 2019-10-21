@@ -1,4 +1,4 @@
-(ns integration.test-batch-update-variation
+(ns integration.batch-update-entities-test
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
@@ -8,12 +8,13 @@
    [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.variation :as gsv]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn update-variations [data]
-  (api-tc/send-request "batch" :put data :sub-path "variation"))
+  (api-tc/send-request "batch" :put data :sub-path "entity/variation"))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -25,32 +26,33 @@
         names (gen/sample gsv/name 2)
         stati (repeat 2 :variation.status/live)]
     (map #(zipmap [:variation/id :variation/name :variation/status] [%1 %2 %3])
-                      ids names stati)))
+         ids names stati)))
 
 (t/deftest non-uniq-names
   (t/testing "Batch with multiple items containing non-unique names is rejected."
     (let [fixtures (make-fixtures)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures
-                bdata [(select-keys f1 [:variation/id :variation/name])
-                       (merge (select-keys f2 [:variation/id])
-                              (select-keys f1 [:variation/name]))]
+                bdata (map #(wnu/unqualify-keys % "variation")
+                           [(select-keys f1 [:variation/id :variation/name])
+                            (merge (select-keys f2 [:variation/id])
+                                   (select-keys f1 [:variation/name]))])
                 response (update-variations {:data bdata :prov basic-prov})]
             (t/is (ru-hp/conflict? response))))))))
 
 (t/deftest invalid-name
   (t/testing "Batch containing invlaid name is rejected."
     (let [fixtures (make-fixtures)]
-      (tu/with-fixtures
+      (tu/with-variation-fixtures
         fixtures
         (fn [conn]
           (let [[f1 f2] fixtures
-                bdata [(select-keys f1 [:variation/id :variation/name])
-                       (merge (select-keys f2 [:variation/id])
-                              (select-keys f1 [:variation/name]))]
+                bdata (map #(wnu/unqualify-keys % "variation")
+                           [(select-keys f1 [:variation/id :variation/name])
+                            (merge (select-keys f2 [:variation/id])
+                                   (select-keys f1 [:variation/name]))])
                 response (update-variations {:data bdata :prov basic-prov})]
             (t/is (ru-hp/conflict? response))))))))
-
 

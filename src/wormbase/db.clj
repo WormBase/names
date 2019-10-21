@@ -6,8 +6,7 @@
    [datomic.api :as d]
    [environ.core :as environ]
    [mount.core :as mount]
-   [wormbase.util :as wu]
-   [wormbase.db.schema :as db-schema]))
+   [wormbase.util :as wu]))
 
 (def ^:dynamic *wb-db-uri* nil)
 
@@ -16,11 +15,9 @@
   schema-version 1)
 
 (defn connect
-  "Connects to the datomic database and transacts schema if required."
+  "Connects to the datomic database."
   [uri]
-  (let [conn (d/connect uri)]
-    (db-schema/install conn)
-    conn))
+  (d/connect uri))
 
 (defn checked-connect
   "Version of connect that checks that the datomic URI matches prefixes.
@@ -73,7 +70,7 @@
   [request-handler]
   (fn [request]
     (when-not (connected?)
-      (mount/start))
+      (mount/start #'conn))
     (let [cx (connection)]
       (-> request
           (assoc :conn cx :db (db cx))
@@ -98,8 +95,8 @@
                        {:tx tx
                         :type ::invert-tx-problem
                         :range (d/tx-range log t (inc t))})))))
-    ([log tx provenance]
-     (invert-tx log tx provenance (constantly nil))))
+  ([log tx provenance]
+   (invert-tx log tx provenance (constantly nil))))
 
 (defn extract-id [tx-result identity-kw]
   (some->> (:tx-data tx-result)
@@ -131,5 +128,8 @@
 (def txfn-schema (partial edn-definition "tx-fns"))
 
 (defn pull [db expr & args]
-  (let [format-result (comp (partial wu/elide-db-internals db) wu/elide-importer-info)]
+  (let [format-result (fn [result]
+                        (->> result
+                             (wu/elide-importer-info)
+                             (wu/elide-db-internals db)))]
     (format-result (apply d/pull db expr args))))

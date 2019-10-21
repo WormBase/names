@@ -1,5 +1,6 @@
 (ns wormbase.names.stats
   (:require
+   [clojure.walk :as w]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.middleware.not-modified :as rmnm]
@@ -10,15 +11,22 @@
 (defn ident-count [db ident]
   (d/q '[:find (count ?e) .
          :in $ ?ident
-         :where [?e ?ident _]]
+         :where
+         [?e ?ident _]]
        db
        ident))
 
 (defn summary [request]
-  (into {}
-        (map (fn ident-to-count [ident]
-               [ident (or (ident-count (:db request) ident) 0)])
-             [:gene/id :variation/id :sequence-feature/id :batch/id])))
+  (let [enabled-ent-types (d/q '[:find [?et ...]
+                                 :where
+                                 [?e :wormbase.names/entity-type-enabled? true]
+                                 [?e :db/ident ?et]]
+                               (:db request))]
+    (->> (conj enabled-ent-types :batch/id)
+         (map (fn ident-to-count [ident]
+                [(str (namespace ident)) (or (ident-count (:db request) ident) 0)]))
+         (into {})
+         (w/stringify-keys))))
 
 (defn handle-summary [request]
   (let [etag (some-> request :db d/basis-t wnu/encode-etag)]

@@ -5,9 +5,9 @@
    [datomic.api :as d]
    [java-time :as jt]
    [wormbase.db :as wdb]
-   [wormbase.db.schema :as wdbs]
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
+   [wormbase.names.util :as wnu]
    [wormbase.specs.person :as wsp]
    [clojure.test :as t]))
 
@@ -38,8 +38,11 @@
   [request payload what & {:keys [tz]
                            :or {tz (jt/zone-id)}}]
   (let [auth-identity (:identity request)
-        prov (get payload :prov {})
-        who (if-let [plur (person-lur-from-provenance prov)]
+        prov (wnu/qualify-keys (get payload :prov {}) "provenance")
+        who (if-let [plur (person-lur-from-provenance (update prov
+                                                              :provenance/who
+                                                              (fn [x]
+                                                                (wnu/qualify-keys x "person"))))]
               (-> request :db (d/pull [:db/id] plur))
               (-> auth-identity :person :db/id))
         whence (-> (get prov :provenance/when (jt/instant))
@@ -101,25 +104,27 @@
 (defn entire-history [db entity-id]
   (d/q '[:find ?e ?aname ?v ?tx ?added
          :in $h ?e
-        :where
+         :where
          [$h ?e ?a ?v ?tx ?added]
          [$h ?a :db/ident ?aname]]
        (d/history db)
        entity-id))
 
-(def ^:private exclude-nses (conj wdbs/datomic-internal-namespaces "importer"))
+(def ^:private exclude-nses (conj (wu/datomic-internal-namespaces) "importer"))
 
 (defn tx-changes [db log tx]
-  (->> (d/q '[:find ?e ?a ?v ?added
+  (->> tx
+       (d/q '[:find ?e ?a ?v ?added
               :in $ ?log ?tx
               :where
               [(tx-data ?log ?tx) [[?e ?a ?v _ ?added]]]]
             db
-            log
-            tx)
+            log)
        (map (partial zipmap [:eid :attr :value :added]))
        (map #(update % :attr (partial d/ident db)))
-       (remove #(exclude-nses (-> % :attr namespace)))))
+       (remove #(exclude-nses (-> % :attr namespace)))
+       (map #(update % :attr wnu/unqualify-maybe))
+       (map #(update % :value wnu/unqualify-maybe))))
 
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
@@ -136,11 +141,11 @@
   "Return a sequence of tx ids that involve `entity-id`."
   [db entity-id ref-idents]
   (let [ent-txes (d/q '[:find [?tx ...]
-                      :in $h ?e
-                      :where
-                      [$h ?e _ _ ?tx _]]
-                    (d/history db)
-                    entity-id)
+                        :in $h ?e
+                        :where
+                        [$h ?e _ _ ?tx _]]
+                      (d/history db)
+                      entity-id)
         ref-txes (mapcat #(d/q '[:find [?tx ...]
                                  :in $h ?e ?ref-attr
                                  :where

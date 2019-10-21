@@ -5,7 +5,7 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request created ok]]
+   [ring.util.http-response :refer [bad-request created not-found! ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
@@ -15,8 +15,6 @@
    [wormbase.names.util :as wnu]))
 
 (def admin-required! (partial wna/require-role! #{:person.role/admin}))
-
-(def pull-expr '[*])
 
 (defmethod wnp/resolve-change :person/id
   [attr db change]
@@ -37,13 +35,15 @@
                           {:type :user/validation-error
                            :problems problems})))
         (let [prov (wnp/assoc-provenance request person :event/new-person)
-              tx-data [(assoc person :person/active? true) prov]
+              tx-data [(-> person
+                           (wnu/qualify-keys "person")
+                           (assoc :person/active? true)) prov]
               tx-res @(d/transact conn tx-data)
               pid (wdb/extract-id tx-res :person/id)]
           (created (str "/person/" pid) person))))))
 
 (defn summary [db lur]
-  (let [person (d/pull db pull-expr lur)]
+  (let [person (d/pull db '[*] lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
@@ -51,36 +51,43 @@
   "Return summary about a WBPerson."
   [identifier request]
   (let [db (:db request)
-        lur (s/conform ::wsp/identifier identifier)]
-    (when-let [person (summary db lur)]
-      (ok person))))
+        lur (s/conform ::wsp/identifier identifier)
+        person (summary db lur)]
+    (when-not person
+      (not-found! {:identifier identifier}))
+    (ok (-> (wnu/unqualify-keys person "person")
+            (update :roles (fn [roles]
+                             (map name roles)))))))
 
 (defn update-person
   "Handler for apply an update a person."
   [identifier request]
   (admin-required! request)
-  (let [db (:db request)
+  (let [{db :db body-params :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (summary db lur)]
     (if person
       (let [spec ::wsp/summary
-            conn (:conn request)
-            data (some-> request
-                         :body-params
-                         (assoc :person/active? true))
-            data* (if (empty? data)
-                    data
-                    (merge data
-                           (when-not (:person/email data)
-                             (select-keys person [:person/email]))
-                           (when-not (:person/id data)
-                             (select-keys person [:person/id]))))]
-        (if (s/valid? spec data*)
-          (let [tx-res @(d/transact-async conn [data*])]
-            (ok (summary (:db-after tx-res) lur)))
+            conn (:conn request)]
+        (if (s/valid? spec body-params)
+          (let [data (some-> body-params
+                             (wnu/qualify-keys "person")
+                             (assoc :person/active? true))
+                data* (if (empty? data)
+                        data
+                        (merge data
+                               (when-not (:person/email data)
+                                 (select-keys person [:person/email]))
+                               (when-not (:person/id data)
+                                 (select-keys person [:person/id]))))
+                tx-res @(d/transact-async conn [data*])]
+            (ok (-> tx-res
+                    :db-after
+                    (summary lur)
+                    (wnu/unqualify-keys "person"))))
           (bad-request
            {:type :user/validation-error
-            :problems (expound-str spec data*)}))))))
+            :problems (expound-str spec body-params)}))))))
 
 (defn deactivate-person [identifier request]
   (admin-required! request)
@@ -88,13 +95,13 @@
         lur (s/conform ::wsp/identifier identifier)
         person (d/pull db [:person/email :person/active?] lur)
         active? (:person/active? person)]
-    (when active?
-      (let [prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
-            tx-result @(d/transact-async conn
-                                         [[:db/cas lur :person/active? active? false] prov])]
-        (if-let [dba (:db-after tx-result)]
-          (ok (wu/elide-db-internals dba (assoc person :person/active? false)))
-          (bad-request))))))
+    (when-not active?
+      (not-found!))
+    (let [prov (wnp/assoc-provenance request (:prov payload {}) :event/deactivate-person)
+          tx-result @(d/transact-async conn
+                                       [[:db/cas lur :person/active? active? false] prov])]
+      (when-let [dba (:db-after tx-result)]
+        (ok (wu/elide-db-internals dba (assoc person :person/active? false)))))))
 
 (defn wrap-id-validation [handler identifier]
   (fn [request]
@@ -106,7 +113,7 @@
 
 (def routes
   (sweet/routes
-   (sweet/context "/person/" []
+   (sweet/context "/person" []
      :tags ["person"]
      (sweet/resource
       {:post

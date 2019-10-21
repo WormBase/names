@@ -13,7 +13,7 @@
 
 (s/def ::size pos-int?)
 
-(s/def ::success-response  (s/keys :req [:batch/id]))
+(s/def ::success-response  (s/keys :req-un [:batch/id]))
 
 (s/def ::ids (s/and (s/coll-of map?)))
 
@@ -23,9 +23,9 @@
 
 (s/def ::updated ::success-response)
 
-(s/def ::status-change (stc/spec (s/nilable (s/keys :opt [:provenance/why
-                                                          :provenance/when
-                                                          :provenance/who]))))
+(s/def ::status-change (stc/spec (s/nilable (s/keys :opt-un [:provenance/why
+                                                             :provenance/when
+                                                             :provenance/who]))))
 (s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
 
 (s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed}) ::success-response)))
