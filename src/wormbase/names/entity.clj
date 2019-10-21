@@ -21,7 +21,8 @@
    [wormbase.ids.core :as wbids]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.entity :as wse]
-   [wormbase.specs.provenance :as wsp]))
+   [wormbase.specs.provenance :as wsp]
+   [wormbase.names.validation :refer [validate-names]]))
 
 (def enabled-ident :wormbase.names/entity-type-enabled?)
 
@@ -30,6 +31,24 @@
 
 (defmethod transform-ident-ref-value :default [_ m]
   m)
+
+(defmethod validate-names :default [request data]
+  (let [db (:db request)
+        data (-> request :body-params :data)
+        ent-ns (-> request :path-params :entity-type)
+        id-ident (keyword ent-ns "id")
+        name-required? (d/q '[:find ?name-required .
+                              :in $ ?ident
+                              :where
+                              [?x :db/ident ?ident]
+                              [?ident :wormbase.names/name-required? ?name-required]]
+                            db
+                            id-ident)]
+    (when (and name-required? (s/valid? ::wse/name (:data name)))
+      (throw (ex-info "Name is required."
+                      {:type :user/validation-error
+                       :data data})))
+    data))
 
 (defn transform-ident-ref-values
   [data & {:keys [skip-keys]
@@ -77,15 +96,15 @@
 
 (defn creator
   "Return an endpoint handler for new entity creation."
-  [uiident conform-spec-fn event summary-pull-expr & [validate-names]]
+  [uiident conform-spec-fn event summary-pull-expr & [validate]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
           live-status-attr (keyword ent-ns "status")
           live-status-val (keyword (str ent-ns ".status") "live")
           template (wbids/identifier-format db uiident)
-          names-validator (if validate-names
-                            (partial validate-names request)
+          names-validator (if validate
+                            (partial validate request)
                             identity)
           data (-> (:data payload)
                    (conform-spec-fn)
@@ -108,15 +127,15 @@
   (merge ent-data data))
 
 (defn updater
-  [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate-names ref-resolver-fn]]
+  [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
         (let [ent-data (wdb/pull db summary-pull-expr lur)
-              names-validator (if validate-names
-                                (partial validate-names request)
+              names-validator (if validate
+                                (partial validate request)
                                 identity)
               data (-> payload
                        :data
@@ -260,7 +279,9 @@
                             [])}]
         (ok res)))))
 
-(defn generic-attrs [id-ident]
+(defn generic-attrs
+  "Return the datomic attribute schema for a generic entity."
+  [id-ident]
   (let [entity-type (namespace id-ident)]
     [#:db{:ident id-ident
           :valueType :db.type/string
