@@ -14,11 +14,7 @@
                        :description (str "A sprintf-style format string "
                                          "that will be used for generating identifiers.")}))
 
-(s/def ::entity-type (stc/spec {:spec (s/and string? #(every?
-                                                       (fn [^Character ch]
-                                                         (and
-                                                          (Character/isLetter ch)
-                                                          (Character/isLowerCase ch))) %))
+(s/def ::entity-type (stc/spec {:spec (s/and string? #(not (empty %)))
                                 :swagger/example "variation"
                                 :description "The name of the entity type."}))
 
