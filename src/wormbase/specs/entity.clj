@@ -14,11 +14,20 @@
                        :description (str "A sprintf-style format string "
                                          "that will be used for generating identifiers.")}))
 
+(s/def ::generic? (stc/spec {:spec sts/boolean?
+                             :description "True if the entity is generic."}))
+
+(s/def ::name-required? (stc/spec {:spec sts/boolean?
+                                   :description "True if the entity is requried to hold a name."}))
+
 (s/def ::entity-type (stc/spec {:spec (s/and string? #(not (empty %)))
                                 :swagger/example "variation"
                                 :description "The name of the entity type."}))
 
-(s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template ::entity-type])
+(s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template
+                                                       ::entity-type
+                                                       ::generic?
+                                                       ::name-required?])
                                :description "Parameters required to install a new entity schema."}))
 
 (s/def ::id (stc/spec {:spec (s/and string?
@@ -26,9 +35,10 @@
                        :description "An entity identifier."
                        :swagger/example "WBVar12345678"}))
 
-(s/def ::name (stc/spec {:spec (s/and string?
-                                      (partial re-seq #"^[A-Za-z]")
-                                      #(not (str/includes? % " ")))
+(s/def ::name (stc/spec {:spec (s/nilable
+                                (s/and string?
+                                       (partial re-seq #"^[A-Za-z]")
+                                       #(not (str/includes? % " "))))
                          :description "Entity name. (AKA \"public name\""}))
 
 (s/def ::identifier (stc/spec {:spec (s/or :id ::id

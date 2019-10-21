@@ -118,6 +118,10 @@
       :valueType :db.type/boolean
       :cardinality :db.cardinality/one
       :doc "Indicates if an entity type should be used."}
+ #:db{:ident :wormbase.names/name-required?
+      :valueType :db.type/boolean
+      :cardinality :db.cardinality/one
+      :doc "Indicates if an entity type should have a name."}
  #:db{:ident :wormbase.names/entity-types
       :valueType :db.type/ref
       :cardinality :db.cardinality/many

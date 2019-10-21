@@ -281,23 +281,29 @@
      #:db{:ident (keyword (str entity-type ".status") "suppressed")}]))
 
 (defn register-entity-schema
-  ([conn id-ident id-template prov generic? enabled?]
+  "Register a new datomic entity schema."
+  ([conn id-ident id-template prov generic? enabled? name-required?]
    (let [attrs-tx-data (conj (generic-attrs id-ident) prov)
          tx-res @(d/transact-async conn attrs-tx-data)
          temp-id (str id-ident)
          reg-tx-data [[:db/add id-ident :wormbase.names/id-template-format id-template]
                       [:db/add id-ident :wormbase.names/entity-type-generic? generic?]
-                      [:db/add id-ident :wormbase.names/entity-type-enabled? enabled?]]]
+                      [:db/add id-ident :wormbase.names/entity-type-enabled? enabled?]
+                      [:db/add id-ident :wormbase.names/name-required? name-required?]]]
      (when (:db-after tx-res)
        @(d/transact-async conn reg-tx-data)
        attrs-tx-data)))
   ([conn id-ident id-template prov]
-   (register-entity-schema conn id-ident id-template prov true true)))
+   (register-entity-schema conn id-ident id-template prov true true true)))
 
-(defn handle-register-entity-schema [request]
+(defn handle-register-entity-schema
+  [request]
   (let [{db :db conn :conn payload :body-params} request
         {data :data} payload
-        {entity-type :entity-type id-template :id-template} data
+        {entity-type :entity-type
+         id-template :id-template
+         generic? :generic
+         name-required? :name-required} data
         id-attr (keyword entity-type "id")
         prov (wnp/assoc-provenance request payload :event/new-entity-type)]
     (when-not entity-type
@@ -306,7 +312,13 @@
       (conflict! {:message (format "Schema %s already exists! (:%s/id)"
                                    entity-type
                                    entity-type)}))
-    (when (register-entity-schema conn id-attr id-template prov)
+    (when (register-entity-schema conn
+                                  id-attr
+                                  id-template
+                                  prov
+                                  generic?
+                                  true
+                                  name-required?)
       (created (str "/api/" entity-type)
                {:message (format "Created generic schema for %s"
                                  entity-type)}))))

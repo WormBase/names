@@ -52,11 +52,12 @@
         init-schema [(concat db-fns schema-txes)]]
     (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
     (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
-    (doseq [{:keys [:entity-type :id-format :generic?]} entity-registry]
+    (doseq [{:keys [:entity-type :id-format :generic? :name-required?]} entity-registry]
       (wne/register-entity-schema conn
                                   entity-type
                                   id-format
                                   {:provenance/why "initial system registration"}
                                   generic?
-                                  true))
+                                  true
+                                  name-required?))
     (import-people conn)))

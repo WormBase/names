@@ -22,7 +22,7 @@
 (defn send-coll-request [method payload]
   (api-tc/send-request nil
                        method
-                       (or payload  {:prov nil :data nil})
+                       (or payload {:prov nil :data nil})
                        :uri "/api/entity"))
 
 (defn send-item-request [method payload ent-type-id]
@@ -49,7 +49,9 @@
       [] ;; empty fixtures (re-using mechanism to test database contents)
       (fn [conn]
         (let [data {:entity-type "strain"
-                    :id-template "WBStrain%0d"}
+                    :id-template "WBStrain%0d"
+                    :generic true
+                    :name-required true}
               response (new-entity-type {:data data :prov nil})]
           (t/is (ru-hp/created? response))
           (let [db-after (d/db conn)
