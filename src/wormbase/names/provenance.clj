@@ -122,9 +122,7 @@
             log)
        (map (partial zipmap [:eid :attr :value :added]))
        (map #(update % :attr (partial d/ident db)))
-       (remove #(exclude-nses (-> % :attr namespace)))
-       (map #(update % :attr wnu/unqualify-maybe))
-       (map #(update % :value wnu/unqualify-maybe))))
+       (remove #(exclude-nses (-> % :attr namespace)))))
 
 (defn query-tx-changes-for-event
   "Return the set of attribute and values changed for an entity."
@@ -135,6 +133,8 @@
          (filter (fn [change]
                    (some #(= % eid) ((juxt :eid :value) change))))
          (map (partial convert-change db eid))
+         (map #(update % :attr wnu/unqualify-maybe))
+         (map #(update % :value wnu/unqualify-maybe))
          (sort-by (juxt :attr :added :value)))))
 
 (defn involved-in-txes

@@ -3,12 +3,14 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
+   [integration.gene-summary-test :as gst]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [elegans-ln]]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.gene :as gs]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
+   [wormbase.names.provenance :as wnp]
    [wormbase.names.service :as service]
    [wormbase.db :as wdb]))
 
@@ -175,6 +177,20 @@
          (dissoc :gene/cgc-name))
      prod-seq-name]))
 
+(defn check-splits
+  [conn ga gb which]
+  (let [history (first (wnp/query-provenance (d/db conn) (d/log conn) [:gene/id ga]))
+        changes (:changes history)
+        splits (filter #(= (:attr %) "splits") changes)
+        gene-id (-> splits (first) :value)]
+    (t/is (= gene-id gb) (str "HISTORY for "
+                              which
+                              " WAS:\n"
+                              (pr-str (:changes history))
+                              "\nPARSED GENE ID: " gene-id
+                              "\nGA: " ga
+                              "\nGB: " gb))))
+
 (t/deftest success
   (t/testing "Provenence for successful split is recorded."
     (let [[gene-id data-sample prod-seq-name] (gen-sample-for-split)]
@@ -192,6 +208,10 @@
                                           gene-id
                                           :current-user user-email)]
             (t/is (ru-hp/created? {:status status :body body}))
+            (let [ga (-> body :updated :id)
+                  gb (-> body :created :id)]
+              (check-splits conn ga gb "updated")
+              (check-splits conn gb ga "created"))
             (let [[from-lur into-lur] [[:gene/id gene-id] [:gene/sequence-name prod-seq-name]]
                   src (d/pull (d/db conn) '[* {:gene/status [:db/ident]
                                                :gene/splits [[:gene/id]]}] from-lur)
@@ -199,12 +219,20 @@
                   prod (d/pull (d/db conn) '[* {:gene/status [:db/ident]
                                                 :gene/_splits [[:gene/id]]}] into-lur)
                   prod-id (:gene/id prod)
-                  prov (query-provenance conn :gene/splits (:db/id src))]
-              (t/is (= (get-in src [:gene/status :db/ident]) :gene.status/live) "source is not live")
+                  prov (query-provenance conn :gene/splits (:db/id src))
+                  dst-prov (wnp/query-provenance (d/db conn) (d/log conn) into-lur)]
+              ;; check the gene product contains the corresponding history
               (t/is (= (get-in prod [:gene/status :db/ident]) :gene.status/live) "product is not live")
               (t/is ((set (map :gene/id (:gene/splits src))) prod-id))
-              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (some-> prov :provenance/when inst?))
+              (t/is (count dst-prov) 1)
+              (let [corr-hist (->> dst-prov first :changes)]
+                (t/is ((set (->> corr-hist (map :attr))) "splits"))
+                (t/is (= (->> corr-hist (filter #(= (:attr %) "splits")) (first) :value)
+                         src-id)))
+              ;; check the src gene contains correct history
+              (t/is (= (get-in src [:gene/status :db/ident]) :gene.status/live) "source is not live")
+              (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
               (t/is (= :agent/web (-> prov :provenance/how :db/ident))))))))))

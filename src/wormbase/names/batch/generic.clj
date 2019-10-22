@@ -71,7 +71,7 @@
             batch-id)
        (wnp/tx-changes db log)
        (filter #(not= (:value %) batch-id))
-       (filter #((set (conj name-attrs (name uiident))) (:attr %)))
+       (filter #((set (conj name-attrs (name uiident))) (name (:attr %))))
        (group-by :eid)
        (vals)
        (map (fn [xs]
