@@ -37,8 +37,6 @@
                   :default m))
               data))
 
-(def ^{:deprecated-in 0.6} undatomicize elide-db-internals)
-
 (defn elide-importer-info
   [data]
   (reduce-kv (fn masker [m k v]
