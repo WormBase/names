@@ -59,11 +59,6 @@
                      (jt/instant)
                      (jt/zoned-date-time tz))))
 
-(defn zoned-date-time? [dt]
-  (try
-    (jt/zoned-date-time dt)
-    (catch Exception e)))
-
 (defn sort-events-by
   "Sort a sequence of mappings representing events in temporal order."
   [k events & {:keys [most-recent-first]
