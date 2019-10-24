@@ -111,14 +111,18 @@ To allow the UI webpackDevServer to proxy to the ring server, the ring server ha
 ### Tools
 
 #### Running a Clojure REPL
-If using Emacs + CIDER:
-```bash
-clj -A:datomic-pro:aws-java-sdk-dynamodb -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.0-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
-```
-Otherwise, for a plain REPL use:
-```bash
-clj -A:datomic-pro:aws-java-sdk-dynamodb -m nrepl.cmdline
-```
+
+Examples
+
+ Emacs + CIDER:
+ ```bash
+clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.4-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
+ ```
+
+ "Vanilla" REPL:
+ ```bash
+ clj -A:datomic-pro:webassets:dev -m nrepl.cmdline
+ ```
 
 From time to time it is good to check for outdated dependencies.
 This can be done via the following command:
@@ -128,23 +132,37 @@ clj -A:outdated
 
 
 ### Testing
-Use built-in testing utilities as provided by leiningen.
-Please run all tests before committing/submitting new pull requests.
+Use built-in testing utilities as provided by your environment, else use the `make` command
+below to run all tests.
+
+Ensure to run all tests and check they pass before submitting new pull requests.
 
 ```bash
 
-clj -A:datomic-pro:dev:test
+make run-tests
 ```
 
 ## Releases
 
 ```bash
-lein release
+make release
 ```
 
-### Building the client application
+## Client application
+
+### Development
+The Reach (Javascript) client application can be run using:
 ```bash
-make build-client-app
+cd ./client
+yarn run start
+```
+This will start service serving the client assets on port 3000,
+the server should be started with the `PORT` environment variable set to *4010*.
+
+### Building
+```bash
+cd client
+yarn build
 ```
 
 For a full list of tasks, type:
