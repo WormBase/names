@@ -117,11 +117,6 @@ docker-clean: $(call print-help,docker-clean,\
 	@docker stop ${PROJ_NAME}
 	@docker rm ${PROJ_NAME}
 
-.PHONY:
-release: $(call print-help,release,"Release a new version of the code.")
-	@clj -A:release
-	@clj -A:aws-eb-docker
-
 .PHONY: deploy-ecr
 deploy-ecr: clean release docker-build docker-ecr-login docker-tag docker-push-ecr
          $(call print-help,\

@@ -134,7 +134,6 @@ clj -A:outdated
 ### Testing
 Use built-in testing utilities as provided by your environment, else use the `make` command
 below to run all tests.
-
 Ensure to run all tests and check they pass before submitting new pull requests.
 
 ```bash
@@ -145,7 +144,12 @@ make run-tests
 ## Releases
 
 ```bash
-make release
+clj -A:release
+clj -A:wormbase.aws-docker-version
+make deploy-ecr
+# Deploy the new version to ElasticBeanstalk
+eb use wormbase-names
+eb deploy
 ```
 
 ## Client application
