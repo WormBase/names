@@ -74,6 +74,7 @@
                               :exclusions [org.clojure/tools.reader]}
     javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
     ring/ring-devel {:mvn/version "1.6.3"}
+    metav {:mvn/version "1.5.2"}
     peridot {:mvn/version "0.5.0"}
     vvvvalvalval/datomock {:mvn/version "0.2.2"}}
    :extra-paths ["ids/src" "export/src" "test"]}
