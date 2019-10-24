@@ -1,4 +1,4 @@
-{:paths ["src"]
+{:paths ["src" "resources"]
  ;; TODO: figure out how to configure logging
  ;; When this package is added, no logging statements appear in
  ;; console by default (compojure-api integration)
@@ -50,8 +50,7 @@
                              "--output-dir" "src"
                              "--namespace" "wormbase.names.metav"
                              "--formats" "clj"]}
-  :aws-eb-docker-version {:extra-deps
-                          {metav {:mvn/version "1.5.2"}}
+  :aws-eb-docker-version {:extra-deps {metav {:mvn/version "1.5.2"}}
                           :main-opts ["-m" "wormbase.aws-eb-docker"]}
   :prod
   {:extra-deps
