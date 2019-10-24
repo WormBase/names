@@ -8,8 +8,8 @@
    [mount.core :as mount]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
-   [wormbase.names.importers.gene :as gene-importer]
-   [wormbase.names.importers.variation :as var-importer]))
+   [wormbase.names.importers.entity :as ent-importer]
+   [wormbase.names.importers.gene :as gene-importer]))
 
 (def cli-options [])
 
@@ -22,8 +22,10 @@
   (println msg)
   (System/exit status))
 
-(def importers {"gene" gene-importer/process
-                "variation" var-importer/process})
+;; A mapping of entity-namespace to importer.
+;; Any name passed on the CLI that isn't in this map is considered generic.
+;; Add a function here for any furture concrete importers (those with custom schema and rules)
+(def importers {"gene" gene-importer/process})
 
 (defn -main
   "Command line entry point.
@@ -55,7 +57,7 @@
       (exit 1 "set the WB_DB_URI environement variable w/datomic URI.")
 
       tsv-paths
-      (if-let [importer (get importers importer-ns-name)]
+      (if-let [importer (get importers importer-ns-name ent-importer/process)]
         (let [process-import (partial importer wdb/conn)]
           (print "Importing...")
           (apply process-import tsv-paths)

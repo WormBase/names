@@ -198,7 +198,8 @@
                   :provenance/when wnip/->when
                   :geneace/event-text identity}]
     (with-open [in-file (io/reader tsv-path)]
-      (->> (wnip/parse-transform-cast in-file ev-ex-conf cast-fns)
+      (->> (wnip/parse-tsv in-file)
+           (wnip/transform-cast ev-ex-conf cast-fns)
            (group-by :gene/id)
            (map process-gene-events)
            (into {})
@@ -243,7 +244,8 @@
                                                :gene/sequence-name)
                   :gene/biotype ->biotype}]
     (with-open [in-file (io/reader tsv-path)]
-      (->> (wnip/parse-transform-cast in-file conf cast-fns)
+      (->> (wnip/parse-tsv in-file)
+           (wnip/transform-cast conf cast-fns)
            (map wnip/discard-empty-valued-entries)
            (filter filter-fn)
            (partition-all batch-size)

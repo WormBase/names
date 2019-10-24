@@ -68,5 +68,14 @@
               #(compare %1 %2))]
     (sort-by k cmp events)))
 
+(defn now
+  "Return a java date converted from the current time in timezone `tz`."
+  ([tz]
+   (-> (jt/instant)
+       (jt/zoned-date-time (jt/zone-id tz))
+       (jt/to-java-date)))
+  ([]
+   (now "UTC")))
+
 (defn datomic-internal-namespaces []
   (-> (read-app-config) :datomic :internal-namespaces set))

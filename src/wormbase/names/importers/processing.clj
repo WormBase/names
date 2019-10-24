@@ -41,8 +41,8 @@
 (defn parse-tsv [stream]
   (csv/read-csv stream :separator \tab))
 
-(defn parse-transform-cast [in-file conf cast-fns]
-  (->> (parse-tsv in-file)
+(defn transform-cast [rows conf cast-fns]
+  (->> rows
        (sc/mappify (select-keys conf [:header]))
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
 

@@ -36,7 +36,7 @@
 
   Returns a map."
   [request payload what & {:keys [tz]
-                           :or {tz (jt/zone-id)}}]
+                           :or {tz (jt/zone-id "UTC")}}]
   (let [auth-identity (:identity request)
         prov (wnu/qualify-keys (get payload :prov {}) "provenance")
         who (if-let [plur (person-lur-from-provenance (update prov

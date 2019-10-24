@@ -15,7 +15,7 @@
 
 ;; clients are requried to provide their time zone when specifying dates.
 (s/def :provenance/when (stc/spec
-                         {:spec (s/nilable wu/zoned-date-time?)
+                         {:spec (s/nilable jt/zoned-date-time?)
                           :swagger/example (jt/format :iso-date-time
                                                       (jt/zoned-date-time (jt/instant) (jt/zone-id)))
                           :description "The date-time the curator performed the action."}))
