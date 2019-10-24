@@ -117,9 +117,12 @@ docker-clean: $(call print-help,docker-clean,\
 	@docker stop ${PROJ_NAME}
 	@docker rm ${PROJ_NAME}
 
-.PHONY: release
-release: $(call print-help,\
-                "Release the application to github.")
-	@lein with-profile prod release
+.PHONY: deploy-ecr
+deploy-ecr: clean docker-build docker-ecr-login docker-tag docker-push-ecr
+         $(call print-help,\
+                "Deploy the application to the AWS container registry.")
+
+
+
 
 
