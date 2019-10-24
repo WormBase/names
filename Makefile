@@ -123,6 +123,10 @@ deploy-ecr: clean docker-build docker-ecr-login docker-tag docker-push-ecr
                 "Deploy the application to the AWS container registry.")
 
 
+.PHONY: release
+	@clj -A:release
+	@clj -A:aws-eb-docker
+
 
 
 
