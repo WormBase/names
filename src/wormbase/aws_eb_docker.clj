@@ -1,6 +1,7 @@
-(ns wormbase.aws-eb-setup
-  (:require [clojure.string :as str])
-  (:gen-class))
+(ns wormbase.aws-eb-docker
+  (:require
+   [clojure.string :as str]
+   [wormbase.names.metav :as wn-metav]))
 
 (def proj-pattern #"wormbase/names:[\d.]+")
 
@@ -8,13 +9,12 @@
   (str/replace content proj-pattern (str "wormbase/names:" new-version)))
 
 (defn update-eb-json! [eb-json-path]
-  (let [version (System/getProperty "wormbase-names.version")
-        curr-content (slurp eb-json-path)
+  (let [curr-content (slurp eb-json-path)
         new-content (slurp eb-json-path)]
     (spit eb-json-path (-> eb-json-path
                            slurp
-                           (replace-version version)))))
+                           (replace-version wn-metav/version)))))
 (defn -main
   [& args]
-  (println (System/getProperty "wormbase-names.version"))
+  (println wn-metav/version)
   (update-eb-json! "./Dockerrun.aws.json"))
