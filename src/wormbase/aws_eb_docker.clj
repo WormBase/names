@@ -18,5 +18,4 @@
   [& args]
   (let [proj-meta (wu/read-app-config "meta.edn")
         version (:version proj-meta)]
-    (println version)
-    (update-eb-json! version "./Dockerrun.aws.json")))
+    (update-eb-json! "./Dockerrun.aws.json" version)))
