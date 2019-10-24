@@ -52,7 +52,7 @@ docker-build: clean build \
 
 .PHONY: docker-ecr-login
 docker-ecr-login: $(call print-help,docker-ecr-login,"Login to ECR")
-	@eval $(shell aws ecr  get-login --no-include-email --registry-ids ${WB_ACC_NUM})
+	@eval $(shell aws ecr get-login --no-include-email --registry-ids ${WB_ACC_NUM})
 
 .PHONY: docker-push-ecr
 docker-push-ecr: docker-ecr-login $(call print-help,docker-push-ecr,\
