@@ -52,7 +52,6 @@
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
   {:ui "/api-docs"
    :spec "/swagger.json"
-   :ignore-missing-mappings? false
    :data
    {:info
     {:title "WormBase name service"
