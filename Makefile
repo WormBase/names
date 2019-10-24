@@ -3,8 +3,8 @@ VERSION ?= $(shell git describe --abbrev=0 --tags)
 EBX_CONFIG := .ebextensions/app-env.config
 WB_DB_URI ?= $(shell sed -rn 's|value:(.*)|\1|p' \
                   ${EBX_CONFIG} | tr -d " " | head -n 1)
-PROJ_NAME="wormbase-names"
-RELEASE_NAME="${PROJ_NAME}-${VERSION}"
+PROJ_NAME := "wormbase-names"
+RELEASE_NAME := "${PROJ_NAME}-${VERSION}"
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
@@ -36,7 +36,7 @@ build: clean \
 .PHONY: build-client-app
 build-client-app: $(call print-help,build-client-app,\
 		    "Build the React Javascript client Application")
-	@cd client && yarn install --frozen-lockfile && yarn build
+	@cd ./client && yarn install --frozen-lockfile && yarn build
 
 .PHONY: clean
 clean: $(call print-help,clean,"Remove the locally built JAR file.")
