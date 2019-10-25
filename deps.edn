@@ -46,10 +46,7 @@
   :release {:extra-deps {metav {:mvn/version "1.5.2"}}
             :main-opts ["-m" "metav.release"]}
   :spit-version {:extra-deps {metav {:mvn/version "1.5.2"}}
-                 :main-opts ["-m" "metav.spit"
-                             "--output-dir" "src"
-                             "--namespace" "wormbase.names.metav"
-                             "--formats" "clj"]}
+                 :main-opts ["-m" "metav.spit"]}
   :aws-eb-docker-version {:extra-deps {metav {:mvn/version "1.5.2"}}
                           :main-opts ["-m" "wormbase.aws-eb-docker"]}
   :prod
