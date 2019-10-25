@@ -154,10 +154,12 @@ Releasing is a 4 step process:
 ```bash
 
 # specify $LEVEL as one of <major|minor|patch>
-clj -A:release -sv $LEVEL
+clj -A:release $LEVEL
 
 # bump the release version for AWS EB Docker
+clj -A:spit-version
 clj -A:datomic-pro:prod:aws-eb-docker-version
+rm resources/meta.edn
 
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
 make deploy-ecr

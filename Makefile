@@ -118,7 +118,7 @@ docker-clean: $(call print-help,docker-clean,\
 	@docker rm ${PROJ_NAME}
 
 .PHONY: deploy-ecr
-deploy-ecr: clean release docker-build docker-ecr-login docker-tag docker-push-ecr
+deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
          $(call print-help,deploy-ecr\
                 "Deploy the application to the AWS container registry.")
 
