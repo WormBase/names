@@ -86,21 +86,21 @@ eb-deploy: $(call print-help,eb-deploy,"Deploy the application using ElasticBean
 eb-setenv: $(call print-help,eb-env,\
 	     "Set enviroment variables for the \
 	      ElasticBeanStalk environment")
-	eb setenv WB_DB_URI="${WB_DB_URI}" \
-		  _JAVA_OPTIONS="-Xmx14g" \
-		  AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-		  AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-		  -e "${PROJ_NAME}"
+	@eb setenv WB_DB_URI="${WB_DB_URI}" \
+		_JAVA_OPTIONS="-Xmx14g" \
+		AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+		AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+		-e "${PROJ_NAME}"
 
 .PHONY: eb-local
 eb-local: docker-ecr-login $(call print-help,eb-local,\
 			     "Runs the ElasticBeanStalk/docker \
 			      build and run locally.")
-	eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI} --profile ${AWS_EB_PROFILE}
+	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI} --profile ${AWS_EB_PROFILE}
 
 .PHONY: run
 run: $(call print-help,run,"Run the application in docker (locally).")
-	docker run \
+	@docker run \
 		--name ${PROJ_NAME} \
 		--publish-all=true \
 		--publish ${PORT}:${PORT} \
