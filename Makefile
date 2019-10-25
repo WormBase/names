@@ -6,7 +6,7 @@ PROJ_NAME := "wormbase-names"
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
-ARTIFACT_NAME ?= $(shell clj -A:artifact-name)
+ARTIFACT_NAME ?= $(shell git describe --tags --abbrev=0)
 FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ARTIFACT_NAME}
 
 define print-help
