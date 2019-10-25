@@ -152,6 +152,12 @@ Releasing is a 4 step process:
 
 ### Commands
 ```bash
+# Build the client application
+cd client
+
+# Ensure you've installed yarn with npm/b other means first.
+yarn build --frozen-lockfile
+cd -
 
 # specify $LEVEL as one of <major|minor|patch>
 clj -A:release $LEVEL

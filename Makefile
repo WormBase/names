@@ -33,11 +33,6 @@ build: clean \
 			aws_access_key_id=${AWS_ACCESS_KEY_ID} \
 		--rm ./docker/
 
-.PHONY: build-client-app
-build-client-app: $(call print-help,build-client-app,\
-		    "Build the React Javascript client Application")
-	@cd ./client && yarn install --frozen-lockfile && yarn build
-
 .PHONY: clean
 clean: $(call print-help,clean,"Remove the locally built JAR file.")
 	@rm -f ./docker/${DEPLOY_JAR}
