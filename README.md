@@ -143,9 +143,23 @@ make run-tests
 
 ## Releases
 
+Releasing is a 4 step process:
+
+ 1. Release code - revision, push. creates `resources/meta.edn` that's included in the build artefacts).
+ 2. Build application and deploy in the AWS Elastic Container Registry (ECR).
+ 3. Deploy the application in AWS ElasticBeanstalk.
+
+
+### Commands
 ```bash
-clj -A:release
-clj -A:wormbase.aws-docker-version
+
+# specify $LEVEL as one of <major|minor|patch>
+clj -A:release -sv $LEVEL
+
+# bump the release version for AWS EB Docker
+clj -A:datomic-pro:prod:aws-eb-docker-version
+
+# Build and deploy the application to the AWS Elastic Container Registry (ECR)
 make deploy-ecr
 # Deploy the new version to ElasticBeanstalk
 eb use wormbase-names
