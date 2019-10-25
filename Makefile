@@ -1,14 +1,13 @@
 NAME := wormbase/names
-VERSION ?= $(shell git describe --abbrev=0 --tags)
 EBX_CONFIG := .ebextensions/app-env.config
 WB_DB_URI ?= $(shell sed -rn 's|value:(.*)|\1|p' \
                   ${EBX_CONFIG} | tr -d " " | head -n 1)
 PROJ_NAME := "wormbase-names"
-RELEASE_NAME := "${PROJ_NAME}-${VERSION}"
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
-FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${NAME}:${VERSION}
+ARTIFACT_NAME ?= $(shell clj -A:artifact-name)
+FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ARTIFACT_NAME}
 
 define print-help
         $(if $(need-help),$(warning $1 -- $2))
@@ -24,7 +23,7 @@ build: clean \
        docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
-	@docker build -t ${NAME}:${VERSION} \
+	@docker build -t ${ARTIFACT_NAME} \
 		--build-arg uberjar_path=${DEPLOY_JAR} \
 		--build-arg \
 			aws_secret_access_key=${AWS_SECRET_ACCESS_KEY} \
@@ -58,8 +57,8 @@ docker-push-ecr: docker-ecr-login $(call print-help,docker-push-ecr,\
 docker-tag: $(call print-help,docker-tag,\
 	     "Tag the image with current git revision \
 	      and ':latest' alias")
-	@docker tag ${NAME}:${VERSION} ${FQ_TAG}
-	@docker tag ${NAME}:${VERSION} \
+	@docker tag ${ARTIFACT_NAME} ${FQ_TAG}
+	@docker tag ${ARTIFACT_NAME} \
 		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${NAME}
 
 .PHONY: eb-create
@@ -103,7 +102,7 @@ run: $(call print-help,run,"Run the application in docker (locally).")
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e WB_DB_URI=${WB_DB_URI} \
 		-e PORT=${PORT} \
-		${NAME}:${VERSION}
+		${ARTIFACT_NAME}
 
 .PHONY: docker-clean
 docker-clean: $(call print-help,docker-clean,\

@@ -167,6 +167,11 @@ clj -A:spit-version
 clj -A:datomic-pro:prod:aws-eb-docker-version
 rm resources/meta.edn
 
+# Ensure target/app.zip is configured in .elasticbeanstalk/config per [AWS EB CLI docs][15]
+ARTEFACT_NAME=$(clj -A:artefact-name)
+git archive $(git describe --abbrev=0) -o target/app.zip
+zip -u target/app.zip Dockerrun.aws.json
+
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
 make deploy-ecr
 # Deploy the new version to ElasticBeanstalk
@@ -322,3 +327,5 @@ Copyright ©  WormBase 2018, 2019
 [12]: https://github.com/docker/docker-credential-helpers/releases
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
 [14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
+[15]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
+
