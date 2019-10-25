@@ -58,7 +58,7 @@ docker-tag: $(call print-help,docker-tag,\
 	     "Tag the image with current git revision \
 	      and ':latest' alias")
 	@docker tag ${ECR_REPO_NAME}:${ARTIFACT_NAME} ${FQ_TAG}
-	@docker tag ${ECR_REPO_NAME}${ARTIFACT_NAME} \
+	@docker tag ${ECR_REPO_NAME}:${ARTIFACT_NAME} \
 		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
 
 .PHONY: eb-create
