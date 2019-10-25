@@ -1,5 +1,6 @@
 (ns wormbase.aws-eb-docker
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [wormbase.util :as wu]))
 
@@ -17,5 +18,9 @@
 (defn -main
   [& args]
   (let [proj-meta (wu/read-app-config "meta.edn")
-        version (:version proj-meta)]
-    (update-eb-json! "./Dockerrun.aws.json" version)))
+        version (:version proj-meta)
+        target-filename "Dockerrun.aws.json"
+        files (map io/file ["Dockerrun.aws.json.template" target-filename])]
+    (when-not (.exists (last files))
+      (apply io/copy files))
+    (update-eb-json! target-filename version)))
