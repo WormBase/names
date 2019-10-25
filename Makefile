@@ -21,7 +21,6 @@ help: ; @echo $(if $(need-help),,\
 
 .PHONY: build
 build: clean \
-       build-client-app \
        docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
