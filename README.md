@@ -168,7 +168,6 @@ clj -A:datomic-pro:prod:aws-eb-docker-version
 rm resources/meta.edn
 
 # Ensure target/app.zip is configured in .elasticbeanstalk/config per [AWS EB CLI docs][15]
-ARTEFACT_NAME=$(clj -A:artefact-name)
 git archive $(git describe --abbrev=0) -o target/app.zip
 zip -u target/app.zip Dockerrun.aws.json
 
