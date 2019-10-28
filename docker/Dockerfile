@@ -9,4 +9,4 @@ ENV AWS_SECRET_ACCESS_KEY=$aws_secret_access_key \
 ARG uberjar_path=
 ADD $uberjar_path /srv/app.jar
 
-CMD ["java", "-cp", "/srv/app.jar" "clojure.main" "-m" "wormbase.names.service"]
+CMD ["java", "-cp", "/srv/app.jar", "clojure.main", "-m", "wormbase.names.service"]
