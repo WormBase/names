@@ -162,6 +162,8 @@
            :changes (fnil identity (pull-changes-fn tx))))
   ([db entity-id prov-pull-expr tx]
    (-> (wdb/pull db prov-pull-expr tx)
+       (update :provenance/how wnu/unqualify-maybe)
+       (update :provenance/what wnu/unqualify-maybe)
        (update :provenance/when
                (fn [v]
                  (when v

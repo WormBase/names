@@ -70,8 +70,8 @@
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
           (t/is (ru-hp/ok? response2))
-          (t/is (= (some-> response2 :body :what keyword)
-                   :event/new-gene)))))))
+          (t/is (= "new-gene"
+                   (some-> response2 :body :what))))))))
 
 (t/deftest batch-success-with-force-override-nomenclature
   (t/testing "Batch with a random number of items overriding nomenclature guide is successful"
@@ -91,5 +91,4 @@
             (t/is (seq xs))
             (t/is (every? (partial = :gene.status/live) xs))
             (t/is (ru-hp/ok? response))
-            (t/is (= (some-> response :body :what keyword)
-                     :event/new-gene))))))))
+            (t/is (= "new-gene" (some-> response :body :what)))))))))

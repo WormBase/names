@@ -154,10 +154,10 @@
                                                     [:gene/id from-id]
                                                     #{:gene/merges :gene/splits}
                                                     ppe)
-                              (filter #(= (:provenance/what %) :event/merge-genes))
+                              (filter #(= (:provenance/what %) "merge-genes"))
                               first)]
             (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (jt/zoned-date-time? (:provenance/when prov)))
+            (t/is (jt/zoned-date-time? (:provenance/when prov)) (pr-str prov))
 
             (let [{src-merges :gene/merges} (d/pull (d/db conn)
                                                     [{:gene/merges [[:gene/id]]}]
@@ -168,7 +168,7 @@
               (t/is (contains? (set (map :gene/id src-merges)) into-id))
               (t/is ((set (map :gene/id tgt-merges)) from-id))
               (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
-              (t/is (= (:provenance/how prov) :agent/web)))))))))
+              (t/is (= "web" (:provenance/how prov))))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."
