@@ -167,6 +167,12 @@ clj -A:spit-version
 clj -A:datomic-pro:prod:aws-eb-docker-version
 rm resources/meta.edn
 
+# print the version being deployed
+make show-version
+
+# Update <verison> in pom.xml to match.
+$EDITOR pom.xml
+
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
 make deploy-ecr
 
