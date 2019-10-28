@@ -168,7 +168,7 @@ clj -A:datomic-pro:prod:aws-eb-docker-version
 rm resources/meta.edn
 
 # Ensure target/app.zip is configured in .elasticbeanstalk/config per [AWS EB CLI docs][15]
-git archive $(git describe --abbrev=0) -o target/app.zip
+git archive $(git describe --tags --abbrev=0) -o target/app.zip
 zip -u target/app.zip Dockerrun.aws.json
 
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
