@@ -1,10 +1,14 @@
 # Change-log
 
+## [0.6.12]
+ - Feature: Generic Entity API
+ - Updated deployment process (removed use of lein in favour of clojure CLI tools).
+
 ## [0.5.3]
  - Species listing API
  - Fixed species-specifix regular expression pattern for gene names.
  - Match up gene identifiers with names in batch creation endpoints.
- 
+
 ## [0.5.2]
  - UI fix for recent activities.
  - Added --profile flag for command for running awsebcli commands in Makefile.
