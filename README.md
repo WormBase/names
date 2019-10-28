@@ -174,8 +174,7 @@ zip -u target/app.zip Dockerrun.aws.json
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
 make deploy-ecr
 # Deploy the new version to ElasticBeanstalk
-eb use wormbase-names
-eb deploy
+eb deploy wormbase-names
 ```
 
 ## Client application
