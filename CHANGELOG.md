@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.6.13]
+ - Fixed aws version bumping in Dockerrun.aws.json.
+
 ## [0.6.12]
  - Feature: Generic Entity API
  - Updated deployment process (removed use of lein in favour of clojure CLI tools).
