@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.6.14]
+ - Temporary fix for missing person provenance (importer defect).
+ 
 ## [0.6.13]
  - Fixed aws version bumping in Dockerrun.aws.json.
 
