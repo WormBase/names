@@ -161,10 +161,15 @@
    (update (pull-provenance db entity-id prov-pull-expr tx)
            :changes (fnil identity (pull-changes-fn tx))))
   ([db entity-id prov-pull-expr tx]
-   (update (wdb/pull db prov-pull-expr tx)
-           :provenance/when (fn [v]
-                              (when v
-                                (jt/zoned-date-time v (jt/zone-id)))))))
+   (-> (wdb/pull db prov-pull-expr tx)
+       (update :provenance/when
+               (fn [v]
+                 (when v
+                   (jt/zoned-date-time v (jt/zone-id)))))
+       (update :provenance/who
+               ;; Temporary hack to fix non-assignment of person provenance in importer.
+               (fnil identity
+                     {:person/email "matthew.russell@wormbase.org"})))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.
