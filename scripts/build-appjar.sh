@@ -8,7 +8,7 @@ DEPLOY_JAR="target/${RELEASE_NAME}.jar"
 rm -rf target
 mkdir -p target
 clj -Spom
-clj -A:datomic-pro:webassets:depstar -m hf.depstar.uberjar "${DEPLOY_JAR}"
+clj -A:prod:datomic-pro:webassets:depstar -m hf.depstar.uberjar "${DEPLOY_JAR}"
 if [ $? -eq 0 ]; then
     mv "${DEPLOY_JAR}" "${ARTEFACT}"
     echo "${ARTEFACT}"
