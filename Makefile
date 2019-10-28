@@ -6,8 +6,9 @@ PROJ_NAME := "wormbase-names"
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
+VERSION ?= $(shell clj -A:spit-version -v | jq .version)
 ARTIFACT_NAME ?= $(shell git describe --tags --abbrev=0)
-FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${ARTIFACT_NAME}
+FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${VERSION}
 
 define print-help
         $(if $(need-help),$(warning $1 -- $2))
@@ -18,12 +19,16 @@ need-help := $(filter help,$(MAKECMDGOALS))
 help: ; @echo $(if $(need-help),,\
 	Type \'$(MAKE)$(dash-f) help\' to get help)
 
+.PHONY: show-version
+show-version: $(call print-help,show-version,"Show the current application verison.")
+	@echo "${VERSION}"
+
 .PHONY: build
 build: clean \
        docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
-	@docker build -t ${ECR_REPO_NAME}:${ARTIFACT_NAME} \
+	@docker build -t ${ECR_REPO_NAME}:${VERSION} \
 		--build-arg uberjar_path=${DEPLOY_JAR} \
 		--build-arg \
 			aws_secret_access_key=${AWS_SECRET_ACCESS_KEY} \
@@ -57,8 +62,8 @@ docker-push-ecr: docker-ecr-login $(call print-help,docker-push-ecr,\
 docker-tag: $(call print-help,docker-tag,\
 	     "Tag the image with current git revision \
 	      and ':latest' alias")
-	@docker tag ${ECR_REPO_NAME}:${ARTIFACT_NAME} ${FQ_TAG}
-	@docker tag ${ECR_REPO_NAME}:${ARTIFACT_NAME} \
+	@docker tag ${ECR_REPO_NAME}:${VERSION} ${FQ_TAG}
+	@docker tag ${ECR_REPO_NAME}:${VERSION} \
 		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
 
 .PHONY: eb-create
