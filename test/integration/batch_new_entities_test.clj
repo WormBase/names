@@ -56,5 +56,6 @@
           (t/is (seq xs))
           (t/is (every? (partial = :variation.status/live) xs))
           (t/is (ru-hp/ok? response2))
-          (t/is (= (some-> response2 :body :what keyword)
-                   :event/new-variation)))))))
+          (t/is (= "new-variation"
+                   (some-> response2 :body :what))
+                (pr-str (:body response2))))))))

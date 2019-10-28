@@ -111,14 +111,18 @@ To allow the UI webpackDevServer to proxy to the ring server, the ring server ha
 ### Tools
 
 #### Running a Clojure REPL
-If using Emacs + CIDER:
-```bash
-clj -A:datomic-pro:aws-java-sdk-dynamodb -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.0-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
-```
-Otherwise, for a plain REPL use:
-```bash
-clj -A:datomic-pro:aws-java-sdk-dynamodb -m nrepl.cmdline
-```
+
+Examples
+
+ Emacs + CIDER:
+ ```bash
+clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.4-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
+ ```
+
+ "Vanilla" REPL:
+ ```bash
+ clj -A:datomic-pro:webassets:dev -m nrepl.cmdline
+ ```
 
 From time to time it is good to check for outdated dependencies.
 This can be done via the following command:
@@ -128,23 +132,72 @@ clj -A:outdated
 
 
 ### Testing
-Use built-in testing utilities as provided by leiningen.
-Please run all tests before committing/submitting new pull requests.
+Use built-in testing utilities as provided by your environment, else use the `make` command
+below to run all tests.
+Ensure to run all tests and check they pass before submitting new pull requests.
 
 ```bash
 
-clj -A:datomic-pro:dev:test
+make run-tests
 ```
 
 ## Releases
 
+Releasing is a 4 step process:
+
+ 1. Release code - revision, push. creates `resources/meta.edn` that's included in the build artefacts).
+ 2. Build application and deploy in the AWS Elastic Container Registry (ECR).
+ 3. Deploy the application in AWS ElasticBeanstalk.
+
+
+### Commands
 ```bash
-lein release
+# Build the client application
+cd client
+
+# Ensure you've installed yarn with npm/b other means first.
+yarn build --frozen-lockfile
+cd -
+
+# specify $LEVEL as one of <major|minor|patch>
+clj -A:release $LEVEL
+
+# bump the release version for AWS EB Docker
+clj -A:spit-version
+clj -A:datomic-pro:prod:aws-eb-docker-version
+rm resources/meta.edn
+
+# print the version being deployed
+make show-version
+
+# Update <verison> in pom.xml to match.
+$EDITOR pom.xml
+
+# Build and deploy the application to the AWS Elastic Container Registry (ECR)
+make deploy-ecr
+
+# Deploy the new version to ElasticBeanstalk
+# Ensure target/app.zip is configured in .elasticbeanstalk/config per [AWS EB CLI docs][15]
+git archive $(git describe --tags --abbrev=0) -o target/app.zip
+zip -u target/app.zip Dockerrun.aws.json
+eb deploy wormbase-names
 ```
 
-### Building the client application
+## Client application
+
+### Development
+The Reach (Javascript) client application can be run using:
 ```bash
-make build-client-app
+cd ./client
+yarn run start
+```
+This will start service serving the client assets on port 3000,
+the server should be started with the `PORT` environment variable set to *4010*.
+
+### Building
+```bash
+cd client
+yarn build
 ```
 
 For a full list of tasks, type:
@@ -278,3 +331,5 @@ Copyright ©  WormBase 2018, 2019
 [12]: https://github.com/docker/docker-credential-helpers/releases
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
 [14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
+[15]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
+

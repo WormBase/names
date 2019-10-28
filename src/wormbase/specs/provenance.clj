@@ -20,15 +20,15 @@
                                                       (jt/zoned-date-time (jt/instant) (jt/zone-id)))
                           :description "The date-time the curator performed the action."}))
 
-(s/def :provenance/what  (stc/spec {:spec sts/keyword?
-                                    :swagger/example "event/new-gene"
+(s/def :provenance/what  (stc/spec {:spec sts/string?
+                                    :swagger/example "new-gene"
                                     :description "The type of event."}))
 
 (s/def :provenance/who (stc/spec {:spec (s/keys :req-un [(or :person/id :person/email)])
                                   :description "The WormBase person who performed the event."}))
 
-(s/def :provenance/how (stc/spec {:spec ::wsa/id
-                                  :swagger/example "agent/web"
+(s/def :provenance/how (stc/spec {:spec sts/string?
+                                  :swagger/example "web"
                                   :description "The agent that was used to process the event."}))
 
 (s/def :provenance/why (stc/spec {:spec (s/and sts/string? (complement str/blank?))

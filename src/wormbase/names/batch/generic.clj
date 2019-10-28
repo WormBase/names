@@ -194,10 +194,12 @@
         (update :provenance/when (fn [v]
                                    (when v
                                      (jt/zoned-date-time v (jt/zone-id)))))
+        (update :provenance/who (fn [who]
+                                  (wnu/unqualify-keys who "person")))
         (wnu/unqualify-keys "batch")
         (wnu/unqualify-keys "provenance")
-        (update :who (fn [who]
-                       (wnu/unqualify-keys who "person")))
+        (update :how wnu/unqualify-maybe)
+        (update :what wnu/unqualify-maybe)
         (ok))))
 
 (def routes

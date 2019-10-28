@@ -22,6 +22,7 @@
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.stats :as wn-stats]
+   [ring.adapter.jetty :as raj]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
@@ -52,7 +53,6 @@
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
   {:ui "/api-docs"
    :spec "/swagger.json"
-   :ignore-missing-mappings? false
    :data
    {:info
     {:title "WormBase name service"
@@ -101,8 +101,13 @@
        wn-stats/routes
        wne/routes))))
 
-(defn init
+(mount/defstate server
+  :start (raj/run-jetty app {:port (read-string (get environ/env :port "3000"))
+                             :join? false})
+  :stop (.stop server))
+
+(defn -main
   "Entry-point for ring server initialization."
-  []
+  [& args]
   (mount/start)
   (wdbs/install wdb/conn))
