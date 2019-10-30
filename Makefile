@@ -125,7 +125,7 @@ vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to r
 	@clj -A:release ${LEVEL}
 	@clj -A:spit-version
 	@clj -A:datomic-pro:prod:aws-eb-docker-version
-	@rm resources/meta
+	@rm resources/meta.edn
 	@echo "Edit version of application in pom.xml to match:"
 	@echo make show-version
 
