@@ -123,5 +123,3 @@ deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
 .PHONY: $(call print-help,test,"Run all tests.")
 run-tests:
 	@clj -A:datomic-pro:webassets:dev:test
-
-
