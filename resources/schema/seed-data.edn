@@ -66,8 +66,8 @@
  #:db{:ident :person.role/viewer}
 
  ;; Events
+ #:db{:ident :event/import}
  #:db{:ident :event/deactivate-person}
- #:db{:ident :event/import-gene}
  #:db{:ident :event/new-person}
  #:db{:ident :event/new-gene}
  #:db{:ident :event/new-unnamed-gene}
@@ -81,7 +81,6 @@
  #:db{:ident :event/resurrect-gene}
  #:db{:ident :event/suppress-gene}
  #:db{:ident :event/remove-cgc-names}
- #:db{:ident :event/import-variation}
  #:db{:ident :event/new-variation}
  #:db{:ident :event/kill-variation}
  #:db{:ident :event/update-variation}
