@@ -1,11 +1,14 @@
 (ns wormbase.names.importers.processing
   (:require
-   [clojure.data.csv :as csv]   
+   [clojure.data.csv :as csv]
+   [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [datomic.api :as d]
+   [environ.core :as environ]
    [java-time :as jt]
-   [semantic-csv.core :as sc]))
+   [semantic-csv.core :as sc]
+   [wormbase.names.auth :as wna]))
 
 (defn- throw-parse-exc! [spec value]
   (throw (ex-info "Could not parse"
@@ -41,16 +44,17 @@
 (defn parse-tsv [stream]
   (csv/read-csv stream :separator \tab))
 
-(defn transform-cast [rows conf cast-fns]
+(defn transform-cast [conf cast-fns rows]
   (->> rows
        (sc/mappify (select-keys conf [:header]))
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
 
 (defn transact-batch
-  [event-type conn tx-batch & {:keys [transact-fn]
-                               :or {transact-fn d/transact-async}}]
+  [person-lur event-type conn tx-batch & {:keys [transact-fn]
+                                          :or {transact-fn d/transact-async}}]
   (let [tx-data (conj tx-batch {:db/id "datomic.tx"
                                 :provenance/what event-type
+                                :provenance/who person-lur
                                 :provenance/how :agent/importer})]
     (transact-fn conn tx-data)))
 
@@ -62,3 +66,22 @@
       (jt/with-zone-same-instant tz)
       (jt/instant)
       (jt/to-java-date)))
+
+(defn check-environ! []
+  (when-not (environ/env :token)
+    (throw (ex-info "Auth information not set - please set the TOKEN environment variable."
+                    {}))))
+
+(defn default-who
+  "Return a datomic lookup ref for a person from the ID token supplied in the environment."
+  []
+  (some-> (environ/env :token)
+          (wna/parse-token)
+          (select-keys [:email])
+          (set/rename-keys {:email :person/email})
+          (find :person/email)))
+
+(defn ->who [value]
+  (if value
+    (conformed-ref :person/id value)
+    (default-who)))

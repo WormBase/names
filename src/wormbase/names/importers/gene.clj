@@ -5,7 +5,7 @@
     1. a set of the 'current data'
     2. a set of the historic actions that have occurred over time.
 
-  The 'current data' set is transated with event type :event/import-gene.
+  The 'current data' set is transated with event type :event/import
   The histoic actions are recorded after-the-fact by transacting provenance against
   the current data set; this results in empty changesets for historic actions as its
   not possible to re-create the history of changes since these have been lost (in ACeDB)."
@@ -34,9 +34,9 @@
 
 (def geneace-text-ref #(last (str/split % #"\s")))
 
-(defn transact-batch [conn tx-data event-type & {:keys [transact-fn]}]
+(defn transact-batch [conn tx-data person-lur event-type & {:keys [transact-fn]}]
   (try
-    (wnip/transact-batch event-type conn tx-data :tranasct-fn transact-fn)
+    (wnip/transact-batch person-lur event-type conn tx-data :tranasct-fn transact-fn)
     (catch Exception exc
       (println "EXCEPTION!!!!")
       (println "EX-DATA follows:")
@@ -84,7 +84,7 @@
 (s/def ::event
   (s/and
    string?
-   (s/or :event/import-gene #(str/starts-with? % "Imported")
+   (s/or :event/import #(str/starts-with? % "Imported")
          :event/resurrect-gene (partial = "Resurrected")
          :event/new-unnamed-gene (partial = "Allocate")
          :event/new-gene (partial = "Created")
@@ -194,7 +194,7 @@
 (defn map-history-actions [tsv-path]
   (let [ev-ex-conf (:events export-conf)
         cast-fns {:gene/id cast-gene-id-fn
-                  :provenance/who (partial wnip/conformed-ref :person/id)
+                  :provenance/who wnip/->who
                   :provenance/when wnip/->when
                   :geneace/event-text identity}]
     (with-open [in-file (io/reader tsv-path)]
@@ -249,7 +249,7 @@
            (map wnip/discard-empty-valued-entries)
            (filter filter-fn)
            (partition-all batch-size)
-           doall))))
+           (doall)))))
 
 (defn fixup-non-live-gene
   "Remove names from dead genes that have already been assigned.
@@ -268,13 +268,17 @@
 
   Dead genes are transacted one-by-one with special care taken to avoid
   storing duplicate names."
-  [conn tsv-path]
+  [conn tsv-path person-lur]
   (let [cd-ex-conf (:data export-conf)]
     ;; process all genes that are not dead, using the default batch size of 500.
     (doseq [batch (build-data-txes tsv-path
                                    cd-ex-conf
                                    #(not= (:gene/status %) :gene.status/dead))]
-      @(transact-batch conn batch :event/import-gene :tranasct-fn noisy-transact))
+      @(transact-batch conn
+                       batch
+                       person-lur
+                       :event/import
+                       :tranasct-fn noisy-transact))
     ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
     ;; - only process the dead genees now, 1 at a time.
     ;; - use batch-size of 1, since there are dead genes with
@@ -285,18 +289,22 @@
                                    :batch-size 1)]
       @(transact-batch conn
                        (map (partial fixup-non-live-gene (d/db conn)) batch)
-                       :event/import-gene
+                       person-lur
+                       :event/import
                        :tranasct-fn noisy-transact))))
 
 (defn process
-  [conn data-tsv-path actions-tsv-path & {:keys [n-in-flight]
-                                          :or {n-in-flight 10}}]
-  (transact-current-data conn data-tsv-path)
-  (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
-    (let [event-txes (->> gene-events
-                          (keep-indexed #(vector (inc %1) %2))
-                          (pmap (partial apply transact-gene-event conn)))]
-      ;; keep `n-in-fllght` transactions  running at a time for performance.
-      (doseq [event-txes-p (partition-all n-in-flight event-txes)]
-        (doseq [event-tx event-txes-p]
-          @event-tx)))))
+  ([conn ent-ns id-template data-tsv-path actions-tsv-path]
+   (process conn ent-ns id-template data-tsv-path actions-tsv-path 10))
+  ([conn ent-ns id-template data-tsv-path actions-tsv-path n-in-flight]
+   (let [person-lur (wnip/default-who)
+         id-ident (keyword ent-ns "id")]
+     (transact-current-data conn data-tsv-path person-lur)
+     (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
+       (let [event-txes (->> gene-events
+                             (keep-indexed #(vector (inc %1) %2))
+                             (pmap (partial apply transact-gene-event conn)))]
+         ;; keep `n-in-fllght` transactions running at a time for performance.
+         (doseq [event-txes-p (partition-all n-in-flight event-txes)]
+           (doseq [event-tx event-txes-p]
+             @event-tx)))))))

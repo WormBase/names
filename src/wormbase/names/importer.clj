@@ -8,8 +8,10 @@
    [mount.core :as mount]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
+   [wormbase.names.importers.processing :as wnip]
    [wormbase.names.importers.entity :as ent-importer]
-   [wormbase.names.importers.gene :as gene-importer]))
+   [wormbase.names.importers.gene :as gene-importer]
+   [wormbase.util :as wu]))
 
 (def cli-options [])
 
@@ -35,18 +37,26 @@
   [& args]
   (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)
         db-uri (env :wb-db-uri)
-        importer-ns-name (first arguments)
-        tsv-paths (take 2 (rest arguments))]
+        [importer-ns-name id-template & tsv-paths] arguments]
+    (d/create-database db-uri)
     (mount/start)
     (cond
       (:help options) (exit 0 (usage summary))
 
-      (nil? (get importers importer-ns-name))
-      (exit 1 (str "Please specifiy the importer to run, one of: "
-                   (str/join "," (-> importers keys sort))))
+      (nil? importer-ns-name)
+      (exit 1 (str "Please specifiy the importer to run, .e.g: \""
+                   (str/join "," (-> importers keys sort))
+                   "\""))
+
+      (nil? id-template)
+      (exit 1 "Please supply the identifier template for the entity type, e.g: \"WBGene%08d\"")
 
       (empty? tsv-paths)
-      (exit 1 "Pass the 2 .tsv files as first 2 parameters")
+      (exit 1 (str (if (get importers importer-ns-name)
+                     "Pass the 2 .tsv files as first 2 parameters for "
+                     "Please pass the single TSV file for ")
+                   importer-ns-name
+                   " import."))
 
       (not (every? #(.exists (io/file %)) tsv-paths))
       (let [non-existant (filter #(not (.exists (io/file %))) tsv-paths)]
@@ -58,7 +68,9 @@
 
       tsv-paths
       (if-let [importer (get importers importer-ns-name ent-importer/process)]
-        (let [process-import (partial importer wdb/conn)]
+        (let [process-import (partial importer wdb/conn importer-ns-name id-template)]
+          (wnip/check-environ!)
+          (wdbs/install wdb/conn)
           (print "Importing...")
           (apply process-import tsv-paths)
           (println "[ok]")
