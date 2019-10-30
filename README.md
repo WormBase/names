@@ -28,16 +28,9 @@ which is modelled as attributes on the "transaction entity".
 
 ### Setup
 
-```bash
-cd /tmp
-lein upgrade
-```
-
 Ensure you've installed the following software on your system:
 
-[clojure 1.9][4]
-
-[leineningen 2.8.1+][5]
+[clojure CLI_tools][4]
 
 [nodejs][6]
 
@@ -321,7 +314,6 @@ Copyright ©  WormBase 2018, 2019
 [2]: https://clojure.org/community/downloads
 [3]: https://clojure.org/about/spec
 [4]: https://clojure.org/guides/getting_started
-[5]: https://leiningen.org/
 [6]: https://nodejs.org/en/
 [7]: https://yarnpkg.com/en/docs/install
 [8]: https://docs.docker.com/install/
