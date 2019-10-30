@@ -12,7 +12,7 @@ aws_console () {
     echo $1 > $CONSOLE_DEVICE
 }
 
-TOOLS_DEPS_VERSION="1.10.0.411"
+TOOLS_DEPS_VERSION="1.10.1.478"
 
 install_tools_deps () {
     aws_console "Installing tools deps...."
