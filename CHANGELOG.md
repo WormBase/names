@@ -3,10 +3,10 @@
 ## [0.6.15]
  - Unqualified names for all provenance values (how and what where
    still rendered as clojure keywords in response bodies).
- 
+
 ## [0.6.14]
  - Temporary fix for missing person provenance (importer defect).
- 
+
 ## [0.6.13]
  - Fixed aws version bumping in Dockerrun.aws.json.
 
