@@ -160,12 +160,7 @@ yarn build --frozen-lockfile
 cd -
 
 # specify $LEVEL as one of <major|minor|patch>
-clj -A:release $LEVEL
-
-# bump the release version for AWS EB Docker
-clj -A:spit-version
-clj -A:datomic-pro:prod:aws-eb-docker-version
-rm resources/meta.edn
+make vc-release $LEVEL
 
 # print the version being deployed
 make show-version
@@ -174,13 +169,8 @@ make show-version
 $EDITOR pom.xml
 
 # Build and deploy the application to the AWS Elastic Container Registry (ECR)
-make deploy-ecr
-
-# Deploy the new version to ElasticBeanstalk
-# Ensure target/app.zip is configured in .elasticbeanstalk/config per [AWS EB CLI docs][15]
-git archive $(git describe --tags --abbrev=0) -o target/app.zip
-zip -u target/app.zip Dockerrun.aws.json
-eb deploy wormbase-names
+# and ElasticBeanstalk (EB)
+make release
 ```
 
 ## Client application
