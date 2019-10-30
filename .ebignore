@@ -3,4 +3,5 @@
 #
 .git
 Dockerrun.aws.json.template
+test/
 *.pom
