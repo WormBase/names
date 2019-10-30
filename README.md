@@ -107,9 +107,10 @@ To allow the UI webpackDevServer to proxy to the ring server, the ring server ha
 
 Examples
 
- Emacs + CIDER:
+ Emacs + CIDER :
  ```bash
-clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.22.4-beta4"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
+  # Example. `:mvn/version` of nrepl changes frequently, CIDER/emacs will prompt when upgrade required.
+clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.23.0"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
  ```
 
  "Vanilla" REPL:
