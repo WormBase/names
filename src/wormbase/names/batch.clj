@@ -2,7 +2,6 @@
   (:require
    [clj-uuid :as uuid]
    [compojure.api.sweet :as sweet]
-   [ring.util.http-response :refer [bad-request bad-request! conflict created ok]]
    [wormbase.names.batch.gene :as wnbg]
    [wormbase.names.batch.generic :as generic]
    [wormbase.names.provenance :as wnp]
@@ -21,9 +20,8 @@
 (def resources
   (sweet/context "/batch" []
     :tags ["batch"]
-    (sweet/routes
-     generic/routes
-     wnbg/routes
-     summary-routes)))
+    (sweet/routes summary-routes
+                  wnbg/routes
+                  generic/routes)))
 
 (def routes (sweet/routes resources))
