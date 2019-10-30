@@ -2,6 +2,7 @@
   (:require
    [clj-uuid :as uuid]
    [compojure.api.sweet :as sweet]
+   [ring.util.http-response :refer [ok]]
    [wormbase.names.batch.gene :as wnbg]
    [wormbase.names.batch.generic :as generic]
    [wormbase.names.provenance :as wnp]
