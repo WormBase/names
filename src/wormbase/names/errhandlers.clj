@@ -137,6 +137,9 @@
 
 (defn handle-request-validation
   [^Exception exc data request]
+  (println "REQUEST VALIDATION FAILED:")
+  (prn exc)
+  (println)
   (handle-validation-error
    exc
    data
