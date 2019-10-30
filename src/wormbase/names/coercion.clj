@@ -2,28 +2,17 @@
   (:require
    [compojure.api.coercion.core :as cc]
    [compojure.api.coercion.spec :as spec-coercion]
-   [spec-tools.core :as stc]
-   [spec-tools.transform :as stt]))
+   [spec-tools.core :as st]))
 
-;;; Modified copies of the original transformers:
-;;; https://github.com/metosin/compojure-api/blob/master/src/compojure/api/coercion/spec.clj#L16-L35
-;;
-;; The only change to remove the `spec-tools.transform/strip-extra-keys-type-decoders` from
-;; the decoders applied to response formats.
+;;; Modified copies of the compojure-api's coercion to prevent stripping of keys.
+;;; TODO!!: This neesd to be kept in sync with compojure-api releases if the implementation changes.
+;;;         Add developer documentation.
 
 (def string-transformer
-  (stc/type-transformer
-    {:name :string
-     :decoders stt/string-type-decoders
-     :encoders stt/string-type-encoders
-     :default-encoder stt/any->any}))
+  (st/type-transformer st/string-transformer {:name :string}))
 
 (def json-transformer
-  (stc/type-transformer
-    {:name :json
-     :decoders stt/json-type-decoders
-     :encoders stt/json-type-encoders
-     :default-encoder stt/any->any}))
+  (st/type-transformer st/json-transformer {:name :json}))
 
 (defn non-stripping-spec-keys-coercion
   "Creates a new spec coercion without the extra-keys stripping in response formats."
