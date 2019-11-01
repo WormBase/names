@@ -36,6 +36,7 @@ const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
     theme: color
       ? createMuiTheme({
           palette: {
+            ...defaultTheme.palette,
             secondary: {
               main: color,
             },
