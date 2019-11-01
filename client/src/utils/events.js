@@ -1,6 +1,6 @@
 export function pastTense(eventText = '') {
   return eventText.replace(
-    /(creat|updat|merg|kill|resurrect|suppress)e?/g,
+    /(creat|updat|merg|kill|resurrect|suppress)e?/gi,
     '$1ed'
   );
 }
