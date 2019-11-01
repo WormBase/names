@@ -32,14 +32,16 @@ function ActivitiesCopy({ entityType, activities }) {
   const formatedEntriesToday = useMemo(
     () => {
       return entriesToday
-        .map((activity) => {
+        .reduce((result, activity) => {
           const { changes, id } = activity;
-
-          const [{ value: name }] = changes.filter(
+          const [{ value: name } = {}] = changes.filter(
             ({ attr, added }) => added && attr.match(/(cgc-)?name/)
           );
-          return `${name} ${id}`;
-        })
+          if (name) {
+            return [...result, `${name} ${id}`];
+          }
+          return result;
+        }, [])
         .join('\n');
     },
     [entriesToday, entityType]
