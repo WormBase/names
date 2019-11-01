@@ -162,6 +162,7 @@ const styles = (theme) => ({
   },
   changeTableCell: {
     border: 'none',
+    width: 100,
   },
 });
 
