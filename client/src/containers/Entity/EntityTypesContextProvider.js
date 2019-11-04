@@ -85,7 +85,7 @@ export default function EntityTypesContextProvider(props) {
             ],
           }),
         () => authorizedFetch('/api/entity'),
-        true
+        false
       ),
     []
   );
