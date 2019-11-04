@@ -44,7 +44,7 @@ function ActivitiesCopy({ entityType, activities }) {
         }, [])
         .join('\n');
     },
-    [entriesToday, entityType]
+    [entriesToday]
   );
 
   const { copied, handleCopy } = useClipboard(formatedEntriesToday);
