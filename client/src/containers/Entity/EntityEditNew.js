@@ -134,7 +134,7 @@ class EntityEditNew extends Component {
                         ? PROGRESS_BUTTON_PENDING
                         : PROGRESS_BUTTON_READY,
                     onClick: this.getCreateHandler(
-                      getFormDataModified,
+                      getFormData,
                       authorizedFetch
                     ),
                     disabled: status === 'SUBMITTED' || disabled,
