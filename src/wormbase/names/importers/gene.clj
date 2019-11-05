@@ -11,53 +11,16 @@
   not possible to re-create the history of changes since these have been lost (in ACeDB)."
   (:require
    [clojure.java.io :as io]
-   [clojure.set :refer [rename-keys]]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.walk :as w]
-   [cheshire.core :as json]
-   [clojure.set :as set]
    [datomic.api :as d]
-   [environ.core :refer [env]]
-   [mount.core :as mount]
-   [ring.util.http-response :as http-response]
-   [wormbase.db :as wdb]
-   [wormbase.db.schema :as wdbs]
    [wormbase.specs.gene :as wsg]
-   [wormbase.specs.person :as wsp]
-   [wormbase.specs.species :as wss]
-   [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.util :as wu]
    [wormbase.names.importers.processing :as wnip])
   (:gen-class))
 
 (def geneace-text-ref #(last (str/split % #"\s")))
-
-(defn transact-batch [conn tx-data person-lur event-type & {:keys [transact-fn]}]
-  (try
-    (wnip/transact-batch person-lur event-type conn tx-data :tranasct-fn transact-fn)
-    (catch Exception exc
-      (println "EXCEPTION!!!!")
-      (println "EX-DATA follows:")
-      (prn (ex-data exc))
-      (println)
-      (throw exc))))
-
-(defn handle-transact-exc [exc data]
-  (throw (ex-info "Failed to transact data!"
-                  {:data data
-                   :orig-exc exc})))
-
-(defn noisy-transact [conn data]
-  (try
-    (d/transact-async conn data)
-    (catch java.util.concurrent.ExecutionException exc
-      (handle-transact-exc exc data))
-    (catch java.lang.IllegalArgumentException exc
-      (handle-transact-exc exc data))
-    (catch Exception exc
-      (handle-transact-exc exc data))))
 
 ;; A string describing the Gene "HistoryAction".
 ;; This contains data about the change in some cases (e.g split, merge, change name)
@@ -228,28 +191,15 @@
         [data prov] tx-data]
     (chuck-on-nils data)
     (chuck-on-nils prov)
-    (noisy-transact conn tx-data)))
+    (wnip/noisy-transact conn tx-data)))
 
-(defn build-data-txes
+(defn batch-data
   "Build the current entity representation of each gene."
-  [tsv-path conf filter-fn
-   & {:keys [batch-size]
-      :or {batch-size 500}}]
-  (let [cast-fns {:gene/id cast-gene-id-fn
-                  :gene/species (partial wnip/conformed-ref
-                                         :species/latin-name)
-                  :gene/status (partial wnip/conformed-label ::status)
-                  :gene/cgc-name (partial wnip/conformed :gene/cgc-name)
-                  :gene/sequence-name (partial wnip/conformed
-                                               :gene/sequence-name)
-                  :gene/biotype ->biotype}]
-    (with-open [in-file (io/reader tsv-path)]
-      (->> (wnip/parse-tsv in-file)
-           (wnip/transform-cast conf cast-fns)
-           (map wnip/discard-empty-valued-entries)
-           (filter filter-fn)
-           (partition-all batch-size)
-           (doall)))))
+  [data ent-ns filter-fn & {:keys [batch-size]
+                            :or {batch-size 500}}]
+  (->> data
+       (filter filter-fn)
+       (partition-all batch-size)))
 
 (defn fixup-non-live-gene
   "Remove names from dead genes that have already been assigned.
@@ -268,38 +218,28 @@
 
   Dead genes are transacted one-by-one with special care taken to avoid
   storing duplicate names."
-  [conn tsv-path person-lur]
-  (let [cd-ex-conf (:data export-conf)]
-    ;; process all genes that are not dead, using the default batch size of 500.
-    (doseq [batch (build-data-txes tsv-path
-                                   cd-ex-conf
-                                   #(not= (:gene/status %) :gene.status/dead))]
-      @(transact-batch conn
-                       batch
-                       person-lur
-                       :event/import
-                       :tranasct-fn noisy-transact))
-    ;; post-porcess all dead genes to work around "duplicate names on dead genes" issue:
-    ;; - only process the dead genees now, 1 at a time.
-    ;; - use batch-size of 1, since there are dead genes with
-    ;;   that share names (e.g sequence names)
-    (doseq [batch (build-data-txes tsv-path
-                                   cd-ex-conf
-                                   #(= (:gene/status %) :gene.status/dead)
-                                   :batch-size 1)]
-      @(transact-batch conn
-                       (map (partial fixup-non-live-gene (d/db conn)) batch)
-                       person-lur
-                       :event/import
-                       :tranasct-fn noisy-transact))))
+  [conn data ent-ns person-lur]
+  (wnip/transact-entities conn
+                          data
+                          ent-ns
+                          person-lur
+                          batch-data
+                          [:gene/cgc-name :gene/sequence-name]))
 
 (defn process
   ([conn ent-ns id-template data-tsv-path actions-tsv-path]
    (process conn ent-ns id-template data-tsv-path actions-tsv-path 10))
   ([conn ent-ns id-template data-tsv-path actions-tsv-path n-in-flight]
    (let [person-lur (wnip/default-who)
-         id-ident (keyword ent-ns "id")]
-     (transact-current-data conn data-tsv-path person-lur)
+         id-ident (keyword ent-ns "id")
+         cast-fns {:gene/id cast-gene-id-fn
+                   :gene/species (partial wnip/conformed-ref :species/latin-name)
+                   :gene/status (partial wnip/->status ent-ns)
+                   :gene/cgc-name (partial wnip/conformed :gene/cgc-name)
+                   :gene/sequence-name (partial wnip/conformed :gene/sequence-name)
+                  :gene/biotype ->biotype}
+         data (wnip/read-data data-tsv-path (:data export-conf) ent-ns cast-fns)]
+     (transact-current-data conn data ent-ns person-lur)
      (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
        (let [event-txes (->> gene-events
                              (keep-indexed #(vector (inc %1) %2))

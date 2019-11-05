@@ -1,7 +1,5 @@
 (ns wormbase.names.importers.entity
   (:require
-   [clojure.java.io :as io]
-   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [datomic.api :as d]
    [environ.core :refer [env]]
@@ -11,31 +9,19 @@
    [wormbase.specs.entity :as wse]
    [wormbase.util :as wu]))
 
-(defn ->status
-  [status]
-  (assert (not (str/blank? status)) "Blank status!")
-  (keyword "variation.status" (str/lower-case status)))
-
 (defn make-export-conf
   [ent-ns named?]
   (let [attrs (conj ["id" "status"] (if named? "name"))]
-    {:header (map (partial keyword ent-ns) attrs)}))
+    {:data {:header (map (partial keyword ent-ns) attrs)}}))
 
-(defn build-data-txes
+(defn batch-data
   "Build the current entity representation of each variation."
-  [tsv-path conf ent-ns & {:keys [batch-size]
-                           :or {batch-size 500}}]
-  (let [cast-fns (select-keys
-                  {(keyword ent-ns "id") (partial wnip/conformed ::wse/id)
-                   (keyword ent-ns "name") (partial wnip/conformed ::wse/name)
-                   (keyword ent-ns "status") ->status}
-                  (-> conf :header))]
-    (with-open [in-file (io/reader tsv-path)]
-      (->> (wnip/parse-tsv in-file)
-           (wnip/transform-cast conf cast-fns)
-           (map wnip/discard-empty-valued-entries)
-           (partition-all batch-size)
-           (doall)))))
+  [prov data ent-ns filter-fn & {:keys [batch-size]
+                                 :or {batch-size 500}}]
+  (->> data
+       (filter filter-fn)
+       (partition-all batch-size)
+       (map #(conj % (assoc prov :batch/id (d/squuid))))))
 
 (defn batch-transact-data
   [conn ent-ns id-template tsv-path person-lur]
@@ -51,7 +37,13 @@
                        (count)
                        (boolean)) ;; number of cols n file determines if named or not.
         conf (make-export-conf ent-ns ent-named?)
-        name-required? (boolean (some #(= (name %) "name") (keys conf)))]
+        name-required? (boolean (some #(= (name %) "name") (keys conf)))
+        cast-fns (select-keys
+                  {(keyword ent-ns "id") (partial wnip/conformed ::wse/id)
+                   (keyword ent-ns "name") (partial wnip/conformed ::wse/name)
+                   (keyword ent-ns "status") (partial wnip/->status ent-ns)}
+                  (-> conf :header))
+        data (wnip/read-data tsv-path (:data conf) ent-ns cast-fns)]
     (wne/register-entity-schema conn
                                 id-ident
                                 id-template
@@ -59,11 +51,12 @@
                                 true
                                 true
                                 name-required?)
-    (doseq [batch (build-data-txes tsv-path conf ent-ns)]
-      @(wnip/transact-batch person-lur
-                            :event/import
-                            conn
-                            (conj batch (assoc prov :batch/id (d/squuid)))))))
+    (wnip/transact-entities conn
+                            data
+                            ent-ns
+                            person-lur
+                            (partial batch-data prov)
+                            [(keyword ent-ns "name")])))
 
 (defn process
   ([conn ent-ns id-template data-tsv-path]
