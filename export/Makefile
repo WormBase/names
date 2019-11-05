@@ -4,7 +4,7 @@ JAR := target/${JAR_NAME}
 
 ${JAR}: deps.edn src/**/*
 	@clj -Spom
-	@clj -A:datomic-pro:uberjar ${JAR}
+	@clj -A:uberjar ${JAR}
 
 clean:
 	@find ./target -name '*.jar' -delete
