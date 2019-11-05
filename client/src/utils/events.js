@@ -1,6 +1,6 @@
 export function pastTense(eventText = '') {
   return eventText.replace(
-    /(creat|updat|merg|kill|resurrect|suppress)e?/g,
+    /(creat|updat|merg|kill|resurrect|suppress)e?/gi,
     '$1ed'
   );
 }
@@ -11,12 +11,12 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
     (result, change) => {
       const { attr, value, added } = change || {};
       if (added)
-        if (attr === 'gene/splits' || attr === 'gene/merges') {
+        if (attr === 'splits' || attr === 'merges') {
           return {
             ...result,
             relatedGeneId: value,
           };
-        } else if (attr === 'gene/status') {
+        } else if (attr === 'status') {
           return {
             ...result,
             statusChange: value,
@@ -28,19 +28,13 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   );
 
   let eventType;
-  if (what === 'event/merge-genes' && !statusChange) {
+  if (what === 'merge-genes' && !statusChange) {
     eventType = 'merge_from';
-  } else if (
-    what === 'event/merge-genes' &&
-    statusChange === 'gene.status/dead'
-  ) {
+  } else if (what === 'merge-genes' && statusChange === 'dead') {
     eventType = 'merge_into';
-  } else if (what === 'event/split-gene' && !statusChange) {
+  } else if (what === 'split-gene' && !statusChange) {
     eventType = 'split_into';
-  } else if (
-    what === 'event/split-gene' &&
-    statusChange === 'gene.status/live'
-  ) {
+  } else if (what === 'split-gene' && statusChange === 'live') {
     eventType = 'split_from';
   } else if (what.match(/new-.+/)) {
     eventType = 'create';
@@ -50,7 +44,7 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
   }
 
   const descriptor = {
-    eventLabel: eventType || activityItem['provenance/what'],
+    eventLabel: eventType || activityItem['what'],
     entity: {
       id: selfGeneId || activityItem.id,
     },

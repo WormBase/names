@@ -36,6 +36,7 @@ const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
     theme: color
       ? createMuiTheme({
           palette: {
+            ...defaultTheme.palette,
             secondary: {
               main: color,
             },
@@ -84,7 +85,7 @@ export default function EntityTypesContextProvider(props) {
             ],
           }),
         () => authorizedFetch('/api/entity'),
-        true
+        false
       ),
     []
   );

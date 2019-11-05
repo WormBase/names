@@ -10,7 +10,7 @@ function ActivitiesCopy({ entityType, activities }) {
       const [activitiesToday] = [...activities].reduce(
         ([activitiesAccumulator, isTodayAccumulator], activity) => {
           if (isTodayAccumulator) {
-            if (moment(activity['provenance/when']).isSame(moment(), 'day')) {
+            if (moment(activity['when']).isSame(moment(), 'day')) {
               activitiesAccumulator.push(activity);
               return [activitiesAccumulator, true];
             } else {
@@ -23,7 +23,7 @@ function ActivitiesCopy({ entityType, activities }) {
         [[], true]
       );
       return activitiesToday.filter((activity) =>
-        activity['provenance/what'].match(/^event\/(new|update)-.+/)
+        activity['what'].match(/^(new|update)-.+/)
       );
     },
     [activities]
@@ -32,18 +32,19 @@ function ActivitiesCopy({ entityType, activities }) {
   const formatedEntriesToday = useMemo(
     () => {
       return entriesToday
-        .map((activity) => {
-          const { changes } = activity;
-          const id = activity[`${entityType}/id`];
-
-          const [{ value: name }] = changes.filter(
-            ({ attr, added }) => added && attr.match(/.+\/(cgc-)?name/)
+        .reduce((result, activity) => {
+          const { changes, id } = activity;
+          const [{ value: name } = {}] = changes.filter(
+            ({ attr, added }) => added && attr.match(/(cgc-)?name/)
           );
-          return `${name} ${id}`;
-        })
+          if (name) {
+            return [...result, `${name} ${id}`];
+          }
+          return result;
+        }, [])
         .join('\n');
     },
-    [entriesToday, entityType]
+    [entriesToday]
   );
 
   const { copied, handleCopy } = useClipboard(formatedEntriesToday);
@@ -71,7 +72,7 @@ ActivitiesCopy.propTypes = {
   entityType: PropTypes.string.isRequired,
   activities: PropTypes.arrayOf(
     PropTypes.shape({
-      'provenance/what': PropTypes.string.isRequired,
+      what: PropTypes.string.isRequired,
       changes: PropTypes.arrayOf(
         PropTypes.shape({
           attr: PropTypes.string.isRequired,
