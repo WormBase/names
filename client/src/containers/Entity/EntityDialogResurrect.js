@@ -48,7 +48,7 @@ class EntityDialogResurrect extends Component {
         {...otherProps}
       >
         {({ withFieldData, errorMessage }) => {
-          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const ReasonField = withFieldData(TextField, 'why');
           return (
             <DialogContent>
               <DialogContentText>

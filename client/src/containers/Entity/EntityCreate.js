@@ -40,7 +40,7 @@ class EntityCreate extends Component {
             buttonSubmitProps,
           } = profileContext;
 
-          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const ReasonField = withFieldData(TextField, 'why');
 
           return (
             <DocumentTitle title={`Create ${entityType}`}>
