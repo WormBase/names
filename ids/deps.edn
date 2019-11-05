@@ -1,4 +1,4 @@
-{:paths ["src" "resources"]
+{:paths ["src"]
 
  ;; TODO: figure out how to configure logging
  ;; When this package is added, no logging statements appear in
