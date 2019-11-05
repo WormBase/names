@@ -1,10 +1,9 @@
 {:paths ["src"]
  :deps
- {org.clojure/clojure {:mvn/version "1.9.0"}
-  org.clojure/tools.cli {:mvn/version "0.3.6"}
+ {org.clojure/tools.cli {:mvn/version "0.4.2"}
   org.clojure/data.csv {:mvn/version "0.1.4"}
   com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.82"}
-  com.datomic/datomic-pro {:mvn/version "0.9.5703"
+  com.datomic/datomic-pro {:mvn/version "0.9.5951"
                            :exclusions [org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]}
   environ {:mvn/version "1.1.0"}
   semantic-csv {:mvn/version "0.2.1-alpha1"}}
@@ -21,11 +20,6 @@
                         :exclusions [org.clojure/test.check]}
     vvvvalvalval/datomock {:mvn/version "0.2.0"}}}
   :extra-paths ["test"]
-  :datomic-pro
-  {:extra-deps
-   {com.datomic/datomic-pro
-    {:mvn/version "0.9.5703"
-     :exclusions [org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]}}}
   :uberjar {:extra-deps {seancorfield/depstar {:mvn/version "0.2.4"}}
             :main-opts ["-m" "hf.depstar.uberjar"]}}}
 
