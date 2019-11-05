@@ -4,8 +4,9 @@
  ;; When this package is added, no logging statements appear in
  ;; console by default (compojure-api integration)
  :deps
- {org.clojure/clojure {:mvn/version "1.9.0"}
-  org.clojure/tools.cli {:mvn/version "0.3.6"}}
+ {com.datomic/datomic-pro {:mvn/version "0.9.5703"
+                           :exclusions [org.slf4j/slf4j-nop
+                                        org.slf4j/slf4j-log4j12]}}
  ;; aliases
  ;;   resolve-deps aliases (-R) affect dependency resolution, options:
  ;;     :extra-deps - specifies extra deps to add to :deps
@@ -14,7 +15,8 @@
  ;;   make-classpath aliases (-C) affect the classpath generation, options:
  ;;     :extra-paths - vector of additional paths to add to the classpath
  ;;     :classpath-overrides - map of lib to path that overrides the result of resolving deps
- :aliases {:dev
+ :aliases {:depstar {:extra-deps {seancorfield/depstar {:mvn/version "0.3.4"}}}
+           :dev
            {:extra-deps
             {org.clojure/test.check {:mvn/version  "0.9.0"}
              org.clojure/tools.trace {:mvn/version  "0.7.9"}
@@ -25,13 +27,5 @@
              com.velisco/strgen {:mvn/version "0.1.5"
                                  :exclusions [org.clojure/test.check]}
              vvvvalvalval/datomock {:mvn/version "0.2.0"}}}
-           :extra-paths ["test"]
-           ;; :pack {:extra-deps
-           ;;        {pack/pack.alpha {:git/url "https://github.com/juxt/pack.alpha.git"
-           ;;                          :sha "8acf80dd4d6e5173585f5c6fec7af28a310f3ed7"}}}
-           :datomic-pro
-           {:extra-deps
-            {com.datomic/datomic-pro
-             {:mvn/version "0.9.5703"
-              :exclusions [org.slf4j/slf4j-nop org.slf4j/slf4j-log4j12]}}}}}
+           :extra-paths ["test"]}}
 

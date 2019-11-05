@@ -59,7 +59,7 @@ class EntityCreate extends Component {
                     <ErrorBoundary>
                       {renderForm(formContext)}
                       {dirtinessContext(({ dirty }) =>
-                        dirty ? (
+                        true ? (
                           <ReasonField
                             label="Reason"
                             helperText={`Why do you create this gene?`}

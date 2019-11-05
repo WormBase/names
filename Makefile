@@ -120,6 +120,21 @@ deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
          $(call print-help,deploy-ecr\
                 "Deploy the application to the AWS container registry.")
 
-.PHONY: $(call print-help,test,"Run all tests.")
-run-tests:
+.PHONY: vc-release
+vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to release the applicaton.")
+	@echo "Edit version of application in pom.xml to match:"
+	@clj -A:release ${LEVEL}
+	@clj -A:spit-version
+	@clj -A:datomic-pro:prod:aws-eb-docker-version
+	@rm resources/meta.edn
+
+
+.PHONY: release
+release: deploy-ecr $(call print-help,release,"Release the applicaton.")
+	@git archive ${ARTIFACT_NAME} -o target/app.zip
+	@zip -u target/app.zip Dockerrun.aws.json
+	@eb deploy wormbase-names
+
+.PHONY: run-tests
+run-tests: $(call print-help,run-tests,"Run all tests.")
 	@clj -A:datomic-pro:webassets:dev:test

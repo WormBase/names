@@ -67,9 +67,10 @@
                                 (filter (fn [k]
                                           (= (name k) "id")))
                                 (first))]
-             (merge (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
-                    (when ident
-                      (find ent ident))))))))
+             (-> (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
+                 (merge (when ident
+                          (find ent ident)))
+                 (wnu/unqualify-keys (namespace ident))))))))
 
 (defn prov-only-puller
   [request]
@@ -89,6 +90,9 @@
            (sequence puller)
            (remove nil?)
            (map (partial wu/elide-db-internals db))
+           (map #(update % :provenance/who (fn [who]
+                                             (wnu/unqualify-keys who "person"))))
+           (map #(wnu/unqualify-keys % "provenance"))
            (sort-activities)))
 
 (def entity-rules '[[(filter-events ?tx ?needle)

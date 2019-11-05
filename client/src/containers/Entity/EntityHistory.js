@@ -82,32 +82,35 @@ class EntityHistory extends Component {
                   <TableCell className={classes.time}>
                     <p>
                       <Timestamp time={when} />
+                      <span className={classes.via}> by </span>
+                      <em>{who ? who['name'] : 'Unknown'}</em>
+                      <span className={classes.via}> via </span>
+                      <em>
+                        <Humanize>{how}</Humanize>
+                      </em>
                     </p>
-                    <em>{who ? who['name'] : 'Unknown'}</em>
-                    <span className={classes.via}> via </span>
-                    <em>
-                      <Humanize>{how}</Humanize>
-                    </em>
-                  </TableCell>
-                  <TableCell className={classes.eventCell}>
-                    <Typography gutterBottom className={classes.eventLabel}>
-                      <span>
-                        {wbId ? null : (
-                          <Link to={`/${entityType}/id/${entity.id}`}>
-                            {entity.id}
-                          </Link>
-                        )}
-                        &nbsp;
-                        <Humanize postProcessor={pastTense}>
+                    <p>
+                      {wbId ? null : (
+                        <Link to={`/${entityType}/id/${entity.id}`}>
+                          {entity.id}
+                        </Link>
+                      )}{' '}
+                      <strong>
+                        <Humanize
+                          capitalized={Boolean(wbId)} // if the eventLabel is the first word
+                          postProcessor={pastTense}
+                        >
                           {eventLabel}
-                        </Humanize>{' '}
-                      </span>
+                        </Humanize>
+                      </strong>{' '}
                       {relatedEntity ? (
                         <Link to={`/${entityType}/id/${relatedEntity.id}`}>
                           {relatedEntity.id}
                         </Link>
                       ) : null}
-                    </Typography>
+                    </p>
+                  </TableCell>
+                  <TableCell className={classes.eventCell}>
                     {why && (
                       <Typography gutterBottom>
                         <span className={classes.reason}>Reason:</span>{' '}
@@ -159,6 +162,7 @@ const styles = (theme) => ({
   },
   changeTableCell: {
     border: 'none',
+    width: 100,
   },
 });
 
