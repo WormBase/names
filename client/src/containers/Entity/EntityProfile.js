@@ -129,7 +129,7 @@ class EntityProfile extends Component {
             changes,
           };
 
-          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const ReasonField = withFieldData(TextField, 'why');
 
           return (
             <DocumentTitle title={`${wbId} (${entityType})`}>
