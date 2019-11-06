@@ -154,7 +154,7 @@
                                entity-id
                                %)
                          ref-idents)]
-    (concat ent-txes ref-txes)))
+    (-> (concat ent-txes ref-txes) set sort)))
 
 (defn pull-provenance
   ([db entity-id prov-pull-expr tx pull-changes-fn]
