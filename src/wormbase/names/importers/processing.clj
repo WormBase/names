@@ -19,14 +19,6 @@
                    :problems (s/explain-data spec value)})))
 
 
-(defn discard-empty-valued-entries [data]
-  (reduce-kv (fn [m k v]
-               (if (nil? v)
-                 (dissoc m k)
-                 m))
-             data
-             data))
-
 (defn conformed [spec value & {:keys [transform]
                                :or {transform identity}}]
   (cond
@@ -60,7 +52,7 @@
   (with-open [in-file (io/reader tsv-path)]
     (->> (parse-tsv in-file)
          (transform-cast conf cast-fns)
-         (map discard-empty-valued-entries)
+         (map wu/discard-empty-valued-entries)
          (doall))))
 
 (defn batch-data [data filter-fn map-fn batch-size]

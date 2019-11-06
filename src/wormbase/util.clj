@@ -2,6 +2,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.walk :as w]
    [datomic.api :as d]
    [aero.core :as aero]
@@ -79,3 +80,13 @@
 
 (defn datomic-internal-namespaces []
   (-> (read-app-config) :datomic :internal-namespaces set))
+
+(defn discard-empty-valued-entries
+  "Discard nil or blank values from a mapping."
+  [data]
+  (reduce-kv (fn [m k v]
+               (if (or (nil? v) (str/blank? v))
+                 (dissoc m k)
+                 m))
+             data
+             data))

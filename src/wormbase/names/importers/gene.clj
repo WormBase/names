@@ -67,7 +67,7 @@
                             rest)]
     (-> m
         (assoc :provenance/what :event/update-gene)
-        (wnip/discard-empty-valued-entries))))
+        (wu/discard-empty-valued-entries))))
 
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
