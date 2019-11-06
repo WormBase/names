@@ -257,7 +257,7 @@
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn db :db payload :body-params} request
         data (:data payload)
-        prov (wnp/assoc-provenance request data :event/merge-genes)
+        prov (wnp/assoc-provenance request payload :event/merge-genes)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
                                                request
                                                into-id
@@ -298,7 +298,8 @@
 
 (defn split-gene [request identifier]
   (let [{conn :conn db :db} request
-        data (get-in request [:body-params :data] {})
+        payload (:body-params request)
+        data (:data payload)
         template (wbids/identifier-format db :gene/id)
         spec ::wsg/split
         [lur from-gene] (identify request identifier)
@@ -321,7 +322,7 @@
           {p-seq-name :gene/sequence-name
            p-biotype :gene/biotype} product
           p-seq-name (get-in cdata [:product :gene/sequence-name])
-          prov (wnp/assoc-provenance request cdata :event/split-gene)
+          prov (wnp/assoc-provenance request payload :event/split-gene)
           species (get-in from-gene [:gene/species :species/latin-name])
           new-data (merge {:gene/species (s/conform :gene/species species)}
                           (assoc product

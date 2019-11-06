@@ -202,7 +202,7 @@
                 data {:product {:biotype "transposable-element-gene"
                                 :sequence-name prod-seq-name}
                       :biotype "cds"}
-                prov {:why "testing"
+                prov {:why "testing 123"
                       :who {:email user-email}}
                 [status body] (split-gene {:data data :prov prov}
                                           gene-id
@@ -232,6 +232,7 @@
                          src-id)))
               ;; check the src gene contains correct history
               (t/is (= (get-in src [:gene/status :db/ident]) :gene.status/live) "source is not live")
+              (t/is (= (:provenance/why prov) "testing 123"))
               (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
