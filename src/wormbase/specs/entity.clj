@@ -30,6 +30,12 @@
                                                        ::name-required?])
                                :description "Parameters required to install a new entity schema."}))
 
+(s/def ::named? ::name-required?)
+
+(s/def ::schema-list-item (s/keys :req-un [::enabled? ::generic? ::named?]))
+
+(s/def ::schema-listing (stc/spec {:spec (s/coll-of ::schema-list-item :min-count 1)}))
+
 (s/def ::id (stc/spec {:spec (s/and string?
                                     #(str/starts-with? % "WB"))
                        :description "An entity identifier."

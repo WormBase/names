@@ -345,12 +345,13 @@
                                  entity-type)}))))
 
 (defn list-entity-schemas [request]
-  (let [entity-types (->> (d/q '[:find ?entity-type ?generic ?enabled
-                                 :keys entity-type generic? enabled?
+  (let [entity-types (->> (d/q '[:find ?entity-type ?generic ?enabled ?named
+                                 :keys entity-type generic? enabled? named?
                                  :in $
                                  :where 
                                  [?et :wormbase.names/entity-type-enabled? ?enabled]
                                  [?et :wormbase.names/entity-type-generic? ?generic]
+                                 [?et :wormbase.names/name-required? ?named]
                                  [?et :db/ident ?entity-type]]
                                (:db request))
                           (map #(update % :entity-type namespace))
@@ -425,7 +426,9 @@
     (sweet/resource
      {:get
       {:summary "List all simple entity types."
-       :responses (wnu/response-map wnu/default-responses)
+       :responses (-> wnu/default-responses
+                      (assoc ok {:schema {:entity-types ::wse/schema-listing}})
+                      (wnu/response-map))
        :handler (fn handle-list-entity-schemas [request]
                   (list-entity-schemas request))}
       :post
