@@ -38,10 +38,13 @@
                                   (build)))
 
 (defn parse-token [token]
-  (some->> (GoogleIdToken/parse json-factory token)
-           (.getPayload)
-           (into {})
-           (w/keywordize-keys)))
+  (try
+    (some->> (GoogleIdToken/parse json-factory token)
+             (.getPayload)
+             (into {})
+             (w/keywordize-keys))
+    (catch IllegalArgumentException _
+      nil)))
 
 (defn client-id [client-type]
   (-> gapps-conf client-type :client-id))
