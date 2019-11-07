@@ -92,7 +92,10 @@
 
 (defn identify [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
-        parsed-token (parse-token token)
+        parsed-token (try
+                       (parse-token token)
+                       (catch Exception ex
+                         (log/error ex "Malformed token")))
         db (:db request)]
     (when parsed-token
       (if-let [person (verified-person db auth-token-conf parsed-token)]
