@@ -108,7 +108,7 @@
 (s/def ::identifier (stc/spec {:spec (s/or :gene/id :gene/id
                                            :gene/cgc-name :gene/cgc-name
                                            :gene/sequence-name :gene/sequence-name)
-                               :description "An identiier which uniquely identifies a Gene."}))
+                               :description "An identifier which uniquely identifies a Gene."}))
 
 (s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
 
