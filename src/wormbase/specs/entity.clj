@@ -77,7 +77,9 @@
                                :min-count 1)
                         :description "A collection of mappings specifying entitys to be updated."}))
 
-(s/def ::change-status-batch (stc/spec {:spec (s/coll-of ::identifier :min-count 1)
+(s/def ::change-status-batch (stc/spec {:spec (s/coll-of (s/keys :req-un [(or ::name
+                                                                              ::id)])
+                                                         :min-count 1)
                                         :description (str "A collection of identifiers respsenting "
                                                           "variaitons that should have their "
                                                           "status changed.")}))

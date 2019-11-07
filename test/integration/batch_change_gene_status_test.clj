@@ -10,6 +10,7 @@
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
    [wormbase.gen-specs.gene :as gsg]))
 
@@ -35,7 +36,7 @@
       (tu/with-gene-fixtures
         [g1 g2]
         (fn [conn]
-          (let [data [gid gid]
+          (let [data [{:id gid} {:id gid}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
             (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
@@ -43,7 +44,7 @@
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gsg/id 1))
-          response (send-change-status-request :kill {:data [gid]
+          response (send-change-status-request :kill {:data [{:id gid}]
                                                       :prov basic-prov})]
       (t/is (ru-hp/conflict? response))
       (t/is (str/includes?  (get-in response [:body :message] "") "processing errors occurred"))
@@ -55,13 +56,17 @@
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
     (let [fixture-candidates (tu/gene-samples 4)
-          gids (map :gene/id fixture-candidates)
+          data (->> fixture-candidates
+                    (map :gene/id)
+                    (map (partial assoc {} :gene/id))
+                    (map #(wnu/unqualify-keys % "gene")))
           fixtures (take 2 fixture-candidates)
-          expected-not-found (set/difference (set (map :gene/id fixtures)) (set gids))]
+          expected-not-found (set/difference (set (map :gene/id fixtures))
+                                             (set (map :id data)))]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
-          (let [response (send-change-status-request :kill {:data gids :prov basic-prov})]
+          (let [response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/conflict? response))
             (doseq [enf expected-not-found]
               (t/is (str/includes? (get-in response [:body :message] "") enf)))))))))
@@ -69,19 +74,23 @@
 (t/deftest change-status-succesfully
   (t/testing "When a batch is expected to succeed."
     (let [fixtures (tu/gene-samples 3)
-          gids (map :gene/id fixtures)]
+          data (->> fixtures
+                    (map :gene/id)
+                    (map (partial assoc {} :gene/id)))
+          payload-data (map #(wnu/unqualify-keys % "gene") data)]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
           (doseq [[op exp-resp-key] {:kill :dead
                                      :suppress :suppressed
                                      :resurrect :live}]
-            (let [response (send-change-status-request op {:data gids :prov basic-prov})]
+            (let [response (send-change-status-request op {:data payload-data
+                                                           :prov basic-prov})]
               (t/is (ru-hp/ok? response))
               (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
                     (pr-str response))
-              (doseq [gid gids]
-                (let [ent (d/entity (d/db conn) [:gene/id gid])]
+              (doseq [m data]
+                (let [ent (d/entity (d/db conn) (find m :gene/id))]
                   (t/is (= (:gene/status ent)
                            (keyword "gene.status" (name exp-resp-key)))))))))))))
 

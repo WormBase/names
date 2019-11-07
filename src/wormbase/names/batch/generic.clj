@@ -131,13 +131,13 @@
     (ok {:updated result})))
 
 (defn change-entity-statuses
-  [uiident event-type to-status spec conformer request]
+  [uiident event-type to-status spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov :prov} payload
         entity-type (namespace uiident)
         data-transform (fn txform-assign-status [_ data]
-                         (->> (conformer spec data)
-                              (map (partial assoc {} uiident))
+                         (->> data
+                              (map #(wnu/qualify-keys % entity-type))
                               (assign-status entity-type to-status)))
         resp-key (-> to-status name keyword)
         result (batcher wbids-batch/update
@@ -255,7 +255,6 @@
                                             event-ident
                                             dead-status
                                             ::wse/kill-batch
-                                            map-conform-data-drop-labels
                                             request)))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect a batch of dead entities."
@@ -268,7 +267,6 @@
                                 event-ident
                                 status
                                 ::wse/resurrect-batch
-                                map-conform-data-drop-labels
                                 request)))
     (sweet/DELETE "/name" request
       :summary "Remove names from a batch of entities."

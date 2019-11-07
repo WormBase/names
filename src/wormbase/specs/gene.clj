@@ -123,7 +123,10 @@
                                :min-count 1)
                         :description "A collection of mappings describing the genes to be updated."}))
 
-(s/def ::change-status-batch (stc/spec {:spec (s/coll-of ::identifier :min-count 1)
+(s/def ::change-status-batch (stc/spec {:spec (s/coll-of (s/keys :req-un [(or :gene/id
+                                                                              :gene/cgc-name
+                                                                              :gene/sequence-name)])
+                                                         :min-count 1)
                                         :description "A collection of one or more identifiers."}))
 (s/def ::kill-batch ::change-status-batch)
 (s/def ::suppress-batch ::change-status-batch)

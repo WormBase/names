@@ -11,6 +11,7 @@
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.sequence-feature :as gssf]
+   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -43,7 +44,7 @@
       (tu/with-fixtures
         [s1 s2]
         (fn [conn]
-          (let [data [id id]
+          (let [data [{:id id} {:id id}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
             (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
@@ -51,7 +52,7 @@
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gssf/id 1))
-          response (send-change-status-request :kill {:data [gid] :prov basic-prov})]
+          response (send-change-status-request :kill {:data [{:id gid}] :prov basic-prov})]
       (t/is (ru-hp/conflict? response))
       (t/is (str/includes? (get-in response [:body :message] "")
                            "processing errors occurred"))
@@ -64,33 +65,41 @@
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
     (let [fixture-candidates (make-samples 4)
-          ids (map :sequence-feature/id fixture-candidates)
+          ids (->> fixture-candidates
+                   (map #(find % :sequence-feature/id))
+                   (map (partial apply assoc {}))
+                   (map #(wnu/unqualify-keys % "sequence-feature")))
           fixtures (take 2 fixture-candidates)
-          expected-not-found (set/difference (set (map :sequence-feature/id fixtures))
-                                             (set ids))]
+          all-ids (map :id ids)
+          fixture-ids (map :sequence-feature/id fixtures)
+          expected-not-found (set/difference (set all-ids) (set fixture-ids))]
       (tu/with-fixtures
         fixtures
         (fn [conn]
           (let [response (send-change-status-request :kill {:data ids :prov basic-prov})]
             (t/is (ru-hp/conflict? response))
-            (doseq [enf expected-not-found]
-              (t/is (str/includes? (get-in response [:body :message] "") enf)))))))))
+            (t/is (some
+                   #(str/includes? (-> response :body pr-str) %)
+                   expected-not-found))))))))
 
 (t/deftest change-status-succesfully
   (t/testing "When a batch is expected to succeed."
     (let [fixtures (make-samples 3)
-          ids (map :sequence-feature/id fixtures)]
+          ids (->> fixtures
+                   (map (fn [x]
+                          {:sequence-feature/id (:sequence-feature/id x)})))]
       (tu/with-sequence-feature-fixtures
         fixtures
         (fn [conn]
           (doseq [[op exp-resp-key] {:kill :dead
                                      :resurrect :live}]
-            (let [response (send-change-status-request op {:data ids :prov basic-prov})]
+            (let [data (map #(wnu/unqualify-keys % "sequence-feature") ids)
+                  response (send-change-status-request op {:data data :prov basic-prov})]
               (t/is (ru-hp/ok? response))
               (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
                     (pr-str response))
-              (doseq [id ids]
-                (let [ent (d/entity (d/db conn) [:sequence-feature/id id])]
+              (doseq [m ids]
+                (let [ent (d/entity (d/db conn) (find m :sequence-feature/id))]
                   (t/is (= (:sequence-feature/status ent)
                            (keyword "sequence-feature.status"
                                     (name exp-resp-key)))))))))))))

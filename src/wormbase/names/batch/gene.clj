@@ -112,8 +112,7 @@
                          :gene/id
                          :event/kill-gene
                          :gene.status/dead
-                         ::wsg/kill-batch
-                         wnbg/map-conform-data-drop-labels)}})
+                         ::wsg/kill-batch)}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
       :body [data {:data ::wsg/resurrect-batch}
@@ -122,7 +121,6 @@
                                    :event/resurrect-gene
                                    :gene.status/live
                                    ::wsg/resurrect-batch
-                                   wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/POST "/suppress" request
       :summary "Suppress genes."
@@ -132,7 +130,6 @@
                                    :event/suppress-gene
                                    :gene.status/suppressed
                                    ::wsg/suppress-batch
-                                   wnbg/map-conform-data-drop-labels
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
