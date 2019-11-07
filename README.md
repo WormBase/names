@@ -34,7 +34,7 @@ Ensure you've installed the following software on your system:
 
 [nodejs][6]
 
-[yarn][7]
+[yarn][7] * **Setting yarn up on ubutnu is problematic - use the "Alternate install" rather than APT packages.**
 
 [docker][8]
 
