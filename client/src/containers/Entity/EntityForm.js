@@ -7,12 +7,9 @@ function EntityForm({ withFieldData, entityType }) {
   const { getEntityType } = useEntityTypes();
   const entity = getEntityType(entityType) || {};
   const NameField = withFieldData(TextField, 'name');
-  return (
-    <NameField
-      label={`Name ${entity['named?'] ? '' : '(Optional)'}`}
-      helperText={`Name of the ${entityType}`}
-    />
-  );
+  return entity['named?'] ? (
+    <NameField label="Name" helperText={`Name of the ${entityType}`} />
+  ) : null;
 }
 
 EntityForm.propTypes = {
