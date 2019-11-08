@@ -18,11 +18,9 @@ class SplitGeneDialog extends Component {
     return mockFetchOrNot(
       (mockFetch) => {
         console.log(data.reason);
-        const emptyFields = ['provenance/why', 'biotype', 'product'].filter(
-          (fieldId) => {
-            return !data[fieldId];
-          }
-        );
+        const emptyFields = ['why', 'biotype', 'product'].filter((fieldId) => {
+          return !data[fieldId];
+        });
         let errorMessage;
         switch (emptyFields.length) {
           case 0:
@@ -84,7 +82,7 @@ class SplitGeneDialog extends Component {
             BiotypeSelect,
             'biotype'
           );
-          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const ReasonField = withFieldData(TextField, 'why');
           const SequenceNameField = withFieldData(
             TextField,
             'product:sequence-name'

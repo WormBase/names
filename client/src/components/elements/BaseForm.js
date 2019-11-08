@@ -53,9 +53,16 @@ function formReducer(state = { ...defaultInitalState }, action) {
   }
 }
 
+const isProvenanceField = (function() {
+  const provenanceFieldIds = new Set(['what', 'when', 'who', 'why', 'how']);
+  return function(fieldId) {
+    return provenanceFieldIds.has(fieldId);
+  };
+})();
+
 function dirtySelect(state) {
   return Object.keys(state.fields)
-    .filter((fieldId) => !fieldId.match(/provenance\//))
+    .filter((fieldId) => !isProvenanceField(fieldId))
     .reduce((result, fieldId) => {
       const value = (state.fields[fieldId] || {}).value || '';
       const initialValue = (state.fields[fieldId] || {}).initialValue || '';
@@ -156,13 +163,13 @@ class BaseForm extends Component {
     const fields = getDirtyFields(this.dataStore.getState().fields);
     console.log(fields);
     const dataFieldIds = Object.keys(fields).filter(
-      (fieldId) => !fieldId.match(/provenance\//g)
+      (fieldId) => !isProvenanceField(fieldId)
     );
     if (Object.keys(dataFieldIds).length === 0) {
       return null;
     }
     const provenanceFieldIds = Object.keys(fields).filter((fieldId) =>
-      fieldId.match(/provenance\//g)
+      isProvenanceField(fieldId)
     );
     return {
       data: this.gatherFields(dataFieldIds, fields),
@@ -173,10 +180,10 @@ class BaseForm extends Component {
   getData = () => {
     const fields = this.dataStore.getState().fields;
     const dataFieldIds = Object.keys(fields).filter(
-      (fieldId) => !fieldId.match(/provenance\//g)
+      (fieldId) => !isProvenanceField(fieldId)
     );
     const provenanceFieldIds = Object.keys(fields).filter((fieldId) =>
-      fieldId.match(/provenance\//g)
+      isProvenanceField(fieldId)
     );
     return {
       data: this.gatherFields(dataFieldIds, fields),

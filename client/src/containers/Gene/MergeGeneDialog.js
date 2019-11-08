@@ -22,7 +22,7 @@ class MergeGeneDialog extends Component {
     const { geneIdMergeInto, ...data } = rawData;
     return mockFetchOrNot(
       (mockFetch) => {
-        if (provenance['provenance/why']) {
+        if (provenance['why']) {
           return mockFetch.post('*', {});
         } else {
           return mockFetch.post('*', {
@@ -60,7 +60,7 @@ class MergeGeneDialog extends Component {
         {...otherProps}
       >
         {({ withFieldData, errorMessage }) => {
-          const ReasonField = withFieldData(TextField, 'provenance/why');
+          const ReasonField = withFieldData(TextField, 'why');
           const GeneIdMergeIntoField = withFieldData(
             GeneAutocomplete,
             'geneIdMergeInto'

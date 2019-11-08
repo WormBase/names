@@ -72,78 +72,78 @@ function EntityEdit({
         (mockFetch) => {
           const historyMock = [
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/merge-genes',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/merge-genes',
+              who: {
                 'person/id': 'WBPerson12346',
               },
-              'provenance/when': '2018-08-09T22:09:16Z',
-              'provenance/merged-from': {
+              when: '2018-08-09T22:09:16Z',
+              'merged-from': {
                 id: 'WBGene00303223',
               },
-              'provenance/merged-into': {
+              'merged-into': {
                 id: id,
               },
             },
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/update-gene',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/update-gene',
+              who: {
                 'person/id': 'WBPerson12346',
               },
-              'provenance/when': '2018-08-08T17:27:31Z',
+              when: '2018-08-08T17:27:31Z',
             },
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/update-gene',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/update-gene',
+              who: {
                 'person/id': 'WBPerson12346',
               },
-              'provenance/when': '2018-08-08T17:27:22Z',
+              when: '2018-08-08T17:27:22Z',
             },
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/split-gene',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/split-gene',
+              who: {
                 'person/id': 'WBPerson12346',
               },
-              'provenance/when': '2018-08-08T16:50:46Z',
-              'provenance/split-from': {
+              when: '2018-08-08T16:50:46Z',
+              'split-from': {
                 id: id,
               },
-              'provenance/split-into': {
+              'split-into': {
                 id: 'WBGene00303222',
               },
             },
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/split-gene',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/split-gene',
+              who: {
                 'person/id': 'WBPerson12346',
               },
-              'provenance/when': '2018-08-08T15:21:07Z',
-              'provenance/split-from': {
+              when: '2018-08-08T15:21:07Z',
+              'split-from': {
                 id: id,
               },
-              'provenance/split-into': {
+              'split-into': {
                 id: 'WBGene00303219',
               },
             },
             {
-              'provenance/how': 'agent/web',
-              'provenance/what': 'event/new-gene',
-              'provenance/who': {
+              how: 'agent/web',
+              what: 'event/new-gene',
+              who: {
                 id: 'WBPerson12346',
               },
-              'provenance/when': '2018-07-23T15:25:17Z',
+              when: '2018-07-23T15:25:17Z',
             },
           ];
 
           return mockFetch.get('*', {
             species: 'Caenorhabditis elegans',
             'cgc-name': 'abi-1',
-            status: 'gene.status/live',
-            biotype: 'biotype/cds',
+            status: 'live',
+            biotype: 'cds',
             id: id,
             history: historyMock,
           });
