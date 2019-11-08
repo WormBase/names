@@ -53,14 +53,9 @@
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gssf/id 1))
           response (send-change-status-request :kill {:data [{:id gid}] :prov basic-prov})]
-      (t/is (ru-hp/conflict? response))
+      (t/is (ru-hp/not-found? response))
       (t/is (str/includes? (get-in response [:body :message] "")
-                           "processing errors occurred"))
-      (t/is (some (fn [msg]
-                    (and (str/includes? msg "does not exist")
-                         (str/includes? msg gid)))
-                  (-> response :body :errors))
-            (pr-str response)))))
+                           "Entity not found")))))
 
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
@@ -77,7 +72,7 @@
         fixtures
         (fn [conn]
           (let [response (send-change-status-request :kill {:data ids :prov basic-prov})]
-            (t/is (ru-hp/conflict? response))
+            (t/is (ru-hp/not-found? response))
             (t/is (some
                    #(str/includes? (-> response :body pr-str) %)
                    expected-not-found))))))))

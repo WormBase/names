@@ -108,11 +108,13 @@
        :responses (wnu/response-map ok {:schema ::wsb/status-changed})
        :parameters {:body-params {:data ::wsg/kill-batch
                                   :prov ::prov}}
-       :handler (partial wnbg/change-entity-statuses
-                         :gene/id
-                         :event/kill-gene
-                         :gene.status/dead
-                         ::wsg/kill-batch)}})
+       :handler (fn kill-handler [request]
+                  (wnbg/change-entity-statuses
+                   :gene/id
+                   :event/kill-gene
+                   :gene.status/dead
+                   ::wsg/kill-batch
+                   request))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
       :body [data {:data ::wsg/resurrect-batch}

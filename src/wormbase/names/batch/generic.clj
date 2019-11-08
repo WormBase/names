@@ -130,14 +130,23 @@
                         request)]
     (ok {:updated result})))
 
+(defn convert-to-ids [db entity-type m]
+  (let [k (-> m keys first)
+        data (d/pull db [(keyword entity-type "id")] (find m k))]
+    (when (nil? data)
+      (throw (ex-info "Entity not found" {:data (wnu/unqualify-keys m entity-type)
+                                          :type ::wdb/missing})))
+    data))
+
 (defn change-entity-statuses
   [uiident event-type to-status spec request]
-  (let [{conn :conn payload :body-params} request
+  (let [{conn :conn db :db payload :body-params} request
         {data :data prov :prov} payload
         entity-type (namespace uiident)
         data-transform (fn txform-assign-status [_ data]
                          (->> data
                               (map #(wnu/qualify-keys % entity-type))
+                              (map (partial convert-to-ids db entity-type))
                               (assign-status entity-type to-status)))
         resp-key (-> to-status name keyword)
         result (batcher wbids-batch/update

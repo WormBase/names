@@ -41,17 +41,25 @@
             (t/is (ru-hp/ok? response))
             (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
 
+(t/deftest dup-seq-names
+  (t/testing "Duplicate gene sequence names in payload don't cause an error."
+    (let [[g1 g2] (tu/gene-samples 2)
+          sn (:gene/sequence-name g1)]
+      (tu/with-gene-fixtures
+        [g1 g2]
+        (fn [conn]
+          (let [data [{:sequence-name sn} {:sequence-name sn}]
+                response (send-change-status-request :kill {:data data :prov basic-prov})]
+            (t/is (ru-hp/ok? response))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
+
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
     (let [gid (first (gen/sample gsg/id 1))
           response (send-change-status-request :kill {:data [{:id gid}]
                                                       :prov basic-prov})]
-      (t/is (ru-hp/conflict? response))
-      (t/is (str/includes?  (get-in response [:body :message] "") "processing errors occurred"))
-      (t/is (some (fn [msg]
-                    (and (str/includes? msg "does not exist")
-                         (str/includes? msg gid)))
-                  (get-in response [:body :errors]))))))
+      (t/is (ru-hp/not-found? response))
+      (t/is (str/includes?  (get-in response [:body :message] "") "Entity not found")))))
 
 (t/deftest entities-missing-across-batch
   (t/testing "When multiple entities referenced in batch are missing from db."
@@ -61,15 +69,15 @@
                     (map (partial assoc {} :gene/id))
                     (map #(wnu/unqualify-keys % "gene")))
           fixtures (take 2 fixture-candidates)
-          expected-not-found (set/difference (set (map :gene/id fixtures))
-                                             (set (map :id data)))]
+          expected-not-found (set/difference (set (map :id data))
+                                             (set (map :gene/id fixtures)))]
       (tu/with-gene-fixtures
         fixtures
         (fn [conn]
           (let [response (send-change-status-request :kill {:data data :prov basic-prov})]
-            (t/is (ru-hp/conflict? response))
-            (doseq [enf expected-not-found]
-              (t/is (str/includes? (get-in response [:body :message] "") enf)))))))))
+            (t/is (ru-hp/not-found? response))
+            (doseq [enf (sort expected-not-found)]
+              (t/is (= (some-> response :body :message) "Entity not found")))))))))
 
 (t/deftest change-status-succesfully
   (t/testing "When a batch is expected to succeed."
