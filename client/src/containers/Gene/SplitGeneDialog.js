@@ -101,11 +101,6 @@ class SplitGeneDialog extends Component {
               <DialogContentText>
                 <ValidationError {...errorMessage} />
               </DialogContentText>
-              <ReasonField
-                label="Reason"
-                helperText="Enter the reason for splitting the gene"
-                fullWidth
-              />
               <BiotypeSelectOriginalField
                 label={`${name || wbId} biotype`}
                 helperText={`Modify the biotype of ${name}`}
@@ -120,6 +115,11 @@ class SplitGeneDialog extends Component {
               </DialogContentText>
               <SequenceNameField label="Sequence name" />
               <BiotypeSelectField required />
+              <ReasonField
+                label="Reason"
+                helperText="Enter the reason for splitting the gene"
+                fullWidth
+              />
             </DialogContent>
           );
         }}
