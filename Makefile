@@ -138,3 +138,7 @@ release: deploy-ecr $(call print-help,release,"Release the applicaton.")
 .PHONY: run-tests
 run-tests: $(call print-help,run-tests,"Run all tests.")
 	@clj -A:datomic-pro:webassets:dev:test
+
+.PHONY: run-dev-server
+run-dev-webserver: $(call print-help,run-dev-webserver,"Run a development webserver.")
+	@clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
