@@ -66,7 +66,6 @@ class SuppressGeneDialog extends Component {
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for suppressing the gene"
-                required
                 fullWidth
               />
             </DialogContent>

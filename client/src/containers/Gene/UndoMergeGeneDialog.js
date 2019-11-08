@@ -65,7 +65,6 @@ class UndoMergeGeneDialog extends Component {
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for undoing the merge"
-                required
                 fullWidth
               />
             </DialogContent>

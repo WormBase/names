@@ -66,7 +66,6 @@ class EntityDialogKill extends Component {
               <ReasonField
                 label="Reason"
                 helperText={`Enter the reason for killing this ${entityType}`}
-                required
                 fullWidth
               />
             </DialogContent>

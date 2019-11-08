@@ -104,7 +104,6 @@ class SplitGeneDialog extends Component {
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for splitting the gene"
-                required
                 fullWidth
               />
               <BiotypeSelectOriginalField
