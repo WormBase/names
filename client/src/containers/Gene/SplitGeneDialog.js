@@ -66,16 +66,19 @@ class SplitGeneDialog extends Component {
   };
 
   render() {
-    const { classes, name, wbId, biotypeOriginal, ...otherProps } = this.props;
+    const { classes, name, wbId, data = {}, ...otherProps } = this.props;
     return (
       <AjaxDialog
         title="Split gene"
-        data={{ biotype: biotypeOriginal }}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
           <ProgressButton {...props}>Split {name}</ProgressButton>
         )}
         {...otherProps}
+        data={{
+          ...data,
+          'product:biotype': data.biotype,
+        }}
       >
         {({ withFieldData, errorMessage }) => {
           const BiotypeSelectOriginalField = withFieldData(
@@ -130,7 +133,6 @@ SplitGeneDialog.propTypes = {
   classes: PropTypes.object.isRequired,
   wbId: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   name: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
-  biotypeOriginal: createOpenOnlyTypeChecker(PropTypes.string.isRequired),
   apiPrefix: PropTypes.string.isRequired,
 };
 
