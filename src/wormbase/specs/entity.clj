@@ -30,7 +30,13 @@
                                                        ::name-required?])
                                :description "Parameters required to install a new entity schema."}))
 
-(s/def ::named? ::name-required?)
+(s/def ::named? (stc/spec {:spec sts/boolean?
+                           :swagger/example "true"
+                           :description "Flag indicating if an entity type requires a name."}))
+
+(s/def ::enabled? (stc/spec {:spec sts/boolean?
+                             :swagger/example "true"
+                             :description "Flag indicating if an entity type is enabled."}))
 
 (s/def ::schema-list-item (s/keys :req-un [::enabled? ::generic? ::named?]))
 
@@ -77,12 +83,11 @@
                                :min-count 1)
                         :description "A collection of mappings specifying entitys to be updated."}))
 
-(s/def ::change-status-batch (stc/spec {:spec (s/coll-of (s/keys :req-un [(or ::name
-                                                                              ::id)])
+(s/def ::change-status-batch (stc/spec {:spec (s/coll-of (s/keys :req-un [(or ::name ::id)])
                                                          :min-count 1)
-                                        :description (str "A collection of identifiers respsenting "
-                                                          "variaitons that should have their "
-                                                          "status changed.")}))
+                                        :swagger/example "[{:id \"WBGene000000001\"}]"
+                                        :description (str "A collection of mappings, "
+                                                          "only one key is required")}))
 (s/def ::kill-batch ::change-status-batch)
 (s/def ::resurrect-batch ::change-status-batch)
 
