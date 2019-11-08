@@ -60,7 +60,6 @@ class EntityDialogResurrect extends Component {
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for resurrecting the gene"
-                required
                 fullWidth
               />
             </DialogContent>

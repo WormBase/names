@@ -93,7 +93,6 @@ class MergeGeneDialog extends Component {
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for merging the gene"
-                required
                 fullWidth
               />
             </DialogContent>
