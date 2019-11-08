@@ -139,7 +139,8 @@ const SearchBox = (props) => {
                             (item) => {
                               return Object.keys(item).reduce(
                                 (matchAny, key) =>
-                                  matchAny || item[key] === inputValue
+                                  matchAny || item[key] === inputValue,
+                                false
                               );
                             }
                           );
