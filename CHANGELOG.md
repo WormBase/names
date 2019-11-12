@@ -2,7 +2,7 @@
 
 ## [0.9.0]
  - Batch API data format change to change status endpoint.
- 
+
 ## [0.6.16]
  - Added temporary hack to allow nil values in provenance due to bad data.
 
