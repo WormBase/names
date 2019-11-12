@@ -76,7 +76,7 @@
                   batch)]
       (let [errors (-> result :errors seq)]
         (when (seq errors)
-          (throw (ex-info "Errors during attempting batch"
+          (throw (ex-info "Errors during batch processing"
                           {:errors errors
                            :type ::db-errors}))))
       (let [b-result (reduce (partial processor-fn
