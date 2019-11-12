@@ -131,7 +131,6 @@ below to run all tests.
 Ensure to run all tests and check they pass before submitting new pull requests.
 
 ```bash
-
 make run-tests
 ```
 
