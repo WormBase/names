@@ -41,9 +41,7 @@ function renderInput(inputProps) {
           inputRef: ref,
           classes: {
             root: classes.inputRoot,
-            input: item ? classes.inputDisabled : '',
           },
-          value: item ? '' : InputProps.value,
           startAdornment: (
             <InputAdornment position="start">
               <SearchIcon className={classes.searchIcon} />
@@ -59,7 +57,6 @@ function renderInput(inputProps) {
                   }}
                 />
               ) : null}
-              {item ? <AutocompleteChip suggestion={item} /> : null}
             </InputAdornment>
           ),
           endAdornment: (
@@ -93,7 +90,10 @@ const SearchBox = (props) => {
   );
 
   return (
-    <AutocompleteBase itemToString={(item) => (item ? item.id : '')}>
+    <AutocompleteBase
+      itemToString={(item) => (item ? item.id : '')}
+      onSelect={(item, { clearSelection }) => item && clearSelection()}
+    >
       {({
         getInputProps,
         getItemProps,
@@ -139,7 +139,8 @@ const SearchBox = (props) => {
                             (item) => {
                               return Object.keys(item).reduce(
                                 (matchAny, key) =>
-                                  matchAny || item[key] === inputValue
+                                  matchAny || item[key] === inputValue,
+                                false
                               );
                             }
                           );
@@ -152,7 +153,7 @@ const SearchBox = (props) => {
 
                         if (id) {
                           // ignore empty input
-                          downshift.closeMenu();
+                          downshift.clearSelection();
                           history.push(`/${entityType}/id/${id}`);
                         }
                       }
@@ -178,11 +179,17 @@ const SearchBox = (props) => {
                         <Paper className={classes.paper} square>
                           {pageItems.map((suggestion, index) => (
                             <AutocompleteSuggestion
+                              key={index}
                               suggestion={suggestion}
                               component={({ ...props }) => (
-                                <Link
-                                  to={`/${entityType}/id/${suggestion.id}`}
+                                <a
                                   {...props}
+                                  onClick={() => {
+                                    downshift.clearSelection();
+                                    history.push(
+                                      `/${entityType}/id/${suggestion.id}`
+                                    );
+                                  }}
                                 />
                               )}
                               index={index}
