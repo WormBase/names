@@ -1,5 +1,10 @@
 # Change-log
 
+## [0.9.4]
+ - Now use npm instead of yarn for managing the client application.
+ - Fixed bugs in retract names endpoints (batch API)
+ - Fixed bugs related to whether a generic entity requires a name or not.
+
 ## [0.9.0]
  - Batch API data format change to change status endpoint.
 
