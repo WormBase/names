@@ -47,14 +47,14 @@
           response (new-variations {:data bdata :prov basic-prov})]
       (t/is (ru-hp/conflict? response)))))
 
-(t/deftest batch-success
-  (t/testing "Batch of new vaiations successful"
-    (let [bdata (map #(array-map :name (str "okay" %)) (range 1 21))
+(t/deftest batch-success-named
+  (t/testing "Batch of new named entities successful"
+    (let [bdata (map #(array-map :name (str "okay" %)) (range 1 11))
           response (new-variations {:data bdata :prov basic-prov})]
       (t/is (ru-hp/created? response) (-> response :status str))
       (let [bid (get-in response [:body :id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
-        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid))
+        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid) "variation")
               xs (map #(get-in % [:variation/status :db/ident]) batch)
               response2  (api-tc/summary "batch" bid)]
           (t/is (seq xs))

@@ -110,7 +110,8 @@
                                            :gene/sequence-name :gene/sequence-name)
                                :description "An identifier which uniquely identifies a Gene."}))
 
-(s/def ::cgc-names (stc/spec (s/coll-of (s/or :gene/cgc-name :gene/cgc-name) :min-count 1)))
+
+(s/def ::cgc-names (stc/spec (s/coll-of (s/keys :req-un [:gene/cgc-name]) :min-count 1)))
 
 (s/def ::new-batch (stc/spec
                     {:spec (s/coll-of ::new :min-count 1)
