@@ -160,7 +160,7 @@ nvm use
 npm ci
 
 # build the static asset bundles (js, css, etc)
-npm build
+npm run build
 cd -
 
 # specify $LEVEL as one of <major|minor|patch>
@@ -194,7 +194,7 @@ the server should be started with the `PORT` environment variable set to *4010*.
 cd client
 nvm use
 npm ci   # a clean install of dependencies based on package-lock.json
-npm build
+npm run build
 ```
 
 For a full list of tasks, type:
