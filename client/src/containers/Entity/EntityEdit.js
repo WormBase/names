@@ -1,6 +1,6 @@
 import React, { useCallback, useReducer, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { withRouter } from 'react-router-dom';
+import { withRouter, Link } from 'react-router-dom';
 import { Prompt } from 'react-router';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {
@@ -329,11 +329,31 @@ function EntityEdit({
                 data: data,
                 open: state.dialog === operation,
                 onClose: () => dispatch({ type: 'DIALOG_CLOSE' }),
-                onSubmitSuccess: (data) => {
+                onSubmitSuccess: ({ created = {}, updated = {} }) => {
                   dispatch({
                     type: 'DIALOG_OPERATION_SUCCESS',
                     payload: {
-                      shortMessage: `${operation} successful!`,
+                      shortMessage: (
+                        <span>
+                          {operation} successful!{' '}
+                          {operation === 'split' ? (
+                            <React.Fragment>
+                              Split into{' '}
+                              <Link to={`/${entityType}/id/${created.id}`}>
+                                {created.id}
+                              </Link>
+                            </React.Fragment>
+                          ) : null}
+                          {operation === 'merge' ? (
+                            <React.Fragment>
+                              Merged into{' '}
+                              <Link to={`/${entityType}/id/${updated.id}`}>
+                                {updated.id}
+                              </Link>
+                            </React.Fragment>
+                          ) : null}
+                        </span>
+                      ),
                       shortMessageVariant: 'success',
                     },
                   });
