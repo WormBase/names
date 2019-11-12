@@ -170,16 +170,6 @@
   [db change]
   (resolve-ref-to-gene-id :gene/splits db change))
 
-(defn new-unnamed-gene [request]
-  (let [{payload :body-params conn :conn} request
-        prov (wnp/assoc-provenance request payload :event/new-gene)
-        data (:data payload)
-        spec ::wsg/new-unnamed
-        names-validator (partial validate-names request)
-        cdata (wnu/conform-data spec data)
-        tx-data [cdata prov]]
-    @(d/transact-async conn tx-data)))
-
 (defn resolve-refs-to-dbids
   "Resolve references in a data payload to database ids for compare-and-swap operations."
   [db data]
