@@ -1,13 +1,15 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { TextField } from '../../components/elements';
+import { useEntityTypes } from './EntityTypesContextProvider';
 
-class EntityForm extends Component {
-  render() {
-    const { withFieldData, entityType } = this.props;
-    const NameField = withFieldData(TextField, 'name');
-    return <NameField label="Name" helperText={`Name of the ${entityType}`} />;
-  }
+function EntityForm({ withFieldData, entityType }) {
+  const { getEntityType } = useEntityTypes();
+  const entity = getEntityType(entityType) || {};
+  const NameField = withFieldData(TextField, 'name');
+  return entity['named?'] ? (
+    <NameField label="Name" helperText={`Name of the ${entityType}`} />
+  ) : null;
 }
 
 EntityForm.propTypes = {
