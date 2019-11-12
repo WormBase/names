@@ -32,9 +32,7 @@ Ensure you've installed the following software on your system:
 
 [clojure CLI_tools][4]
 
-[nodejs][6]
-
-[yarn][7] * **Setting yarn up on ubutnu is problematic - use the "Alternate install" rather than APT packages.**
+[nvm][7]
 
 [docker][8]
 
@@ -62,23 +60,29 @@ Setup client app **either by [making a production build of the client app](#buil
 - Then, run:
 ```bash
 cd client/
-yarn install
-yarn run start
+nvm use # optionally `nvm install` to install the latest compatible version of node.js
+npm install
+npm run start
 ```
+  - This will start service serving the client assets on port 3000,
+  the server should be started with the `PORT` environment variable set to *4010*.
 
 - Finally, ensure the authentication callback URL at Google Cloud Console is configured to match the client development server configuration.
 
 Notes:
-- `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
+- **Node.js and NPM***
+  - This client requires compatible versions of node.js and NPM, as specified in the `engines` property [package.json](client/package.json). The easiest way to use the right version of node.js and NPM, is through the [Node Version Manage (nvm)][7].
+  - To invoke `nvm use` automatically, setup Deeper Shell Integration by following the nvm documentation.
+- **Create-React-App**
+  - `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
 - **Port:**
-	- To run the server on a different port:
+	- To run the client on a different port:
 ```bash
-PORT=[PORT] yarn run start
+PORT=[PORT] npm run start
 ```
 - **Dependencies:**
-	- Most errors about missing dependencies can be resolved with `yarn install`.
-	- It's safe to run `yarn install` when in doubt.
-	- Refer to [yarn][7] documentation when modifying dependencies. And be sure to checking in changes in `yarn.lock` (auto-generated).
+	- Most errors about missing dependencies can be resolved with `npm install`, which installs dependencies into the `./node_modules` directory. It's safe to delete the content of `./node_modules` and/or re-run `npm install`.
+	- Be sure to checking in changes in `package-lock.json`, which specifies the exact versions of npm packages installed, and allows package installation to happen in a reproducible way based on `package-lock.json` with `npm ci`.
 - **Mock:**
 	- Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
 	- Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
@@ -148,8 +152,14 @@ Releasing is a 4 step process:
 # Build the client application
 cd client
 
-# Ensure you've installed yarn with npm/b other means first.
-yarn build --frozen-lockfile
+# use a compatible version of node.js and npm
+nvm use
+
+# make a clean installation of npm dependencies
+npm ci
+
+# build the static asset bundles (js, css, etc)
+npm run build
 cd -
 
 # specify $LEVEL as one of <major|minor|patch>
@@ -172,7 +182,8 @@ make release
 The Reach (Javascript) client application can be run using:
 ```bash
 cd ./client
-yarn run start
+nvm use
+npm run start
 ```
 This will start service serving the client assets on port 3000,
 the server should be started with the `PORT` environment variable set to *4010*.
@@ -180,7 +191,9 @@ the server should be started with the `PORT` environment variable set to *4010*.
 ### Building
 ```bash
 cd client
-yarn build
+nvm use
+npm ci   # a clean install of dependencies based on package-lock.json
+npm run build
 ```
 
 For a full list of tasks, type:
@@ -305,7 +318,7 @@ Copyright ©  WormBase 2018, 2019
 [3]: https://clojure.org/about/spec
 [4]: https://clojure.org/guides/getting_started
 [6]: https://nodejs.org/en/
-[7]: https://yarnpkg.com/en/docs/install
+[7]: https://github.com/nvm-sh/nvm
 [8]: https://docs.docker.com/install/
 [9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [10]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install.html
@@ -314,4 +327,3 @@ Copyright ©  WormBase 2018, 2019
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
 [14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
 [15]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
-
