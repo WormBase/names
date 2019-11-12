@@ -24,22 +24,21 @@
 
 (s/def ::prov map?)
 
-(defn map-conform-data-drop-labels [spec data]
-  (map second (wnu/conform-data spec data)))
+(defn conform-data-drop-labels [spec data]
+  (second (wnu/conform-data spec data)))
 
 (def ^:private default-batch-size 100)
 
 (defn assign-status [entity-type to-status data]
   (let [status-ident (keyword entity-type "status")]
-    (map #(assoc % status-ident to-status) data)))
+    (assoc data status-ident to-status)))
 
 (defn batch-size [payload coll]
-  (let [bsize (get payload :batch-size 0)
-        coll-size (count coll)
-        cbsize (int (/ coll-size 10))]
-    (if (or (zero? cbsize) (> cbsize default-batch-size))
+  (let [coll-size (count coll)
+        cbsize (int (/ coll-size (min coll-size default-batch-size)))]
+    (if (< coll-size default-batch-size)
       default-batch-size
-      cbsize)))
+      (int (/ coll-size default-batch-size)))))
 
 (defn batcher [impl uiident event-type spec data-transform request]
   (let [{conn :conn payload :body-params} request
@@ -83,22 +82,33 @@
 (defn new-entities
   "Create a batch of new entities."
   [uiident event-type spec conformer validator name-attrs request]
-  (let [entity-type (namespace uiident)
-        data-transform (fn set-live [_ data]
-                         (let [live-status (keyword (str entity-type ".status") "live")]
-                           (some->> data
-                                    (conformer spec)
-                                    (map #(wnu/qualify-keys % entity-type))
-                                    (map wne/transform-ident-ref-values)
-                                    (validator)
-                                    (assign-status entity-type live-status))))
+  (let [{conn :conn db :db} request
+        entity-type (namespace uiident)
+        ident-ent (d/entity db uiident)
+        named? (:wormbase.names/name-required? ident-ent)
+        data-transform (fn [_ data]
+                         (let [live-status (keyword (str entity-type ".status") "live")
+                               unnamed-status-repeater (fn [x n]
+                                                         (repeat n
+                                                                 (assign-status entity-type live-status x)))
+                               conformed (conformer spec data)]
+                           (if named?
+                             (some->> conformed
+                                      (map #(wnu/qualify-keys % entity-type))
+                                      (map wne/transform-ident-ref-values)
+                                      (validator)
+                                      (map (partial assign-status entity-type live-status)))
+                             (-> (dissoc conformed :n)
+                                 (wnu/qualify-keys entity-type)
+                                 (wne/transform-ident-ref-values)
+                                 (validator)
+                                 (unnamed-status-repeater (:n conformed))))))
         batch-result (batcher wbids-batch/new
                               uiident
                               event-type
                               spec
                               data-transform
                               request)
-        {conn :conn} request
         new-ids (ids-created (d/log conn)
                              (d/db conn)
                              uiident
@@ -147,7 +157,7 @@
                          (->> data
                               (map #(wnu/qualify-keys % entity-type))
                               (map (partial convert-to-ids db entity-type))
-                              (assign-status entity-type to-status)))
+                              (map (partial assign-status entity-type to-status))))
         resp-key (-> to-status name keyword)
         result (batcher wbids-batch/update
                         uiident
@@ -168,10 +178,8 @@
     (if (s/invalid? conformed)
       (bad-request {:data data})
       (let [cdata (some->> conformed
-                           (filter (fn remove-any-nils [[_ value]]
-                                     (not (nil? value))))
-                           (map (partial apply assoc {}))
-                           (map #(wnu/qualify-keys % ent-type)))
+                           (map #(wnu/qualify-keys % ent-type))
+                           (filter #(some? (attr %))))
             bsize (batch-size payload cdata)
             result (wbids-batch/retract
                     conn
@@ -234,20 +242,22 @@
                                      identity
                                      request)))}
       :post
-      {:summary "Assign identifiers and associate names, creating new variations."
+      {:summary "Assign identifiers and associate names, creating new entities."
        :x-name ::batch-new-entities
        :responses (wnu/response-map created {:schema ::wsb/created})
        :parameters {:body-params {:data ::wse/new-batch
                                   :prov ::wsp/provenance}}
        :handler (fn handle-new [request]
                   (let [ent-ident (keyword entity-type "id")
+                        ident-ent (d/entity (:db request) ent-ident)
                         event-ident (keyword "event" (str "new-" entity-type))
                         data (get-in request [:body-params])
-                        name-attrs [(keyword entity-type "name")]]
+                        name-attrs (when (:wormbase.names/name-required? ident-ent)
+                                     [(keyword entity-type "name")])]
                     (new-entities ent-ident
                                   event-ident
                                   ::wse/new-batch
-                                  wnu/conform-data
+                                  conform-data-drop-labels
                                   identity
                                   name-attrs
                                   request)))}

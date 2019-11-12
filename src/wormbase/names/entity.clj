@@ -34,20 +34,17 @@
 
 (defmethod validate-names :default [request data]
   (let [db (:db request)
-        data (-> request :body-params :data)
-        ent-ns (-> request :path-params :entity-type)
+        ent-ns (-> request :params :entity-type)
         id-ident (keyword ent-ns "id")
-        name-required? (d/q '[:find ?name-required .
-                              :in $ ?ident
-                              :where
-                              [?x :db/ident ?ident]
-                              [?ident :wormbase.names/name-required? ?name-required]]
-                            db
-                            id-ident)]
-    (when (and name-required? (s/valid? ::wse/name (:data name)))
-      (throw (ex-info "Name is required."
-                      {:type :user/validation-error
-                       :data data})))
+        ident-ent (d/entity db id-ident)
+        name-ident (keyword ent-ns "name")
+        name-val (name-ident data)]
+    (when (:wormbase.names/entity-type-enabled? ident-ent)
+      (when (:wormbase.names/name-required? ident-ent)
+        (when-not (and name-val (s/valid? ::wse/name name-val))
+          (throw (ex-info "Name is required."
+                          {:type :user/validation-error
+                           :data data})))))
     data))
 
 (defn transform-ident-ref-values
@@ -94,6 +91,12 @@
   [db data]
   (select-keys data (filter (partial d/entid db) (keys data))))
 
+(defn handle-unnamed-or-named [data conformer]
+  (let [[x conformed] (conformer data)]
+    (if (= x :un-named)
+      (dissoc conformed :n)
+      conformed)))
+
 (defn creator
   "Return an endpoint handler for new entity creation."
   [uiident conform-spec-fn event summary-pull-expr & [validate]]
@@ -110,8 +113,8 @@
                    (conform-spec-fn)
                    (wnu/qualify-keys ent-ns)
                    (transform-ident-ref-values)
-                   (names-validator)
-                   (update live-status-attr (fnil identity live-status-val)))
+                   (update live-status-attr (fnil identity live-status-val))
+                   (names-validator))
           cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))
           prov (wnp/assoc-provenance request payload event)
           tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
@@ -123,14 +126,24 @@
               result {:created (wnu/unqualify-keys emap ent-ns)}]
           (created (str "/" ent-ns "/") result))))))
 
-(defn merge-into-ent-data [data ent-data]
-  (merge ent-data data))
+(defn merge-into-ent-data
+  [data ent-data db uiident]
+  (let [uiident-ent (d/entity db uiident)]
+    (merge (reduce-kv (fn [m k v]
+                        (if (and (:wormbase.names/name-required? uiident-ent)
+                                 (str/ends-with? (name k) "name"))
+                          (dissoc m k v)
+                          m))
+                      ent-data
+                      ent-data)
+           data)))
 
 (defn updater
   [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
+          uiident-ent (d/entity db uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
         (let [ent-data (wdb/pull db summary-pull-expr lur)
@@ -141,7 +154,7 @@
                        :data
                        (conform-spec-fn)
                        (wnu/qualify-keys ent-ns)
-                       (merge-into-ent-data ent-data)
+                       (merge-into-ent-data ent-data db uiident)
                        (transform-ident-ref-values)
                        (names-validator))
               resolve-refs-to-db-ids (or ref-resolver-fn
@@ -348,7 +361,7 @@
   (let [entity-types (->> (d/q '[:find ?entity-type ?generic ?enabled ?named
                                  :keys entity-type generic? enabled? named?
                                  :in $
-                                 :where 
+                                 :where
                                  [?et :wormbase.names/entity-type-enabled? ?enabled]
                                  [?et :wormbase.names/entity-type-generic? ?generic]
                                  [?et :wormbase.names/name-required? ?named]
@@ -506,7 +519,8 @@
                                                   id-ident
                                                   (partial wnu/conform-data update-spec)
                                                   event-ident
-                                                  summary-pull-expr)]
+                                                  summary-pull-expr
+                                                  validate-names)]
                       (update-handler request identifier)))}
         :get
         {:summary "Summarise an entity."

@@ -28,6 +28,9 @@
 (defn new-variation [& args]
   (apply api-tc/new "entity/variation" args))
 
+(defn new-sequence-feature [& args]
+  (apply api-tc/new "entity/sequence-feature" args))
+
 (defn check-db [db ident id]
   (let [status-ident (keyword (namespace ident) "status")
         qr (d/q '[:find (count ?e) .
@@ -151,8 +154,8 @@
           response (new-variation data)]
       (t/is (ru-hp/bad-request? response)))))
 
-(t/deftest wrong-variation-data-shape
-  (t/testing "Non-conformant variation data should result in HTTP Bad Request 400"
+(t/deftest wrong-named-generic-entity-data-shape
+  (t/testing "Non-conformant named generic entity data should result in HTTP Bad Request 400"
     (tu/with-installed-generic-entity
       :variation/id
       "WBVar%08d"
@@ -160,8 +163,8 @@
         (let [response (new-variation {})]
           (t/is (ru-hp/bad-request? response)))))))
 
-(t/deftest variation-naming-conflict
-  (t/testing "When a variation already exists with the requested name."
+(t/deftest named-generic-entity-naming-conflict
+  (t/testing "When a named generic entity already exists with the requested name."
     (let [vname (first (gen/sample gsv/name 1))
           sample {:variation/name vname
                   :variation/id (first (gen/sample gsv/id 1))
@@ -174,14 +177,25 @@
           (let [response (new-variation data)]
             (t/is (ru-hp/conflict? response))))))))
 
-(t/deftest naming-variation-with-provenance
-  (t/testing "Naming a variation providing provenance."
+(t/deftest named-generic-entity-with-provenance
+  (t/testing "Naming a generic entity, providing provenance."
     (tu/with-installed-generic-entity
       :variation/id
       "WBVar%08d"
       (fn [_]
         (let [data {:name (first (gen/sample gsv/name 1))}
               response (new-variation {:data data :prov basic-prov})]
+          (t/is (ru-hp/created? response))
+          (t/is (some-> response :body :created :id) (pr-str response)))))))
+
+(t/deftest unnamed-entity-with-provenance
+  (t/testing "Naming a generic entity, providing provenance."
+    (tu/with-installed-generic-entity
+      :sequence-feature/id
+      "WBsf%d"
+      (fn [_]
+        (let [data {}
+              response (new-sequence-feature {:data {} :prov basic-prov})]
           (t/is (ru-hp/created? response))
           (t/is (some-> response :body :created :id) (pr-str response)))))))
 

@@ -19,10 +19,14 @@
 (defn new-variations [data]
   (api-tc/send-request "batch" :post data :sub-path "entity/variation"))
 
-(def summary-pull-expr '[* {:variation/status [:db/ident]}])
+(defn new-sequence-feature [data]
+  (api-tc/send-request "batch" :post data :sub-path "entity/sequence-feature"))
 
-(defn query-batch [db bid]
-  (wnu/query-batch db bid summary-pull-expr))
+
+(defn query-batch [db bid entity-type]
+  (let [status-attr (keyword entity-type "status")
+        pull-expr (conj '[*] {status-attr [:db/ident]})]
+    (wnu/query-batch db bid pull-expr)))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
@@ -57,5 +61,22 @@
           (t/is (every? (partial = :variation.status/live) xs))
           (t/is (ru-hp/ok? response2))
           (t/is (= "new-variation"
+                   (some-> response2 :body :what))
+                (pr-str (:body response2))))))))
+
+(t/deftest batch-success-un-named
+  (t/testing "Batch of new un-named entities is successful"
+    (let [bdata {:n 10}
+          response (new-sequence-feature {:data bdata :prov basic-prov})]
+      (t/is (ru-hp/created? response) (-> response :status str))
+      (let [bid (get-in response [:body :id] "")]
+        (t/is (uuid/uuid-string? bid) (pr-str response))
+        (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid) "sequence-feature")
+              xs (map #(get-in % [:sequence-feature/status :db/ident]) batch)
+              response2  (api-tc/summary "batch" bid)]
+          (t/is (seq xs))
+          (t/is (every? (partial = :sequence-feature.status/live) xs))
+          (t/is (ru-hp/ok? response2))
+          (t/is (= "new-sequence-feature"
                    (some-> response2 :body :what))
                 (pr-str (:body response2))))))))

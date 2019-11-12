@@ -6,6 +6,10 @@
    [spec-tools.core :as stc]
    [wormbase.specs.provenance :as wsp]))
 
+(def ^{:doc "Max number of un-named entities requestable."
+       :dynamic true}
+  *max-requestable-un-named* 1000000)
+
 (s/def ::id-template (stc/spec
                       {:spec (s/and string?
                                     #(str/starts-with? % "WB")
@@ -67,14 +71,24 @@
 
 (s/def ::status-changed (stc/spec {:spec (s/keys :req-un [::status])}))
 
-(s/def ::new (stc/spec {:spec (s/keys :req-un [::name])
-                        :description "The data requried to store a new entity."}))
+
+(s/def ::n (stc/spec {:spec (s/and pos-int? #(<= % *max-requestable-un-named*))
+                      :description (str "The number of new (u-named) entiies to create. "
+                                        "A number between 1 and the maximum: "
+                                        *max-requestable-un-named* " .")
+                      :swagger/example 100}))
+
+(s/def ::count (s/keys :req-un [::n]))
+
+(s/def ::new (stc/spec {:spec (s/keys :opt-un [::name])
+                        :description "The data for a new entity."}))
 
 (s/def ::update (stc/spec {:spec ::new
                            :description "The data required to update a entity."}))
 
 (s/def ::new-batch (stc/spec
-                    {:spec (s/coll-of ::new :min-count 1)
+                    {:spec (s/or :un-named ::count
+                                 :named (s/coll-of ::new :min-count 1))
                      :description "A collection of mappings specifying new entitys to be created.."}))
 
 (s/def ::update-batch (stc/spec

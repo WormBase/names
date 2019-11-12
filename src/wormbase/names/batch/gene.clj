@@ -41,6 +41,9 @@
         bsize (wnbg/batch-size payload cdata)]
       (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
 
+(defn map-conform-data-drop-labels [spec data]
+  (map second (wnu/conform-data spec data)))
+
 (defn transform-ident-ref-value [k m]
   (if (k m)
     (wne/transform-ident-ref-value k m)
@@ -98,7 +101,7 @@
                     (wnbg/new-entities :gene/id
                                        event-type
                                        ::wsg/new-batch
-                                       wnbg/map-conform-data-drop-labels
+                                       map-conform-data-drop-labels
                                        (partial names-validator request)
                                        ["cgc-name" "sequence-name"]
                                        request)))}
