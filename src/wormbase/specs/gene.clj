@@ -26,7 +26,7 @@
                                       :description "The sequence name of the Gene."}))
 
 (s/def :gene/biotype (stc/spec {:spec ::wsb/identifier
-                                :swagger/example "biotype/cds"
+                                :swagger/example "cds"
                                 :description "The biotype of gene."}))
 
 (s/def :gene/species (stc/spec {:spec ::wss/identifier
