@@ -38,7 +38,7 @@
     (let [cdata (->> data
                      (stc/conform spec)
                      (map wne/transform-ident-ref-values))
-        bsize (wnbg/batch-size payload cdata)]
+        bsize (wnbg/batch-size cdata)]
       (ok (wbids-batch/merge-genes conn cdata prov :batch-size bsize)))))
 
 (defn map-conform-data-drop-labels [spec data]
@@ -64,7 +64,7 @@
     (when (s/invalid? cdata)
       (bad-request! {:data data
                      :problems (expound/expound-str spec data)}))
-    (let [bsize (wnbg/batch-size payload data)]
+    (let [bsize (wnbg/batch-size data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
 (defn names-validator [request data]
