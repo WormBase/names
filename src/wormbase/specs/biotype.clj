@@ -4,12 +4,6 @@
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]))
 
-(s/def ::identifier (stc/spec ;; (s/and
-                     {:spec string?}
-                                     ;; (fn lower-case? [bts]
-                                     ;;   (every? #(Character/isLowerCase %) (name bts)))))
-                               ;; )
-  ))
-
+(s/def ::identifier (stc/spec {:spec string?}))
 
   
