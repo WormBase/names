@@ -1,5 +1,10 @@
 # Change-log
 
+## [0.9.5]
+ - Removed payload from consideration when calcualting batch-size.
+ - Minor swagger docs fixes.
+ - Added doc-strings.
+
 ## [0.9.4]
  - Now use npm instead of yarn for managing the client application.
  - Fixed bugs in retract names endpoints (batch API)
