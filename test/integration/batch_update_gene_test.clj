@@ -112,3 +112,18 @@
             (t/is (ru-hp/ok? response) (pr-str response))
             (let [bid (get-in response [:body :updated :id] "")]
               (t/is (uuid/uuid-string? bid)))))))))
+
+(t/deftest update-uncloned-gene-with-cgc-name
+  (t/testing "Test updating an existing clone gene adding just the cgc-name with a specific payload."
+    (let [samples [#:gene{:species [:species/latin-name "Caenorhabditis elegans"]
+                          :sequence-name "F23H11.5"
+                          :biotype :biotype/cds
+                          :id "WBGene00000263"}]]
+      (tu/with-gene-fixtures
+        samples
+        (fn [conn]
+          (let [response (update-genes {:prov {},
+                                        :data [{:species "Caenorhabditis elegans",
+                                                :cgc-name "xxx-1",
+                                                :id "WBGene00000263"}]})]
+            (t/is (ru-hp/ok? response))))))))
