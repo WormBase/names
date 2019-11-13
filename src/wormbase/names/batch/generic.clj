@@ -24,31 +24,50 @@
 
 (s/def ::prov map?)
 
-(defn conform-data-drop-labels [spec data]
-  (second (wnu/conform-data spec data)))
-
 (def ^:private default-batch-size 100)
 
-(defn assign-status [entity-type to-status data]
+(defn conform-data-drop-labels
+  "Conform data to an 'or' spec, striping away the label.
+
+  An 'or' spec is a spec defined with `clojure.spec.alpha/or`."
+  [spec data]
+  (second (wnu/conform-data spec data)))
+
+(defn assign-status
+  "Assign a status for an entity type in `data`.
+
+  Returns a map."
+  [entity-type to-status data]
   (let [status-ident (keyword entity-type "status")]
     (assoc data status-ident to-status)))
 
-(defn batch-size [payload coll]
+(defn batch-size
+  "Calculate a batch size given the input data collection `coll`.
+
+  If the collection is smaller that the default batch size, the the default (100) will be used,
+  otherwise the collection size divided by the default batch size."
+  [coll]
   (let [coll-size (count coll)
         cbsize (int (/ coll-size (min coll-size default-batch-size)))]
     (if (< coll-size default-batch-size)
       default-batch-size
       (int (/ coll-size default-batch-size)))))
 
-(defn batcher [impl uiident event-type spec data-transform request]
+(defn batcher
+  "Perform batching given an implementation function `impl`, applying `data-transform` to
+  the data in the `:body-params` of the request."
+  [impl uiident event-type spec data-transform request]
   (let [{conn :conn payload :body-params} request
         {data :data} payload
         prov (wnp/assoc-provenance request payload event-type)
         cdata (data-transform spec data)
-        bsize (batch-size payload cdata)]
+        bsize (batch-size cdata)]
     (impl conn uiident cdata prov :batch-size bsize)))
 
-(defn query-provenance [db bid pull-expr]
+(defn query-provenance
+  "Query the database for the provenance associated with a given batch identifier `bid`,
+  and return a map of the provenance data associated as described by `pull-expr`."
+  [db bid pull-expr]
   (some->> (d/q '[:find [?tx ...]
                   :in $ ?bid
                   :where
@@ -58,10 +77,16 @@
            (map (partial wdb/pull db pull-expr))
            (map #(update %
                          :provenance/when
-                         (fn [v] (jt/zoned-date-time v (jt/zone-id)))))
+                         (fn [v]
+                           (jt/zoned-date-time v (jt/zone-id)))))
            (first)))
 
-(defn ids-created [log db uiident batch-id name-attrs]
+(defn ids-created
+  "Given a uniquely identifying ident (`uiident`) and a `batch-id` value,
+  find the identifiers created by that batch.
+
+  Return a sequence of maps with the attribute/value pairs (identifiers)."
+  [log db uiident batch-id name-attrs]
   (->> (d/q '[:find ?tx .
               :in $ ?bid
               :where
@@ -80,7 +105,21 @@
                    (apply merge))))))
 
 (defn new-entities
-  "Create a batch of new entities."
+  "Create a batch of new entities.
+
+  Accepts a batch of new entities via a HTTP request as described by a given `spec`.
+  This func should return the new identifiers created.
+  It may raise an exception if transacting the batch would cause a conflict, or if
+  any referenced entities are missing in the database.
+
+  - uiident : Uniquely Identifing Ident - A datomic entity attribute.
+  - event-type: A datomic ident that identifies the kind of event.
+  - spec: The spec desribing the shape of the data.
+  - conformer: function taking spec and data, responsible for coercion of input data.
+  - validator: function to validate the coerced data.
+  - name-attrs: A set of attributes desciring the names for the entities in input data.
+  - request: The HTTP request.
+  "
   [uiident event-type spec conformer validator name-attrs request]
   (let [{conn :conn db :db} request
         entity-type (namespace uiident)
@@ -121,6 +160,16 @@
     (created (str "/api/batch/" (:id result)) result)))
 
 (defn update-entities
+  "Perform a batch update.
+
+  - uiident : Uniquely Identifing Ident - A datomic entity attribute.
+  - item-pull-expr: a datomic pull expression describing the data for each entity
+                    that's fetched as defaults when the data isn't supplied in the request.
+  - event-type: A datomic ident that identifies the kind of event.
+  - spec: The spec desribing the shape of the data.
+  - conformer: function taking spec and data, responsible for coercion of input data.
+  - validator: function to validate the coerced data.
+  - request: the HTTP request."
   [uiident item-pull-expr event-type spec conformer validator request]
   ;; TODO: conformer no longer applied. Is it needeed?
   (let [ent-ns (namespace uiident)
@@ -180,7 +229,7 @@
       (let [cdata (some->> conformed
                            (map #(wnu/qualify-keys % ent-type))
                            (filter #(some? (attr %))))
-            bsize (batch-size payload cdata)
+            bsize (batch-size cdata)
             result (wbids-batch/retract
                     conn
                     uiident
