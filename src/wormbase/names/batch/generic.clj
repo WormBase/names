@@ -160,8 +160,7 @@
                              (:id batch-result)
                              name-attrs)
         result (-> batch-result
-                   (assoc :ids (map #(wnu/unqualify-keys % entity-type) new-ids)
-                          :id-key uiident)
+                   (assoc :ids (map #(wnu/unqualify-keys % entity-type) new-ids))
                    (wnu/unqualify-keys "batch"))]
     (created (str "/api/batch/" (:id result)) result)))
 
