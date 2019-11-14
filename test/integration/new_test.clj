@@ -193,6 +193,9 @@
     (tu/with-installed-generic-entity
       :sequence-feature/id
       "WBsf%d"
+      tu/provenance
+      nil
+      false
       (fn [_]
         (let [data {}
               response (new-sequence-feature {:data {} :prov basic-prov})]

@@ -15,6 +15,7 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
+   [wormbase.names.validation :as wnv]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.entity :as wse]
    [wormbase.specs.provenance :as wsp]
@@ -130,18 +131,23 @@
                                unnamed-status-repeater (fn [x n]
                                                          (repeat n
                                                                  (assign-status entity-type live-status x)))
-                               conformed (conformer spec data)]
-                           (if named?
-                             (some->> conformed
-                                      (map #(wnu/qualify-keys % entity-type))
-                                      (map wne/transform-ident-ref-values)
-                                      (validator)
-                                      (map (partial assign-status entity-type live-status)))
-                             (-> (dissoc conformed :n)
-                                 (wnu/qualify-keys entity-type)
-                                 (wne/transform-ident-ref-values)
-                                 (validator)
-                                 (unnamed-status-repeater (:n conformed))))))
+                               conformed (conformer spec data)
+                               transformed (if named?
+                                             (some->> conformed
+                                                      (map #(wnu/qualify-keys % entity-type))
+                                                      (map wne/transform-ident-ref-values)
+                                                      (map (partial assign-status entity-type live-status)))
+                                             (-> (dissoc conformed :n)
+                                                 (wnu/qualify-keys entity-type)
+                                                 (wne/transform-ident-ref-values)
+                                                 (unnamed-status-repeater (:n conformed))))]
+                           (when-let [errors (some->> (map validator transformed)
+                                                      (filter identity)
+                                                      (seq))]
+                             (throw (ex-info "One ore more invalid names found."
+                                             {:type :user/validation-error
+                                              :errors errors})))
+                           transformed))
         batch-result (batcher wbids-batch/new
                               uiident
                               event-type
@@ -175,19 +181,23 @@
   (let [ent-ns (namespace uiident)
         data-transform (fn valdiating-conformer [_ data]
                          (let [{db :db} request
-                               qdata (->> data
-                                          (map #(wnu/qualify-keys % ent-ns))
-                                          (map wne/transform-ident-ref-values)
-                                          (validator))
-                               db-data (map #(wdb/pull db item-pull-expr (find % uiident)) qdata)]
-                           (map #(merge %1 %2) db-data qdata)))
-        result (batcher wbids-batch/update
-                        uiident
-                        event-type
-                        spec
-                        data-transform
-                        request)]
-    (ok {:updated result})))
+                               qdata (map #(wnu/qualify-keys % ent-ns) data)
+                               db-data (map #(wdb/pull db item-pull-expr (find % uiident)) qdata)
+                               transformed (->> qdata
+                                                (map merge db-data)
+                                                (map wne/transform-ident-ref-values))]
+                           (when-let [errors (some->> (map validator transformed)
+                                                      (filter identity)
+                                                      (seq))]
+                             (throw (ex-info "One or more invalid names found."
+                                            {:errors errors})))
+                           transformed))]
+    (ok {:updated (batcher wbids-batch/update
+                           uiident
+                           event-type
+                           spec
+                           data-transform
+                           request)})))
 
 (defn convert-to-ids [db entity-type m]
   (let [k (-> m keys first)
@@ -288,7 +298,7 @@
                                      event-ident
                                      ::wse/update-batch
                                      wnu/conform-data
-                                     identity
+                                     (partial wnv/validate-names request)
                                      request)))}
       :post
       {:summary "Assign identifiers and associate names, creating new entities."
@@ -307,7 +317,7 @@
                                   event-ident
                                   ::wse/new-batch
                                   conform-data-drop-labels
-                                  identity
+                                  (partial wnv/validate-names request)
                                   name-attrs
                                   request)))}
       :delete

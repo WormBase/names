@@ -33,19 +33,19 @@
   m)
 
 (defmethod validate-names :default [request data]
-  (let [db (:db request)
-        ent-ns (-> request :params :entity-type)
-        id-ident (keyword ent-ns "id")
-        ident-ent (d/entity db id-ident)
-        name-ident (keyword ent-ns "name")
-        name-val (name-ident data)]
-    (when (:wormbase.names/entity-type-enabled? ident-ent)
-      (when (:wormbase.names/name-required? ident-ent)
-        (when-not (and name-val (s/valid? ::wse/name name-val))
-          (throw (ex-info "Name is required."
-                          {:type :user/validation-error
-                           :data data})))))
-    data))
+  (when-not (some-> request :params :force)
+    (let [db (:db request)
+          ent-ns (-> request :params :entity-type)
+          id-ident (keyword ent-ns "id")
+          ident-ent (d/entity db id-ident)
+          name-ident (keyword ent-ns "name")
+          name-val (name-ident data)]
+      (when (:wormbase.names/entity-type-enabled? ident-ent)
+        (when (:wormbase.names/name-required? ident-ent)
+          (when-not (and name-val (s/valid? ::wse/name name-val))
+            [{:name "name"
+              :ident name-ident
+              :value name-val}]))))))
 
 (defn transform-ident-ref-values
   [data & {:keys [skip-keys]
@@ -113,18 +113,21 @@
                    (conform-spec-fn)
                    (wnu/qualify-keys ent-ns)
                    (transform-ident-ref-values)
-                   (update live-status-attr (fnil identity live-status-val))
-                   (names-validator))
-          cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))
-          prov (wnp/assoc-provenance request payload event)
-          tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
-          tx-res @(d/transact-async conn tx-data)
-          dba (:db-after tx-res)]
-      (when dba
-        (let [new-id (wdb/extract-id tx-res uiident)
-              emap (wdb/pull dba summary-pull-expr [uiident new-id])
-              result {:created (wnu/unqualify-keys emap ent-ns)}]
-          (created (str "/" ent-ns "/") result))))))
+                   (update live-status-attr (fnil identity live-status-val)))]
+      (when-let [errors (names-validator data)]
+        (throw (ex-info "One ore missing or invalid names found"
+                        (merge {:type :user/validation-error}
+                               errors))))
+      (let [cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))
+            prov (wnp/assoc-provenance request payload event)
+            tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
+            tx-res @(d/transact-async conn tx-data)
+            dba (:db-after tx-res)]
+        (when dba
+          (let [new-id (wdb/extract-id tx-res uiident)
+                emap (wdb/pull dba summary-pull-expr [uiident new-id])
+                result {:created (wnu/unqualify-keys emap ent-ns)}]
+            (created (str "/" ent-ns "/") result)))))))
 
 (defn merge-into-ent-data
   [data ent-data db uiident]
@@ -155,23 +158,26 @@
                        (conform-spec-fn)
                        (wnu/qualify-keys ent-ns)
                        (merge-into-ent-data ent-data db uiident)
-                       (transform-ident-ref-values)
-                       (names-validator))
-              resolve-refs-to-db-ids (or ref-resolver-fn
-                                         (fn noop-resolver [_ data]
-                                           data))
-              cdata (->> data
-                         (resolve-refs-to-db-ids db)
-                         (into {})
-                         (prepare-data-for-transact db))
-              prov (wnp/assoc-provenance request payload event)
-              txes [['wormbase.ids.core/cas-batch lur cdata] prov]
-              tx-result @(d/transact-async conn txes)]
+                       (transform-ident-ref-values))]
+          (when-let [errors (names-validator data)]
+            (throw (ex-info "One or more invalid names found."
+                            {:type :user/validation-error
+                             :errors errors})))
+          (let [resolve-refs-to-db-ids (or ref-resolver-fn
+                                           (fn noop-resolver [_ data]
+                                             data))
+               cdata (->> data
+                          (resolve-refs-to-db-ids db)
+                          (into {})
+                          (prepare-data-for-transact db))
+               prov (wnp/assoc-provenance request payload event)
+               txes [['wormbase.ids.core/cas-batch lur cdata] prov]
+               tx-result @(d/transact-async conn txes)]
           (when-let [db-after (:db-after tx-result)]
             (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
               (ok {:updated (wnu/unqualify-keys updated ent-ns)})
               (not-found
-               (format "%s '%s' does not exist" ent-ns (last lur))))))))))
+               (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
 
 (defn status-changer
   "Return a handler to change the status of an entity to `to-status`.
@@ -488,7 +494,11 @@
                         event-ident (keyword "event" (str "new-" entity-type))
                         conformer (partial wnu/conform-data ::wse/new)
                         spe (make-summary-pull-expr entity-type)
-                        new-entity (creator id-ident conformer event-ident spe)]
+                        new-entity (creator id-ident
+                                            conformer
+                                            event-ident
+                                            spe
+                                            validate-names)]
                     (new-entity request)))}})
     (sweet/context "/:identifier" []
       :tags ["entity"]

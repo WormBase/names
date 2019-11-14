@@ -67,10 +67,6 @@
     (let [bsize (wnbg/batch-size data)]
       (ok (wbids-batch/split-genes conn cdata prov :batch-size bsize)))))
 
-(defn names-validator [request data]
-  (map (fn [dx]
-         (wnv/validate-names request dx)) data))
-
 (def routes
   (sweet/context "/gene" []
     :tags ["batch" "gene"]
@@ -83,11 +79,11 @@
                                   :prov ::prov}}
        :handler (fn update-handler [request]
                   (wnbg/update-entities :gene/id
-                                        wng/summary-pull-expr
+                                        [{:gene/species [[:species/latin-name]]}]
                                         :event/update-gene
                                         ::wsg/update-batch
                                         wnu/conform-data
-                                        (partial names-validator request)
+                                        (partial wnv/validate-names request)
                                         request))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
@@ -102,7 +98,7 @@
                                        event-type
                                        ::wsg/new-batch
                                        map-conform-data-drop-labels
-                                       (partial names-validator request)
+                                       (partial wnv/validate-names request)
                                        ["cgc-name" "sequence-name"]
                                        request)))}
       :delete

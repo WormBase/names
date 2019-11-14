@@ -281,10 +281,12 @@
        (test-fn conn)))))
 
 (defn with-installed-generic-entity
-  ([entity-type id-template provenance-fn fixtures test-fn]
+  ([entity-type id-template provenance-fn fixtures named? test-fn]
    (let [conn (db-testing/fixture-conn)]
-     (wne/register-entity-schema conn entity-type id-template (provenance-fn {}))
+     (wne/register-entity-schema conn entity-type id-template (provenance-fn {}) true true named?)
      (with-fixtures conn (or fixtures []) test-fn)))
+  ([entity-type id-template provenance-fn fixtures test-fn]
+   (with-installed-generic-entity entity-type id-template provenance-fn fixtures true test-fn))
   ([entity-type id-template fixtures test-fn]
    (with-installed-generic-entity entity-type id-template provenance fixtures test-fn))
   ([entity-type id-template test-fn]
