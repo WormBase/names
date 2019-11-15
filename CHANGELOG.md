@@ -1,5 +1,8 @@
 # Change-log
 
+## [0.9.6]
+ - Fixed batch update bugs.
+ 
 ## [0.9.5]
  - Removed payload from consideration when calcualting batch-size.
  - Minor swagger docs fixes.
