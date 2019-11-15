@@ -23,6 +23,7 @@
    [wormbase.names.util :as wnu]
    [wormbase.names.validation :refer [validate-names]]
    [wormbase.specs.common :as wsc]
+   [wormbase.specs.validation :as wsv]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
    [wormbase.ids.core :as wbids]))
@@ -64,9 +65,8 @@
                       (when-not (re-matches regexp gname)
                         (when-not (and (empty? (get data gname))
                                        (= gname :gene/cgc-name))
-                          {:name gname
-                           :ident name-ident
-                           :value (get data gname)})))))
+                          {:name (name name-ident)
+                           :value gname})))))
              (filter identity)
              (seq))))))
 
@@ -384,7 +384,7 @@
     (sweet/resource
      {:get
       {:summary "Find genes by any name."
-       :responses (wnu/response-map ok {:schema ::wsg/find-result})
+       :responses (wnu/http-responses-for-read {:schema ::wsg/find-result})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-gene
        :handler (fn find-by-any-name [request]
@@ -394,7 +394,7 @@
        :x-name ::new-gene
        :parameters {:body-params {:data ::wsg/new :prov ::wsp/provenance}}
        :responses (wnu/response-map created {:schema {:created ::wsg/created}}
-                                    bad-request {:schema ::wsc/error-response})
+                                    bad-request {:schema ::wsv/error-response})
        :handler (fn handle-new [request]
                   (let [new-gene (wne/creator :gene/id
                                               (partial wnu/conform-data-drop-label ::wsg/new)
@@ -459,7 +459,7 @@
      {:get
       {:summary "Information about a given gene."
        :x-name ::summary
-       :responses (wnu/response-map ok {:schema ::wsg/summary})
+       :responses (wnu/http-responses-for-read {:schema ::wsg/summary})
        :handler (fn [request]
                   ((wne/summarizer identify
                                    summary-pull-expr
@@ -473,6 +473,7 @@
                                   :prov ::wsp/provenance}}
        :responses (-> wnu/default-responses
                       (dissoc conflict)
+                      (assoc bad-request {:schema ::wsv/error-response})
                       (wnu/response-map))
        :handler (fn [request]
                   (let [update-gene (wne/updater identify

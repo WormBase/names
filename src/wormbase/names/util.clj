@@ -9,7 +9,7 @@
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request conflict header ok]]
+   [ring.util.http-response :refer [bad-request conflict header not-modified ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]))
@@ -106,8 +106,14 @@
 (def not-live? #(not (live? %)))
 
 (def default-responses
-  {bad-request {:schema {:errors ::wsc/error-response}}
-   conflict {:schema {:conflict ::wsc/error-response}}})
+  {bad-request {:schema {:errors ::wsc/error-response}
+                :description "The request input data was found to be invalid."}
+   conflict {:schema {:conflict ::wsc/error-response}
+             :description "Processing the request data caused a conflict with an existing resource."}
+   not-modified {:schema {}
+                 :description "The content has not changed since it was last requested."
+                 :headers {:etag string?
+                           :if-none-match string?}}})
 
 (defn response-map
   ([m]
@@ -115,11 +121,19 @@
   ([k v & kvs]
    (response-map (apply (partial assoc default-responses k v) kvs))))
 
+
+(defn http-responses-for-read [swagger-schema]
+  (-> default-responses
+      (assoc ok swagger-schema)
+      (dissoc bad-request)
+      (dissoc conflict)
+      (response-map)))
+
 (defn conform-data [spec data]
   (let [conformed (s/conform spec data)]
     (if (s/invalid? conformed)
       (let [problems (expound-str spec data)]
-        (throw (ex-info "Not valid according to spec."
+        (throw (ex-info "Not valid according to specification."
                         {:problems problems
                          :type :user/validation-error
                          :data data})))

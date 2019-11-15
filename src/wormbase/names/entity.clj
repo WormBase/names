@@ -44,7 +44,6 @@
         (when (:wormbase.names/name-required? ident-ent)
           (when-not (and name-val (s/valid? ::wse/name name-val))
             [{:name "name"
-              :ident name-ident
               :value name-val}]))))))
 
 (defn transform-ident-ref-values

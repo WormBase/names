@@ -14,7 +14,7 @@
    (sweet/context "" []
      (sweet/GET "/:batch-id" request
        :summary "Summarise a given batch operation."
-       :responses (wnu/response-map ok {:schema ::wsb/summary})
+       :responses (wnu/http-responses-for-read {:schema ::wsb/summary})
        :path-params [batch-id :- :batch/id]
        (generic/summary request batch-id wnp/pull-expr)))))
 

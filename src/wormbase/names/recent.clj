@@ -129,7 +129,7 @@
 (def routes (sweet/routes
              (sweet/context "/recent" []
                :tags ["recent"]
-               :responses {200 {:schema {:activities ::wsr/activities}}}
+               :responses (wnu/http-responses-for-read {:schema {:activities ::wsr/activities}})
                :query-params [{from :- ::wsr/from nil}
                               {until :- ::wsr/until nil}]
                :middleware [rmnm/wrap-not-modified]

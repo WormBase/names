@@ -42,5 +42,5 @@
                 {:get
                  {:summary "Counts of the number of entities in the system."
                   :x-name ::stats-summary-all
-                  :responses (wnu/response-map ok {:schema ::wsst/summary})
+                  :responses (wnu/http-responses-for-read {:schema ::wsst/summary})
                   :handler handle-summary}}))))

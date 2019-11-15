@@ -78,7 +78,11 @@
                (if-let [problems (some-> data* :problems)]
                  (assoc data* :problems (prettify-spec-error-maybe spec data*))
                  data*)
-               data*)
+               (-> data*
+                   (update :type (fn [x]
+                                   (if (keyword? x)
+                                     (name x)
+                                     x)))))
         body (assoc-error-message info exc :message message)]
     (respond-bad-request request body)))
 

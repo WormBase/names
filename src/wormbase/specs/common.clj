@@ -6,15 +6,16 @@
    [spec-tools.spec :as sts]))
 
 (s/def ::info (stc/spec {:spec sts/map?
-                         :swagger/example {:problems ["A sequence of clojure.spec error data."]}
+                         :swagger/example {:problems ["clojure.spec error data."]}
                          :description "Information pertaining to an error."}))
 
 (s/def ::message (stc/spec {:spec sts/string?
-                            :swagger/example "The event could not be process due to X."
+                            :swagger/example "The request could not be processed due to X."
                             :description "The error message."}))
 
-(s/def ::error-response (stc/spec {:spec (s/keys :req-un [::info ::message])
-                                   :description "A mapping describing an error response."}))
+(s/def ::error-response (stc/spec {:spec (s/keys :req-un [::message]
+                                                 :opt-un [::info])
+                                   :description "A mapping describing a general error response."}))
 
 (s/def ::find-term (stc/spec {:spec (s/and string? (complement str/blank?))
                               :swagger/example "unc-2"
