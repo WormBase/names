@@ -17,9 +17,7 @@
 
 (s/def ::ids (s/and (s/coll-of map?)))
 
-(s/def ::id-key sts/keyword?)
-
-(s/def ::created (s/merge ::success-response (s/keys :req-un [::ids ::id-key])))
+(s/def ::created (s/merge ::success-response (s/keys :req-un [::ids])))
 
 (s/def ::updated ::success-response)
 
@@ -28,7 +26,8 @@
                                                              :provenance/who]))))
 (s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
 
-(s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed}) ::success-response)))
+(s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed :retracted})
+                                            ::success-response)))
 
 (s/def ::merge-into :gene/id)
 (s/def ::merge-from :gene/id)
