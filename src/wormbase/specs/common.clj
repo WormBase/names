@@ -26,7 +26,7 @@
 (s/def ::find-request (stc/spec {:spec (s/keys :req-un [::pattern])
                                  :description "A mapping containing the search term pattern."}))
 
-(s/def ::matches (s/coll-of map? :min-count 1))
+(s/def ::matches (s/coll-of map?))
 
 (s/def ::find-response (stc/spec {:spec (s/keys :req-un [::matches])
                                   :description "The results of a find request."}))
