@@ -1,5 +1,10 @@
 # Change-log
 
+## [0.9.8]
+ - Improved auto-generated swagger docs.
+ - Moved not-modified middleware to top level (any GET request may
+   result in 304 if nothing's changed to a given resource).
+
 ## [0.9.7]
  - Improved generated swagger docs.
 
