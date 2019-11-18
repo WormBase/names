@@ -78,7 +78,7 @@
      {:get
       {:summary "Retrieve of attributes held for each species in system."
        :x-name ::list-species
-       :responses (wnu/response-map ok {:schema ::wss/listing})
+       :responses (wnu/http-responses-for-read {:schema ::wss/listing})
        :handler (fn li [request]
                   (list-items request))}
       :post
@@ -97,7 +97,7 @@
      {:get
       {:summary "Species details held in the system."
        :x-name ::species-summary
-       :responses (wnu/response-map ok {:schema ::wss/item})
+       :responses (wnu/http-responses-for-read {:schema ::wss/item})
        :handler (fn handle-summary [request]
                   (let [summarize (wne/summarizer (partial wne/identify ::wss/identifier "species")
                                                   '[*]

@@ -21,11 +21,6 @@
 
 (s/def ::updated ::success-response)
 
-(s/def ::status-change (stc/spec (s/nilable (s/keys :opt-un [:provenance/why
-                                                             :provenance/when
-                                                             :provenance/who]))))
-(s/def ::status-change (stc/spec (s/coll-of ::status-change :min-count 1)))
-
 (s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed :retracted})
                                             ::success-response)))
 

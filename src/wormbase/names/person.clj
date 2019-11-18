@@ -120,7 +120,7 @@
        {:summary "Create a new person."
         :x-name ::new-person
         :parameters {:body-params ::wsp/summary}
-        :responses {201 {:schema ::wsp/summary}}
+        :responses (wnu/response-map created {:schema ::wsp/summary})
         :handler create-person}}))
    (sweet/context "/person/:identifier" []
      :tags ["person"]
@@ -129,17 +129,17 @@
       {:get
        {:summary "Summaraise a person."
         :x-name ::person-summary
-        :responses {200 {:schema ::wsp/summary}}
+        :responses (wnu/http-responses-for-read {:schema ::wsp/summary})
         :handler (wrap-id-validation about-person identifier)}
        :put
        {:summary "Update information about a person."
         :x-name ::update-person
-        :responses {200 {:schema ::wsp/summary}}
+        :responses (wnu/response-map ok {:schema ::wsp/summary})
         :parameters {:body-params ::wsp/update}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
         :x-name ::deactivate-person
-        :responses {200 {:schema ::wsp/summary}}
+        :responses (wnu/response-map ok {:schema ::wsp/summary})
         :handler (wrap-id-validation deactivate-person identifier)}}))))
 

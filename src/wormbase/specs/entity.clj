@@ -112,6 +112,10 @@
 (s/def ::created (stc/spec {:spec (s/keys :req-un [::id])
                             :description "A mapping describing a newly created entity."}))
 
+(s/def ::message string?)
+
+(s/def ::schema-created (stc/spec (s/keys :req-un [::message])))
+
 (s/def ::names (stc/spec {:spec (s/coll-of (s/keys :req-un [::name]) :min-count 1)
                           :description "A collection of entity names."}))
 

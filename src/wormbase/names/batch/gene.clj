@@ -104,7 +104,7 @@
       :delete
       {:summary "Kill genes."
        :x-name ::batch-kill-genes
-       :responses (wnu/response-map ok {:schema ::wsb/status-changed})
+       :responses wnbg/status-changed-responses
        :parameters {:body-params {:data ::wsg/kill-batch
                                   :prov ::prov}}
        :handler (fn kill-handler [request]
@@ -116,6 +116,7 @@
                    request))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
+      :responses wnbg/status-changed-responses
       :body [data {:data ::wsg/resurrect-batch}
              prov {:prov :wsp/provenance}]
       (wnbg/change-entity-statuses :gene/id
@@ -125,6 +126,7 @@
                                    request))
     (sweet/POST "/suppress" request
       :summary "Suppress genes."
+      :responses wnbg/status-changed-responses
       :body [data {:data ::wsg/suppress-batch}
              prov {:prov ::wsp/provenance}]
       (wnbg/change-entity-statuses :gene/id
@@ -134,6 +136,7 @@
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
+      :responses wnbg/status-changed-responses
       :body [data {:data ::wsg/cgc-names}
              prov {:prov ::wsp/provenance}]
       (wnbg/retract-attr-vals :gene/cgc-name

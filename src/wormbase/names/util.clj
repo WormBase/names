@@ -9,10 +9,11 @@
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request conflict header not-modified ok]]
+   [ring.util.http-response :refer [bad-request conflict header not-found not-modified ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
-   [wormbase.specs.common :as wsc]))
+   [wormbase.specs.common :as wsc]
+   [wormbase.specs.validation :as wsv]))
 
 (defn- nsify [domain kw]
   (if (namespace kw)
@@ -105,15 +106,15 @@
 
 (def not-live? #(not (live? %)))
 
-(def default-responses
-  {bad-request {:schema {:errors ::wsc/error-response}
+(def ^{:doc (str "The set of default responses used to generate swagger documentation "
+                 "for compojure.api endpoint definitions.")}
+  default-responses
+  {bad-request {:schema {:errors ::wsv/error-response}
                 :description "The request input data was found to be invalid."}
    conflict {:schema {:conflict ::wsc/error-response}
              :description "Processing the request data caused a conflict with an existing resource."}
-   not-modified {:schema {}
-                 :description "The content has not changed since it was last requested."
-                 :headers {:etag string?
-                           :if-none-match string?}}})
+   not-found {:schema {:missing ::wsc/error-response}
+              :description "An entity referred to in the request data is missing in the database."}})
 
 (defn response-map
   ([m]
@@ -125,6 +126,10 @@
 (defn http-responses-for-read [swagger-schema]
   (-> default-responses
       (assoc ok swagger-schema)
+      (assoc not-modified {:schema map?
+                           :description "The content has not changed since it was last requested."
+                           :headers {:etag string?
+                                     :if-none-match string?}})
       (dissoc bad-request)
       (dissoc conflict)
       (response-map)))

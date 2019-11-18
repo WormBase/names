@@ -444,13 +444,13 @@
     (sweet/resource
      {:get
       {:summary "List all simple entity types."
-       :responses (-> wnu/default-responses
-                      (assoc ok {:schema {:entity-types ::wse/schema-listing}})
-                      (wnu/response-map))
+       :responses (wnu/http-responses-for-read
+                   {:schema {:entity-types ::wse/schema-listing}})
        :handler (fn handle-list-entity-schemas [request]
                   (list-entity-schemas request))}
       :post
       {:summary "Add a new simple entity type to the system."
+       :responses (wnu/response-map created {:schema ::wse/schema-created})
        :parameters {:body-params {:data ::wse/new-schema
                                   :prov ::wsp/provenance}}
        :handler (fn register-entity-schema [request]
@@ -469,7 +469,8 @@
        :handler (fn handle-disable-ent-type [request]
                   (disable-entity-type request entity-type))}
       :get
-      {:summary "Find variations by any unique identifier."
+      {:summary>> "Find variations by any unique identifier."
+       :responses (wnu/http-responses-for-read {:schema ::wsc/find-response})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-entities
        :handler (finder entity-type)}
@@ -534,9 +535,7 @@
         :get
         {:summary "Summarise an entity."
          :x-name ::about-entity
-         :responses (-> wnu/default-responses
-                        (assoc ok {:schema ::wse/summary})
-                        (wnu/response-map))
+         :responses (wnu/http-responses-for-read {:schema ::wse/summary})
          :handler (fn handle-entity-summary [request]
                     (let [summary-pull-expr (make-summary-pull-expr entity-type)
                           summarize (summarizer (partial identify ::wse/identifier entity-type)

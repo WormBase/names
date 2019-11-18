@@ -6,7 +6,7 @@
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [java-time :as jt]
-   [ring.util.http-response :refer [bad-request created not-found! ok]]
+   [ring.util.http-response :refer [bad-request created not-found! not-modified ok]]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
@@ -19,7 +19,6 @@
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.entity :as wse]
    [wormbase.specs.provenance :as wsp]
-   [wormbase.specs.validation :as wsv]
    [java-time :as jt]))
 
 (s/def ::entity-type sts/string?)
@@ -27,6 +26,13 @@
 (s/def ::prov map?)
 
 (def ^:private default-batch-size 100)
+
+(def status-changed-responses
+  (-> wnu/default-responses
+      (dissoc not-modified)
+      (assoc ok {:schema ::wsb/status-changed
+                 :descrpition "Information provided about entity status changes."})
+      (wnu/response-map)))
 
 (defn conform-data-drop-labels
   "Conform data to an 'or' spec, striping away the label.
@@ -288,7 +294,6 @@
        :x-name ::batch-update-entities
        :responses (-> wnu/default-responses
                       (assoc ok {:schema {:updated ::wsb/updated}})
-                      (assoc bad-request {:schema ::wsv/error-response})
                       (wnu/response-map))
        :parameters {:body-params {:data ::wse/update-batch
                                   :prov ::wsp/provenance}}
@@ -308,7 +313,6 @@
        :x-name ::batch-new-entities
        :responses (-> wnu/default-responses
                       (assoc created {:schema ::wsb/created})
-                      (assoc bad-request {:schema ::wsv/error-response})
                       (wnu/response-map))
        :parameters {:body-params {:data ::wse/new-batch
                                   :prov ::wsp/provenance}}
@@ -329,9 +333,7 @@
       :delete
       {:summary "Kill a batch of entities."
        :x-name ::batch-kill-entities
-       :responses (-> wnu/default-responses
-                      (assoc ok {:schema ::wsb/status-changed})
-                      (wnu/response-map))
+       :responses status-changed-responses
        :parameters {:body-params {:data ::wse/kill-batch}}
        :handler (fn handle-kill [request]
                   (let [ent-ident (keyword entity-type "id")
@@ -344,9 +346,7 @@
                                             request)))}})
     (sweet/POST "/resurrect" request
       :summary "Resurrect a batch of dead entities."
-      :responses (-> wnu/default-responses
-                     (assoc ok {:schema ::wsb/status-changed})
-                      (wnu/response-map))
+      :responses status-changed-responses
       :body [data {:data ::wse/resurrect-batch}
              prov {:prov ::wsp/provenance}]
       (let [ent-ident (keyword entity-type "id")
@@ -359,9 +359,7 @@
                                 request)))
     (sweet/DELETE "/name" request
       :summary "Remove names from a batch of entities."
-      :responses (-> wnu/default-responses
-                     (assoc ok {:schema ::wsb/status-changed})
-                     (wnu/response-map))
+      :responses status-changed-responses
       :body [data {:data ::wse/names}
              prov {:prov ::wsp/provenance}]
       (retract-names request entity-type))))
