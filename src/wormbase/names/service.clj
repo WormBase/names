@@ -26,6 +26,7 @@
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
+   [ring.middleware.not-modified :as rmnm]
    [ring.middleware.resource :as ring-resource]
    [ring.util.http-response :as http-response]))
 
@@ -88,6 +89,7 @@
                  wdb/wrap-datomic
                  wna/wrap-auth
                  mmw/wrap-format
+                 rmnm/wrap-not-modified
                  wrap-not-found]
     :swagger swagger-ui}
    (sweet/context "" []

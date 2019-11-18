@@ -3,7 +3,6 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
-   [ring.middleware.not-modified :as rmnm]
    [ring.util.http-response :refer [ok]]
    [wormbase.db :as wdb]
    [wormbase.names.provenance :as wnp]
@@ -132,7 +131,6 @@
                :responses (wnu/http-responses-for-read {:schema {:activities ::wsr/activities}})
                :query-params [{from :- ::wsr/from nil}
                               {until :- ::wsr/until nil}]
-               :middleware [rmnm/wrap-not-modified]
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
