@@ -15,6 +15,7 @@
    [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [peridot.core :as p]
+   [wormbase.constdata :refer [elegans-ln]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
@@ -206,10 +207,11 @@
                                           (species->latin-name [:species/id sv])]))
       (vector? species-value) data
       :otherwise (update data
-                         :gene/species
-                         (fn use-latin-name [sname]
-                           (let [lur (s/conform ::wss/identifier sname)]
-                             [:species/latin-name (species->latin-name lur)]))))))
+                        :gene/species
+                        (fnil (fn use-latin-name [sname]
+                                (let [lur (s/conform ::wss/identifier sname)]
+                                  [:species/latin-name (species->latin-name lur)]))
+                              elegans-ln)))))
 
 (defn species-ref->latin-name
   "Retrive the name of the gene species from a mapping."
@@ -341,7 +343,7 @@
                                 (second v)
                                 v))]
     (-> sample
-        :species
+        (get :species elegans-ln)
         select-species-name
         generator
         (gen/sample 1)

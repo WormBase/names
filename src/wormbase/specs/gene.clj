@@ -52,8 +52,9 @@
 
 (s/def ::uncloned (stc/spec
                    (stc/merge
-                    (s/keys :req-un [:gene/species :gene/cgc-name]
-                            :opt-un [:gene/status]))))
+                    (s/keys :req-un [:gene/cgc-name]
+                            :opt-un [:gene/species
+                                     :gene/status]))))
 
 (s/def ::new (stc/spec {:spec (s/or :cloned ::cloned
                                     :uncloned ::uncloned)
