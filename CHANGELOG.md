@@ -1,6 +1,9 @@
 # Change-log
 
 ## [0.9.8]
+ - Species is now optional in gene update payloads.
+ 
+## [0.9.8]
  - Improved auto-generated swagger docs.
  - Moved not-modified middleware to top level (any GET request may
    result in 304 if nothing's changed to a given resource).
