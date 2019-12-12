@@ -4,7 +4,6 @@
    [clojure.string :as str]
    [clojure.walk :as w]
    [datomic.api :as d]
-   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request!
                                     conflict!
@@ -147,6 +146,8 @@
           ent-ns (namespace uiident)
           uiident-ent (d/entity db uiident)
           [lur entity] (identify-fn request identifier)]
+      (when (empty? (:data payload))
+        (bad-request! {:message "No data supplied for update."}))
       (when entity
         (let [ent-data (wdb/pull db summary-pull-expr lur)
               names-validator (if validate
@@ -438,118 +439,117 @@
       (assoc ok {:schema ::wse/status-changed})
       (wnu/response-map)))
 
-(def coll-resources
-  (sweet/context "/entity" []
-    :tags ["entity"]
-    (sweet/resource
-     {:get
-      {:summary "List all simple entity types."
-       :responses (wnu/http-responses-for-read
-                   {:schema {:entity-types ::wse/schema-listing}})
-       :handler (fn handle-list-entity-schemas [request]
-                  (list-entity-schemas request))}
-      :post
-      {:summary "Add a new simple entity type to the system."
-       :responses (wnu/response-map created {:schema ::wse/schema-created})
-       :parameters {:body-params {:data ::wse/new-schema
-                                  :prov ::wsp/provenance}}
-       :handler (fn register-entity-schema [request]
-                  (handle-register-entity-schema request))}})))
+(defn new-entity
+  [{{{:keys [entity-type]} :path} :parameters :as request}]
+  (let [id-ident (keyword entity-type "id")
+        _ (println (-> request :parameters))
+        _ (println "ENTITY TYPE:" entity-type)
+        _ (println "ID IDENT:" id-ident)
+        event-ident (keyword "event" (str "new-" entity-type))
+        conformer (partial wnu/conform-data ::wse/new)
+        spe (make-summary-pull-expr entity-type)
+        create-new-entity (creator id-ident
+                                   conformer
+                                   event-ident
+                                   spe
+                                   validate-names)]
+    (create-new-entity request)))
 
-(def item-resources
-  (sweet/context "/entity/:entity-type" []
-    :tags ["entity"]
-    :path-params [entity-type :- ::wse/entity-type]
-    (sweet/resource
-     {:delete
-      {:summary "Mark an entity type as disabled."
-       :x-name ::disable-entity-type
-       :responses (wnu/response-map wnu/default-responses)
-       :parameters {:body-params {:prov ::wsp/provenance}}
-       :handler (fn handle-disable-ent-type [request]
-                  (disable-entity-type request entity-type))}
-      :get
-      {:summary>> "Find variations by any unique identifier."
-       :responses (wnu/http-responses-for-read {:schema ::wsc/find-response})
-       :parameters {:query-params ::wsc/find-request}
-       :x-name ::find-entities
-       :handler (finder entity-type)}
-      :put
-      {:summary "Update the schema for an entity type (enable/disable only)."
-       :x-name ::enable-entity-type
-       :parameters {:body-params {:prov ::wsp/provenance}}
-       :responses (wnu/response-map wnu/default-responses)
-       :handler (fn handle-enable-entity-type [request]
-                  (enable-entity-type request entity-type))}
-      :post
-      {:summary "Create a new entity."
-       :x-name ::new-entity
-       :parameters {:body-params {:data ::wse/new
-                                  :prov ::wsp/provenance}}
-       :responses (-> wnu/default-responses
-                      (assoc created {:schema {:created ::wse/created}})
-                      (wnu/response-map))
-       :handler (fn new-entity [request]
-                  (let [id-ident (keyword entity-type "id")
-                        event-ident (keyword "event" (str "new-" entity-type))
-                        conformer (partial wnu/conform-data ::wse/new)
-                        spe (make-summary-pull-expr entity-type)
-                        new-entity (creator id-ident
-                                            conformer
-                                            event-ident
-                                            spe
-                                            validate-names)]
-                    (new-entity request)))}})
-    (sweet/context "/:identifier" []
-      :tags ["entity"]
-      :middleware [entity-enabled-checker]
-      :path-params [identifier :- ::wse/identifier]
-      (sweet/resource
-       {:delete
-        {:summary "Kill an entity."
-         :x-name ::kill-entity
-         :parameters {:body-params {:prov ::wsp/provenance}}
-         :responses status-changed-responses
-         :handler (fn [request]
-                    (handle-kill request entity-type identifier))}
-        :put
-        {:summary "Update an existing entity."
-         :x-name ::update-entity
-         :parameters {:body-params {:data ::wse/update
-                                    :prov ::wsp/provenance}}
-         :responses (-> wnu/default-responses
-                        (dissoc conflict)
-                        (wnu/response-map))
-         :handler (fn handle-update [request]
-                    (let [id-ident (keyword entity-type "id")
-                          update-spec ::wse/update
-                          event-ident (keyword "event" (str "update-" entity-type))
-                          summary-pull-expr (make-summary-pull-expr entity-type)
-                          update-handler (updater (partial identify ::wse/identifier entity-type)
-                                                  id-ident
-                                                  (partial wnu/conform-data update-spec)
-                                                  event-ident
-                                                  summary-pull-expr
-                                                  validate-names)]
-                      (update-handler request identifier)))}
-        :get
-        {:summary "Summarise an entity."
-         :x-name ::about-entity
-         :responses (wnu/http-responses-for-read {:schema ::wse/summary})
-         :handler (fn handle-entity-summary [request]
-                    (let [summary-pull-expr (make-summary-pull-expr entity-type)
-                          summarize (summarizer (partial identify ::wse/identifier entity-type)
-                                                summary-pull-expr
-                                                #{})]
-                      (summarize request identifier)))}})
-      (sweet/context "/resurrect" []
-        (sweet/resource
-         {:post
-          {:summary "Resurrect an entity."
-           :x-name ::resurrect-entity
-           :respones status-changed-responses
-           :handler (fn handle-resurrect-entity [request]
-                      (handle-resurrect request entity-type identifier))}})))))
+(def routes
+  [["/entity"
+   {:swagger {:tags ["entity"]}
+    :get {:summary "List all simple entity types."
+          :responses (wnu/http-responses-for-read
+                      {:schema {:entity-types ::wse/schema-listing}})
+          :handler (fn handle-list-entity-schemas [request]
+                     (list-entity-schemas request))}
+    :post {:summary "Add a new simple entity type to the system."
+           :responses (wnu/response-map created {:schema ::wse/schema-created})
+           :parameters {:body {:data ::wse/new-schema
+                               :prov ::wsp/provenance}}
+           :handler (fn register-entity-schema [request]
+                      (handle-register-entity-schema request))}}]
+    ["/entity/:entity-type"
+     {:swagger {:tags ["entity"]}
+      :parameters {:path {:entity-type string?}}
+      :delete {:summary "Mark an entity type as disabled."
+              :x-name ::disable-entity-type
+              :responses (wnu/response-map wnu/default-responses)
+              :parameters {:body {:prov ::wsp/provenance}}
+              :handler (fn handle-disable-ent-type
+                         [{{{:keys [entity-type]} :path} :parameters :as request}]
+                         (disable-entity-type request entity-type))}
+     :get {:summary "Find variations by any unique identifier."
+           :responses (wnu/http-responses-for-read {:schema ::wsc/find-response})
+           :parameters {:query ::wsc/find-request}
+           :x-name ::find-entities
+           :handler (fn [{{{:keys [entity-type]} :path} :parameters :as request}]
+                      (finder entity-type))}
+     :put {:summary "Update the schema for an entity type (enable/disable only)."
+           :x-name ::enable-entity-type
+           :parameters {:body {:prov ::wsp/provenance}}
+           :responses (wnu/response-map wnu/default-responses)
+           :handler (fn handle-enable-entity-type
+                      [{{{:keys [entity-type]} :path} :parameters :as request}]
+                      (enable-entity-type request entity-type))}
+     :post {:summary "Create a new entity."
+            :x-name ::new-entity
+            :parameters {:body {:data ::wse/new
+                                :prov ::wsp/provenance}}
+            :responses (-> wnu/default-responses
+                           (assoc created {:schema {:created ::wse/created}})
+                           (wnu/response-map))
+            :handler new-entity}}]
+     ["/entity/:entity-type/:identifier"
+      {:swagger {:tags ["entity"]}
+       :parameters {:path {:entity-type string? :identifier string?}}
+       :delete {:summary "Kill an entity."                
+                :x-name ::kill-entity
+                :parameters {:body {:prov ::wsp/provenance}}
+                :responses status-changed-responses
+                :handler (fn
+                           [{{{:keys [entity-type identifier]} :path} :parameters :as request}]
+                           (handle-kill request entity-type identifier))}
+       :put {:summary "Update an existing entity."
+             :x-name ::update-entity
+             :parameters {:body {:data ::wse/update
+                                 :prov ::wsp/provenance}}
+             :responses (-> wnu/default-responses
+                            (dissoc conflict)
+                            (wnu/response-map))
+             :handler (fn handle-update
+                        [{{{:keys [entity-type identifier]} :path} :parameters :as request}]
+                        (let [id-ident (keyword entity-type "id")
+                              update-spec ::wse/update
+                              event-ident (keyword "event" (str "update-" entity-type))
+                              summary-pull-expr (make-summary-pull-expr entity-type)
+                              update-handler (updater (partial identify ::wse/identifier entity-type)
+                                                      id-ident
+                                                      (partial wnu/conform-data update-spec)
+                                                      event-ident
+                                                      summary-pull-expr
+                                                      validate-names)]
+                          (update-handler request identifier)))}
+      :get {:summary "Summarise an entity."
+            :x-name ::about-entity
+            :responses (wnu/http-responses-for-read {:schema ::wse/summary})
+            :handler (fn handle-entity-summary
+                       [{{{:keys [entity-type identifier]} :path} :parameters :as request}]
+                       (let [summary-pull-expr (make-summary-pull-expr entity-type)
+                             summarize (summarizer (partial identify ::wse/identifier entity-type)
+                                                   summary-pull-expr
+                                                   #{})]
+                         (summarize request identifier)))}}]
+   ["/entity/:entity-type/:identifier/resurrect"
+    {:swagger {:tags ["entity"]}
+     :parameters {:path {:entity-type string? :identifier string?}}
+     :post
+     {:summary "Resurrect an entity."
+      :x-name ::resurrect-entity
+      :respones status-changed-responses
+      :handler (fn handle-resurrect-entity
+                 [{{{:keys [entity-type identifier]} :path} :parameters :as request}]
+                 (handle-resurrect request entity-type identifier))}}]])
 
-(def routes (sweet/routes coll-resources
-                          item-resources))
+
+ 

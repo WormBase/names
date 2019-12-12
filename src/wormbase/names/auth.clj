@@ -9,7 +9,6 @@
    [buddy.auth.backends.token :as babt]
    [buddy.auth.middleware :as auth-mw]
    [buddy.sign.compact :as bsc]
-   [compojure.api.meta :as capi-meta]
    [datomic.api :as d]
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response]

@@ -80,7 +80,7 @@
 
 (def person-summary (partial api-tc/summary "person"))
 
-(t/deftest about
+(t/deftest summary
   (t/testing "Attempting to get summary a none existant person yields 404"
     (let [response (person-summary "WBPerson0")]
       (t/is (ru-hp/not-found? response))))

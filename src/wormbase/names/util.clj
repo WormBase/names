@@ -107,7 +107,7 @@
 (def not-live? #(not (live? %)))
 
 (def ^{:doc (str "The set of default responses used to generate swagger documentation "
-                 "for compojure.api endpoint definitions.")}
+                 "for endpoint definitions.")}
   default-responses
   {bad-request {:schema {:errors ::wsv/error-response}
                 :description "The request input data was found to be invalid."}

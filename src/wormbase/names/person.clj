@@ -1,15 +1,14 @@
 (ns wormbase.names.person
   (:require
    [clojure.spec.alpha :as s]
-   [compojure.api.routes :as route]
-   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request created not-found! ok]]
+   [ring.util.http-response :refer [bad-request created not-found not-found! ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
    [wormbase.names.auth :as wna]
+   [wormbase.names.coercion :as wnc]
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]))
@@ -106,40 +105,41 @@
 (defn wrap-id-validation [handler identifier]
   (fn [request]
     (if (s/valid? ::wsp/identifier identifier)
-      (handler identifier request)
-      (throw (ex-info "Invalid person identifier"
-                      {:type :user/validation-error
-                       :problems (expound-str ::wsp/identifier identifier)})))))
+      (do
+        (println "::wsp/identifier valid")
+        (handler identifier request))
+      (do
+        (println "Invalid spec??!!")
+        (throw (ex-info "Invalid person identifier"
+                        {:type :user/validation-error
+                         :problems (expound-str ::wsp/identifier identifier)}))))))
 
 (def routes
-  (sweet/routes
-   (sweet/context "/person" []
-     :tags ["person"]
-     (sweet/resource
-      {:post
-       {:summary "Create a new person."
-        :x-name ::new-person
-        :parameters {:body-params ::wsp/summary}
-        :responses (wnu/response-map created {:schema ::wsp/summary})
-        :handler create-person}}))
-   (sweet/context "/person/:identifier" []
-     :tags ["person"]
-     :path-params [identifier :- ::wsp/identifier]
-     (sweet/resource
-      {:get
-       {:summary "Summaraise a person."
-        :x-name ::person-summary
-        :responses (wnu/http-responses-for-read {:schema ::wsp/summary})
-        :handler (wrap-id-validation about-person identifier)}
-       :put
-       {:summary "Update information about a person."
-        :x-name ::update-person
-        :responses (wnu/response-map ok {:schema ::wsp/summary})
-        :parameters {:body-params ::wsp/update}
-        :handler (wrap-id-validation update-person identifier)}
-       :delete
-       {:summary "Deactivate a person."
-        :x-name ::deactivate-person
-        :responses (wnu/response-map ok {:schema ::wsp/summary})
-        :handler (wrap-id-validation deactivate-person identifier)}}))))
+  [["/person"
+    {:swagger {:tags ["person"]}
+     :post {:summary "Create a new person."
+            :coercion wnc/open-spec
+;;            :x-name ::new-person
+            :parameters {:body ::wsp/summary}
+            :responses (wnu/response-map created {:schema ::wsp/summary})
+            :handler create-person}}]
+   ["/person/:identifier"
+    {:parameters {:path {:identifier ::wsp/identifier}}
+     :swagger {:tags ["person"]}
+     :get {:summary "Summaraise a person."
+           :x-name ::person-summary
+           :responses (wnu/http-responses-for-read {:schema ::wsp/summary})
+           :handler (fn [{{{:keys [identifier]} :path} :parameters :as request}]
+                      ((wrap-id-validation about-person identifier) request))}
+     :put {:summary "Update information about a person."
+           :x-name ::update-person
+           :responses (wnu/response-map ok {:schema ::wsp/summary})
+           :parameters {:body ::wsp/update}
+           :handler (fn [{{{:keys [identifier]} :path} :parameters :as request}]
+                      ((wrap-id-validation update-person identifier) request))}
+     :delete {:summary "Deactivate a person."
+              :x-name ::deactivate-person
+              :responses (wnu/response-map ok {:schema ::wsp/summary})
+              :handler (fn [{{{:keys [identifier]} :path} :parameters :as request}]
+                         ((wrap-id-validation deactivate-person identifier) request))}}]])
 

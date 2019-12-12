@@ -2,7 +2,6 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request! created ok]]
    [spec-tools.core :as stc]
@@ -71,45 +70,37 @@
                              {}
                              sp))))))
 
-(def coll-resources
-  (sweet/context "/species" []
-    :tags ["species"]
-    (sweet/resource
-     {:get
-      {:summary "Retrieve of attributes held for each species in system."
-       :x-name ::list-species
-       :responses (wnu/http-responses-for-read {:schema ::wss/listing})
-       :handler (fn li [request]
-                  (list-items request))}
-      :post
-      {:summary "Add a new species to the system."
-       :x-name ::new-species
-       :responses (wnu/response-map created {:schema ::wss/created})
-       :parameters {:body-params {:data ::wss/new
-                                  :prov ::wsp/provenance}}
-       :handler new-item}})))
-
-(def item-resources
-  (sweet/context "/species/:identifier" []
-    :tags ["species"]
-    :path-params [identifier :- string?]
-    (sweet/resource
-     {:get
-      {:summary "Species details held in the system."
-       :x-name ::species-summary
-       :responses (wnu/http-responses-for-read {:schema ::wss/item})
-       :handler (fn handle-summary [request]
-                  (let [summarize (wne/summarizer (partial wne/identify ::wss/identifier "species")
-                                                  '[*]
-                                                  #{})]
-                    (summarize request identifier)))}
-      :put
-      {:summary "Update species details."
-       :x-name ::species-update
-       :responses (wnu/response-map ok {:schema ::wss/updated})
-       :parameters {:body-params {:data ::wss/update
-                                  :prov ::wsp/provenance}}
-       :handler (fn handle-update [request]
-                  (update-item request identifier))}})))
-
-(def routes (sweet/routes coll-resources item-resources))
+(def routes
+  [["/species"
+    {:swagger {:tags ["species"]}
+     :get {:summary "Retrieve of attributes held for each species in system."
+           :x-name ::list-species
+           :responses (wnu/http-responses-for-read {:schema ::wss/listing})
+           :handler (fn li [request]
+                      (list-items request))}
+     :post {:summary "Add a new species to the system."
+            :x-name ::new-species
+            :responses (wnu/response-map created {:schema ::wss/created})
+            :parameters {:body {:data ::wss/new
+                                :prov ::wsp/provenance}}
+            :handler new-item}}]
+   ["/species/:identifier"
+    {:swagger {:tags ["species"]}
+     :parameters {:path {:identifier string?}}
+     :get {:summary "Species details held in the system."
+           :x-name ::species-summary
+           :responses (wnu/http-responses-for-read {:schema ::wss/item})
+           :handler (fn handle-summary
+                      [{{{:keys [identifier]} :path} :parameters :as request}]
+                      (let [summarize (wne/summarizer (partial wne/identify ::wss/identifier "species")
+                                                      '[*]
+                                                      #{})]
+                        (summarize request identifier)))}
+      :put {:summary "Update species details."
+            :x-name ::species-update
+            :responses (wnu/response-map ok {:schema ::wss/updated})
+            :parameters {:body {:data ::wss/update
+                                :prov ::wsp/provenance}}
+            :handler (fn handle-update
+                       [{{{:keys [identifier]} :path} :parameters :as request}]
+                       (update-item request identifier))}}]])

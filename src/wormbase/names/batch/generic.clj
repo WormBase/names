@@ -2,7 +2,6 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [compojure.api.sweet :as sweet]
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [java-time :as jt]
@@ -284,82 +283,93 @@
         (update :what wnu/unqualify-maybe)
         (ok))))
 
+
 (def routes
-  (sweet/context "/entity/:entity-type" []
-    :tags ["batch"]
-    :path-params [entity-type :- string?]
-    (sweet/resource
-     {:put
-      {:summary "Update records."
-       :x-name ::batch-update-entities
-       :responses (-> wnu/default-responses
-                      (assoc ok {:schema {:updated ::wsb/updated}})
-                      (wnu/response-map))
-       :parameters {:body-params {:data ::wse/update-batch
+  ["/batch/entity"   
+   ["/:entity-type"
+    {:swagger {:tags ["batch" "entity"]}
+     :parameters {:path {:entity-type string?}}
+     :put {:summary "Update entities."
+           :x-name ::batch-update-entities
+           :responses (-> wnu/default-responses
+                          (assoc ok {:schema {:updated ::wsb/updated}})
+                          (wnu/response-map))
+           :parameters {:body {:data ::wse/update-batch
+                               :prov ::wsp/provenance}}
+           :handler (fn handle-update
+                      [{{{:keys [entity-type]} :path} :parameters :as request}]
+                      (let [ent-ident (keyword entity-type "id")
+                            event-ident (keyword "event" (str "update-" entity-type))
+                            pull-expr (wne/make-summary-pull-expr entity-type)]
+                        (update-entities ent-ident
+                                         pull-expr
+                                         event-ident
+                                         ::wse/update-batch
+                                         wnu/conform-data
+                                         (partial wnv/validate-names request)
+                                         request)))}
+     :post {:summary "Assign identifiers and associate names, creating new entities."
+            :x-name ::batch-new-entities
+            :responses (-> wnu/default-responses
+                           (assoc created {:schema ::wsb/created})
+                           (wnu/response-map))
+            :parameters {:body {:data ::wse/new-batch
+                                :prov ::wsp/provenance}}
+            :handler (fn handle-new
+                       [{{{:keys [entity-type]} :path} :parameters :as request}]
+                       (let [ent-ident (keyword entity-type "id")
+                             ident-ent (d/entity (:db request) ent-ident)
+                             event-ident (keyword "event" (str "new-" entity-type))
+                             data (get-in request [:body-params])
+                             name-attrs (when (:wormbase.names/name-required? ident-ent)
+                                          [(keyword entity-type "name")])]
+                         (new-entities ent-ident
+                                       event-ident
+                                       ::wse/new-batch
+                                       conform-data-drop-labels
+                                       (partial wnv/validate-names request)
+                                       name-attrs
+                                       request)))}
+     :delete {:summary "Kill a batch of entities."
+              :x-name ::batch-kill-entities
+              :responses status-changed-responses
+              :parameters {:body {:data ::wse/kill-batch
                                   :prov ::wsp/provenance}}
-       :handler (fn handle-update [request]
-                  (let [ent-ident (keyword entity-type "id")
-                        event-ident (keyword "event" (str "update-" entity-type))
-                        pull-expr (wne/make-summary-pull-expr entity-type)]
-                    (update-entities ent-ident
-                                     pull-expr
-                                     event-ident
-                                     ::wse/update-batch
-                                     wnu/conform-data
-                                     (partial wnv/validate-names request)
-                                     request)))}
-      :post
-      {:summary "Assign identifiers and associate names, creating new entities."
-       :x-name ::batch-new-entities
-       :responses (-> wnu/default-responses
-                      (assoc created {:schema ::wsb/created})
-                      (wnu/response-map))
-       :parameters {:body-params {:data ::wse/new-batch
-                                  :prov ::wsp/provenance}}
-       :handler (fn handle-new [request]
-                  (let [ent-ident (keyword entity-type "id")
-                        ident-ent (d/entity (:db request) ent-ident)
-                        event-ident (keyword "event" (str "new-" entity-type))
-                        data (get-in request [:body-params])
-                        name-attrs (when (:wormbase.names/name-required? ident-ent)
-                                     [(keyword entity-type "name")])]
-                    (new-entities ent-ident
-                                  event-ident
-                                  ::wse/new-batch
-                                  conform-data-drop-labels
-                                  (partial wnv/validate-names request)
-                                  name-attrs
-                                  request)))}
-      :delete
-      {:summary "Kill a batch of entities."
-       :x-name ::batch-kill-entities
-       :responses status-changed-responses
-       :parameters {:body-params {:data ::wse/kill-batch}}
-       :handler (fn handle-kill [request]
-                  (let [ent-ident (keyword entity-type "id")
-                        event-ident (keyword "event" (str "kill-" entity-type))
-                        dead-status (keyword (str entity-type ".status") "dead")]
-                    (change-entity-statuses ent-ident
-                                            event-ident
-                                            dead-status
-                                            ::wse/kill-batch
-                                            request)))}})
-    (sweet/POST "/resurrect" request
-      :summary "Resurrect a batch of dead entities."
-      :responses status-changed-responses
-      :body [data {:data ::wse/resurrect-batch}
-             prov {:prov ::wsp/provenance}]
-      (let [ent-ident (keyword entity-type "id")
-            event-ident (keyword "event" (str "resurrect-" entity-type))
-            status (keyword (str entity-type ".status") "live")]
-        (change-entity-statuses ent-ident
-                                event-ident
-                                status
-                                ::wse/resurrect-batch
-                                request)))
-    (sweet/DELETE "/name" request
-      :summary "Remove names from a batch of entities."
-      :responses status-changed-responses
-      :body [data {:data ::wse/names}
-             prov {:prov ::wsp/provenance}]
-      (retract-names request entity-type))))
+              :handler (fn handle-kill
+                         [{{{:keys [entity-type]} :path} :parameters :as request}]
+                         (let [ent-ident (keyword entity-type "id")
+                               event-ident (keyword "event" (str "kill-" entity-type))
+                               dead-status (keyword (str entity-type ".status") "dead")]
+                           (change-entity-statuses ent-ident
+                                                   event-ident
+                                                   dead-status
+                                                   ::wse/kill-batch
+                                                   request)))}}]
+    ["/:entity-type/resurrect"
+     {:swagger {:tags ["batch" "entity"]}
+      :parameters {:path {:entity-type string?}}
+      :post {:summary "Resurrect a batch of dead entities."
+             :responses status-changed-responses
+             :parameters {:body {:data ::wse/resurrect-batch
+                                 :prov ::wsp/provenance}}
+             :handler (fn handle-resurrect
+                        [{{{:keys [entity-type]} :path} :parameters :as request}]
+                        (let [ent-ident (keyword entity-type "id")
+                              event-ident (keyword "event" (str "resurrect-" entity-type))
+                              status (keyword (str entity-type ".status") "live")]
+                          (change-entity-statuses ent-ident
+                                                  event-ident
+                                                  status
+                                                  ::wse/resurrect-batch
+                                                  request)))}}]
+    ["/:entity-type/name"
+     {:swagger {:tags ["batch" "entity"]}
+      :parameters {:path {:entity-type string?}}
+      :delete {:summary "Remove names from a batch of entities."
+                           :responses status-changed-responses
+                           :parameters {:body {:data ::wse/names
+                                               :prov ::wsp/provenance}}
+                           :handler (fn handle-remove-names
+                                      [{{{:keys [entity-type]} :path} :parameters :as request}]
+                                      (retract-names request entity-type))}}]])
+

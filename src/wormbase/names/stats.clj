@@ -1,7 +1,6 @@
 (ns wormbase.names.stats
   (:require
    [clojure.walk :as w]
-   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.middleware.not-modified :as rmnm]
    [ring.util.http-response :refer [ok]]
@@ -34,13 +33,10 @@
         (ok)
         (wnu/add-etag-header-maybe etag))))
 
-(def routes (sweet/routes
-             (sweet/context "/stats" []
-               :middleware [rmnm/wrap-not-modified]
-               :tags ["stats"]
-               (sweet/resource
-                {:get
-                 {:summary "Counts of the number of entities in the system."
-                  :x-name ::stats-summary-all
-                  :responses (wnu/http-responses-for-read {:schema ::wsst/summary})
-                  :handler handle-summary}}))))
+(def routes
+  [["/stats"
+    {:swagger {:tags ["stats"]}
+     :get {:summary "Counts of the number of entities in the system."
+           :x-name ::stats-summary-all
+           :responses (wnu/http-responses-for-read {:schema ::wsst/summary})
+           :handler handle-summary}}]])

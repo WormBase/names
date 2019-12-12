@@ -1,6 +1,5 @@
 (ns wormbase.names.recent
   (:require
-   [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [java-time :as jt]
    [ring.util.http-response :refer [ok]]
@@ -125,51 +124,52 @@
              (ok)
              (wnu/add-etag-header-maybe etag)))))
 
-(def routes (sweet/routes
-             (sweet/context "/recent" []
-               :tags ["recent"]
-               :responses (wnu/http-responses-for-read {:schema {:activities ::wsr/activities}})
-               :query-params [{from :- ::wsr/from nil}
-                              {until :- ::wsr/until nil}]
-               (sweet/GET "/batch" request
-                 :tags ["recent" "batch"]
-                 :summary "List recent batch activity."
-                 (handle request batch-rules (changes-and-prov-puller request) "" from until))
-               (sweet/GET "/person/:id" request
-                 :tags ["recent" "person"]
-                 :path-params [id :- :person/id]
-                 :summary "List recent activities made by the currently logged-in user."
-                 (when-let [person (if id
-                                     (d/pull (:db request) [:person/email] [:person/id id])
-                                     (some-> request :identity :person))]
-                   (handle request
-                           person-rules
-                           (changes-and-prov-puller request)
-                           (:person/email person)
-                           from
-                           until)))
-               (sweet/context "/:entity-type" []
-                 :path-params [entity-type :- string?]
-                 :summary "List recent activity for a given entity type."
-                 (sweet/GET "/" request
-                   :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
-                   (handle request
-                           entity-rules
-                           (changes-and-prov-puller request)
-                           entity-type
-                           from
-                           until
-                           how))
-                 (sweet/GET "/:agent" request
-                   :summary "List recent entity activity performed via a given agent."
-                   :path-params [agent :- ::wsr/agent]
-                   (handle request
-                           entity-rules
-                           (changes-and-prov-puller request)
-                           entity-type
-                           from
-                           until
-                           #{(keyword "agent" agent)}))))))
+(def routes
+  [["/recent/:entity-type"
+    {:summary "List recent activity for a given entity type."
+     :swagger {:tags ["recent"]}
+     :parameters {:path {:entity-type string?}
+                  :query {:how ::wsr/how
+                          :from ::wsr/from
+                          :until ::wsr/until}}
+     :get (fn [{{{:keys [how entity-type from until]} :path} :parameters :as request}]
+            (let [puller (changes-and-prov-puller request)]
+              (cond
+                (= entity-type "batch") (handle request
+                                                batch-rules
+                                                puller
+                                                ""
+                                                from
+                                                until)
+                (= entity-type "person") (when-let [person (some-> request :identity :person)]
+                                           (handle request
+                                                   person-rules
+                                                   puller
+                                                   (:person/email person)
+                                                   from
+                                                   until))
+                :else (handle request
+                              entity-rules
+                              puller
+                              entity-type
+                              from
+                              until
+                              how))))}]
+   ["/recent/:entity-type/:agent"
+    {:summary "List recent entity activity performed via a given agent."
+     :swagger {:tags ["recent"]}
+     :parameters {:path {:entity-type string?
+                         :agent ::wsr/agent}
+                  :query {:from ::wsr/from
+                          :until ::wsr/until}}
+     :get (fn [{{{:keys [entity-type agent from until]} :path} :parameters :as request}]
+            (handle request
+                    entity-rules
+                    (changes-and-prov-puller request)
+                    entity-type
+                    from
+                    until
+                    #{(keyword "agent" agent)}))}]])
 
 (comment
   "Examples of each invokation flavour"

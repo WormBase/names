@@ -8,7 +8,6 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [clojure.tools.logging :as log]
-   [compojure.api.routes :as routes]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
    [java-time :as jt]
@@ -167,9 +166,6 @@
    :body (muuntaja/encode mformats format data)
    :headers {"content-type" format
              "accept" format}})
-
-(defn extract-paths [app]
-  (-> app routes/get-routes routes/all-paths))
 
 (defn get-spec [app]
   (let [[status spec] (get* app "/swagger.json" {})]

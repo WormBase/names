@@ -2,33 +2,43 @@
   (:require
    [clojure.string :as str]
    [buddy.auth :as auth]
-   [compojure.api.middleware :as mw]
-   [compojure.api.swagger :as swagger]
-   [compojure.api.sweet :as sweet]
-   [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
+   [muuntaja.core :as m]
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
    [wormbase.names.auth :as wna]
    [wormbase.names.batch :as wn-batch]
-   [wormbase.names.coercion] ;; coercion scheme
+   [wormbase.names.batch.gene :as batch-gene]
+   [wormbase.names.batch.generic :as batch-generic]
+   [wormbase.names.coercion :as wnc]
    [wormbase.names.entity :as wne]
-   [wormbase.names.errhandlers :as wn-eh]
-   [wormbase.names.gene :as wn-gene]
+   [wormbase.names.errhandlers :as wneh]
+   [wormbase.names.gene :as wng]
    [wormbase.names.person :as wn-person]
    [wormbase.names.recent :as wn-recent]
    [wormbase.names.response-formats :as wnrf]
    [wormbase.names.species :as wn-species]
    [wormbase.names.stats :as wn-stats]
+   [reitit.ring :as ring]
+   [reitit.swagger :as swagger]
+   [reitit.swagger-ui :as swagger-ui]
+   [reitit.ring.coercion :as coercion]
+   [reitit.dev.pretty :as pretty]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.exception :as exception]
+   [reitit.ring.middleware.multipart :as multipart]
+   [reitit.ring.middleware.parameters :as parameters]
    [ring.adapter.jetty :as raj]
    [ring.middleware.content-type :as ring-content-type]
    [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.not-modified :as rmnm]
+   [ring.middleware.params :as params-mw]
    [ring.middleware.resource :as ring-resource]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [reitit.ring.middleware.dev]))
 
 (defn- wrap-not-found
   "Fallback 404 handler."
@@ -69,9 +79,8 @@
       :in "header"}}
     :tags
     [{:name "api"}
-     {:name "feature"}
      {:name "gene"}
-     {:name "variation"}
+     {:name "entity"}
      {:name "person"}]}})
 
 (defn wrap-static-resources [handler]
@@ -79,29 +88,53 @@
       (ring-resource/wrap-resource "client_build")
       (ring-content-type/wrap-content-type)))
 
+(def routes
+  ["" {:no-doc true}
+   ["/swagger.json" {:get {:no-doc true
+                           :swagger {:info {:title "WormBase Names service API."}}
+                           :handler (swagger/create-swagger-handler)}}]])
+
+(def router (ring/router
+             [routes
+              ["/api" {:coercion wnc/open-spec
+                       :muuntaja m/instance}
+               [wn-person/routes
+                wng/routes
+                wne/routes
+                wn-recent/routes
+                batch-gene/routes
+                batch-generic/routes
+                wn-batch/routes
+                wn-stats/routes
+                wn-species/routes]]]
+             {:exception pretty/exception
+              ;; :reitit.middleware/transform reitit.ring.middleware.dev/print-request-diffs
+              :data {:middleware [swagger/swagger-feature
+                                  ring-gzip/wrap-gzip
+                                  wrap-static-resources
+                                  parameters/parameters-middleware
+                                  muuntaja/format-negotiate-middleware
+                                  muuntaja/format-response-middleware
+                                  wneh/exception-middleware
+                                  muuntaja/format-request-middleware
+                                  coercion/coerce-response-middleware
+                                  coercion/coerce-request-middleware
+                                  rmnm/wrap-not-modified
+                                  wrap-not-found
+                                  wdb/wrap-datomic
+                                  wna/wrap-auth
+                                  ]}}))
+
 (def ^{:doc "The main application."} app
-  (sweet/api
-   {:formats wnrf/json
-    :coercion :pure-spec
-    :exceptions {:handlers wn-eh/handlers}
-    :middleware [ring-gzip/wrap-gzip
-                 wrap-static-resources
-                 wdb/wrap-datomic
-                 wna/wrap-auth
-                 mmw/wrap-format
-                 rmnm/wrap-not-modified
-                 wrap-not-found]
-    :swagger swagger-ui}
-   (sweet/context "" []
-     (sweet/context "/api" []
-       :middleware [wna/restrict-to-authenticated]
-       wn-species/routes
-       wn-gene/routes
-       wn-person/routes
-       wn-recent/routes
-       wn-batch/routes
-       wn-stats/routes
-       wne/routes))))
+  (ring/ring-handler
+   router
+   (ring/routes
+    (swagger-ui/create-swagger-ui-handler
+     {:path "/api-docs"
+      :config {:validatorUri nil
+               :operationSorter "alpha"}})
+    (ring/create-resource-handler {:path "client_build"})
+    (ring/create-default-handler))))
 
 (mount/defstate server
   :start (raj/run-jetty app {:port (read-string (get environ/env :port "3000"))

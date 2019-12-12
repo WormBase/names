@@ -1,7 +1,6 @@
 (ns wormbase.names.coercion
   (:require
-   [compojure.api.coercion.core :as cc]
-   [compojure.api.coercion.spec :as spec-coercion]
+   [reitit.coercion.spec :as rcs]
    [spec-tools.core :as st]))
 
 ;;; Modified copies of the compojure-api's coercion to prevent stripping of keys.
@@ -17,19 +16,12 @@
 (defn non-stripping-spec-keys-coercion
   "Creates a new spec coercion without the extra-keys stripping in response formats."
   []
-  (let [mimetypes (-> spec-coercion/default-options :body keys)
-        options (-> spec-coercion/default-options
-                    (assoc-in
-                     [:body :formats]
-                     {"application/json" json-transformer
-                      "application/msgpack" json-transformer
-                      "application/x-yaml" json-transformer})
-                    (assoc-in [:body :string :default] string-transformer))]
-    (spec-coercion/create-coercion options)))
+  (let [options (-> rcs/default-options
+                    (assoc-in [:transformers :body :formats] {"application/json" json-transformer})
+                    (assoc-in [:transformers :body :string :default] string-transformer))]
+    (rcs/create options)))
 
 (def ^{:doc "Custom coercion that doesn't strip keys from specs during response processing."}
-  pure-spec (non-stripping-spec-keys-coercion))
-
-(defmethod cc/named-coercion :pure-spec [_] pure-spec)
+  open-spec (non-stripping-spec-keys-coercion))
 
 

@@ -1,7 +1,4 @@
 {:paths ["src" "resources"]
- ;; TODO: figure out how to configure logging
- ;; When this package is added, no logging statements appear in
- ;; console by default (compojure-api integration)
  :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
              "clojars" {:url "https://repo.clojars.org/"}}
  :deps
@@ -26,9 +23,10 @@
   com.google.api-client/google-api-client {:mvn/version "1.30.4"}
   io.rkn/conformity {:mvn/version "0.5.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
-  metosin/compojure-api {:mvn/version "2.0.0-alpha30"
-                         :exclusions [potemkin frankiesardo/linked]}
   metosin/muuntaja {:mvn/version "0.6.5"}
+  metosin/spec-tools {:mvn/version "0.10.0"}
+  metosin/reitit {:mvn/version "0.3.10"}
+  metosin/ring-http-response {:mvn/version "0.9.1"}
   ikitommi/linked {:mvn/version "1.3.1-alpha1"}
   mount {:mvn/version "0.1.16"}
   ring/ring-codec {:mvn/version "1.1.2"}

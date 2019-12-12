@@ -3,18 +3,19 @@
    [clojure.spec.alpha :as s]
    [clojure.tools.logging :as log]
    [buddy.auth :refer [authenticated?]]
-   [compojure.api.exception :as ex]
    [datomic.api :as d]
    [environ.core :as environ]
    [expound.alpha :as expound]
    [muuntaja.core :as mc]
+   [reitit.coercion :as rc]
+   [reitit.ring.middleware.exception :as rrme]
    [ring.util.http-response :refer [bad-request
                                     conflict
                                     content-type
                                     forbidden
                                     internal-server-error
                                     not-found
-                                    unauthorized]]
+                                    unauthorized] :as ru-hp]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene]
@@ -71,8 +72,9 @@
        :message "Unable to determine spec error."})))
 
 (defn handle-validation-error
-  [^Exception exc data request & {:keys [message]}]
-  (let [data* (dissoc data :request :spec :coercion :in)
+  [exc request & {:keys [message]}]
+  (let [data (ex-data exc)
+        data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if (s/spec? spec)
                (if-let [problems (some-> data* :problems)]
@@ -86,35 +88,39 @@
         body (assoc-error-message info exc :message message)]
     (respond-bad-request request body)))
 
-(defn handle-missing [^Exception exc data request]
-  (when (some-> data :entity keyword?)
-    (throw (ex-info (format "Schema %s not installed!" (:entity data))
-                    {:ident (:entity data)})))
-  (if-let [lookup-ref (:entity data)]
-    (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
-      (respond-missing request (assoc-error-message data exc :message msg)))
-    (respond-missing request (assoc-error-message data exc))))
+(defn handle-missing [exc request]
+  (let [data (ex-data exc)]
+    (when (some-> data :entity keyword?)
+      (throw (ex-info (format "Schema %s not installed!" (:entity data))
+                      {:ident (:entity data)})))
+    (if-let [lookup-ref (:entity data)]
+      (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
+        (respond-missing request (assoc-error-message data exc :message msg)))
+      (respond-missing request (assoc-error-message data exc)))))
 
-(defn handle-db-conflict [^Exception exc data request]
-  (respond-conflict request (assoc-error-message data exc)))
+(defn handle-db-conflict [exc request]
+  (respond-conflict request (assoc-error-message (ex-data exc) exc)))
 
-(defn handle-db-unique-conflict [^Exception exc data request]
-  (let [uc-err (parse-exc-message exc)
+(defn handle-db-unique-conflict
+  [exc request]
+  (let [data (ex-data exc)
+        uc-err (parse-exc-message exc)
         body (assoc-error-message data exc :message uc-err)]
     (respond-conflict request body)))
 
 (defn handle-unexpected-error
-  ([^Exception exc data request]
-   (if-let [db-err (:db/error data)]
-     (if-let [db-err-handler (db-err handlers)]
-       (db-err-handler exc data request)
-       (handle-unexpected-error exc))
-     (throw exc)))
+  ([exc request]
+   (let [data (ex-data exc)]
+     (if-let [db-err (:db/error data)]
+       (if-let [db-err-handler (db-err handlers)]
+         (db-err-handler exc request)
+         (handle-unexpected-error exc))
+       (throw exc))))
   ([exc]
    (log/fatal "Unexpected errror" exc)
    (throw exc)))
 
-(defn handle-txfn-error [^Exception exc data request]
+(defn handle-txfn-error [exc request]
   (let [txfn-err? (instance? ExecutionException exc)
         cause (.getCause exc)
         cause-data (ex-data cause)
@@ -124,7 +130,7 @@
         err-type-dispatch (dissoc handlers ExecutionException)]
     (if (and txfn-err? err-handler-key)
       (if-let [err-handler (get err-type-dispatch err-handler-key)]
-        (err-handler cause cause-data request)
+        (err-handler cause request)
         (do
           (log/fatal (str "Could not find error handler for:" exc
                           "using lookup key:" err-handler-key))
@@ -137,36 +143,38 @@
           (log/debug "Message?: " (.getMessage exc))
           (log/debug "Cause?" (.getCause exc))
           (log/debug "Cause data?:" (ex-data (.getCause exc))))
-        (handle-unexpected-error exc data request)))))
+        (handle-unexpected-error exc request)))))
 
 (defn handle-request-validation
-  [^Exception exc data request]
-  (handle-validation-error
-   exc
-   data
-   request
-   :message "Request validation failed"))
+  [exc request]
+  (let [data (ex-data exc)]
+    (handle-validation-error
+     exc
+     data
+     request
+     :message "Request validation failed")))
 
-(defn handle-unauthenticated [^Exception exc data request]
-  (if-not (authenticated? request)
-    (unauthorized "Access denied")
-    (forbidden)))
+(defn handle-unauthenticated [exc request]
+  (let [data (ex-data exc)]
+    (if-not (authenticated? request)
+      (unauthorized "Access denied")
+      (forbidden))))
 
-(defn handle-db-error [^Exception exc data request]
-  (if-let [err-handler ((:db/error data) handlers)]
-    (err-handler exc data request)
-    (handle-db-conflict exc data request)))
+(defn handle-db-error [exc request]
+  (let [data (ex-data  exc)]
+    (if-let [err-handler ((:db/error data) handlers)]
+      (err-handler exc request)
+      (handle-db-conflict exc request))))
 
-(defn handle-batch-errors [^Exception exc data request]
+(defn handle-batch-errors [exc request]
   (try
-    (let [batch-errors (:errors data)
+    (let [data (ex-data exc)
+          batch-errors (:errors data)
           err-data {:errors (map
                              (fn [batch-error]
                                (let [err-type (:error-type batch-error)
                                      ed (if-let [err-handler (get handlers err-type)]
-                                          (err-handler (:exc batch-error)
-                                                       (ex-data (:exc batch-error))
-                                                       request)
+                                          (err-handler (:exc batch-error) request)
                                           {:body {:error-type err-type
                                                   :message (-> batch-error :exc parse-exc-message)}})]
                                  (:body ed)))
@@ -178,31 +186,56 @@
     (catch Exception exc
       (handle-unexpected-error exc))))
 
-(def ^{:doc "Error handler dispatch map for the compojure.api app"}
-  handlers
-  {;;;;; Spec validation errors
-   ::ex/request-validation handle-request-validation
-   :user/validation-error handle-validation-error
+(defn coercion-error-handler [status]
+  (let [printer (expound/custom-printer {:theme :figwheel-theme, :print-specs? false})
+        handler (rrme/create-coercion-handler status)]
+    (fn [exception request]
+      (printer (-> exception ex-data :problems))
+      (println "HERE IN COERCION-ERROR-HANDLER status is" status)
+      (let [result (handler exception request)]
+        (println "ERROR HANDLER RESULT IN COERCION ERR HANDLING:")
+        (prn result)
+        (assoc-in result [:body :message] "The request was invalid")))))
+
+
+(def handlers
+  {:user/validation-error handle-validation-error
    ::wn-gene/validation-error handle-validation-error
    ::wdb/validation-error handle-validation-error
-   ExceptionInfo handle-validation-error
 
-   ;;;;;  Exceptions raised within a transaction function are handled
+
+   ::rc/request-coercion (coercion-error-handler 400)
+   ::rc/response-coercion (coercion-error-handler 500)
+   ::ru-hp/response (:reitit.ring/response rrme/default-handlers)
+
+   ;; ???
+   ;; ExceptionInfo handle-validation-error
+
+     ;;;;;  Exceptions raised within a transaction function are handled
    ExecutionException handle-txfn-error
+
    ;; App db errors
    ::wdb/conflict handle-db-conflict
    ::wdb/missing handle-missing
+
    ;; Datomic db exceptions
    :db/error handle-db-error
    :db.error/datoms-conflict handle-db-conflict
    :db.error/nil-value handle-unexpected-error
    :db.error/not-an-entity handle-missing
    :db.error/unique-conflict handle-db-unique-conflict
-
    datomic.impl.Exceptions$IllegalArgumentExceptionInfo handle-txfn-error
 
    ;; Batch errors, may contain multiple errors types from above
    ::wbids-batch/db-errors handle-batch-errors
 
    ;; Something else
-   ::ex/default handle-unexpected-error})
+
+   ;; TODO: find equivilent to compojure.api.exception
+   ;; ::rrme/default handle-unexpected-error
+   })
+
+(def ^{:doc "Custom error handler dispatch map. Keys match the :type of (ex-data exc) in an exception."}
+  exception-middleware
+  (rrme/create-exception-middleware
+   (merge rrme/default-handlers handlers)))

@@ -32,6 +32,7 @@
                        (when-not (str/blank? sub-path)
                          "/")
                        sub-path))
+           _ (println "APP PATH:" path)
            response (tu/raw-put-or-post*
                      service/app
                      path
