@@ -47,7 +47,7 @@
           (let [data [{:id id} {:id id}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
-            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid?))))))))
 
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
@@ -91,7 +91,7 @@
             (let [data (map #(wnu/unqualify-keys % "sequence-feature") ids)
                   response (send-change-status-request op {:data data :prov basic-prov})]
               (t/is (ru-hp/ok? response))
-              (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
+              (t/is (some-> response :body exp-resp-key :id uuid/uuid?)
                     (pr-str response))
               (doseq [m ids]
                 (let [ent (d/entity (d/db conn) (find m :sequence-feature/id))]

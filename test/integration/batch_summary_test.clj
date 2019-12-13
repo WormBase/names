@@ -15,7 +15,7 @@
 (t/use-fixtures :each db-testing/db-lifecycle)
 
 (defn summary [bid]
-  (api-tc/summary "batch" bid))
+  (api-tc/summary "batch/log" bid))
 
 (t/deftest batch-id-missing
   (t/testing "When a batch ID is not stored."
@@ -24,7 +24,7 @@
 
 (t/deftest batch-id-invalid
   (t/testing "When a batch ID is not of the correct/expected format."
-    (let [response (summary "zxx")]
+    (let [response (summary "zxxp")]
       (t/is (ru-hp/bad-request? response))))) 
 
 (t/deftest summary-success

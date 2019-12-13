@@ -277,7 +277,7 @@
 
 (defn finder [entity-type]
   (fn handle-find [request]
-    (when-let [pattern (some-> request :query-params :pattern str/trim)]
+    (when-let [pattern (some-> request :parameters :query :pattern str/trim)]
       (let [db (:db request)
             term (stc/conform ::wsc/find-term pattern)
             name-ident (keyword entity-type "name")
@@ -442,9 +442,6 @@
 (defn new-entity
   [{{{:keys [entity-type]} :path} :parameters :as request}]
   (let [id-ident (keyword entity-type "id")
-        _ (println (-> request :parameters))
-        _ (println "ENTITY TYPE:" entity-type)
-        _ (println "ID IDENT:" id-ident)
         event-ident (keyword "event" (str "new-" entity-type))
         conformer (partial wnu/conform-data ::wse/new)
         spe (make-summary-pull-expr entity-type)
@@ -484,7 +481,7 @@
            :parameters {:query ::wsc/find-request}
            :x-name ::find-entities
            :handler (fn [{{{:keys [entity-type]} :path} :parameters :as request}]
-                      (finder entity-type))}
+                      ((finder entity-type) request))}
      :put {:summary "Update the schema for an entity type (enable/disable only)."
            :x-name ::enable-entity-type
            :parameters {:body {:prov ::wsp/provenance}}

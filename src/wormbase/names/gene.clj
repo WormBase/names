@@ -112,7 +112,7 @@
   "Perform a prefix search against names in the DB.
   Match any unique gene identifier (cgc, sequence names or id)."
   [request]
-  (when-let [pattern (some-> request :query-params :pattern str/trim)]
+  (when-let [pattern (some-> request :parameters :query :pattern str/trim)]
     (let [db (:db request)
           matching-rules (concat wnm/name-matching-rules name-matching-rules)
           term (stc/conform ::wsc/find-term pattern)
@@ -493,14 +493,13 @@
      ["/gene/:identifier/split"
       {:swagger {:tags ["gene"]}
        :parameters {:path {:identifier string?}}
-       :post
-       {:summary "Split a gene."
-        :parameters {:body {:data ::wsg/split :prov ::wsp/provenance}}
-        :responses (-> (dissoc wnu/default-responses ok)
-                       (assoc created {:schema ::wsg/split-response})
-                       (wnu/response-map))
-        :handler (fn [{{{:keys [identifier]} :path} :parameters :as request}]
-                   (split-gene request identifier))}}]
+       :post {:summary "Split a gene."
+              :parameters {:body {:data ::wsg/split :prov ::wsp/provenance}}
+              :responses (-> (dissoc wnu/default-responses ok)
+                             (assoc created {:schema ::wsg/split-response})
+                             (wnu/response-map))
+              :handler (fn [{{{:keys [identifier]} :path} :parameters :as request}]
+                         (split-gene request identifier))}}]
      ["/gene/:identifier/split/:into-identifier"
       {:swagger {:tags ["gene"]}
        :parameters {:path {:identifier string? :into-identifier string?}}

@@ -63,10 +63,10 @@
             ids-created (get-in response [:body :ids])]
         (t/is (every? (juxt :cgc-name :sequence-name :id) ids-created))
         (t/is (= (count ids-created) (count bdata)))
-        (t/is (uuid/uuid-string? bid) (pr-str response))
+        (t/is (uuid/uuid? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
               xs (map #(get-in % [:gene/status :db/ident]) batch)
-              response2 (api-tc/summary "batch" bid)]
+              response2 (api-tc/summary "batch/log" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
           (t/is (ru-hp/ok? response2))
@@ -83,11 +83,11 @@
           response (new-genes {:data bdata :prov basic-prov :force true})]
       (t/is (ru-hp/created? response))
       (let [bid (get-in response [:body :id] "")]
-        (t/is (uuid/uuid-string? bid) (pr-str response))
+        (t/is (uuid/uuid? bid) (pr-str response))
         (when bid
           (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
                 xs (map #(get-in % [:gene/status :db/ident]) batch)
-                response (api-tc/summary "batch" bid)]
+                response (api-tc/summary "batch/log" bid)]
             (t/is (seq xs))
             (t/is (every? (partial = :gene.status/live) xs))
             (t/is (ru-hp/ok? response))

@@ -49,7 +49,7 @@
     (let [data (tu/->json payload)
           [status body] (tu/raw-put-or-post*
                          service/app
-                         (str "/api/gene/" gene-id "/split/")
+                         (str "/api/gene/" gene-id "/split")
                          :post
                          data
                          "application/json"
@@ -99,7 +99,7 @@
                          "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
       (t/is (re-matches #".*validation failed.*" (:message body))
-            (pr-str body))))
+            (str "\n" (pr-str body) "\n"))))
   (t/testing "Get 400 response for product must be specified"
     (let [[status body] (split-gene
                          {:data {:biotype "transcript"}

@@ -105,21 +105,17 @@
 (defn wrap-id-validation [handler identifier]
   (fn [request]
     (if (s/valid? ::wsp/identifier identifier)
-      (do
-        (println "::wsp/identifier valid")
-        (handler identifier request))
-      (do
-        (println "Invalid spec??!!")
-        (throw (ex-info "Invalid person identifier"
-                        {:type :user/validation-error
-                         :problems (expound-str ::wsp/identifier identifier)}))))))
+      (handler identifier request)
+      (throw (ex-info "Invalid person identifier"
+                      {:type :user/validation-error
+                       :problems (expound-str ::wsp/identifier identifier)})))))
 
 (def routes
   [["/person"
     {:swagger {:tags ["person"]}
      :post {:summary "Create a new person."
             :coercion wnc/open-spec
-;;            :x-name ::new-person
+            :x-name ::new-person
             :parameters {:body ::wsp/summary}
             :responses (wnu/response-map created {:schema ::wsp/summary})
             :handler create-person}}]

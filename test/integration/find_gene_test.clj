@@ -24,7 +24,7 @@
                    "authorization" "Token IsTotallyMadeUp"}
           [status body] (tu/get*
                          service/app
-                         "/api/gene/"
+                         "/api/gene"
                          params
                          headers)]
       [status (tu/parse-body body)])))
@@ -42,7 +42,8 @@
         (t/is (ru-hp/bad-request? {:status status :body body}))
         (t/is (not (contains? body :matches)))
         (t/is (re-matches #".*validation failed.*"
-                          (get body :message "")))
+                          (get body :message ""))
+              (pr-str body))
         (t/is (:problems body) (pr-str body)))))
   (let [data-samples (tu/gene-samples 3)]
     (tu/with-gene-fixtures
@@ -53,7 +54,7 @@
                 matches (:matches body)]
             (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (empty? matches))))
-        (t/testing "Whitepace at begining and end of find term is ignoreed"
+        (t/testing "Whitepace at begining and end of find term is ignored"
           (doseq [term [" foo" "bar "]]
             (let [[status body] (find-gene term)
                   matches (:matches body)]

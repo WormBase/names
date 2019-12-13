@@ -40,20 +40,16 @@
    [ring.util.http-response :as http-response]
    [reitit.ring.middleware.dev]))
 
-(defn- wrap-not-found
+(defn- handle-not-found
   "Fallback 404 handler."
-  [request-handler]
-  (fn [request]
-    (if-let [response (request-handler request)]
-      response
-      (cond
-        (str/starts-with? (:uri request) "/api")
-        (http-response/not-found {:message "Resource not found (fallback)"})
-
-        :else
-        (-> (http-response/resource-response "client_build/index.html")
-            (http-response/content-type "text/html")
-            (http-response/status 200))))))
+  [request]
+  (cond
+    (str/starts-with? (:uri request) "/api")
+    (http-response/not-found {:message "Resource not found (fallback)"})
+    :else
+    (-> (http-response/resource-response "client_build/index.html")
+        (http-response/content-type "text/html")
+        (http-response/status 200))))
 
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
@@ -109,9 +105,8 @@
                 wn-species/routes]]]
              {:exception pretty/exception
               ;; :reitit.middleware/transform reitit.ring.middleware.dev/print-request-diffs
-              :data {:middleware [swagger/swagger-feature
-                                  ring-gzip/wrap-gzip
-                                  wrap-static-resources
+              :data {:middleware [ring-gzip/wrap-gzip
+                                  swagger/swagger-feature
                                   parameters/parameters-middleware
                                   muuntaja/format-negotiate-middleware
                                   muuntaja/format-response-middleware
@@ -120,10 +115,8 @@
                                   coercion/coerce-response-middleware
                                   coercion/coerce-request-middleware
                                   rmnm/wrap-not-modified
-                                  wrap-not-found
                                   wdb/wrap-datomic
-                                  wna/wrap-auth
-                                  ]}}))
+                                  wna/wrap-auth]}}))
 
 (def ^{:doc "The main application."} app
   (ring/ring-handler
@@ -133,8 +126,9 @@
      {:path "/api-docs"
       :config {:validatorUri nil
                :operationSorter "alpha"}})
-    (ring/create-resource-handler {:path "client_build"})
-    (ring/create-default-handler))))
+    (ring/create-resource-handler {:path "client_build"
+                                   :allow-symlinks? true})
+    (ring/create-default-handler {:not-found handle-not-found}))))
 
 (mount/defstate server
   :start (raj/run-jetty app {:port (read-string (get environ/env :port "3000"))

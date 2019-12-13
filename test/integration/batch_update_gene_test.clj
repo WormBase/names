@@ -111,7 +111,7 @@
           (let [response (update-genes {:data bdata :prov basic-prov})]
             (t/is (ru-hp/ok? response) (pr-str response))
             (let [bid (get-in response [:body :updated :id] "")]
-              (t/is (uuid/uuid-string? bid)))))))))
+              (t/is (uuid/uuid? bid)))))))))
 
 (t/deftest update-uncloned-gene-with-cgc-name
   (t/testing "Test updating an existing clone gene adding just the cgc-name with a specific payload."

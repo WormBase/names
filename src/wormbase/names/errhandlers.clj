@@ -1,6 +1,7 @@
 (ns wormbase.names.errhandlers
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [buddy.auth :refer [authenticated?]]
    [datomic.api :as d]
@@ -190,12 +191,10 @@
   (let [printer (expound/custom-printer {:theme :figwheel-theme, :print-specs? false})
         handler (rrme/create-coercion-handler status)]
     (fn [exception request]
-      (printer (-> exception ex-data :problems))
-      (println "HERE IN COERCION-ERROR-HANDLER status is" status)
+      (when-not (str/blank? (:dev environ/env))
+        (printer (-> exception ex-data :problems)))
       (let [result (handler exception request)]
-        (println "ERROR HANDLER RESULT IN COERCION ERR HANDLING:")
-        (prn result)
-        (assoc-in result [:body :message] "The request was invalid")))))
+        (assoc-in result [:body :message] "The request validation failed (invalid data specified)")))))
 
 
 (def handlers
@@ -232,7 +231,7 @@
    ;; Something else
 
    ;; TODO: find equivilent to compojure.api.exception
-   ;; ::rrme/default handle-unexpected-error
+   ::rrme/default handle-unexpected-error
    })
 
 (def ^{:doc "Custom error handler dispatch map. Keys match the :type of (ex-data exc) in an exception."}

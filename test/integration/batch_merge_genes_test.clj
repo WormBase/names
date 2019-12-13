@@ -76,7 +76,7 @@
           (let [response (merge-genes {:data bdata :prov basic-prov})
                 bid (get-in response [:body :id] "")]
             (t/is (ru-hp/ok? response))
-            (t/is (uuid/uuid-string? bid))
+            (t/is (uuid/uuid? bid))
             (let [batch-info (tu/query-gene-batch (d/db conn) (uuid/as-uuid bid))
                   batch-lookup (into {}
                                      (map (fn [bi]

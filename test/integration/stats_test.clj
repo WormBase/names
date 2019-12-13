@@ -19,7 +19,8 @@
     (let [response (stats-summary)
           etag (get-in response [:headers "etag"])]
       (t/is (ru-hp/ok? response))
-      (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response)))
+      (t/is (set/subset? #{:gene :variation :sequence-feature}
+                         (set (map keyword (-> response :body keys)))))
       (t/testing "Status summary renders a not-modified response when nothing has changed."
         (let [extra-headers {"if-none-match" etag}
               response2 (stats-summary extra-headers)]

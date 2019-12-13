@@ -39,7 +39,7 @@
           (let [data [{:id gid} {:id gid}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
-            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid?))))))))
 
 (t/deftest dup-seq-names
   (t/testing "Duplicate gene sequence names in payload don't cause an error."
@@ -51,7 +51,7 @@
           (let [data [{:sequence-name sn} {:sequence-name sn}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
-            (t/is (-> response :body :dead (get :id "") uuid/uuid-string?))))))))
+            (t/is (-> response :body :dead (get :id "") uuid/uuid?))))))))
 
 (t/deftest entity-in-db-missing
   (t/testing "When a single ID specified in batch does not exist in db."
@@ -95,7 +95,7 @@
             (let [response (send-change-status-request op {:data payload-data
                                                            :prov basic-prov})]
               (t/is (ru-hp/ok? response))
-              (t/is (some-> response :body exp-resp-key :id uuid/uuid-string?)
+              (t/is (some-> response :body exp-resp-key :id uuid/uuid?)
                     (pr-str response))
               (doseq [m data]
                 (let [ent (d/entity (d/db conn) (find m :gene/id))]
