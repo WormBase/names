@@ -46,20 +46,17 @@
 
 (defn export-genes
   "Export all genes to a CSV file."
-  ([out-path db]
-   (export-data out-path
-                db
-                :gene/id
-                '[:gene/id
-                  :gene/cgc-name
-                  :gene/sequence-name
-                  {:gene/status [[:db/ident]]
-                   :gene/biotype [[:db/ident]]}]
-                {:gene/biotype abbrev-ident
-                 :gene/status abbrev-ident}))
-  ([out-path db ent-ns]
-   (assert (= ent-ns "gene"))
-   (export-data db ent-ns)))
+  [out-path db]
+  (export-data out-path
+               db
+               :gene/id
+               '[:gene/id
+                 :gene/cgc-name
+                 :gene/sequence-name
+                 {:gene/status [[:db/ident]]
+                  :gene/biotype [[:db/ident]]}]
+               {:gene/biotype abbrev-ident
+                :gene/status abbrev-ident}))
 
 (defn export-entities
   "Export all records for a given entity type to a CSV file."
