@@ -163,7 +163,7 @@ npm run build
 cd -
 
 # specify $LEVEL as one of <major|minor|patch>
-make vc-release $LEVEL
+make vc-release LEVEL=$LEVEL
 
 # print the version being deployed
 make show-version
