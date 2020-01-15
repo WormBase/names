@@ -1,5 +1,8 @@
 # Change-log
 
+## [1.0.0]
+ - 1.0.0 release (fresh tag for failed AWS deploy).
+
 ## [0.9.9]
  - Fixes for exporter and tests.
 
