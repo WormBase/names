@@ -46,7 +46,7 @@
 
 (defn export-genes
   "Export all genes to a CSV file."
-  [out-path db]
+  [out-path db ent-ns]
   (export-data out-path
                db
                :gene/id
@@ -119,7 +119,7 @@
                     export-entities)]
     (print "Outputing" ent-ns "to" out-path " ... ")
     (flush)
-    (export-fn out-path db)
+    (export-fn out-path db ent-ns)
     (println "[ok]")))
 
 
