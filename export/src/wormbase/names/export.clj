@@ -119,7 +119,7 @@
                     export-entities)]
     (print "Outputing" ent-ns "to" out-path " ... ")
     (flush)
-    (export-fn out-path db ent-ns)
+    (export-fn out-path db)
     (println "[ok]")))
 
 
