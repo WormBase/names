@@ -1,8 +1,11 @@
 # Change-log
 
+## [0.9.9]
+ - Fixes for exporter and tests.
+
 ## [0.9.8]
  - Species is now optional in gene update payloads.
- 
+
 ## [0.9.8]
  - Improved auto-generated swagger docs.
  - Moved not-modified middleware to top level (any GET request may
