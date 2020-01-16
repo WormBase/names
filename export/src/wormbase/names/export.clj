@@ -51,8 +51,8 @@
                db
                :gene/id
                '[:gene/id
-                 :gene/cgc-name
-                 :gene/sequence-name
+                 (default :gene/cgc-name "")
+                 (default :gene/sequence-name "")
                  {:gene/status [[:db/ident]]
                   :gene/biotype [[:db/ident]]}]
                {:gene/biotype abbrev-ident
@@ -67,7 +67,7 @@
         named? (:wormbase.names/name-required? (d/entity db id-ident))
         pull-expr (conj [id-ident {status-ident [[:db/ident]]}]
                         (when named?
-                          name-ident))]
+                          (interpose name-ident (quote (default ""))))]
     (if named?
       (export-data out-path db id-ident pull-expr {status-ident abbrev-ident})
       (with-open [out-file (io/writer out-path)]
