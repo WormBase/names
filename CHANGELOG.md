@@ -1,5 +1,9 @@
 # Change-log
 
+## [1.0.1]
+ - Avoid baking AWS credentials into the docker image.
+ - Updated transactor deps script to use latest clojure CLI tools.
+
 ## [1.0.0]
  - 1.0.0 release (fresh tag for failed AWS deploy).
 
