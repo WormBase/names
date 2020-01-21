@@ -67,7 +67,7 @@
         named? (:wormbase.names/name-required? (d/entity db id-ident))
         pull-expr (conj [id-ident {status-ident [[:db/ident]]}]
                         (when named?
-                          (interpose name-ident (quote (default "")))))
+                          (interpose name-ident (quote (default "")))))]
     (if named?
       (export-data out-path db id-ident pull-expr {status-ident abbrev-ident})
       (with-open [out-file (io/writer out-path)]
