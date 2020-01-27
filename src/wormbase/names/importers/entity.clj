@@ -26,6 +26,7 @@
 (defn batch-transact-data
   [conn ent-ns id-template tsv-path person-lur]
   (let [id-ident (keyword ent-ns "id")
+        name-ident (keyword ent-ns "name")
         prov {:db/id "datomic.tx"
               :provenance/what :event/import
               :provenance/who person-lur
@@ -38,11 +39,10 @@
                        (boolean)) ;; number of cols n file determines if named or not.
         conf (make-export-conf ent-ns ent-named?)
         name-required? (boolean (some #(= (name %) "name") (keys conf)))
-        cast-fns (select-keys
-                  {(keyword ent-ns "id") (partial wnip/conformed ::wse/id)
-                   (keyword ent-ns "name") (partial wnip/conformed ::wse/name)
-                   (keyword ent-ns "status") (partial wnip/->status ent-ns)}
-                  (-> conf :header))
+        avail-cast-fns {(keyword ent-ns "id") (partial wnip/conformed ::wse/id)
+                        name-ident (partial wnip/conformed ::wse/name)
+                        (keyword ent-ns "status") (partial wnip/->status ent-ns)}
+        cast-fns (select-keys avail-cast-fns (get-in conf [:data :header]))
         data (wnip/read-data tsv-path (:data conf) ent-ns cast-fns)]
     (wne/register-entity-schema conn
                                 id-ident
@@ -56,7 +56,7 @@
                             ent-ns
                             person-lur
                             (partial batch-data prov)
-                            [(keyword ent-ns "name")])))
+                            [name-ident])))
 
 (defn process
   ([conn ent-ns id-template data-tsv-path]

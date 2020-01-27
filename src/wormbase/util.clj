@@ -85,7 +85,10 @@
   "Discard nil or blank values from a mapping."
   [data]
   (reduce-kv (fn [m k v]
-               (if (or (nil? v) (str/blank? v))
+               (if (or (nil? v)
+                       (and (string? v) (str/blank? v))
+                       ;; handle references like [:species/latin-name "C..."]
+                       (and (vector? v) (nil? (second v))))
                  (dissoc m k)
                  m))
              data

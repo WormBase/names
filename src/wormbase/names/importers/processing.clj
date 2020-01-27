@@ -10,7 +10,8 @@
    [java-time :as jt]
    [semantic-csv.core :as sc]
    [wormbase.names.auth :as wna]
-   [wormbase.specs.entity :as wse]))
+   [wormbase.specs.entity :as wse]
+   [wormbase.util :as wu]))
 
 (defn- throw-parse-exc! [spec value]
   (throw (ex-info "Could not parse"
