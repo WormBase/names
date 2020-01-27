@@ -10,6 +10,7 @@
 /*.bak
 /*.old
 /*.out
+*pom.xml
 /bundle-release.log
 Build
 Build.bat
