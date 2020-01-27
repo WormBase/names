@@ -51,10 +51,9 @@
                        :description "An entity identifier."
                        :swagger/example "WBVar12345678"}))
 
+;; Due to "Public_name" in the source data, the name can be any non-blank string.
 (s/def ::name (stc/spec {:spec (s/nilable
-                                (s/and string?
-                                       (partial re-seq #"^[A-Za-z]")
-                                       #(not (str/includes? % " "))))
+                                (s/and string? #(not (str/blank? %))))
                          :description "Entity name. (AKA \"public name\""}))
 
 (s/def ::identifier (stc/spec {:spec (s/or :id ::id
