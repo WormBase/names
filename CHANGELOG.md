@@ -1,4 +1,8 @@
 # Change-log
+#
+
+## [1.0.2]
+ - Updated and fixed issues with importers.
 
 ## [1.0.1]
  - Avoid baking AWS credentials into the docker image.
