@@ -48,7 +48,6 @@
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
 
 (defn read-data [tsv-path conf ent-ns cast-fns]
-  ;; TODO: specieis cgc-name (pass in cast-fns!)
   (with-open [in-file (io/reader tsv-path)]
     (->> (parse-tsv in-file)
          (transform-cast conf cast-fns)
