@@ -12,8 +12,9 @@
 (defn make-export-conf
   [ent-ns named?]
   (let [attrs (conj ["id" "status"] (if named? "name"))]
-    {:data {:header (map (partial keyword ent-ns) attrs)}}))
-
+    {:data {:header (->> attrs
+                         (remove nil?)
+                         (map (partial keyword ent-ns)))}}))
 (defn batch-data
   "Build the current entity representation of each variation."
   [prov data ent-ns filter-fn & {:keys [batch-size]
@@ -45,13 +46,14 @@
                         (keyword ent-ns "status") (partial wnip/->status ent-ns)}
         cast-fns (select-keys avail-cast-fns headers)
         data (wnip/read-data tsv-path (:data conf) ent-ns cast-fns)]
-    (wne/register-entity-schema conn
-                                id-ident
-                                id-template
-                                reg-prov
-                                true
-                                true
-                                name-required?)
+    (when-not (wne/entity-schema-registered? conn id-ident)
+      (wne/register-entity-schema conn
+                                  id-ident
+                                  id-template
+                                  reg-prov
+                                  true
+                                  true
+                                  name-required?))
     (wnip/transact-entities conn
                             data
                             ent-ns

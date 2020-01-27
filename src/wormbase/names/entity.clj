@@ -319,6 +319,10 @@
      #:db{:ident (keyword (str entity-type ".status") "live")}
      #:db{:ident (keyword (str entity-type ".status") "suppressed")}]))
 
+(defn entity-schema-registered? [conn id-ident]
+  (when-let [ent (d/entity (d/db conn) id-ident)]
+    (:wormbase.names/entity-type-enabled? ent)))
+
 (defn register-entity-schema
   "Register a new datomic entity schema."
   ([conn id-ident id-template prov generic? enabled? name-required?]
