@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.0.3]
+ - Importer fixes for un-named generic entities.
+
 ## [1.0.2]
  - Updated and fixed issues with importers.
 
