@@ -36,13 +36,14 @@
         ent-named? (-> (wnip/parse-tsv tsv-path)
                        (first)
                        (count)
-                       (boolean)) ;; number of cols n file determines if named or not.
+                       (> 1)) ;; number of cols in file determines if named or not.
         conf (make-export-conf ent-ns ent-named?)
-        name-required? (boolean (some #(= (name %) "name") (keys conf)))
+        headers (get-in conf [:data :header])
+        name-required? (boolean (some #(= (name %) "name") headers))
         avail-cast-fns {(keyword ent-ns "id") (partial wnip/conformed ::wse/id)
                         name-ident (partial wnip/conformed ::wse/name)
                         (keyword ent-ns "status") (partial wnip/->status ent-ns)}
-        cast-fns (select-keys avail-cast-fns (get-in conf [:data :header]))
+        cast-fns (select-keys avail-cast-fns headers)
         data (wnip/read-data tsv-path (:data conf) ent-ns cast-fns)]
     (wne/register-entity-schema conn
                                 id-ident
