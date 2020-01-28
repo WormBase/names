@@ -322,7 +322,7 @@
      #:db{:ident (keyword "event" (str "new-" entity-type))}
      #:db{:ident (keyword "event" (str "update-" entity-type))}
      #:db{:ident (keyword "event" (str "kill-" entity-type))}
-     #:db{:ident (keyword "event" (str "resurrect-" entity-type))]))
+     #:db{:ident (keyword "event" (str "resurrect-" entity-type))}]))
 
 (defn entity-schema-registered? [conn id-ident]
   (when-let [ent (d/entity (d/db conn) id-ident)]

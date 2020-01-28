@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.0.7]
+ - Fixed typo.
+
 ## [1.0.6]
  - Register new provenance event types upon generic entity registration.
 
