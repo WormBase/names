@@ -180,7 +180,7 @@ class EntityProfile extends Component {
                             dirty ? (
                               <ReasonField
                                 label="Reason"
-                                helperText={`Why do you create this gene?`}
+                                helperText={`Why do you update this ${entityType}?`}
                               />
                             ) : null
                           )}

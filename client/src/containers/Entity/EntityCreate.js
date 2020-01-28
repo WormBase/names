@@ -62,7 +62,7 @@ class EntityCreate extends Component {
                         true ? (
                           <ReasonField
                             label="Reason"
-                            helperText={`Why do you create this gene?`}
+                            helperText={`Why do you create this ${entityType}?`}
                           />
                         ) : null
                       )}
