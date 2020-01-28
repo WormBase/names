@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.0.6]
+ - Register new provenance event types upon generic entity registration.
+
 ## [1.0.5]
  - Fix bug where event type for new generic entity was not being
    registered upon creation.
