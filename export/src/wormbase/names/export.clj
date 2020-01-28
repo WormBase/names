@@ -182,9 +182,9 @@
         [ent-ns out-path] arguments]
     (cond
       (:help options) (exit 0 (usage summary))
-      (:list options) (exit 0 (list-available-entitiy-types db))
       (nil? db-uri) (exit 1 (str "Please set the WB_DB_URI environment variable.\n"
                                  "e.g: export WB_DB_URI=\"datomic:ddb://us-east-1/WSNames/20190503_12\""))
+      (:list options) (exit 0 (list-available-entitiy-types db))
       (nil? ent-ns) (exit 1 (str "Please specify an entity type to export. "
                                  "Use --list to see the available types."))
       (nil? out-path) (exit 1 "Specify the output file path. e.g: /tmp/foo.csv"))
