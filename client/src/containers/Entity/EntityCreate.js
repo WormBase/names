@@ -61,6 +61,7 @@ class EntityCreate extends Component {
                       {dirtinessContext(({ dirty }) =>
                         true ? (
                           <ReasonField
+                            multiline
                             label="Reason"
                             helperText={`Why do you create this ${entityType}?`}
                           />
