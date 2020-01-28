@@ -1,6 +1,10 @@
 # Change-log
 #
 
+## [1.0.4]
+ - Initial production release.
+ - Minor fixes for importers.
+
 ## [1.0.3]
  - Importer fixes for un-named generic entities.
 
