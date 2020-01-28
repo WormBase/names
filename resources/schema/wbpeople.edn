@@ -86,7 +86,7 @@
           :active? false}
  #:person{:id "WBPerson1983",
           :email "paul.davis@wormbase.org",
-          :name "Paul Anthony Davis"
+          :name "Paul Davis"
           :roles #{:person.role/sequence-curator}
           :active? true}
  #:person{:id "WBPerson26085",
