@@ -300,7 +300,8 @@
 (defn generic-attrs
   "Return the datomic attribute schema for a generic entity."
   [id-ident]
-  (let [entity-type (namespace id-ident)]
+  (let [entity-type (namespace id-ident)
+        status-ident-ns (str entity-type ".status")]
     [#:db{:ident id-ident
           :valueType :db.type/string
           :cardinality :db.cardinality/one
@@ -315,9 +316,10 @@
           :valueType :db.type/ref
           :cardinality :db.cardinality/one
           :doc (format "The status of the %s." entity-type)}
-     #:db{:ident (keyword (str entity-type ".status") "dead")}
-     #:db{:ident (keyword (str entity-type ".status") "live")}
-     #:db{:ident (keyword (str entity-type ".status") "suppressed")}]))
+     #:db{:ident (keyword status-ident-ns "dead")}
+     #:db{:ident (keyword status-ident-ns "live")}
+     #:db{:ident (keyword status-ident-ns "suppressed")}
+     #:db{:ident (keyword "event" (str "new-" entity-type))}]))
 
 (defn entity-schema-registered? [conn id-ident]
   (when-let [ent (d/entity (d/db conn) id-ident)]

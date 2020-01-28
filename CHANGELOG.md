@@ -1,6 +1,10 @@
 # Change-log
 #
 
+## [1.0.5]
+ - Fix bug where event type for new generic entity was not being
+   registered upon creation.
+
 ## [1.0.4]
  - Initial production release.
  - Minor fixes for importers.
