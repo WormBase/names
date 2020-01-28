@@ -65,16 +65,21 @@
         status-ident (keyword ent-ns "status")
         name-ident (keyword ent-ns "name")
         named? (:wormbase.names/name-required? (d/entity db id-ident))
-        pull-expr (conj [id-ident {status-ident [[:db/ident]]}]
-                        (when named?
-                          (interpose name-ident (quote (default "")))))]
+        pull-expr (remove nil?
+                          (conj [id-ident {status-ident [[:db/ident]]}]
+                                (when named?
+                                  (interpose name-ident (quote (default ""))))))]
     (if named?
       (export-data out-path db id-ident pull-expr {status-ident abbrev-ident})
       (with-open [out-file (io/writer out-path)]
         (let [max-id (d/q '[:find (max ?id) . :in $ ?ident :where [?e ?ident ?id]]
                           db
-                          id-ident)]
-          (cd-csv/write-csv out-file [[max-id]]))))))
+                          id-ident)
+              status (-> (d/pull db [{status-ident [:db/ident]}] [id-ident max-id])
+                         status-ident
+                         :db/ident
+                         name)]
+          (cd-csv/write-csv out-file [[max-id status]]))))))
 
 (defn list-available-entitiy-types
   "List the entity types available for export."
