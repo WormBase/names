@@ -39,7 +39,7 @@
  :aliases
  {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
   :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
-  :depstar {:extra-deps {seancorfield/depstar {:mvn/version "0.3.4"}}}
+  :depstar {:extra-deps {seancorfield/depstar {:mvn/version "0.5.2"}}}
   :webassets {:extra-paths ["resources"]}
   :artifact-name {:extra-deps {metav {:mvn/version "1.5.2"}}
                   :main-opts ["-m" "metav.display"]}
