@@ -1,10 +1,11 @@
 import React, {
   useMemo,
   useRef,
-  useReducer,
+  //  useReducer,
   useCallback,
   useEffect,
 } from 'react';
+import { useSessionStorageReducer } from 'react-storage-hooks';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -15,9 +16,13 @@ import AuthorizationContext, {
 } from './AuthorizationContext';
 
 export default function Authenticate({ children }) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...DEFAULT_AUTHENTICATION_STATE,
-  });
+  const [state, dispatch] = useSessionStorageReducer(
+    'authentication',
+    reducer,
+    {
+      ...DEFAULT_AUTHENTICATION_STATE,
+    }
+  );
 
   function reducer(state, { type, payload }) {
     switch (type) {
