@@ -1,10 +1,11 @@
 import React, {
   useMemo,
   useRef,
-  useReducer,
+  //  useReducer,
   useCallback,
   useEffect,
 } from 'react';
+import { useSessionStorageReducer } from 'react-storage-hooks';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -15,9 +16,13 @@ import AuthorizationContext, {
 } from './AuthorizationContext';
 
 export default function Authenticate({ children }) {
-  const [state, dispatch] = useReducer(reducer, {
-    ...DEFAULT_AUTHENTICATION_STATE,
-  });
+  const [state, dispatch] = useSessionStorageReducer(
+    'authentication',
+    reducer,
+    {
+      ...DEFAULT_AUTHENTICATION_STATE,
+    }
+  );
 
   function reducer(state, { type, payload }) {
     switch (type) {
@@ -64,15 +69,32 @@ export default function Authenticate({ children }) {
           const name = googleUserProfile.getName();
           const email = googleUserProfile.getEmail();
           const id_token = googleUser.getAuthResponse().id_token;
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: {
-              user: {
-                name,
-                email,
-                id_token,
-              },
-            },
+
+          const newHeaders = new Headers();
+          newHeaders.append('Authorization', `Token ${id_token}`);
+          newHeaders.append('Content-Type', 'application/json');
+          newHeaders.append('Accept', 'application/json');
+          // hack: initiate a request to verify the backend API is working and
+          // accepts the id_token
+          return fetch('/api/entity', {
+            headers: newHeaders,
+          }).then((response) => {
+            if (response.ok) {
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: {
+                  user: {
+                    name,
+                    email,
+                    id_token,
+                  },
+                },
+              });
+            } else {
+              response.json().then((content) => {
+                dispatch({ type: 'LOGIN_FAILURE', payload: { content } });
+              });
+            }
           });
         } else {
           dispatch({ type: 'ACCESS_REVOKED' });
