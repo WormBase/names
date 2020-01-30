@@ -43,11 +43,12 @@
           (created (str "/person/" pid) person))))))
 
 (defn summary [db lur]
-  (let [person (d/pull db '[:person/active?
-                            :person/email
-                            :person/id
-                            :person/name
-                            :person/roles] lur)]
+  (let [person (d/pull db [:db/id
+                           :person/active?
+                           :person/email
+                           :person/id
+                           :person/name
+                           :person/roles] lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
