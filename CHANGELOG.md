@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.0.9]
+ - Return specific attributes in the person summary API.
+
 ## [1.0.8]
  - Entity-type specific labels for "reason" inputs.
  - Reason inputs now accept multi-line comments.
