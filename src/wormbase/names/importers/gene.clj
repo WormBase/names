@@ -40,9 +40,28 @@
                :biotype/cds #(= % "CDS")
                :biotype/pseudogene #(= % "Pseudogene"))))
 
+(def conform-to-non-empty-value
+  [func value]
+  (fn conform-non-empty [v]
+    (when-not (str/blank v)
+      (func v))))
+
 (defn ->biotype [v]
-  (when-not (str/blank? v)
-    (wnip/conformed-label ::biotype v)))
+  ((conform-to-non-empty-value (partial wnip/conformed-label ::biotype))) v)
+
+(defn ->species [v]
+  (let [[ident value] (wnip/conformed-ref :species/latin-name)]
+    (when-not value
+      (throw (ex-info "Empty species values are not permitted."
+                      {:value v
+                       :spec (s/describe :species/latin-name)
+                       :ident ident})))))
+
+(defn ->sequence-name [v]
+  ((conform-to-non-empty-value (partial wnip/conformed :gene/sequence-name))) v)
+
+(defn ->cgc-name [v]
+  ((conform-to-non-empty-value (partial wnip/conformed :gene/cgc-name))) v)
 
 (s/def ::event
   (s/and
@@ -233,10 +252,10 @@
    (let [person-lur (wnip/default-who)
          id-ident (keyword ent-ns "id")
          cast-fns {:gene/id cast-gene-id-fn
-                   :gene/species (partial wnip/conformed-ref :species/latin-name)
+                   :gene/species ->species
                    :gene/status (partial wnip/->status ent-ns)
-                   :gene/cgc-name (partial wnip/conformed :gene/cgc-name)
-                   :gene/sequence-name (partial wnip/conformed :gene/sequence-name)
+                   :gene/cgc-name ->cgc-name
+                   :gene/sequence-name ->sequence-name
                   :gene/biotype ->biotype}
          data (wnip/read-data data-tsv-path (:data export-conf) ent-ns cast-fns)]
      (transact-current-data conn data ent-ns person-lur)

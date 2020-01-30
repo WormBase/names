@@ -22,10 +22,9 @@
 
 (defn conformed [spec value & {:keys [transform]
                                :or {transform identity}}]
-  (cond
-    (str/blank? value) nil
-    (s/valid? spec value) (transform (s/conform spec value))
-    :else (throw-parse-exc! spec value)))
+  (if (s/valid? spec value)
+    (transform (s/conform spec value))
+    (throw-parse-exc! spec value)))
 
 (defn conformed-ref [spec value]
   [spec (conformed spec value)])
