@@ -1,6 +1,11 @@
 # Change-log
 #
 
+## [1.0.8]
+ - Entity-type specific labels for "reason" inputs.
+ - Reason inputs now accept multi-line comments.
+ - Fixed import transformations (species was previously erroneously permitted to be blank).
+ 
 ## [1.0.7]
  - Fixed typo.
 
