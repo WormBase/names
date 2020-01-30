@@ -179,8 +179,9 @@ class EntityProfile extends Component {
                           {dirtinessContext(({ dirty }) =>
                             dirty ? (
                               <ReasonField
+                                multiline
                                 label="Reason"
-                                helperText={`Why do you create this gene?`}
+                                helperText={`Why do you update this ${entityType}?`}
                               />
                             ) : null
                           )}
