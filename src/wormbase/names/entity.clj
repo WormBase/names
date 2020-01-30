@@ -478,7 +478,7 @@
        :handler (fn handle-disable-ent-type [request]
                   (disable-entity-type request entity-type))}
       :get
-      {:summary>> "Find variations by any unique identifier."
+      {:summary "Find variations by any unique identifier."
        :responses (wnu/http-responses-for-read {:schema ::wsc/find-response})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-entities
