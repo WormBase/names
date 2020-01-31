@@ -9,6 +9,7 @@ export default function AutocompleteLoader({
   inputValue,
   selectedValue,
   onSuggestionChange,
+  prefixLengthMin = 3,
 }) {
   const { isLoading, data, setFetchFunc } = useDataFetch(null, {}); // can't provide fetchFunc now, because it depends on suggestions
   const suggestions = useMemo(() => data.matches || [], [data]);
@@ -37,7 +38,12 @@ export default function AutocompleteLoader({
         (item) => item.id === inputValue
       );
 
-      if (apiPrefix && inputValue && !resultItem) {
+      if (
+        apiPrefix &&
+        inputValue &&
+        inputValue.length >= prefixLengthMin &&
+        !resultItem
+      ) {
         setFetchFunc((authorizedFetch) => {
           return authorizedFetch(`${apiPrefix}/?pattern=${inputValue}`, {
             method: 'GET',
@@ -45,7 +51,7 @@ export default function AutocompleteLoader({
         });
       }
     },
-    [entityType, apiPrefix, inputValue, setFetchFunc]
+    [entityType, apiPrefix, inputValue, setFetchFunc, prefixLengthMin]
   );
 
   return children({
@@ -59,4 +65,5 @@ AutocompleteLoader.propTypes = {
   inputValue: PropTypes.string,
   selectedValue: PropTypes.string,
   onSuggestionChange: PropTypes.func,
+  prefixLengthMin: PropTypes.number,
 };
