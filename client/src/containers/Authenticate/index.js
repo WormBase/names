@@ -26,6 +26,11 @@ export default function Authenticate({ children }) {
 
   function reducer(state, { type, payload }) {
     switch (type) {
+      case 'LOGIN_BEGIN':
+        return {
+          ...state,
+          isAuthenticated: undefined,
+        };
       case 'LOGIN_FAILURE':
         return {
           ...state,
@@ -74,6 +79,8 @@ export default function Authenticate({ children }) {
           newHeaders.append('Authorization', `Token ${id_token}`);
           newHeaders.append('Content-Type', 'application/json');
           newHeaders.append('Accept', 'application/json');
+
+          dispatch({ type: 'LOGIN_BEGIN' });
           // hack: initiate a request to verify the backend API is working and
           // accepts the id_token
           return fetch('/api/entity', {
