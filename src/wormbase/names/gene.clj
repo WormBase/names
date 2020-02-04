@@ -59,14 +59,15 @@
       (let [patterns ((juxt :species/cgc-name-pattern :species/sequence-name-pattern) species-ent)
             regexps (map re-pattern patterns)
             name-idents [:gene/cgc-name :gene/sequence-name]]
-        (->> (partition 2 (interleave regexps name-idents))
+        (->> (interleave regexps name-idents)
+             (partition 2)
              (map (fn collect-errors [[regexp name-ident]]
                     (when-let [gname (name-ident data)]
                       (when-not (re-matches regexp gname)
-                        (when-not (and (empty? (get data gname))
-                                       (= gname :gene/cgc-name))
                           {:name (name name-ident)
-                           :value gname})))))
+                           :value gname
+                           :reason "Did not match species regular expression pattern."
+                           :regexp (str regexp)}))))
              (filter identity)
              (seq))))))
 
