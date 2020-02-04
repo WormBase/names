@@ -1,6 +1,11 @@
 # Change-log
 #
 
+## [1.0.10]
+ - Login fixes (UI); check for API loggedin-ness after Google API login.
+ - Search fix: accept a minimum number of characters in search string before issuing API call.
+ - Creation API: Return unqualified names in response payload.
+
 ## [1.0.9]
  - Return specific attributes in the person summary API.
 
@@ -8,7 +13,7 @@
  - Entity-type specific labels for "reason" inputs.
  - Reason inputs now accept multi-line comments.
  - Fixed import transformations (species was previously erroneously permitted to be blank).
- 
+
 ## [1.0.7]
  - Fixed typo.
 
