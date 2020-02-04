@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [phrase.alpha :as ph]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.specs.provenance :as wsp]))
@@ -16,21 +17,35 @@
 (s/def :species/sequence-name-pattern (s/and string?
                                              (complement str/blank?)))
 
-(s/def :species/id (stc/spec {:spec (s/and string?
-                                           #(re-matches id-regexp %))
+(def matches-id-regexp (partial re-matches id-regexp))
+
+(s/def :species/id (stc/spec {:spec (s/and string? matches-id-regexp)
                               :swagger/example "species/c-elegans"
                               :description "The identifier for a species."}))
+
+(ph/defphraser matches-id-regexp [_ _] "Species ID must match regular expression.")
 
 (s/def ::species-id-name (stc/spec {:spec (s/and string?
                                                  #(str/includes? % "-"))
                                     :swagger/example "c-elegans"
                                     :description "The short-name of the id."}))
 
-(s/def :species/latin-name (stc/spec {:spec (s/and sts/string? #(re-matches latin-name-regexp %))
+(def matches-latin-name-regexp (partial re-matches latin-name-regexp))
+
+(s/def :species/latin-name (stc/spec {:spec (s/and sts/string? matches-latin-name-regexp)
                                       :description "The linnaean name of the species."}))
+
+(ph/defphraser matches-latin-name-regexp
+  [_ problem]
+  "Species name must match regular expression.")
+
 
 (s/def ::identifier (stc/spec {:spec (s/or :species/id :species/id
                                            :species/latin-name :species/latin-name)}))
+
+(ph/defphraser :species/latin-name
+  [_ problem]
+  "Species name must match regular expression.")
 
 (s/def ::item (s/keys :req-un [:species/id
                                :species/latin-name

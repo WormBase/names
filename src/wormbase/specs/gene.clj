@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as str]
    [clojure.spec.alpha :as s]
+   [phrase.alpha :as ph]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.specs.biotype :as wsb]
@@ -56,11 +57,26 @@
                             :opt-un [:gene/species
                                      :gene/status]))))
 
-(s/def ::new (stc/spec {:spec (s/or :cloned ::cloned
-                                    :uncloned ::uncloned)
+(def not-empty? #(not (empty? %)))
+
+(s/def ::new (stc/spec {:spec (s/and not-empty?
+                                     (s/or :cloned ::cloned
+                                           :uncloned ::uncloned))
                         :description (str "The data required to populate a new Gene. "
                                           "This data should be in one two forms: cloned, or "
                                           "uncloned.")}))
+(ph/defphraser not-empty
+  [_ problem]
+  (str (-> problem :via last keyword name) " must not be blank."))
+
+(ph/defphraser not-empty?
+  [_ problems]
+  (str "A new gene requires at least a species and a name."))
+
+;; (ph/defphraser #(contains? % :cgc-name) [_ _] "cgc-name is required")
+;; (ph/defphraser #(contains? % :sequence-name) [_ _] "sequence-name is required")
+;; (ph/defphraser #(contains? % :biotype) [_ _] "biotype is required")
+
 
 (s/def ::new-unnamed (s/keys :req-un [:gene/id
                                       :gene/species]))

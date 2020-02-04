@@ -1,6 +1,7 @@
 (ns wormbase.names.errhandlers
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [buddy.auth :refer [authenticated?]]
    [compojure.api.exception :as ex]
@@ -8,6 +9,7 @@
    [environ.core :as environ]
    [expound.alpha :as expound]
    [muuntaja.core :as mc]
+   [phrase.alpha :as ph]
    [ring.util.http-response :refer [bad-request
                                     conflict
                                     content-type
@@ -24,6 +26,12 @@
    (java.util.concurrent ExecutionException)))
 
 (declare handlers)
+
+;; Generates a human-readable error message
+;; when there are missing required keys.
+(ph/defphraser #(contains? % kw)
+  [_ _ kw]
+  (format "%s is required" (name kw)))
 
 (defn respond-with [response-fn request data]
   (let [fmt (mc/default-format (or (:compojure.api.request/muuntaja request)
@@ -161,7 +169,7 @@
    exc
    data
    request
-   :message "Request validation failed"))
+   :message (ph/phrase-first {} (:spec data) (:value data))))
 
 (defn handle-unauthenticated [^Exception exc data request]
   (if-not (authenticated? request)

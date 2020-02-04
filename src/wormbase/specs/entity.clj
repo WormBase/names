@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
+   [phrase.alpha :as ph]
    [spec-tools.spec :as sts]
    [spec-tools.core :as stc]
    [wormbase.specs.provenance :as wsp]))
@@ -46,15 +47,39 @@
 
 (s/def ::schema-listing (stc/spec {:spec (s/coll-of ::schema-list-item :min-count 1)}))
 
-(s/def ::id (stc/spec {:spec (s/and string?
-                                    #(str/starts-with? % "WB"))
+(def is-wb-id? #(and % (str/starts-with? % "WB")))
+
+(s/def ::id (stc/spec {:spec (s/and string? is-wb-id?)
                        :description "An entity identifier."
                        :swagger/example "WBVar12345678"}))
 
+(ph/defphraser is-wb-id?
+  [_ problem]
+  (let [msg (-> problem :via last namespace)]
+    {:message msg
+     :code "Invalid identifier. Identifier should start with a prefix of WB."}))
+
 ;; Due to "Public_name" in the source data, the name can be any non-blank string.
-(s/def ::name (stc/spec {:spec (s/nilable
-                                (s/and string? #(not (str/blank? %))))
+
+(def not-blank? #(not (str/blank? %)))
+
+(def not-start-end-space? #(not (or (str/starts-with? % " ")
+                                    (str/ends-with? % " "))))
+
+(s/def ::name (stc/spec {:spec (s/nilable (s/and string?
+                                                 not-blank?
+                                                 not-start-end-space?))
                          :description "Entity name. (AKA \"public name\""}))
+
+(ph/defphraser not-blank?
+  [_ problem]
+  (let [ent-ns (-> problem :via last name)]
+    (str ent-ns " cannot be empty.")))
+
+(ph/defphraser not-start-end-space?
+  [_ problem]
+  (let [ent-ns (-> problem :via last name)]
+        (str ent-ns " cannot start or end with spaces.")))
 
 (s/def ::identifier (stc/spec {:spec (s/or :id ::id
                                            :name ::name)}))
