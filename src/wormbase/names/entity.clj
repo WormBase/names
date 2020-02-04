@@ -125,7 +125,13 @@
         (when dba
           (let [new-id (wdb/extract-id tx-res uiident)
                 emap (wdb/pull dba summary-pull-expr [uiident new-id])
-                result {:created (wnu/unqualify-keys emap ent-ns)}]
+                emap* (reduce-kv (fn [m k v]
+                                   (if (qualified-keyword? v)
+                                     (assoc m k (name v))
+                                     (assoc m k v)))
+                                 {}
+                                 emap)
+                result {:created (wnu/unqualify-keys emap* ent-ns)}]
             (created (str "/" ent-ns "/") result)))))))
 
 (defn merge-into-ent-data
