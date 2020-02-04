@@ -91,8 +91,8 @@ export default function Authenticate({ children }) {
                 },
               });
             } else {
-              response.json().then((content) => {
-                dispatch({ type: 'LOGIN_FAILURE', payload: { content } });
+              response.json().then((error) => {
+                dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
               });
             }
           });
