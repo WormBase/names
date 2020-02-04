@@ -43,32 +43,48 @@
 (defmulti parse-exc-message (fn [exc]
                               (-> exc ex-data :db/error keyword)))
 
-(defmethod parse-exc-message :db.error/nil-value [exc]
+(defmethod parse-exc-message :db.error/nil-value
+  [exc]
   (format "Cannot accept nil-value %s" (ex-data exc)))
 
-(defmethod parse-exc-message :db.error/not-an-entity [exc]
+(defmethod parse-exc-message :db.error/not-an-entity
+  [exc]
   (let [ent (some-> exc ex-data :entity)]
     (if (keyword? ent)
       (format "Ident %s does not exist" ent)
       (apply format "Entity attribute %s with identifier '%s' does not exist" ent))))
 
-(defmethod parse-exc-message :db.error/unique-conflict [exc]
+(defmethod parse-exc-message :db.error/unique-conflict
+  [exc]
   (let [msg (.getMessage exc)
         [k v] (->> msg
                    (re-find #"Unique conflict: :(.*), value: (.*) already*")
                    rest)
-        [ident v] [(keyword k) v]]
-    (format "Entity with %s identifier '%s' is already stored." (str ident) v)))
+        [ident v] [(keyword k) v]
+        ent-ns (namespace ident)
+        id-ident (keyword ent-ns "id")
+        id (-> (d/db wdb/conn)
+               (d/pull [id-ident] [ident v]) id-ident)]
+    (format "%s with %s identifier '%s' is already stored against %s."
+            (str/capitalize ent-ns)
+            (name ident)
+            v
+            id)))
 
-(defmethod parse-exc-message :default [exc]
+(defmethod parse-exc-message :default
+  [exc]
   (throw exc))
 
 (defn- prettify-spec-error-maybe [spec data]
   (try
     (expound/expound-str spec (:value data))
     (catch Exception ex
+      (println "UI fails to render the following:")
+      (pr-str
+       {:data (pr-str (:value data))
+        :message "Unable to determine spec error."})
       {:data (pr-str (:value data))
-       :message "Unable to determine spec error."})))
+        :message "Unable to determine spec error."})))
 
 (defn handle-validation-error
   [^Exception exc data request & {:keys [message]}]
