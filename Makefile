@@ -25,12 +25,17 @@ show-version: $(call print-help,show-version,"Show the current application veris
 
 .PHONY: build
 build: clean \
+       ui-build \
        docker/${DEPLOY_JAR} \
        $(call print-help,build,\
 	"Build the docker images from using the current git revision.")
 	@docker build -t ${ECR_REPO_NAME}:${VERSION} \
 		--build-arg uberjar_path=${DEPLOY_JAR} \
 		--rm ./docker/
+
+.PHONY: ui-build
+ui-build: $(call print-help,ui-build,"Build JS and CSS file for release")
+	@bash -l -c 'cd client/ && nvm exec npm ci && nvm exec npm run build'
 
 .PHONY: clean
 clean: $(call print-help,clean,"Remove the locally built JAR file.")
