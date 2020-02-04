@@ -55,7 +55,7 @@ EntityTypesContext.Provider.propTypes = {
   ),
 };
 
-export default function EntityTypesContextProvider(props) {
+export function EntityTypesContextProvider(props) {
   const memoizedFetchFunc = useCallback(
     (authorizedFetch) =>
       mockFetchOrNot(
@@ -127,7 +127,7 @@ export default function EntityTypesContextProvider(props) {
   return <EntityTypesContext.Provider value={entityTypesAll} {...props} />;
 }
 
-export function useEntityTypes() {
+export default function useEntityTypes() {
   const entityTypesMap = useContext(EntityTypesContext);
   const entityTypesAll = useMemo(
     () => [...entityTypesMap].map(([, entityTypeConfig]) => entityTypeConfig),

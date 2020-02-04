@@ -12,7 +12,6 @@ export { default as EntityDialogResurrect } from './EntityDialogResurrect';
 export { default as EntityHistory } from './EntityHistory';
 
 export {
-  default as EntityTypesContextProvider,
-  EntityTypesContext,
-  useEntityTypes,
-} from './EntityTypesContextProvider';
+  default as useEntityTypes,
+  EntityTypesContextProvider,
+} from './useEntityTypes';
