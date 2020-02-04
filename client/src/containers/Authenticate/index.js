@@ -81,21 +81,24 @@ export default function Authenticate({ children }) {
           newHeaders.append('Accept', 'application/json');
 
           dispatch({ type: 'LOGIN_BEGIN' });
-          // hack: initiate a request to verify the backend API is working and
+          // Verify the backend API is working and
           // accepts the id_token
-          return fetch('/api/entity', {
+          return fetch(`/api/person/${email}`, {
             headers: newHeaders,
           }).then((response) => {
             if (response.ok) {
-              dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: {
-                  user: {
-                    name,
-                    email,
-                    id_token,
+              response.json().then(({ id }) => {
+                dispatch({
+                  type: 'LOGIN_SUCCESS',
+                  payload: {
+                    user: {
+                      name,
+                      email,
+                      id_token,
+                      id,
+                    },
                   },
-                },
+                });
               });
             } else {
               response.text().then((error) => {
