@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { TextField } from '../../components/elements';
-import { useEntityTypes } from './EntityTypesContextProvider';
+import useEntityTypes from './useEntityTypes';
 
 function EntityForm({ withFieldData, entityType }) {
   const { getEntityType } = useEntityTypes();

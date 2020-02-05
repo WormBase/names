@@ -12,8 +12,8 @@ import Profile from './Profile';
 import ProfileButton from './ProfileButton';
 import AuthorizationContext, {
   DEFAULT_AUTHENTICATION_STATE,
-  useDataFetch,
 } from './AuthorizationContext';
+import useDataFetch from './useDataFetch';
 
 export default function Authenticate({ children }) {
   const [state, dispatch] = useSessionStorageReducer(

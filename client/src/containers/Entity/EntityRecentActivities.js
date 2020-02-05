@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import moment from 'moment';
-import { useDataFetch } from '../Authenticate/AuthorizationContext';
+import { useDataFetch } from '../Authenticate';
 import EntityHistory from './EntityHistory';
 import ActivitiesCopy from './ActivitiesCopy';
 import { NoData, CircularProgress } from '../../components/elements';
