@@ -35,7 +35,7 @@ build: clean \
 
 .PHONY: ui-build
 ui-build: $(call print-help,ui-build,"Build JS and CSS file for release")
-	@bash -l -c 'cd client/ && nvm exec npm ci && nvm exec npm run build'
+	@./scripts/build-ui.sh
 
 .PHONY: clean
 clean: $(call print-help,clean,"Remove the locally built JAR file.")
