@@ -54,8 +54,7 @@
                         {:type :user/validation-error})))
       (if-not (:db/id species-ent)
         (throw (ex-info "Invalid species specified"
-                        {:errors {:species (second species-lur)}
-                         :type :user/validation-error})))
+                        {:type :user/validation-error})))
       (let [patterns ((juxt :species/cgc-name-pattern :species/sequence-name-pattern) species-ent)
             regexps (map re-pattern patterns)
             name-idents [:gene/cgc-name :gene/sequence-name]]
