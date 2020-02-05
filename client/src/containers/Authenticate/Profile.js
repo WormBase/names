@@ -6,6 +6,8 @@ const Profile = (props) => {
   return (
     <div className={props.classes.root}>
       <h2>{props.name}</h2>
+      <span>ID: {props.id}</span>
+      <br />
       <span>{props.email}</span>
       <div className={props.classes.logout}>{props.children}</div>
     </div>
@@ -16,6 +18,7 @@ Profile.propTypes = {
   classes: PropTypes.object.isRequired,
   name: PropTypes.string.isRequired,
   email: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
   onLogout: PropTypes.func.isRequired,
   children: PropTypes.element,
 };

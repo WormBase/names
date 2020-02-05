@@ -26,6 +26,11 @@ export default function Authenticate({ children }) {
 
   function reducer(state, { type, payload }) {
     switch (type) {
+      case 'LOGIN_BEGIN':
+        return {
+          ...state,
+          isAuthenticated: undefined,
+        };
       case 'LOGIN_FAILURE':
         return {
           ...state,
@@ -74,25 +79,30 @@ export default function Authenticate({ children }) {
           newHeaders.append('Authorization', `Token ${id_token}`);
           newHeaders.append('Content-Type', 'application/json');
           newHeaders.append('Accept', 'application/json');
-          // hack: initiate a request to verify the backend API is working and
+
+          dispatch({ type: 'LOGIN_BEGIN' });
+          // Verify the backend API is working and
           // accepts the id_token
-          return fetch('/api/entity', {
+          return fetch(`/api/person/${email}`, {
             headers: newHeaders,
           }).then((response) => {
             if (response.ok) {
-              dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: {
-                  user: {
-                    name,
-                    email,
-                    id_token,
+              response.json().then(({ id }) => {
+                dispatch({
+                  type: 'LOGIN_SUCCESS',
+                  payload: {
+                    user: {
+                      name,
+                      email,
+                      id_token,
+                      id,
+                    },
                   },
-                },
+                });
               });
             } else {
-              response.json().then((content) => {
-                dispatch({ type: 'LOGIN_FAILURE', payload: { content } });
+              response.text().then((error) => {
+                dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
               });
             }
           });
