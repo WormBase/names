@@ -42,12 +42,26 @@ class ValidationError extends React.Component {
   };
 
   render() {
-    const { classes, message, problems } = this.props;
+    const { classes, message, problems, errors = [] } = this.props;
     const problemText = problems;
     return message || problems ? (
       <Card card className={classes.root}>
         <CardContent>
           <Typography color="error">{message || 'Error'}</Typography>
+          {errors.map(({ name, value, reason, regexp }) => (
+            <ul>
+              <li>
+                <Typography key={name} color="error">
+                  {name}:{' '}
+                  <em>
+                    <strong>{value}</strong>
+                  </em>{' '}
+                  {reason}
+                  {regexp ? <pre> {regexp}</pre> : null}
+                </Typography>
+              </li>
+            </ul>
+          ))}
         </CardContent>
         {this.renderActions()}
         <Collapse in={this.state.expanded}>
@@ -61,6 +75,16 @@ class ValidationError extends React.Component {
 }
 
 ValidationError.propTypes = {
+  classes: PropTypes.object.isRequired,
+  message: PropTypes.string,
+  errors: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      value: PropTypes.string,
+      reason: PropTypes.string,
+      regexp: PropTypes.string,
+    })
+  ),
   problems: PropTypes.object,
 };
 

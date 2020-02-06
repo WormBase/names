@@ -44,7 +44,9 @@
         (when (:wormbase.names/name-required? ident-ent)
           (when-not (and name-val (s/valid? ::wse/name name-val))
             [{:name "name"
-              :value name-val}]))))))
+              :value name-val
+              :reason (format "%s name was blank or otherwise invalid."
+                              (str/capitalize ent-ns))}]))))))
 
 (defn transform-ident-ref-values
   [data & {:keys [skip-keys]
@@ -114,9 +116,9 @@
                    (transform-ident-ref-values)
                    (update live-status-attr (fnil identity live-status-val)))]
       (when-let [errors (names-validator data)]
-        (throw (ex-info "One ore missing or invalid names found"
+        (throw (ex-info "Missing or invalid name(s)."
                         (merge {:type :user/validation-error}
-                               errors))))
+                               {:errors errors}))))
       (let [cdata (prepare-data-for-transact db (wnu/qualify-keys data ent-ns))
             prov (wnp/assoc-provenance request payload event)
             tx-data [['wormbase.ids.core/new template uiident [cdata]] prov]
