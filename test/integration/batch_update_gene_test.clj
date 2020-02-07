@@ -72,10 +72,7 @@
                         :id gid}]
                 response (update-genes {:data bdata :prov basic-prov})]
             (t/is (ru-hp/bad-request? response))
-            (t/is (some (fn [error]
-                          (str/includes? error bad-species))
-                        (get-in response [:body :errors] []))
-                  (pr-str response))))))))
+            (t/is (str/includes? (get-in response [:body :message] "") "Invalid species"))))))))
 
 (t/deftest single-item
   (let [fixtures (tu/gene-samples 1)

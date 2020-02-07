@@ -98,7 +98,7 @@
                           :prov nil}
                          "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
-      (t/is (re-matches #".*validation failed.*" (:message body))
+      (t/is (re-matches #"biotype.*required" (:message body))
             (pr-str body))))
   (t/testing "Get 400 response for product must be specified"
     (let [[status body] (split-gene
@@ -106,7 +106,7 @@
                           :prov nil}
                          "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
-      (t/is (re-matches #".*validation failed.*" (:message body)))))
+      (t/is (re-matches #"product.*required" (:message body)))))
   (t/testing "Get 400 if product biotype not supplied"
     (let [[status body] (split-gene
                          {:data {:product
@@ -115,7 +115,7 @@
                           :prov nil}
                          "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
-      (t/is (re-matches #".*validation failed.*" (:message body))
+      (t/is (re-matches #"biotype.*required" (:message body))
             (pr-str body))))
   (t/testing "Get 400 if sequence-name not supplied"
     (let [[status body] (split-gene
@@ -124,7 +124,7 @@
                           :prov nil}
                          "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
-      (t/is (re-matches #".*validation failed.*" (:message body))
+      (t/is (re-matches #"sequence-name.*required.*" (:message body))
             (pr-str body))))
   (t/testing "Get 404 when gene to be operated on is missing"
     (let [gene-id (first (gen/sample gs/id 1))
@@ -161,7 +161,7 @@
                                      :prov nil}
                                     "WBGene00000001")]
       (t/is (ru-hp/bad-request? {:status status :body body}))
-      (t/is (re-seq #".*validation failed" (:message body))
+      (t/is (re-seq #"product.*required" (:message body))
             (pr-str body)))))
 
 (defn gen-sample-for-split [& {:keys [status]
