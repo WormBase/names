@@ -57,7 +57,7 @@
              (remove nil?))))
 
 (defn latest-id
-  "Get the latest identifier for a given `ident`."
+  "Returns the latest WB identifier for a given `ident` as a string."
   [db ident]
   (d/q '[:find (max ?gid) .
          :in $ ?ident
