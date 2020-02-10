@@ -278,6 +278,7 @@
                            [data])]
          @(d/transact-async conn tx-fixtures)))
      (with-redefs [wdb/connection (fn [] conn)
+                   wdb/connect (fn [] conn)
                    wdb/db (fn speculate [_]
                             (d/db conn))]
        (test-fn conn)))))
@@ -308,6 +309,7 @@
                       data)]
     @(d/transact-async conn tx-fixtures)
     (with-redefs [wdb/connection (constantly conn)
+                  wdb/connect (constantly conn)
                   wdb/db (fn [_] (d/db conn))]
       (test-fn conn))))
 

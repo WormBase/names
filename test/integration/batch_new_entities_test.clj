@@ -55,10 +55,13 @@
       (let [bid (get-in response [:body :id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid) "variation")
-              xs (map #(get-in % [:variation/status :db/ident]) batch)
+              xs (->> batch
+                      (remove :counter/variation)
+                      (map #(get-in % [:variation/status :db/ident])))
               response2  (api-tc/summary "batch" bid)]
           (t/is (seq xs))
-          (t/is (every? (partial = :variation.status/live) xs))
+          (t/is (every? (partial = :variation.status/live) xs)
+                (pr-str xs))
           (t/is (ru-hp/ok? response2))
           (t/is (= "new-variation"
                    (some-> response2 :body :what))
@@ -72,7 +75,9 @@
       (let [bid (get-in response [:body :id] "")]
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (query-batch (d/db wdb/conn) (uuid/as-uuid bid) "sequence-feature")
-              xs (map #(get-in % [:sequence-feature/status :db/ident]) batch)
+              xs (->> batch
+                      (remove :counter/sequence-feature)
+                      (map #(get-in % [:sequence-feature/status :db/ident])))
               response2  (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :sequence-feature.status/live) xs))

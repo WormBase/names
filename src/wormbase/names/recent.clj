@@ -66,10 +66,11 @@
                                 (filter (fn [k]
                                           (= (name k) "id")))
                                 (first))]
-             (-> (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
-                 (merge (when ident
-                          (find ent ident)))
-                 (wnu/unqualify-keys (namespace ident))))))))
+             (when ident
+               (-> (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
+                   (merge (when ident
+                            (find ent ident)))
+                   (wnu/unqualify-keys (namespace ident)))))))))
 
 (defn prov-only-puller
   [request]

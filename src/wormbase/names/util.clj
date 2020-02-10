@@ -191,10 +191,12 @@
   "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
   [mapping entity-type]
   (reduce-kv (fn [m k v]
-               (if (and (qualified-keyword? k)
-                        (= (namespace k) entity-type))
-                 (assoc m (-> k name keyword) v)
-                 (assoc m k v)))
+               (try
+                 (if (and (qualified-keyword? k)
+                          (= (namespace k) entity-type))
+                   (assoc m (-> k name keyword) v)
+                   (assoc m k v))))
+
              {}
              mapping))
 

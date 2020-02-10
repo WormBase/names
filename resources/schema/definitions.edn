@@ -1,4 +1,8 @@
-[#:db{:ident :gene/biotype
+[#:db{:ident :counter/gene
+      :valueType :db.type/bigint
+      :cardinality :db.cardinality/one
+      :index true}
+ #:db{:ident :gene/biotype
       :valueType :db.type/ref
       :cardinality :db.cardinality/one}
  #:db{:ident :gene/sequence-name
