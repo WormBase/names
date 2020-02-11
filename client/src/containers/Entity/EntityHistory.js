@@ -114,7 +114,7 @@ class EntityHistory extends Component {
                     {why && (
                       <Typography gutterBottom>
                         <span className={classes.reason}>Reason:</span>{' '}
-                        <em>{why}</em>
+                        <em className={classes.reasonValue}>{why}</em>
                       </Typography>
                     )}
                     {this.renderChanges(activityItem.changes)}
@@ -159,6 +159,9 @@ const styles = (theme) => ({
   reason: {
     color: theme.palette.text.secondary,
     fontStyle: 'normal',
+  },
+  reasonValue: {
+    wordBreak: 'break-word',
   },
   changeTableCell: {
     border: 'none',
