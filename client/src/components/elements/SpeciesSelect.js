@@ -70,7 +70,7 @@ SpeciesSelect.propTypes = {
 
 const styles = (theme) => ({
   inputRoot: {
-    minWidth: 100,
+    minWidth: 200,
   },
 });
 
