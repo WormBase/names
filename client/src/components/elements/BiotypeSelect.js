@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { MenuItem, withStyles } from '@material-ui/core';
+import { withStyles } from '@material-ui/core';
 import TextField from './TextField';
 
 const BiotypeSelect = (props) => {
@@ -27,30 +27,32 @@ const BiotypeSelect = (props) => {
     },
   ];
 
-  const biotypeOptions = props.required
-    ? [...BIOTYPES]
-    : [
-        {
-          id: null,
-          label: '',
-          sequenceOntology: '',
-        },
-        ...BIOTYPES,
-      ];
+  const biotypeOptions =
+    props.required && props.value
+      ? [...BIOTYPES]
+      : [
+          {
+            id: null,
+            label: '',
+            sequenceOntology: '',
+          },
+          ...BIOTYPES,
+        ];
   const { classes, ...others } = props;
   return (
     <TextField
       select
       label="Biotype"
       InputProps={{ className: classes.inputRoot }}
+      SelectProps={{ native: true }}
       {...others}
     >
       {biotypeOptions.map((biotype) => (
-        <MenuItem key={biotype.id} value={biotype.id}>
+        <option key={biotype.id} value={biotype.id}>
           {biotype.label
             ? `${biotype.label} [${biotype.sequenceOntology}]`
             : null}
-        </MenuItem>
+        </option>
       ))}
     </TextField>
   );
