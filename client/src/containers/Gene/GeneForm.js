@@ -19,6 +19,7 @@ class GeneForm extends Component {
         <CgcNameField
           label="CGC name"
           helperText="Enter the CGC name of the gene"
+          autoFocus
         />
         <br />
         <SpeciesSelectField required />
