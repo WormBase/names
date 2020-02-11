@@ -55,7 +55,6 @@ export const PageMain = withStyles((theme) => ({
   main: {
     width: '80%',
     flex: '1 0 auto',
-    margin: `0px ${theme.spacing.unit * 4}px`,
     [theme.breakpoints.down('sm')]: {
       margin: 0,
       width: `100%`,
