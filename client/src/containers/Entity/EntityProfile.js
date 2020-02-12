@@ -18,7 +18,7 @@ import {
   ProgressButton,
   Snackbar,
   SnackbarContent,
-  TextField,
+  TextArea,
   ValidationError,
 } from '../../components/elements';
 
@@ -129,7 +129,7 @@ class EntityProfile extends Component {
             changes,
           };
 
-          const ReasonField = withFieldData(TextField, 'why');
+          const ReasonField = withFieldData(TextArea, 'why');
 
           return (
             <DocumentTitle title={`${wbId} (${entityType})`}>

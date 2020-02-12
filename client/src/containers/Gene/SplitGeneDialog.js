@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogContentText,
   ProgressButton,
+  TextArea,
   TextField,
   ValidationError,
 } from '../../components/elements';
@@ -85,7 +86,7 @@ class SplitGeneDialog extends Component {
             BiotypeSelect,
             'biotype'
           );
-          const ReasonField = withFieldData(TextField, 'why');
+          const ReasonField = withFieldData(TextArea, 'why');
           const SequenceNameField = withFieldData(
             TextField,
             'product:sequence-name'

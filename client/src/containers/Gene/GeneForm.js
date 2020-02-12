@@ -19,9 +19,12 @@ class GeneForm extends Component {
         <CgcNameField
           label="CGC name"
           helperText="Enter the CGC name of the gene"
+          autoFocus
         />
-        <SequenceNameField label="Sequence name" />
+        <br />
         <SpeciesSelectField required />
+        <br />
+        <SequenceNameField label="Sequence name" />
         <BiotypeSelectField
           required={cloned} // once a cloned gene, always a cloned gene
           helperText={

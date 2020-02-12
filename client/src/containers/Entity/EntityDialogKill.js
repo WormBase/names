@@ -8,7 +8,7 @@ import {
   DialogContent,
   DialogContentText,
   ProgressButton,
-  TextField,
+  TextArea,
   ValidationError,
 } from '../../components/elements';
 import { createOpenOnlyTypeChecker } from '../../utils/types';
@@ -53,7 +53,7 @@ class EntityDialogKill extends Component {
         {...otherProps}
       >
         {({ withFieldData, errorMessage }) => {
-          const ReasonField = withFieldData(TextField, 'why');
+          const ReasonField = withFieldData(TextArea, 'why');
           return (
             <DialogContent>
               <DialogContentText>

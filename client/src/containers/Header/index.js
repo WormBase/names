@@ -70,7 +70,7 @@ const styles = (theme) => ({
     [theme.breakpoints.down('sm')]: {
       justifyContent: 'space-between',
       flexWrap: 'wrap',
-      padding: 0,
+      padding: `0 0 ${theme.spacing.unit}px 0`,
     },
   },
   title: {
@@ -81,7 +81,6 @@ const styles = (theme) => ({
     },
   },
   searchBox: {
-    top: theme.spacing.unit,
     [theme.breakpoints.down('sm')]: {
       order: 10,
       width: '100%',

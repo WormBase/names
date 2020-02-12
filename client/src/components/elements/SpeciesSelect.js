@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { MenuItem, withStyles } from '@material-ui/core';
+import { withStyles } from '@material-ui/core';
 import TextField from './TextField';
 import { mockFetchOrNot } from '../../mock';
 import { useDataFetch } from '../../containers/Authenticate';
@@ -42,7 +42,8 @@ const SpeciesSelect = (props) => {
       .filter((speciesName) => speciesName !== 'Caenorhabditis elegans')
       .sort(),
   ];
-  const speciesOptions = props.required ? [...SPECIES] : [null, ...SPECIES];
+  const speciesOptions =
+    props.required && props.value ? [...SPECIES] : [null, ...SPECIES];
   const { classes, ...others } = props;
 
   return (
@@ -50,12 +51,13 @@ const SpeciesSelect = (props) => {
       select
       label="Species"
       InputProps={{ className: classes.inputRoot }}
+      SelectProps={{ native: true }}
       {...others}
     >
       {speciesOptions.map((species) => (
-        <MenuItem key={species} value={species}>
+        <option key={species} value={species}>
           {species}
-        </MenuItem>
+        </option>
       ))}
     </TextField>
   );
@@ -68,7 +70,7 @@ SpeciesSelect.propTypes = {
 
 const styles = (theme) => ({
   inputRoot: {
-    minWidth: 100,
+    minWidth: 200,
   },
 });
 

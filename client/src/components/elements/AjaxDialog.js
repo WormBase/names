@@ -40,6 +40,8 @@ class AjaxDialog extends Component {
                   <Dialog
                     open={this.props.open}
                     onClose={() => this.handleClose(resetData)}
+                    fullWidth
+                    maxWidth="sm"
                     aria-labelledby="form-dialog-title"
                   >
                     <DialogTitle id="form-dialog-title">

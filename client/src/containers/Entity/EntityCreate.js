@@ -14,7 +14,7 @@ import {
   PageLeft,
   PageMain,
   ProgressButton,
-  TextField,
+  TextArea,
   ValidationError,
 } from '../../components/elements';
 
@@ -40,7 +40,7 @@ class EntityCreate extends Component {
             buttonSubmitProps,
           } = profileContext;
 
-          const ReasonField = withFieldData(TextField, 'why');
+          const ReasonField = withFieldData(TextArea, 'why');
 
           return (
             <DocumentTitle title={`Create ${entityType}`}>

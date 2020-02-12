@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Link, withRouter } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 
-import { withStyles } from '@material-ui/core';
+import { TextField, withStyles } from '@material-ui/core';
 import SearchIcon from '@material-ui/icons/Search';
 import CancelIcon from '@material-ui/icons/Cancel';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -12,10 +12,8 @@ import Paper from '@material-ui/core/Paper';
 
 import {
   AutocompleteBase,
-  AutocompleteChip,
   AutocompleteSuggestion,
   SimpleListPagination,
-  TextField,
   EntityTypeSelect,
 } from '../../components/elements';
 
@@ -36,6 +34,7 @@ function renderInput(inputProps) {
   return (
     <div>
       <TextField
+        variant="standard"
         InputProps={{
           ...InputProps,
           inputRef: ref,
@@ -181,7 +180,7 @@ const SearchBox = (props) => {
                             <AutocompleteSuggestion
                               key={index}
                               suggestion={suggestion}
-                              component={({ ...props }) => (
+                              component={({ children, ...props }) => (
                                 <a
                                   {...props}
                                   onClick={() => {
@@ -190,7 +189,9 @@ const SearchBox = (props) => {
                                       `/${entityType}/id/${suggestion.id}`
                                     );
                                   }}
-                                />
+                                >
+                                  {children}
+                                </a>
                               )}
                               index={index}
                               highlightedIndex={highlightedIndex}
@@ -241,7 +242,6 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 1,
-    marginTop: -2 * theme.spacing.unit,
     left: 0,
     right: 0,
   },

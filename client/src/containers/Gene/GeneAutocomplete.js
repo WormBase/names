@@ -20,7 +20,7 @@ function renderInput(inputProps) {
     <TextField
       InputProps={{
         ...InputProps,
-        value: item ? '' : InputProps.value,
+        value: item ? ' ' : InputProps.value,
         disabled: item,
         inputRef: ref,
         classes: {
@@ -154,7 +154,7 @@ const styles = (theme) => ({
   },
   paper: {
     position: 'absolute',
-    zIndex: 1,
+    zIndex: 10,
     marginTop: -6 * theme.spacing.unit,
     left: 0,
     right: 0,

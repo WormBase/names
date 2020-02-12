@@ -8,7 +8,11 @@ function EntityForm({ withFieldData, entityType }) {
   const entity = getEntityType(entityType) || {};
   const NameField = withFieldData(TextField, 'name');
   return entity['named?'] ? (
-    <NameField label="Name" helperText={`Name of the ${entityType}`} />
+    <NameField
+      label="Name"
+      helperText={`Name of the ${entityType}`}
+      autoFocus
+    />
   ) : null;
 }
 
