@@ -150,17 +150,7 @@ Releasing is a 4 step process:
 ### Commands
 ```bash
 # Build the client application
-cd client
-
-# use a compatible version of node.js and npm
-nvm use
-
-# make a clean installation of npm dependencies
-npm ci
-
-# build the static asset bundles (js, css, etc)
-npm run build
-cd -
+make ui-build
 
 # specify $LEVEL as one of <major|minor|patch>
 make vc-release LEVEL=$LEVEL
