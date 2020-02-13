@@ -1,6 +1,10 @@
 # Change-log
 #
 
+## [1.1.0]
+ - Improved performance of id lookup in creation requests for large collections (e.g variation).
+ - UI improvements: increased user-friendly-ness of forms,  avoid cropping names in history display.
+
 ## [1.0.10]
  - Login fixes (UI); check for API loggedin-ness after Google API login.
  - Search fix: accept a minimum number of characters in search string before issuing API call.
