@@ -57,7 +57,7 @@
              (remove nil?))))
 
 (defn latest-id
-  "Get the latest identifier for a given `ident`."
+  "Returns the latest WB identifier for a given `ident` as a string."
   [db ident]
   (d/q '[:find (max ?gid) .
          :in $ ?ident
@@ -80,16 +80,24 @@
            (read-string)))
 
 (defn latest-id-number
-  "Get the numeric suffix of the latest identifier for a given `ident`."
+  "Returns the numeric value for the latest WB idenifier given an entity `ident`."
   [db ident]
-  (if-not (d/entid db ident)
-    (throw (ex-info "Invalid ident" {:ident ident}))
-    (or (parse-digits (latest-id db ident)) 0)))
+  (when-not (d/entid db ident)
+    (throw (ex-info "Invalid ident" {:ident ident})))
+  (let [counter-ident (keyword "counter" (namespace ident))
+        counter-entid (d/entid db counter-ident)]
+    (when-not counter-ident
+      (throw (ex-info "Invalid ident"
+                      {:ident counter-ident})))
+    (get (d/pull db [counter-ident] counter-ident) counter-ident 0)))
 
 (defn next-identifier
-  "Get the next identifier for a given `ident`."
+  "Return the next identifier for a given `ident`."
   [db ident template]
-  (->> (latest-id-number db ident) inc (format template)))
+  (->> (latest-id-number db ident)
+       (inc)
+       (biginteger)
+       (format template)))
 
 (defn identifier-format [db uiident]
   (let [{template :format} (d/pull db
@@ -105,17 +113,23 @@
   `coll` - A collection of mappings that contain data to be transacted.
            Maps in this collection will be augmented with identifiers associated with `uiident`.
 
-  Returns data suitable for passing to `datomic.api/transact`."
+  Looks-up the highest numeric id stored against an entity.
+  Increments then applies the datomic compare-and-swap function: (+ curr-max-id (count coll)
+  returns sequnce of maps, suitable for `datomic.api/transact`."
   [db template uiident coll & {:keys [start-n]
                                :or {start-n (latest-id-number db uiident)}}]
-  (let [stop-n (+ (count coll) start-n)]
-    (some->> (range start-n stop-n)
-             (map inc)
-             (map (partial format template))
-             (map (partial array-map uiident))
-             (interleave coll)
-             (partition 2)
-             (map (partial apply merge)))))
+  (let [stop-n (+ (count coll) start-n)
+        counter-ident (keyword "counter" (namespace uiident))
+        counter-entid (d/entid db counter-ident)
+        data (some->> (range start-n stop-n)
+                      (map inc)
+                      (map biginteger)
+                      (map (partial format template))
+                      (map (partial array-map uiident))
+                      (interleave coll)
+                      (partition 2)
+                      (map (partial apply merge)))]
+    (conj data [:db/cas counter-entid counter-ident start-n stop-n])))
 
 (defn merge-genes
   "Merge two genes.

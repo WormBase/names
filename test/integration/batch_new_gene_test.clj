@@ -65,7 +65,9 @@
         (t/is (= (count ids-created) (count bdata)))
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
-              xs (map #(get-in % [:gene/status :db/ident]) batch)
+              xs (->> batch
+                      (remove :counter/gene)
+                      (map #(get-in % [:gene/status :db/ident])))
               response2 (api-tc/summary "batch" bid)]
           (t/is (seq xs))
           (t/is (every? (partial = :gene.status/live) xs))
@@ -86,7 +88,9 @@
         (t/is (uuid/uuid-string? bid) (pr-str response))
         (when bid
           (let [batch (tu/query-gene-batch (d/db wdb/conn) (uuid/as-uuid bid))
-                xs (map #(get-in % [:gene/status :db/ident]) batch)
+                xs (->> batch
+                        (remove :counter/gene)
+                        (map #(get-in % [:gene/status :db/ident])))
                 response (api-tc/summary "batch" bid)]
             (t/is (seq xs))
             (t/is (every? (partial = :gene.status/live) xs))

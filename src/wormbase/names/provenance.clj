@@ -1,5 +1,6 @@
 (ns wormbase.names.provenance
   (:require
+   [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [datomic.api :as d]
@@ -79,7 +80,10 @@
 (defmethod resolve-change :default
   [db change]
   (let [cv (:value change)]
-    (assoc change :value (d/ident db (:value change)))))
+    (if (and ((-> change :attr namespace set) "counter")
+             (= (-> change :attr name) "value"))
+      (select-keys change [:eid])
+      (assoc change :value (d/ident db (:value change))))))
 
 (def ref-change-rules
   '[[(ref-changes ?e ?aname ?a ?eid)
@@ -110,7 +114,8 @@
        (d/history db)
        entity-id))
 
-(def ^:private exclude-nses (conj (wu/datomic-internal-namespaces) "importer"))
+(def ^:private exclude-nses (set/union (wu/datomic-internal-namespaces)
+                                       #{"importer" "counter"}))
 
 (defn tx-changes [db log tx]
   (->> tx
@@ -130,6 +135,8 @@
   ;; using d/entid to normalise the form of entity-id (could be lookup ref) to datomic numeric eid.
   (let [eid (d/entid db entity-id)]
     (->> (tx-changes db log tx)
+         (remove (fn [change]
+                   ((-> change :attr namespace set) "counter")))
          (filter (fn [change]
                    (some #(= % eid) ((juxt :eid :value) change))))
          (map (partial convert-change db eid))
@@ -157,9 +164,6 @@
     (-> (concat ent-txes ref-txes) set sort)))
 
 (defn pull-provenance
-  ([db entity-id prov-pull-expr tx pull-changes-fn]
-   (update (pull-provenance db entity-id prov-pull-expr tx)
-           :changes (fnil identity (pull-changes-fn tx))))
   ([db entity-id prov-pull-expr tx]
    (-> (wdb/pull db prov-pull-expr tx)
        (update :provenance/how wnu/unqualify-maybe)
@@ -171,7 +175,11 @@
        (update :provenance/who
                ;; Temporary hack to fix non-assignment of person provenance in importer.
                (fnil identity
-                     {:person/email "matthew.russell@wormbase.org"})))))
+                     {:person/email "matthew.russell@wormbase.org"}))))
+  ([db entity-id prov-pull-expr tx pull-changes-fn]
+   (let [changes (pull-changes-fn tx)]
+     (-> (pull-provenance db entity-id prov-pull-expr tx)
+         (update :changes (fnil identity changes))))))
 
 (defn query-provenance
   "Query for the entire history of an entity `entity-id`.

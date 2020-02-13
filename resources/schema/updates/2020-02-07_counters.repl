@@ -1,0 +1,27 @@
+(require '[cognitect.transcriptor :as xr :refer (check!)])
+(require '[datomic.api :as d])
+
+(let [counters-schema [#:db{:ident :counter/gene
+                            :valueType :db.type/bigint
+                            :cardinality :db.cardinality/one
+                            :index true}
+                       #:db{:ident :counter/variation
+                            :valueType :db.type/bigint
+                            :cardinality :db.cardinality/one
+                            :index true}
+                       #:db{:ident :counter/sequence-feature
+                            :valueType :db.type/bigint
+                            :cardinality :db.cardinality/one
+                            :index true}
+                       #:db{:ident :counter/strain
+                            :valueType :db.type/bigint
+                            :cardinality :db.cardinality/one
+                            :index true}]]
+  @(d/transact wdb/conn counters-schema))
+
+(doseq [ident [:gene/id :variation/id :sequence-feature/id :strain/id]]
+  (let [counter-ident (keyword "counter" (namespace ident))
+        ent-id (d/entid (d/db conn) counter-ident)]
+    @(d/transact conn [[:db/add ent-id (biginteger
+                                        (wbids/parse-digits
+                                         (wbids/latest-id (d/db wdb/conn) ident)))]])))

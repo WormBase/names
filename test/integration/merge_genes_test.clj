@@ -200,6 +200,7 @@
       @(d/transact conn [init-from-gene])
       (let [tx-result @(d/transact conn merge-txes)]
         (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+                      wdb/connect (fn get-fixture-conn [] conn)
                       wdb/db (fn get-db [_] (d/db conn))]
           (let [[status body] (undo-merge-genes merged-into merged-from)]
             (t/is (ru-hp/ok? {:status status :body body}))
