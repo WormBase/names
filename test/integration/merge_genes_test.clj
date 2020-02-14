@@ -183,7 +183,7 @@
                           :gene/species [:species/latin-name species]
                           :gene/status :gene.status/dead
                           :gene/biotype :biotype/cds}
-          from-gene {:gene/id merged-from :gene/merges "into"}
+          from-gene [:db/add [:gene/id merged-from] :gene/merges "into"]
           into-gene {:db/id "into"
                      :gene/id merged-into
                      :gene/species [:species/latin-name species]

@@ -26,10 +26,14 @@
         (api-tc/send-request "batch/entity" :post data* :sub-path sub-path)))))
 
 (defn make-samples [n]
-  (map (fn [id]
-         {:sequence-feature/id id
-          :sequence-feature/status :sequence-feature.status/live})
-       (gen/sample gssf/id n)))
+  (let [coll (map (fn [id]
+                    {:sequence-feature/id id
+                     :sequence-feature/status :sequence-feature.status/live})
+                  (gen/sample gssf/id n))]
+    ;; When we don't have unique samples, re-try until we do.
+    (if (not= n (-> coll distinct count))
+      (make-samples n)
+      coll)))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."
