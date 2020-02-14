@@ -313,7 +313,7 @@
     [#:db{:ident id-ident
           :valueType :db.type/string
           :cardinality :db.cardinality/one
-          :unique :db.unique/identity
+          :unique :db.unique/value
           :doc (format "The primary identifier of the %s." entity-type)}
      #:db{:ident (keyword entity-type "name")
           :valueType :db.type/string
