@@ -22,7 +22,7 @@
 
 (doseq [ident [:gene/id :variation/id :sequence-feature/id :strain/id]]
   (let [counter-ident (keyword "counter" (namespace ident))
-        ent-id (d/entid (d/db conn) counter-ident)]
+        ent-id (d/entid (d/db wdb/conn) counter-ident)]
     @(d/transact conn [[:db/add counter-ident counter-ident (biginteger
                                                              (wbids/parse-digits
                                                               (wbids/latest-id (d/db wdb/conn) ident)))]])))
