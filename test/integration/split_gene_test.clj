@@ -252,7 +252,7 @@
                           :gene/cgc-name "ABC.1"
                           :gene/status :gene.status/live
                           :gene/biotype :biotype/transcript}
-          from-gene {:gene/id split-from :gene/splits "into"}
+          from-gene [:db/add [:gene/id split-from] :gene/splits "into"]
           into-gene {:db/id "into"
                      :gene/id split-into
                      :gene/species [:species/latin-name species]

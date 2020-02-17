@@ -173,18 +173,19 @@
           (let [resolve-refs-to-db-ids (or ref-resolver-fn
                                            (fn noop-resolver [_ data]
                                              data))
-               cdata (->> data
-                          (resolve-refs-to-db-ids db)
-                          (into {})
-                          (prepare-data-for-transact db))
-               prov (wnp/assoc-provenance request payload event)
-               txes [['wormbase.ids.core/cas-batch lur cdata] prov]
-               tx-result @(d/transact-async conn txes)]
-          (when-let [db-after (:db-after tx-result)]
-            (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
-              (ok {:updated (wnu/unqualify-keys updated ent-ns)})
-              (not-found
-               (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
+                cdata (dissoc (->> data
+                                   (resolve-refs-to-db-ids db)
+                                   (into {})
+                                   (prepare-data-for-transact db))
+                              uiident)
+                prov (wnp/assoc-provenance request payload event)
+                txes [['wormbase.ids.core/cas-batch lur cdata] prov]
+                tx-result @(d/transact-async conn txes)]
+            (when-let [db-after (:db-after tx-result)]
+              (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
+                (ok {:updated (wnu/unqualify-keys updated ent-ns)})
+                (not-found
+                 (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
 
 (defn status-changer
   "Return a handler to change the status of an entity to `to-status`.
@@ -313,7 +314,7 @@
     [#:db{:ident id-ident
           :valueType :db.type/string
           :cardinality :db.cardinality/one
-          :unique :db.unique/identity
+          :unique :db.unique/value
           :doc (format "The primary identifier of the %s." entity-type)}
      #:db{:ident (keyword entity-type "name")
           :valueType :db.type/string
