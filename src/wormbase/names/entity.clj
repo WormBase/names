@@ -293,8 +293,8 @@
             q-spec '{:find [?id ?name]
                      :in [$ ?pattern ?id-ident ?name-ident]
                      :where [[(re-seq ?pattern ?name)]
-                             [?e ?id-ident ?id]
-                             [?e ?name-ident ?name]]}
+                             [?e ?name-ident ?name]
+                             [?e ?id-ident ?id]]}
             q-result (d/q (assoc q-spec :keys [id-ident name-ident])
                           db
                           (re-pattern (str "^" term))
