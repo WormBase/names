@@ -343,18 +343,20 @@
 (defn register-entity-schema
   "Register a new datomic entity schema."
   ([conn id-ident id-template prov generic? enabled? name-required?]
-   (let [attrs-tx-data (conj (generic-attrs id-ident) prov)
-         counter-ident (keyword "counter" (namespace id-ident))
-         tx-res @(d/transact-async conn attrs-tx-data)
-         temp-id (str id-ident)
-         reg-tx-data [[:db/add id-ident :wormbase.names/id-template-format id-template]
-                      [:db/add id-ident :wormbase.names/entity-type-generic? generic?]
-                      [:db/add id-ident :wormbase.names/entity-type-enabled? enabled?]
-                      [:db/add id-ident :wormbase.names/name-required? name-required?]
-                      [:db/add counter-ident counter-ident 0N]]]
-     (when (:db-after tx-res)
-       @(d/transact-async conn reg-tx-data)
-       attrs-tx-data)))
+   ;; Only setup generic entity registration if the id-ident is not already installed.
+   (when-not (d/entity (d/db conn) id-ident)
+     (let [attrs-tx-data (conj (generic-attrs id-ident) prov)
+           counter-ident (keyword "counter" (namespace id-ident))
+           tx-res @(d/transact-async conn attrs-tx-data)
+           temp-id (str id-ident)
+           reg-tx-data [[:db/add id-ident :wormbase.names/id-template-format id-template]
+                        [:db/add id-ident :wormbase.names/entity-type-generic? generic?]
+                        [:db/add id-ident :wormbase.names/entity-type-enabled? enabled?]
+                        [:db/add id-ident :wormbase.names/name-required? name-required?]
+                        [:db/add counter-ident counter-ident 0N]]]
+       (when (:db-after tx-res)
+         @(d/transact-async conn reg-tx-data)
+         attrs-tx-data))))
   ([conn id-ident id-template prov]
    (register-entity-schema conn id-ident id-template prov true true true)))
 
