@@ -16,7 +16,7 @@
 (defn make-fixture-conn
   []
   (let [conn (dm/mock-conn)]
-    (schema/install conn)
+    (schema/ensure-schema conn)
     ;; A set of fake users with different roles to test against.
     @(d/transact-async conn [{:person/email "tester@wormbase.org"
                               :person/id "WBPerson007"

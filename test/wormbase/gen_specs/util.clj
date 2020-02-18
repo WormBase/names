@@ -4,7 +4,9 @@
    [wormbase.util :as util]))
 
 (defn load-seed-data []
-  (util/read-edn (io/resource "schema/seed-data.edn")))
+  (-> (io/resource "schema/seed-data.edn")
+      (util/read-edn)
+      (:tx-data)))
 
 (defn load-enum-samples [sd-ns]
   (->> (load-seed-data)

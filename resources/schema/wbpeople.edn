@@ -1,127 +1,129 @@
-[#:person{:name "Bill Nash"
-          :id "WBPerson10213"
-          :active? false}
- #:person{:name "Bernard Lakowski"
-          :id "WBPerson1826"
-          :active? false}
- #:person{:name "Kimberly Van Auken" :id "WBPerson1843" :active? true}
- #:person{:name "Chao-Kung Chen" :id "WBPerson1845"}
- #:person{:name "Daniel Lawson" :id "WBPerson1846"}
- #:person{:name "Anthony Rodgers" :id "WBPerson1847"}
- #:person{:name "Darin Blasiar" :id "WBPerson1848"}
- #:person{:name "Tamberlyn Bieri" :id "WBPerson1849"}
- #:person{:name "Philip Ozersky" :id "WBPerson1867"}
- #:person{:name "Charlotte Kenning" :id "WBPerson1876"}
- #:person{:name "Keith Bradnam" :id "WBPerson1971"}
- #:person{:name "Eleanor Stanley" :id "WBPerson2062"},
- #:person{:name "Yvonne Hajdu-Cronin" :id "WBPerson231"},
- #:person{:name "Esther Neufeld" :id "WBPerson2960"},
- #:person{:name "Mary Ann Tuli" :id "WBPerson2970" :active? false},
- #:person{:name "Jujiao Kuang" :id "WBPerson2971"},
- #:person{:name "Erik Jorgensen" :id "WBPerson298"},
- #:person{:name "Jie Yan" :id "WBPerson4036"}
- #:person{:name "Tuco" :id "WBPerson480"}
- #:person{:name "Erich Marquard Schwarz" :id "WBPerson567"}
- #:person{:name "John Spieth" :id "WBPerson615"}
- #:person{:name "Paul Sternberg" :id "WBPerson625"},
- #:person{:name "Margaret Duesbury" :id "WBPerson9133" :active? false},
- #:person{:name "Alan Mark Zahler" :id "WBPerson713" :active? false}
- #:person{:id "WBPerson30813",
-          :email "adam.wright@wormbase.org",
-          :name "Adam Wright"}
- #:person{:id "WBPerson28279",
-          :email "bruce.bolt@wormbase.org",
-          :name "Bruce J. Bolt"}
- #:person{:id "WBPerson2987",
-          :email "chris@wormbase.org",
-          :name "Christian Andrew Grove"}
- #:person{:id "WBPerson736",
-          :email "daniel.wang@wormbase.org",
-          :name "Qinghua Wang"
-          :active? true}
- #:person{:id "WBPerson36183",
-          :email "faye.rodgers@wormbase.org",
-          :name "Faye Rodgers"
-          :active? true}
- #:person{:id "WBPerson4025",
-          :email "gary.williams@wormbase.org",
-          :name "Gareth W Williams"
-          :roles #{:person.role/sequence-curator}
-          :active? true}
- #:person{:id "WBPerson28994",
-          :email "jane.lomax@wormbase.org",
-          :name "Jane Lomax"
-          :active? false}
- #:person{:id "WBPerson19730",
-          :email "jdmswong@wormbase.org",
-          :name "Jean-Daniel M Wong"}
- #:person{:id "WBPerson21471",
-          :email "joachim.baran@wormbase.org",
-          :name "Joachim Baran"
-          :active? true}
- #:person{:id "WBPerson712",
-          :email "karen@wormbase.org",
-          :name "Karen J Yook"
-          :active? true}
- #:person{:id "WBPerson3111",
-          :email "kevin.howe@wormbase.org",
-          :name "Kevin L Howe"
-          :active? true}
- #:person{:id "WBPerson11187",
-          :email "liyuling@wormbase.org",
-          :name "Yuling Li"
-          :active? true}
- #:person{:id "WBPerson33035",
-          :email "matthew.russell@wormbase.org",
-          :name "Matthew Russell"
-          :roles #{:person.role/admin}
-          :active? true}
- #:person{:id "WBPerson4055",
-          :email "michael.paulini@wormbase.org",
-          :name "Michael Paulini"
-          :active? true}
- #:person{:id "WBPerson36074",
-          :email "myriam.shafie@wormbase.org",
-          :name "Myriam Shafie"
-          :active? false}
- #:person{:id "WBPerson1983",
-          :email "paul.davis@wormbase.org",
-          :name "Paul Davis"
-          :roles #{:person.role/sequence-curator}
-          :active? true}
- #:person{:id "WBPerson26085",
-          :email "sibyl@wormbase.org",
-          :name "Sibyl Gao"
-          :active? true}
- #:person{:id "WBPerson12884",
-          :email "snehalvk@wormbase.org",
-          :name "Snehalata Kadam"
-          :active? true}
- #:person{:id "WBPerson12021",
-          :email "thomas.down@wormbase.org",
-          :name "Thomas A Down"
-          :active? false}
- #:person{:id "WBPerson241",
-          :email "todd@wormbase.org",
-          :name "Todd William Harris"
-          :active? true}
- #:person{:id "WBPerson101",
-          :email "wen@wormbase.org",
-          :name "Wen Joanna Chen"
-          :active? true}
- #:person{:id "WBPerson1823"
-          :email "juancarlos@wormbase.org"
-          :name "Juancarlos Chan"
-          :active? true}
- #:person{:id "WBPerson12028"
-          :email "daniela@wormbase.org"
-          :active? true}
- #:person{:id "WBPerson363"
-          :email "raymond@wormbase.org"
-          :active? true}
- #:person{:id "WBPerson324"
-          :email "ranjana@wormbase.org"
-          :active? true}
- #:person{:id "WBPerson2987"
-          :email "chris@wormbase.org"
-          :active? true}]
+{:id :wormbase.names/people
+ :tx-data
+ [#:person{:name "Bill Nash"
+           :id "WBPerson10213"
+           :active? false}
+  #:person{:name "Bernard Lakowski"
+           :id "WBPerson1826"
+           :active? false}
+  #:person{:name "Kimberly Van Auken" :id "WBPerson1843" :active? true}
+  #:person{:name "Chao-Kung Chen" :id "WBPerson1845"}
+  #:person{:name "Daniel Lawson" :id "WBPerson1846"}
+  #:person{:name "Anthony Rodgers" :id "WBPerson1847"}
+  #:person{:name "Darin Blasiar" :id "WBPerson1848"}
+  #:person{:name "Tamberlyn Bieri" :id "WBPerson1849"}
+  #:person{:name "Philip Ozersky" :id "WBPerson1867"}
+  #:person{:name "Charlotte Kenning" :id "WBPerson1876"}
+  #:person{:name "Keith Bradnam" :id "WBPerson1971"}
+  #:person{:name "Eleanor Stanley" :id "WBPerson2062"},
+  #:person{:name "Yvonne Hajdu-Cronin" :id "WBPerson231"},
+  #:person{:name "Esther Neufeld" :id "WBPerson2960"},
+  #:person{:name "Mary Ann Tuli" :id "WBPerson2970" :active? false},
+  #:person{:name "Jujiao Kuang" :id "WBPerson2971"},
+  #:person{:name "Erik Jorgensen" :id "WBPerson298"},
+  #:person{:name "Jie Yan" :id "WBPerson4036"}
+  #:person{:name "Tuco" :id "WBPerson480"}
+  #:person{:name "Erich Marquard Schwarz" :id "WBPerson567"}
+  #:person{:name "John Spieth" :id "WBPerson615"}
+  #:person{:name "Paul Sternberg" :id "WBPerson625"},
+  #:person{:name "Margaret Duesbury" :id "WBPerson9133" :active? false},
+  #:person{:name "Alan Mark Zahler" :id "WBPerson713" :active? false}
+  #:person{:id "WBPerson30813",
+           :email "adam.wright@wormbase.org",
+           :name "Adam Wright"}
+  #:person{:id "WBPerson28279",
+           :email "bruce.bolt@wormbase.org",
+           :name "Bruce J. Bolt"}
+  #:person{:id "WBPerson2987",
+           :email "chris@wormbase.org",
+           :name "Christian Andrew Grove"}
+  #:person{:id "WBPerson736",
+           :email "daniel.wang@wormbase.org",
+           :name "Qinghua Wang"
+           :active? true}
+  #:person{:id "WBPerson36183",
+           :email "faye.rodgers@wormbase.org",
+           :name "Faye Rodgers"
+           :active? true}
+  #:person{:id "WBPerson4025",
+           :email "gary.williams@wormbase.org",
+           :name "Gareth W Williams"
+           :roles #{:person.role/sequence-curator}
+           :active? true}
+  #:person{:id "WBPerson28994",
+           :email "jane.lomax@wormbase.org",
+           :name "Jane Lomax"
+           :active? false}
+  #:person{:id "WBPerson19730",
+           :email "jdmswong@wormbase.org",
+           :name "Jean-Daniel M Wong"}
+  #:person{:id "WBPerson21471",
+           :email "joachim.baran@wormbase.org",
+           :name "Joachim Baran"
+           :active? true}
+  #:person{:id "WBPerson712",
+           :email "karen@wormbase.org",
+           :name "Karen J Yook"
+           :active? true}
+  #:person{:id "WBPerson3111",
+           :email "kevin.howe@wormbase.org",
+           :name "Kevin L Howe"
+           :active? true}
+  #:person{:id "WBPerson11187",
+           :email "liyuling@wormbase.org",
+           :name "Yuling Li"
+           :active? true}
+  #:person{:id "WBPerson33035",
+           :email "matthew.russell@wormbase.org",
+           :name "Matthew Russell"
+           :roles #{:person.role/admin}
+           :active? true}
+  #:person{:id "WBPerson4055",
+           :email "michael.paulini@wormbase.org",
+           :name "Michael Paulini"
+           :active? true}
+  #:person{:id "WBPerson36074",
+           :email "myriam.shafie@wormbase.org",
+           :name "Myriam Shafie"
+           :active? false}
+  #:person{:id "WBPerson1983",
+           :email "paul.davis@wormbase.org",
+           :name "Paul Davis"
+           :roles #{:person.role/sequence-curator}
+           :active? true}
+  #:person{:id "WBPerson26085",
+           :email "sibyl@wormbase.org",
+           :name "Sibyl Gao"
+           :active? true}
+  #:person{:id "WBPerson12884",
+           :email "snehalvk@wormbase.org",
+           :name "Snehalata Kadam"
+           :active? true}
+  #:person{:id "WBPerson12021",
+           :email "thomas.down@wormbase.org",
+           :name "Thomas A Down"
+           :active? false}
+  #:person{:id "WBPerson241",
+           :email "todd@wormbase.org",
+           :name "Todd William Harris"
+           :active? true}
+  #:person{:id "WBPerson101",
+           :email "wen@wormbase.org",
+           :name "Wen Joanna Chen"
+           :active? true}
+  #:person{:id "WBPerson1823"
+           :email "juancarlos@wormbase.org"
+           :name "Juancarlos Chan"
+           :active? true}
+  #:person{:id "WBPerson12028"
+           :email "daniela@wormbase.org"
+           :active? true}
+  #:person{:id "WBPerson363"
+           :email "raymond@wormbase.org"
+           :active? true}
+  #:person{:id "WBPerson324"
+           :email "ranjana@wormbase.org"
+           :active? true}
+  #:person{:id "WBPerson2987"
+           :email "chris@wormbase.org"
+           :active? true}]}

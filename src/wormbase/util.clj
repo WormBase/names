@@ -9,7 +9,7 @@
    [java-time :as jt]
    [wormbase.ids.core :as wic])
   (:import
-   (java.io PushbackReader)
+   (java.io File PushbackReader)
    (java.util Date)))
 
 (defn read-edn [readable]
@@ -93,3 +93,14 @@
                  m))
              data
              data))
+
+(defn list-resource-files
+  "Returns a seq of .edn files under dir"
+  [dir & {:keys [ext]
+          :or {ext ".edn"}}]
+  (->> (io/file dir)
+       file-seq
+       (filter (fn [^java.io.File f]
+                 (and (.isFile f)
+                      (str/ends-with? (.getName f) ext))))
+       (map #(.getPath ^File %))))

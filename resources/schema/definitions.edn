@@ -1,140 +1,143 @@
-[#:db{:ident :counter/gene
-      :valueType :db.type/bigint
-      :cardinality :db.cardinality/one
-      :index true}
- #:db{:ident :gene/biotype
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one}
- #:db{:ident :gene/sequence-name
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :gene/species
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one}
- #:db{:ident :gene/id
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :gene/cgc-name
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :gene/status
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one}
- #:db{:ident :gene/splits
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/many}
- #:db{:ident :gene/merges
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/many}
- #:db{:ident :provenance/compensates
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "A transaction that this provenance compensates for."}
- #:db{:ident :provenance/why
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :doc "An optional string describing the reason for an event."}
- #:db{:ident :provenance/how
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "A reference to an agent (client) that made the change."}
- #:db{:ident :provenance/what
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "The event that occurred."}
- #:db{:ident :provenance/who
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "A reference to the person who performed the event."}
- #:db{:ident :provenance/when
-      :valueType :db.type/instant
-      :cardinality :db.cardinality/one
-      :doc "When the event occurred."}
- #:db{:ident :provenance/merged-from
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "DEPRECATED"}
- #:db{:ident :provenance/merged-into
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "DEPRECATED"}
- #:db{:ident :provenance/split-from
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "DEPRECATED"}
- #:db{:ident :provenance/split-into
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/one
-      :doc "DEPRECATED"}
- #:db{:ident :species/id
-      :valueType :db.type/keyword
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :species/latin-name
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}
- #:db{:ident :species/cgc-name-pattern
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one}
- #:db{:ident :species/sequence-name-pattern
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one}
- #:db{:ident :person/id
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value
-      :doc "WBPerson ID"}
- #:db{:ident :person/google-id
-      :valueType :db.type/bigint
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value
-      :doc
-      "Unique value representing a google user returned by Google verification APIs"}
- #:db{:ident :person/email
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/identity}
- #:db{:ident :person/auth-token
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value
-      :noHistory true}
- #:db{:ident :person/roles
-      :valueType :db.type/keyword
-      :cardinality :db.cardinality/many}
- #:db{:ident :person/name
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :doc "Person's name as presented by Google APIs"}
- #:db{:ident :person/active?
-      :valueType :db.type/boolean,
-      :cardinality :db.cardinality/one}
- #:db{:ident :batch/id
-      :cardinality :db.cardinality/one
-      :valueType :db.type/uuid
-      :index true
-      :doc "A saga identifier for tracking batches of operations."}
- #:db{:ident :wormbase.names/entity-type-enabled?
-      :valueType :db.type/boolean
-      :cardinality :db.cardinality/one
-      :doc "Indicates if an entity type should be used."}
- #:db{:ident :wormbase.names/name-required?
-      :valueType :db.type/boolean
-      :cardinality :db.cardinality/one
-      :doc "Indicates if an entity type should have a name."}
- #:db{:ident :wormbase.names/entity-types
-      :valueType :db.type/ref
-      :cardinality :db.cardinality/many
-      :doc "A registry of entity types."}
- #:db{:ident :wormbase.names/entity-type-generic?
-      :valueType :db.type/boolean
-      :cardinality :db.cardinality/one
-      :doc "Indicates if the entity type is generic."}
- #:db{:ident :wormbase.names/id-template-format
-      :valueType :db.type/string
-      :cardinality :db.cardinality/one
-      :unique :db.unique/value}]
+{:id :wormbase.names/schema
+ :tx-data
+ [;; Gene
+  #:db{:ident :counter/gene
+       :valueType :db.type/bigint
+       :cardinality :db.cardinality/one
+       :index true}
+  #:db{:ident :gene/biotype
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one}
+  #:db{:ident :gene/sequence-name
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}
+  #:db{:ident :gene/species
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one}
+  #:db{:ident :gene/id
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}
+  #:db{:ident :gene/cgc-name
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}
+  #:db{:ident :gene/status
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one}
+  #:db{:ident :gene/splits
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/many}
+  #:db{:ident :gene/merges
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/many}
+  #:db{:ident :provenance/compensates
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "A transaction that this provenance compensates for."}
+  #:db{:ident :provenance/why
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :doc "An optional string describing the reason for an event."}
+  #:db{:ident :provenance/how
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "A reference to an agent (client) that made the change."}
+  #:db{:ident :provenance/what
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "The event that occurred."}
+  #:db{:ident :provenance/who
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "A reference to the person who performed the event."}
+  #:db{:ident :provenance/when
+       :valueType :db.type/instant
+       :cardinality :db.cardinality/one
+       :doc "When the event occurred."}
+  #:db{:ident :provenance/merged-from
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "DEPRECATED"}
+  #:db{:ident :provenance/merged-into
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "DEPRECATED"}
+  #:db{:ident :provenance/split-from
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "DEPRECATED"}
+  #:db{:ident :provenance/split-into
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/one
+       :doc "DEPRECATED"}
+  #:db{:ident :species/id
+       :valueType :db.type/keyword
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}
+  #:db{:ident :species/latin-name
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}
+  #:db{:ident :species/cgc-name-pattern
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one}
+  #:db{:ident :species/sequence-name-pattern
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one}
+  #:db{:ident :person/id
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value
+       :doc "WBPerson ID"}
+  #:db{:ident :person/google-id
+       :valueType :db.type/bigint
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value
+       :doc
+       "Unique value representing a google user returned by Google verification APIs"}
+  #:db{:ident :person/email
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/identity}
+  #:db{:ident :person/auth-token
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value
+       :noHistory true}
+  #:db{:ident :person/roles
+       :valueType :db.type/keyword
+       :cardinality :db.cardinality/many}
+  #:db{:ident :person/name
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :doc "Person's name as presented by Google APIs"}
+  #:db{:ident :person/active?
+       :valueType :db.type/boolean,
+       :cardinality :db.cardinality/one}
+  #:db{:ident :batch/id
+       :cardinality :db.cardinality/one
+       :valueType :db.type/uuid
+       :index true
+       :doc "A saga identifier for tracking batches of operations."}
+  #:db{:ident :wormbase.names/entity-type-enabled?
+       :valueType :db.type/boolean
+       :cardinality :db.cardinality/one
+       :doc "Indicates if an entity type should be used."}
+  #:db{:ident :wormbase.names/name-required?
+       :valueType :db.type/boolean
+       :cardinality :db.cardinality/one
+       :doc "Indicates if an entity type should have a name."}
+  #:db{:ident :wormbase.names/entity-types
+       :valueType :db.type/ref
+       :cardinality :db.cardinality/many
+       :doc "A registry of entity types."}
+  #:db{:ident :wormbase.names/entity-type-generic?
+       :valueType :db.type/boolean
+       :cardinality :db.cardinality/one
+       :doc "Indicates if the entity type is generic."}
+  #:db{:ident :wormbase.names/id-template-format
+       :valueType :db.type/string
+       :cardinality :db.cardinality/one
+       :unique :db.unique/value}]}

@@ -12,7 +12,8 @@
    [wormbase.db-testing :as db-testing]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.service :as service]
-   [wormbase.db :as wdb]))
+   [wormbase.db :as wdb]
+   [wormbase.ids.core :as wbids]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -262,15 +263,20 @@
                      :gene/biotype :biotype/transcript}
           split-txes [from-gene
                       into-gene
+                      {:db/id :counter/gene
+                       :counter/gene 2N}
                       {:db/id "datomic.tx"
                        :provenance/why "2 genes for undo split test"
                        :provenance/how :agent/console}]
           conn (db-testing/fixture-conn)]
-      (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+      (with-redefs [wdb/connection (constantly conn)
+                    wdb/connect (constantly conn)
                     wdb/db (fn get-db [_] (d/db conn))]
-        @(d/transact conn [init-from-gene])
-        @(d/transact conn split-txes)
-        (let [tx (d/q '[:find ?tx .
+        @(d/transact conn [init-from-gene
+                           {:db/id :counter/gene
+                            :counter/gene 2N}])
+        (let [split-result @(d/transact conn split-txes)
+              tx (d/q '[:find ?tx .
                         :in $ ?from-lur ?into-lur
                         :where
                         [?from-lur :gene/splits ?into-lur ?tx]
@@ -305,11 +311,14 @@
             (t/is (= (get-in from-g [:gene/status :db/ident]) :gene.status/live)
                   (str "Expecting live got dead for from gene" split-from))
             ;; prove we don't "reclaim" the identifier
-            (t/is (= (invoke :wormbase.tx-fns/next-identifier
-                             db
-                             :gene/id
-                             "WBGene%08d")
-                     "WBGene00000003"))
+            (t/is (= "WBGene00000002" (wbids/latest-id (d/db conn) :gene/id)))
+            (t/is (= "WBGene00000003"
+                     (wbids/next-identifier (d/db conn) :gene/id "WBGene%08d"))
+                  (str "Latest Identifier was:"
+                       (wbids/latest-id (d/db conn) :gene/id)
+                       "\n"
+                       "Latest gene counter value: "
+                       (wbids/latest-id-number db :gene/id)))
             (t/is (->> (d/q '[:find ?added
                               :in $ ?into-id
                               :where

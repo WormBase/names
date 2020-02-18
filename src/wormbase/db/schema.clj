@@ -4,9 +4,9 @@
    [clojure.java.io :as io]
    [cognitect.transcriptor :as xr]
    [datomic.api :as d]
-   [io.rkn.conformity :as c]
+   [magnetcoop.stork :as stork]
    [wormbase.names.entity :as wne]
-   [wormbase.util :refer [read-edn datomic-internal-namespaces]])
+   [wormbase.util :as wu])
   (:import (java.io PushbackReader)))
 
 (defn definitions [db]
@@ -19,7 +19,7 @@
          (not
           [(contains? ?excludes ?ns)])]
        db
-       (datomic-internal-namespaces)))
+       (wu/datomic-internal-namespaces)))
 
 (defn write-edn [conn & {:keys [out-path]
                          :or {out-path "/tmp/schema.edn"}}]
@@ -33,25 +33,25 @@
                   vec)]
       (prn se))))
 
-(defn apply-updates! []
-  (doseq [rf (xr/repl-files "resources/schema/updates")]
-    (xr/run rf)))
+(defn ensure-installed [conn resource-path]
+  (->> resource-path
+       (stork/read-resource)
+       (stork/ensure-installed conn)
+       (dorun)))
 
-(defn import-people [conn]
-  (let [people (read-edn (io/resource "schema/wbpeople.edn"))]
-    (c/ensure-conforms conn
-                       :import/people
-                       {:people {:txes [people]}}
-                       [:people])))
+(defn apply-migrations
+  [conn & {:keys [resource-path]
+           :or {resource-path "schema/migrations"}}]
+  (dorun (->> (wu/list-resource-files (str "resources/" resource-path))
+              (map io/file)
+              (map #(.getName %))
+              (map #(ensure-installed conn (str resource-path "/" %))))))
 
-(defn install [conn]
-  (let [db-fns (read-edn (io/resource "schema/tx-fns.edn"))
-        schema-txes (read-edn (io/resource "schema/definitions.edn"))
-        seed-data (read-edn (io/resource "schema/seed-data.edn"))
-        entity-registry (read-edn (io/resource "schema/generic-entity-registry.edn"))
-        init-schema [(concat db-fns schema-txes)]]
-    (c/ensure-conforms conn {:initial-schema {:txes init-schema}})
-    (c/ensure-conforms conn {:seed-data {:txes [seed-data]}})
+(defn ensure-schema [conn]
+  (ensure-installed conn "schema/definitions.edn")
+  (ensure-installed conn "schema/seed-data.edn")
+  (ensure-installed conn "schema/wbpeople.edn")
+  (let [entity-registry (wu/read-edn (io/resource "schema/generic-entity-registry.edn"))]
     (doseq [{:keys [:entity-type :id-format :generic? :name-required?]} entity-registry]
       (wne/register-entity-schema conn
                                   entity-type
@@ -59,5 +59,5 @@
                                   {:provenance/why "initial system registration"}
                                   generic?
                                   true
-                                  name-required?))
-    (import-people conn)))
+                                  name-required?)))
+  (apply-migrations conn))

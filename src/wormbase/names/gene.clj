@@ -342,15 +342,12 @@
            (created (str "/api/gene/" p-gene-id))))))
 
 (defn- invert-split-tx [db e a v tx added?]
-  (cond
-    (= (d/ident db a) :gene/status)
-    [:db/cas e a v (d/entid db :gene.status/dead)]
-
-    (= (d/ident db a) :gene/id)
-    [:db/add e a v]
-
-    :default
-    [(if added? :db/retract :db/add) e a v]))
+  (let [attr (d/ident db a)]
+    (cond
+      (= attr :gene/status) [:db/cas e a v (d/entid db :gene.status/dead)]
+      (= attr :gene/id) [:db/add e a v]
+      (= attr :counter/gene) nil ;; don't change anything to do with the counter value.
+      :default [(if added? :db/retract :db/add) e a v])))
 
 (defn undo-split-gene [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .

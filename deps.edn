@@ -24,7 +24,6 @@
   environ {:mvn/version "1.1.0"}
   expound {:mvn/version "0.7.2"}
   com.google.api-client/google-api-client {:mvn/version "1.30.4"}
-  io.rkn/conformity {:mvn/version "0.5.1"}
   me.raynes/fs {:mvn/version "1.4.6"}
   metosin/compojure-api {:mvn/version "2.0.0-alpha30"
                          :exclusions [potemkin frankiesardo/linked]}
@@ -36,7 +35,8 @@
   ring/ring-defaults {:mvn/version "0.3.2"}
   ring/ring-jetty-adapter {:mvn/version "1.7.1"}
   semantic-csv {:mvn/version "0.2.1-alpha1"}
-  com.taoensso/encore {:mvn/version "2.116.0"}}
+  com.taoensso/encore {:mvn/version "2.116.0"}
+  magnetcoop/stork {:mvn/version "0.1.6"}}
  :aliases
  {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
   :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}

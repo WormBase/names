@@ -1,6 +1,10 @@
 # Change-log
 #
 
+## [1.1.1]
+ - Use :db.unique/value instead of :db.unique/identity for primary identifiers.
+ - Switched to using magnetcoop.stork instead of conformity for schema and data alternations.
+
 ## [1.1.0]
  - Improved performance of id lookup in creation requests for large collections (e.g variation).
  - UI improvements: increased user-friendly-ness of forms,  avoid cropping names in history display.

@@ -112,4 +112,4 @@
   "Entry-point for ring server initialization."
   [& args]
   (mount/start)
-  (wdbs/install wdb/conn))
+  (wdbs/ensure-schema wdb/conn))

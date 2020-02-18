@@ -1,103 +1,105 @@
-[;; biotypes
- #:db{:ident :biotype/transcript}
- #:db{:ident :biotype/transposable-element-gene}
- #:db{:ident :biotype/pseudogene}
- #:db{:ident :biotype/cds}
+{:id :wormbase.names/seed-data
+ :tx-data
+ [ ;; biotypes
+  #:db{:ident :biotype/transcript}
+  #:db{:ident :biotype/transposable-element-gene}
+  #:db{:ident :biotype/pseudogene}
+  #:db{:ident :biotype/cds}
 
- ;; species
- #:species{:latin-name "Caenorhabditis elegans"
-           :id :species/c-elegans
-           :cgc-name-pattern "^[a-z]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"}
- #:species{:latin-name "Caenorhabditis briggsae"
-           :id :species/c-briggsae
-           :cgc-name-pattern "^Cbr-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^CBG\\d{5}$"}
- #:species{:latin-name "Caenorhabditis remanei"
-           :id :species/c-remanei
-           :cgc-name-pattern "^Cre-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^CRE\\d{5}$"}
- #:species{:latin-name "Caenorhabditis brenneri"
-           :id :species/c-brenneri
-           :cgc-name-pattern "^Cbn-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^CBN\\d{5}$"}
- #:species{:latin-name "Pristionchus pacificus"
-           :id :species/p-pacificus
-           :cgc-name-pattern "^Ppa-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^PPA\\d{5}$"}
- #:species{:latin-name "Caenorhabditis japonica"
-           :id :species/c-japonica
-           :cgc-name-pattern "^Cjp-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^CJA\\d{5}$"}
- #:species{:latin-name "Brugia malayi"
-           :id :species/b-malayi
-           :cgc-name-pattern "^Bma-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^Bm\\d+$"}
- #:species{:latin-name "Onchocerca volvulus"
-           :id :species/o-volvulus
-           :cgc-name-pattern "^Ovo-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^OVOC\\d+$"}
- #:species{:latin-name "Strongyloides ratti"
-           :id :species/s-ratti
-           :cgc-name-pattern "^Sra-[a-z21]{3,4}-[1-9]{1}\\d*(\\.\\d*)?$"
-           :sequence-name-pattern "^SRAE_[\\dXM]\\d+$"}
- #:species{:latin-name "Trichuris muris"
-           :id :species/t-muris
-           :cgc-name-pattern "^Tmu-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
-           :sequence-name-pattern "^TMUE_[0123M]\\d{9}$"}
+  ;; species
+  #:species{:latin-name "Caenorhabditis elegans"
+            :id :species/c-elegans
+            :cgc-name-pattern "^[a-z]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^[A-Z0-9_cel]+\\.[1-9]\\d{0,3}[A-Za-z]?$"}
+  #:species{:latin-name "Caenorhabditis briggsae"
+            :id :species/c-briggsae
+            :cgc-name-pattern "^Cbr-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^CBG\\d{5}$"}
+  #:species{:latin-name "Caenorhabditis remanei"
+            :id :species/c-remanei
+            :cgc-name-pattern "^Cre-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^CRE\\d{5}$"}
+  #:species{:latin-name "Caenorhabditis brenneri"
+            :id :species/c-brenneri
+            :cgc-name-pattern "^Cbn-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^CBN\\d{5}$"}
+  #:species{:latin-name "Pristionchus pacificus"
+            :id :species/p-pacificus
+            :cgc-name-pattern "^Ppa-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^PPA\\d{5}$"}
+  #:species{:latin-name "Caenorhabditis japonica"
+            :id :species/c-japonica
+            :cgc-name-pattern "^Cjp-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^CJA\\d{5}$"}
+  #:species{:latin-name "Brugia malayi"
+            :id :species/b-malayi
+            :cgc-name-pattern "^Bma-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^Bm\\d+$"}
+  #:species{:latin-name "Onchocerca volvulus"
+            :id :species/o-volvulus
+            :cgc-name-pattern "^Ovo-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^OVOC\\d+$"}
+  #:species{:latin-name "Strongyloides ratti"
+            :id :species/s-ratti
+            :cgc-name-pattern "^Sra-[a-z21]{3,4}-[1-9]{1}\\d*(\\.\\d*)?$"
+            :sequence-name-pattern "^SRAE_[\\dXM]\\d+$"}
+  #:species{:latin-name "Trichuris muris"
+            :id :species/t-muris
+            :cgc-name-pattern "^Tmu-[a-z21]{3,4}-[1-9]\\d*(\\.\\d+)?$"
+            :sequence-name-pattern "^TMUE_[0123M]\\d{9}$"}
 
- ;; agent
- #:db{:ident :agent/importer}
- #:db{:ident :agent/web}
- #:db{:ident :agent/console}
+  ;; agent
+  #:db{:ident :agent/importer}
+  #:db{:ident :agent/web}
+  #:db{:ident :agent/console}
 
- ;; gene status
- #:db{:ident :gene.status/dead}
- #:db{:ident :gene.status/live}
- #:db{:ident :gene.status/suppressed}
+  ;; gene status
+  #:db{:ident :gene.status/dead}
+  #:db{:ident :gene.status/live}
+  #:db{:ident :gene.status/suppressed}
 
- ;; sequence-feature status
- #:db{:ident :sequence-feature.status/dead}
- #:db{:ident :sequence-feature.status/live}
+  ;; sequence-feature status
+  #:db{:ident :sequence-feature.status/dead}
+  #:db{:ident :sequence-feature.status/live}
 
- ;; Person's roles
- #:db{:ident :person.role/admin}
- #:db{:ident :person.role/sequence-curator}
- #:db{:ident :person.role/viewer}
+  ;; Person's roles
+  #:db{:ident :person.role/admin}
+  #:db{:ident :person.role/sequence-curator}
+  #:db{:ident :person.role/viewer}
 
- ;; Events
- #:db{:ident :event/import}
- #:db{:ident :event/deactivate-person}
- #:db{:ident :event/new-person}
- #:db{:ident :event/new-gene}
- #:db{:ident :event/new-unnamed-gene}
- #:db{:ident :event/update-gene}
- #:db{:ident :event/merge-genes}
- #:db{:ident :event/undo-merge-genes}
- #:db{:ident :event/split-gene}
- #:db{:ident :event/split-genes}
- #:db{:ident :event/undo-split-gene}
- #:db{:ident :event/kill-gene}
- #:db{:ident :event/resurrect-gene}
- #:db{:ident :event/suppress-gene}
- #:db{:ident :event/remove-cgc-names}
- #:db{:ident :event/new-variation}
- #:db{:ident :event/kill-variation}
- #:db{:ident :event/update-variation}
- #:db{:ident :event/resurrect-variation}
- #:db{:ident :event/new-sequence-feature}
- #:db{:ident :event/kill-sequence-feature}
- #:db{:ident :event/resurrect-sequence-feature}
- #:db{:ident :event/new-species}
- #:db{:ident :event/update-species}
- #:db{:ident :event/new-entity-type}
- #:db{:ident :event/disable-entity-type}
- #:db{:ident :event/enable-entity-type}
+  ;; Events
+  #:db{:ident :event/import}
+  #:db{:ident :event/deactivate-person}
+  #:db{:ident :event/new-person}
+  #:db{:ident :event/new-gene}
+  #:db{:ident :event/new-unnamed-gene}
+  #:db{:ident :event/update-gene}
+  #:db{:ident :event/merge-genes}
+  #:db{:ident :event/undo-merge-genes}
+  #:db{:ident :event/split-gene}
+  #:db{:ident :event/split-genes}
+  #:db{:ident :event/undo-split-gene}
+  #:db{:ident :event/kill-gene}
+  #:db{:ident :event/resurrect-gene}
+  #:db{:ident :event/suppress-gene}
+  #:db{:ident :event/remove-cgc-names}
+  #:db{:ident :event/new-variation}
+  #:db{:ident :event/kill-variation}
+  #:db{:ident :event/update-variation}
+  #:db{:ident :event/resurrect-variation}
+  #:db{:ident :event/new-sequence-feature}
+  #:db{:ident :event/kill-sequence-feature}
+  #:db{:ident :event/resurrect-sequence-feature}
+  #:db{:ident :event/new-species}
+  #:db{:ident :event/update-species}
+  #:db{:ident :event/new-entity-type}
+  #:db{:ident :event/disable-entity-type}
+  #:db{:ident :event/enable-entity-type}
 
- ;; nonce schema for import only
- #:db{:ident :importer/historical-gene-version
-      :valueType :db.type/long
-      :cardinality :db.cardinality/one
-      :doc "A temporary attribute used only for import."}]
+  ;; nonce schema for import only
+  #:db{:ident :importer/historical-gene-version
+       :valueType :db.type/long
+       :cardinality :db.cardinality/one
+       :doc "A temporary attribute used only for import."}]}
 
 
