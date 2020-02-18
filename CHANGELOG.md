@@ -1,7 +1,7 @@
 # Change-log
 #
 
-## [1.1.1]
+## [1.2]
  - Use :db.unique/value instead of :db.unique/identity for primary identifiers.
  - Switched to using magnetcoop.stork instead of conformity for schema and data alternations.
 
