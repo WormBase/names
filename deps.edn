@@ -61,8 +61,9 @@
     com.cognitect/transcriptor {:mvn/version "0.1.5"}
     com.velisco/strgen {:mvn/version "0.1.5"
                         :exclusions [org.clojure/test.check]}
-    vvvvalvalval/datomock {:mvn/version "0.2.2"}}
-   :main-opts ["-m" "cognitect.test-runner" "-r" "integration.*"]}
+    vvvvalvalval/datomock {:mvn/version "0.2.2"}}}
+  :run-tests
+  {:main-opts ["-m" "cognitect.test-runner" "-r" "integration.*"]}
   :dev
   {:extra-deps
    {com.velisco/strgen {:mvn/version "0.1.5"

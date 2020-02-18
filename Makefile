@@ -138,7 +138,7 @@ release: deploy-ecr $(call print-help,release,"Release the applicaton.")
 
 .PHONY: run-tests
 run-tests: $(call print-help,run-tests,"Run all tests.")
-	@clj -A:datomic-pro:webassets:dev:test
+	@clj -A:datomic-pro:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
 run-dev-webserver: $(call print-help,run-dev-webserver,"Run a development webserver.")
