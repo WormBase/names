@@ -84,8 +84,7 @@
   [db ident]
   (when-not (d/entid db ident)
     (throw (ex-info "Invalid ident" {:ident ident})))
-  (let [counter-ident (keyword "counter" (namespace ident))
-        counter-entid (d/entid db counter-ident)]
+  (let [counter-ident (keyword "counter" (namespace ident))]
     (when-not counter-ident
       (throw (ex-info "Invalid ident"
                       {:ident counter-ident})))
@@ -120,7 +119,6 @@
                                :or {start-n (latest-id-number db uiident)}}]
   (let [stop-n (+ (count coll) start-n)
         counter-ident (keyword "counter" (namespace uiident))
-        counter-entid (d/entid db counter-ident)
         data (some->> (range start-n stop-n)
                       (map inc)
                       (map biginteger)
@@ -129,7 +127,7 @@
                       (interleave coll)
                       (partition 2)
                       (map (partial apply merge)))]
-    (conj data [:db/cas counter-entid counter-ident start-n stop-n])))
+    (conj data [:db/cas counter-ident counter-ident start-n stop-n])))
 
 (defn merge-genes
   "Merge two genes.
