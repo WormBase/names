@@ -1,4 +1,0 @@
-(require '[datomic.api :as d])
-(require '[wormbase.db :as wdb])
-@(d/transact wdb/conn [(wdb/seed-data-schema :event/remove-cgc-names)])
-		
