@@ -36,8 +36,7 @@
 (defn ensure-installed [conn resource-path]
   (->> resource-path
        (stork/read-resource)
-       (stork/ensure-installed conn)
-       (dorun)))
+       (stork/ensure-installed conn)))
 
 (defn apply-migrations
   [conn & {:keys [resource-path]
