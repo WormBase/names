@@ -1,7 +1,10 @@
 # Change-log
 #
 
-## [1.2]
+## [1.2.1]
+ - Fixed error with migration code (incorrect use of "dorun").
+
+## [1.2.0]
  - Use :db.unique/value instead of :db.unique/identity for primary identifiers.
  - Switched to using magnetcoop.stork instead of conformity for schema and data alternations.
 
