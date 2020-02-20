@@ -284,26 +284,37 @@
             (assoc :history prov)
             (ok))))))
 
-(defn finder [entity-type]
+;; transducer for converting list of names to datalog variables.
+(def ->datalog-vars (map #(symbol (str "?" %))))
+
+(defn finder
+  [entity-type unqualfied-attrs]
   (fn handle-find [request]
     (when-let [pattern (some-> request :query-params :pattern str/trim)]
       (let [db (:db request)
             term (stc/conform ::wsc/find-term pattern)
-            name-ident (keyword entity-type "name")
-            id-ident (keyword entity-type "id")
-            ent-ns (namespace id-ident)
-            q-spec '{:find [?id ?name]
-                     :in [$ ?pattern ?id-ident ?name-ident]
-                     :where [[(re-seq ?pattern ?name)]
-                             [?e ?name-ident ?name]
-                             [?e ?id-ident ?id]]}
-            q-result (d/q (assoc q-spec :keys [id-ident name-ident])
-                          db
-                          (re-pattern (str "^" term))
-                          id-ident
-                          name-ident)
+            pattern (re-pattern (str "^" term))
+            query-vars (sequence ->datalog-vars unqualfied-attrs)
+            find-attrs (map (partial keyword entity-type) unqualfied-attrs)
+            rule-head (str entity-type "-name")
+            matching-rules (wnm/make-rules rule-head find-attrs)
+            rule-clause (cons (symbol rule-head) '(?pattern ?name ?eid))
+            var->ident (zipmap query-vars find-attrs)
+            q-spec {:in '[$ % ?pattern]
+                    :where
+                    [rule-clause
+                     '[?eid ?id-ident ?id]]}
+            get-else-clauses (->> query-vars
+                                  (map (fn [name-sym]
+                                         [(list 'get-else '$ '?eid (name-sym var->ident) "") name-sym]))
+                                  (vec))
+            query (-> q-spec
+                      (update :where (fn [clause]
+                                       (concat clause get-else-clauses)))
+                      (assoc :find query-vars :keys find-attrs))
+            q-result (d/q query db matching-rules pattern)
             res {:matches (if (seq q-result)
-                            (map #(wnu/unqualify-keys % ent-ns) q-result)
+                            (vec (map #(wnu/unqualify-keys % entity-type) q-result))
                             [])}]
         (ok res)))))
 
@@ -495,7 +506,7 @@
        :responses (wnu/http-responses-for-read {:schema ::wsc/find-response})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-entities
-       :handler (finder entity-type)}
+       :handler (finder entity-type ["name" "id"])}
       :put
       {:summary "Update the schema for an entity type (enable/disable only)."
        :x-name ::enable-entity-type
