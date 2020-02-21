@@ -100,44 +100,6 @@
       (when-let [ent (d/entity db result)]
         [result ent]))))
 
-(def name-matching-rules
-  '[[(gene-name ?pattern ?name ?eid)
-     (matches-name :gene/cgc-name ?pattern ?name ?eid)]
-    [(gene-name ?pattern ?name ?eid)
-     (matches-name :gene/sequence-name ?pattern ?name ?eid)]
-    [(gene-name ?pattern ?name ?eid)
-     (matches-name :gene/id ?pattern ?name ?eid)]])
-
-(defn find-gene
-  "Perform a prefix search against names in the DB.
-  Match any unique gene identifier (cgc, sequence names or id)."
-  [request]
-  (when-let [pattern (some-> request :query-params :pattern str/trim)]
-    (let [db (:db request)
-          matching-rules (concat wnm/name-matching-rules name-matching-rules)
-          term (stc/conform ::wsc/find-term pattern)
-          q-result (d/q '[:find ?gid ?cgc-name ?sequence-name
-                          :in $ % ?term
-                          :where
-                          (gene-name ?term ?name ?eid)
-                          [?eid :gene/id ?gid]
-                          [(get-else $ ?eid :gene/cgc-name "") ?cgc-name]
-                          [(get-else $ ?eid :gene/sequence-name "") ?sequence-name]]
-                        db
-                        matching-rules
-                        (re-pattern (str "^" term)))
-          res {:matches (or (some->> q-result
-                                     (map (fn matched [[gid cgc-name seq-name]]
-                                            (merge {:gene/id gid}
-                                                   (when (s/valid? :gene/cgc-name cgc-name)
-                                                     {:gene/cgc-name cgc-name})
-                                                   (when (s/valid? :gene/sequence-name seq-name)
-                                                     {:gene/sequence-name seq-name}))))
-                                     (map #(wnu/unqualify-keys % "gene"))
-                                     (vec))
-                            [])}]
-      (ok res))))
-
 (def summary-pull-expr '[* {:gene/biotype [[:db/ident]]
                             :gene/species [[:species/latin-name]]
                             :gene/status [[:db/ident]]
@@ -384,8 +346,7 @@
        :responses (wnu/http-responses-for-read {:schema ::wsg/find-result})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-gene
-       :handler (fn find-by-any-name [request]
-                  (find-gene request))}
+       :handler (wne/finder "gene" ["cgc-name" "sequence-name" "id"])}
       :post
       {:summary "Create new names for a gene (cloned or un-cloned)"
        :x-name ::new-gene
