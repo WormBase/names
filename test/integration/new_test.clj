@@ -76,6 +76,22 @@
       (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest naming-uncloned-gene
+  (t/testing "Providing a empty sequence name doesn't effect the response."
+    (tu/with-gene-fixtures
+      []
+      (fn new-uncloned [conn]
+        (let [response (new-gene
+                        {:data {:cgc-name (tu/cgc-name-for-species elegans-ln)
+                                :sequence-name ""
+                                :species elegans-ln}
+                         :prov nil})
+              expected-id "WBGene00000001"]
+          (t/is (ru-hp/created? response))
+          (let [db (d/db conn)
+                identifier (some-> response :body :created :id)]
+            (t/is (= identifier expected-id))
+            (check-db db :gene/id identifier)
+            (tu/query-provenance conn identifier :event/new-gene))))))
   (t/testing "Naming one uncloned gene succesfully returns ids"
     (tu/with-gene-fixtures
       []
@@ -93,6 +109,17 @@
             (tu/query-provenance conn identifier :event/new-gene)))))))
 
 (t/deftest naming-cloned-gene
+  (t/testing "Creating a cloned gene requires sequence name to be populated."
+    (tu/with-gene-fixtures
+      []
+      (fn new-uncloned [conn]
+        (let [response (new-gene
+                        {:data {:sequence-name ""
+                                :biotype "cds"
+                                :species elegans-ln}
+                         :prov nil})
+              expected-id "WBGene00000001"]
+          (t/is (ru-hp/bad-request? response) (pr-str response))))))
   (t/testing "Naming one cloned gene succesfully returns ids"
     (tu/with-gene-fixtures
       []

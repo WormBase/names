@@ -99,6 +99,15 @@
       (dissoc conformed :n)
       conformed)))
 
+(defn remove-enties-with-blank-values
+  [data]
+  (reduce-kv (fn [m k v]
+               ((if (str/blank? v)
+                  dissoc
+                  assoc) m k v))
+             {}
+             data))
+
 (defn creator
   "Return an endpoint handler for new entity creation."
   [uiident conform-spec-fn event summary-pull-expr & [validate]]
@@ -112,6 +121,7 @@
                             (partial validate request)
                             identity)
           data (-> (:data payload)
+                   (remove-enties-with-blank-values)
                    (conform-spec-fn)
                    (wnu/qualify-keys ent-ns)
                    (transform-ident-ref-values)

@@ -12,7 +12,7 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(s/def ::name (s/and string? not-empty))
+(s/def ::name (s/and string?))
 
 (s/def :gene/id (stc/spec {:spec ::name
                            :swagger/example "WBGene00000421"
@@ -22,7 +22,7 @@
                                  :swagger/example "unc-22"
                                  :description "The CGC name."}))
 
-(s/def :gene/sequence-name (stc/spec {:spec ::name
+(s/def :gene/sequence-name (stc/spec {:spec (s/nilable ::name)
                                       :swagger/example "AAH1.1"
                                       :description "The sequence name of the Gene."}))
 
