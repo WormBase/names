@@ -99,7 +99,7 @@
       (dissoc conformed :n)
       conformed)))
 
-(defn remove-enties-with-blank-values
+(defn remove-entities-with-blank-values
   [data]
   (reduce-kv (fn [m k v]
                ((if (str/blank? v)
@@ -121,7 +121,7 @@
                             (partial validate request)
                             identity)
           data (-> (:data payload)
-                   (remove-enties-with-blank-values)
+                   (remove-entities-with-blank-values)
                    (conform-spec-fn)
                    (wnu/qualify-keys ent-ns)
                    (transform-ident-ref-values)
