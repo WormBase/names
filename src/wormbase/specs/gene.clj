@@ -73,11 +73,6 @@
   [_ problems]
   (str "A new gene requires at least a species and a name."))
 
-;; (ph/defphraser #(contains? % :cgc-name) [_ _] "cgc-name is required")
-;; (ph/defphraser #(contains? % :sequence-name) [_ _] "sequence-name is required")
-;; (ph/defphraser #(contains? % :biotype) [_ _] "biotype is required")
-
-
 (s/def ::new-unnamed (s/keys :req-un [:gene/id
                                       :gene/species]))
 
