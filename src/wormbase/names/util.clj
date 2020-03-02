@@ -9,6 +9,7 @@
    [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
+   [phrase.alpha :as ph]
    [ring.util.http-response :refer [bad-request conflict header not-found not-modified ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
@@ -137,8 +138,9 @@
 (defn conform-data [spec data]
   (let [conformed (s/conform spec data)]
     (if (s/invalid? conformed)
-      (let [problems (expound-str spec data)]
-        (throw (ex-info "Not valid according to specification."
+      (let [problems (expound-str spec data)
+            msg (ph/phrase-first {} spec data)]
+        (throw (ex-info msg
                         {:problems problems
                          :type :user/validation-error
                          :data data})))
