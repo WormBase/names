@@ -20,6 +20,7 @@
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene]
+   [wormbase.names.util :as wnu]
    [wormbase.names.response-formats :as wnrf])
   (:import
    (clojure.lang ExceptionInfo)
@@ -165,11 +166,20 @@
 
 (defn handle-request-validation
   [^Exception exc data request]
-  (handle-validation-error
-   exc
-   data
-   request
-   :message (ph/phrase-first {} (:spec data) (:value data))))
+  (let [context {:topic (-> request :uri (str/split #"/") last)}
+        {spec :spec value :value} data
+        phrased (wnu/phrase-all context spec value)]
+    (if (> (count phrased) 1)
+      (handle-validation-error
+       exc
+       (assoc data :errors phrased)
+       request
+       :message "One or more problems found.")
+      (handle-validation-error
+       exc
+       data
+       request
+       :message (ph/phrase-first {} spec value)))))
 
 (defn handle-unauthenticated [^Exception exc data request]
   (if-not (authenticated? request)

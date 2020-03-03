@@ -211,3 +211,19 @@
   (if (qualified-keyword? x)
     (name x)
     x))
+
+(defn phrase-all
+  "Phrase all problems.
+  Takes a context a clojure.spec problem and dispatches to a phraser.
+  Returns a sequence the return value for each phraser matching a problem."
+  [context spec value]
+  (some->> (s/explain-data spec value)
+           ::s/problems
+           (map (fn explain-spec [prob]
+                  (if-let [path (-> prob :path last name)]
+                    {:reason (str/join " " [(ph/phrase {} prob)
+                                            "for a"
+                                            path
+                                            (:topic context)])}
+                    {:reason (ph/phrase {} prob)})))))
+
