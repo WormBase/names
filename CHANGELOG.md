@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.2.2]
+ - Improved validation error messages.
+
 ## [1.2.1]
  - Fixed error with migration code (incorrect use of "dorun").
 
