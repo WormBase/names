@@ -76,7 +76,7 @@
       (t/is (ru-hp/bad-request? response)))))
 
 (t/deftest naming-uncloned-gene
-  (t/testing "Providing a empty sequence name doesn't effect the response."
+  (t/testing "Providing a empty sequence name doesn't affect the response."
     (tu/with-gene-fixtures
       []
       (fn new-uncloned [conn]
