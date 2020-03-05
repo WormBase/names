@@ -215,15 +215,22 @@
 (defn phrase-all
   "Phrase all problems.
   Takes a context a clojure.spec problem and dispatches to a phraser.
-  Returns a sequence the return value for each phraser matching a problem."
-  [context spec value]
-  (some->> (s/explain-data spec value)
-           ::s/problems
-           (map (fn explain-spec [prob]
-                  (if-let [path (-> prob :path last name)]
-                    {:reason (str/join " " [(ph/phrase {} prob)
-                                            "for a"
-                                            path
-                                            (:topic context)])}
-                    {:reason (ph/phrase {} prob)})))))
+  Returns a sequence of maps containing return value for each phraser matching a problem
+  under they key named `reason`."
+  ([context spec value]
+   (phrase-all context spec value #{:cloned :uncloned}))
+  ([context spec value include-context-topics]
+   (some->> (s/explain-data spec value)
+            ::s/problems
+            (map (fn explain-spec [prob]
+                   (let [last-path-seg (some-> prob :path last)]
+                     (if (and last-path-seg
+                              (keyword? last-path-seg)
+                              (include-context-topics last-path-seg))
+                       (let [reason (str/join " " [(ph/phrase {} prob)
+                                                   "for a"
+                                                   (name last-path-seg)
+                                                   (:topic context)])]
+                         {:reason reason})
+                       {:reason (ph/phrase {} prob)})))))))
 

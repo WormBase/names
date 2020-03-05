@@ -166,9 +166,11 @@
 
 (defn handle-request-validation
   [^Exception exc data request]
-  (let [context {:topic (-> request :uri (str/split #"/") last)}
+  (let [context {:topic (second (drop 1 (-> request :uri (str/split #"/"))))}
         {spec :spec value :value} data
-        phrased (wnu/phrase-all context spec value)]
+        phrased (if value
+                  (wnu/phrase-all context spec value)
+                  [])]
     (if (> (count phrased) 1)
       (handle-validation-error
        exc
