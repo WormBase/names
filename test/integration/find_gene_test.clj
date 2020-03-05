@@ -71,7 +71,6 @@
                 value (attr sample)]
             (when value
               (let [valid-prefix (rand-prefix value)
-                    _ (println "Attempt to find gene with prefix:" valid-prefix)
                     [status body] (find-gene valid-prefix)
                     matches (:matches body)]
                 (t/is (ru-hp/ok? {:status status :body body}))
