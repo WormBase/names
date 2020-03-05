@@ -59,13 +59,19 @@
                   matches (:matches body)]
               (t/is (ru-hp/ok? {:status status :body body}))
               (t/is (empty? matches)))))
-        (t/testing "Results found for matching GeneID/CGC/sequence prefixes"
-        (doseq [attr [:gene/id :gene/cgc-name :gene/sequence-name]]
+        (t/testing "Gene ID searches must contain minimum of 7 digits"
+          (let [[status body] (find-gene "WBGene000")]
+            (t/is (ru-hp/ok? {:status status :body body}))
+            (t/is (:message body))
+            (t/is (re-matches #".*at least 7.*" (:message body)))))
+        (t/testing "Results found for matching CGC/sequence name prefixes"
+        (doseq [attr [:gene/cgc-name :gene/sequence-name]]
           (let [sample (rand-nth data-samples)
                 gid (:gene/id sample)
                 value (attr sample)]
             (when value
               (let [valid-prefix (rand-prefix value)
+                    _ (println "Attempt to find gene with prefix:" valid-prefix)
                     [status body] (find-gene valid-prefix)
                     matches (:matches body)]
                 (t/is (ru-hp/ok? {:status status :body body}))

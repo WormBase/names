@@ -301,7 +301,8 @@
                    id-pattern #"WB[a-zA-Z]+(\d+)"}}]
   (when-let [[id numbers] (re-find id-pattern pattern)]
     (if (< (count numbers) min-chars-match)
-      {:message (format
+      {:matches []
+       :message (format
                  "Identifier must contain at least %d digits (received %d)."
                  min-chars-match
                  (count numbers))})))
