@@ -65,14 +65,19 @@
                             :description "The response data return from creating a new Species."}))
 
 
+(def allowed-to-update #{:sequence-name-pattern :cgc-name-pattern})
+
 (s/def ::update (stc/spec {:spec (s/and
                                   (s/keys :opt-un [:species/cgc-name-pattern
                                                    :species/sequence-name-pattern])
                                   seq
-                                  (s/map-of (s/and sts/keyword? #{:sequence-name-pattern
-                                                                  :cgc-name-pattern})
+                                  (s/map-of (s/and sts/keyword? allowed-to-update)
                                             any?))
                            :description "Data required to update a species."}))
+
+(ph/defphraser allowed-to-update
+  [_ prob]
+  "Can only update CGC and sequence name patterns for a species.")
 
 (s/def ::updated (stc/spec {:spec (s/keys :req-un [:species/latin-name])
                             :description "The response data from updating a Species."}))
