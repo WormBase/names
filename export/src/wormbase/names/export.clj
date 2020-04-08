@@ -81,7 +81,7 @@
                          name)]
           (cd-csv/write-csv out-file [[max-id status]]))))))
 
-(defn list-available-entitiy-types
+(defn list-available-entity-types
   "List the entity types available for export."
   [db]
   (->> (d/q '[:find ?entity-type ?generic ?enabled
@@ -188,7 +188,7 @@
             db (d/db conn)]
         (cond
           (:help options) (exit 0 (usage summary))          
-          (:list options) (exit 0 (list-available-entitiy-types db))
+          (:list options) (exit 0 (list-available-entity-types db))
           (nil? ent-ns) (exit 1 (str "Please specify an entity type to export. "
                                      "Use --list to see the available types."))
           (nil? out-path) (exit 1 "Specify the output file path. e.g: /tmp/foo.csv"))
