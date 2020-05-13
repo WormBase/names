@@ -1,11 +1,7 @@
 (ns wormbase.names.service
   (:require
    [clojure.string :as str]
-   [buddy.auth :as auth]
-   [compojure.api.middleware :as mw]
-   [compojure.api.swagger :as swagger]
    [compojure.api.sweet :as sweet]
-   [compojure.route :as route]
    [environ.core :as environ]
    [mount.core :as mount]
    [muuntaja.middleware :as mmw]
@@ -24,7 +20,6 @@
    [wormbase.names.stats :as wn-stats]
    [ring.adapter.jetty :as raj]
    [ring.middleware.content-type :as ring-content-type]
-   [ring.middleware.file :as ring-file]
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.not-modified :as rmnm]
    [ring.middleware.resource :as ring-resource]
