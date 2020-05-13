@@ -99,6 +99,8 @@
        wn-stats/routes
        wne/routes))))
 
+(declare server)
+
 (mount/defstate server
   :start (raj/run-jetty app {:port (read-string (get environ/env :port "3000"))
                              :join? false})
@@ -106,6 +108,6 @@
 
 (defn -main
   "Entry-point for ring server initialization."
-  [& args]
+  [& _]
   (mount/start)
   (wdbs/ensure-schema wdb/conn))
