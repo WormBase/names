@@ -49,6 +49,7 @@
 (def ^{:doc "Configuration for the Swagger UI."} swagger-ui
   {:ui "/api-docs"
    :spec "/swagger.json"
+   :validatorUrl swagger-validator-url
    :data
    {:info
     {:title "WormBase name service"
