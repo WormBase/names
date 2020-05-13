@@ -37,7 +37,10 @@
                                                     (apply list)))
                                   (build)))
 
-(defn parse-token [token]
+(defn parse-token
+  "Parse a Google ID token, returns a map containing the information associated with Google ID token.
+  Returns nil if the token cannot be parsed."
+  [^String token]
   (try
     (some->> (GoogleIdToken/parse json-factory token)
              (.getPayload)
@@ -46,14 +49,21 @@
     (catch IllegalArgumentException _
       nil)))
 
-(defn client-id [client-type]
+(defn client-id
+  "Returns the Google client-id from application configuration give the client type."
+  [client-type]
   (-> gapps-conf client-type :client-id))
 
-(defn verify-token-gapi [token]
+(defn verify-token-gapi
+  "Return a truthy value iif the token is valid."
+  [token]
   (some->> (.verify token-verifier token)
            (.getPayload)))
 
-(defn verify-token [^String token]
+(defn verify-token
+  "Verify the token via Google API(s).
+  Returns a map containing the information held in the Google ID Token."
+  [^String token]
   (try
     (when-let [gtoken (verify-token-gapi token)]
       (when (and
@@ -66,12 +76,18 @@
       (log/error exc "Invalid token supplied"))))
 
 (defn query-person
+  "Query the database for a WormBase person, given the schema attribute
+  and token associated with authentication.
+
+  Return a map containing the information about a person, omitting the auth token."
   [db ident auth-token]
   (let [person (d/pull db '[*] [ident auth-token])]
     (when (:db/id person)
       (dissoc person :person/auth-token))))
 
-(defn sign-token [auth-token-conf token]
+(defn sign-token
+  "Sign a token using a key from the application configuration."
+  [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
 (defrecord Identification [token-info person])
@@ -93,7 +109,11 @@
                                                 :key (:key auth-token-conf)})))]
         (query-person db :person/email email)))))
 
-(defn identify [request ^String token]
+(defn identify
+  "Identify the wormbase user associated with request.
+   Conditionally associates the authentication token with the user in the database.
+   Return an Identificaiton record."
+  [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
         parsed-token (try
                        (parse-token token)
@@ -117,6 +137,7 @@
 (def backend (babt/token-backend {:authfn identify}))
 
 (defn wrap-auth
+  "Ring middleware for applying authentication scheme."
   [handler]
   (-> handler
       (auth-mw/wrap-authentication backend)
