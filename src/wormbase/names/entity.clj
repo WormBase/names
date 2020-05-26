@@ -308,10 +308,8 @@
 (def ->datalog-vars (map #(symbol (str "?" %))))
 
 (defn build-find-query
-  [entity-type find-attrs unqualified-attrs rule-head pattern]
-  (let [term (stc/conform ::wsc/find-term pattern)
-        pattern (re-pattern (str "^" term))
-        query-vars (sequence ->datalog-vars unqualified-attrs)
+  [find-attrs unqualified-attrs rule-head]
+  (let [query-vars (sequence ->datalog-vars unqualified-attrs)
         rule-clause (cons (symbol rule-head) '(?pattern ?name ?eid))
         var->ident (zipmap query-vars find-attrs)
         q-spec {:in '[$ % ?pattern]
@@ -337,7 +335,7 @@
               find-attrs (map (partial keyword entity-type) unqualified-attrs)
               rule-head (str entity-type "-name")
               matching-rules (wnm/make-rules rule-head find-attrs)
-              query (build-find-query entity-type find-attrs unqualified-attrs rule-head s-pattern)
+              query (build-find-query find-attrs unqualified-attrs rule-head)
               regexp-pattern (re-pattern (str "^" s-pattern))
               q-result (d/q query db matching-rules regexp-pattern)
               res {:matches (if (seq q-result)
