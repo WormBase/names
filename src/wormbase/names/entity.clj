@@ -2,10 +2,8 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [clojure.walk :as w]
    [datomic.api :as d]
    [compojure.api.sweet :as sweet]
-   [datomic.api :as d]
    [magnetcoop.stork :as stork]
    [ring.util.http-response :refer [bad-request!
                                     conflict!
@@ -13,7 +11,6 @@
                                     created not-found
                                     not-found!
                                     ok]]
-   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
    [wormbase.names.matching :as wnm]
@@ -27,10 +24,11 @@
 
 (def enabled-ident :wormbase.names/entity-type-enabled?)
 
-(defmulti transform-ident-ref-value (fn [k m]
+(defmulti transform-ident-ref-value (fn [k _]
                                       k))
 
-(defmethod transform-ident-ref-value :default [_ m]
+(defmethod transform-ident-ref-value :default
+  [_ m]
   m)
 
 (defmethod validate-names :default [request data]
@@ -164,7 +162,6 @@
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
-          uiident-ent (d/entity db uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
         (let [ent-data (wdb/pull db summary-pull-expr lur)
@@ -277,9 +274,9 @@
                      :identifier identifier}))
       (let [ent-ns (-> lur first namespace)
             info (reduce-kv (fn unqalify-idents [m k v]
-                              (cond
-                                (qualified-keyword? v) (assoc m k (name v))
-                                :default (assoc m k v)))
+                              (if (qualified-keyword? v)
+                                (assoc m k (name v))
+                                (assoc m k v)))
                             {}
                             (-> (wdb/pull db pull-expr lur)
                                 (wnu/unqualify-keys ent-ns)))
@@ -299,8 +296,8 @@
                      id-pattern]
               :or {min-chars-match 7
                    id-pattern #"WB[a-zA-Z]+(\d+)"}}]
-  (when-let [[id numbers] (re-find id-pattern pattern)]
-    (if (< (count numbers) min-chars-match)
+  (when-let [[_ numbers] (re-find id-pattern pattern)]
+    (when (< (count numbers) min-chars-match)
       {:matches []
        :message (format
                  "Identifier must contain at least %d digits (received %d)."
@@ -442,7 +439,7 @@
     (ok {:entity-types entity-types})))
 
 (defn check-enabled! [request entity-type test-fn err-msgs]
-  (let [{db :db conn :conn} request
+  (let [{db :db} request
         ent-type-ident (keyword entity-type "id")
         {curr-enabled? enabled-ident et-ident :db/ident} (d/pull db '[*] ent-type-ident)]
     (when-not et-ident

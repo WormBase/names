@@ -17,8 +17,7 @@
 (defn non-stripping-spec-keys-coercion
   "Creates a new spec coercion without the extra-keys stripping in response formats."
   []
-  (let [mimetypes (-> spec-coercion/default-options :body keys)
-        options (-> spec-coercion/default-options
+  (let [options (-> spec-coercion/default-options
                     (assoc-in
                      [:body :formats]
                      {"application/json" json-transformer

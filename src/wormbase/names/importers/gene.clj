@@ -40,17 +40,17 @@
                :biotype/cds #(= % "CDS")
                :biotype/pseudogene #(= % "Pseudogene"))))
 
-(def conform-to-non-empty-value
-  [func value]
+(defn conform-to-non-empty-value
+  [func]
   (fn conform-non-empty [v]
-    (when-not (str/blank v)
+    (when-not (str/blank? v)
       (func v))))
 
 (defn ->biotype [v]
-  ((conform-to-non-empty-value (partial wnip/conformed-label ::biotype))) v)
+  ((conform-to-non-empty-value (partial wnip/conformed-label ::biotype)) v))
 
 (defn ->species [v]
-  (let [[ident value] (wnip/conformed-ref :species/latin-name)]
+  (let [[ident value] (wnip/conformed-ref :species/latin-name v)]
     (when-not value
       (throw (ex-info "Empty species values are not permitted."
                       {:value v
@@ -58,7 +58,7 @@
                        :ident ident})))))
 
 (defn ->sequence-name [v]
-  ((conform-to-non-empty-value (partial wnip/conformed :gene/sequence-name))) v)
+  ((conform-to-non-empty-value (partial wnip/conformed :gene/sequence-name)) v))
 
 (defn ->cgc-name [v]
   ((conform-to-non-empty-value (partial wnip/conformed :gene/cgc-name))) v)
@@ -80,13 +80,10 @@
          :event/merge-genes #(str/includes? (str/lower-case %) "merge")
          :event/split-gene #(str/includes? (str/lower-case %) "split"))))
 
-(defn decode-biotype-event [m event-text]
-  (let [[bt-from bt-to] (-> event-text
-                            (str/split #"\s" 3)
-                            rest)]
-    (-> m
-        (assoc :provenance/what :event/update-gene)
-        (wu/discard-empty-valued-entries))))
+(defn decode-biotype-event [m _]
+  (-> m
+      (assoc :provenance/what :event/update-gene)
+      (wu/discard-empty-valued-entries)))
 
 (defn decode-name-change-event [m target-attr event-text]
   (-> m
@@ -201,11 +198,18 @@
         lur (find gd :gene/id)
         gid (second lur)
         prov (assoc pv :db/id "datomic.tx" :provenance/how :agent/importer)
-        merges-and-splits (mapcat vec (select-keys gd [:gene/merges :gene/splits]))
+        merges-and-splits (mapcat vec
+                                  (select-keys
+                                   gd
+                                   [:gene/merges :gene/splits]))
         tx-data (conj (concat [[:db/add gid :gene/id gid]]
-                              [[:db/add gid :importer/historical-gene-version historical-version]]
-                              (if (seq merges-and-splits)
-                                [(vec (concat [:db/add lur] merges-and-splits))]))
+                              [[:db/add
+                                gid
+                                :importer/historical-gene-version
+                                historical-version]]
+                              (when (seq merges-and-splits)
+                                [(vec (concat [:db/add lur]
+                                              merges-and-splits))]))
                       prov)
         [data prov] tx-data]
     (chuck-on-nils data)
@@ -214,8 +218,8 @@
 
 (defn batch-data
   "Build the current entity representation of each gene."
-  [data ent-ns filter-fn & {:keys [batch-size]
-                            :or {batch-size 500}}]
+  [data _ filter-fn & {:keys [batch-size]
+                       :or {batch-size 500}}]
   (->> data
        (filter filter-fn)
        (partition-all batch-size)))
@@ -248,9 +252,8 @@
 (defn process
   ([conn ent-ns id-template data-tsv-path actions-tsv-path]
    (process conn ent-ns id-template data-tsv-path actions-tsv-path 10))
-  ([conn ent-ns id-template data-tsv-path actions-tsv-path n-in-flight]
+  ([conn ent-ns _ data-tsv-path actions-tsv-path n-in-flight]
    (let [person-lur (wnip/default-who)
-         id-ident (keyword ent-ns "id")
          cast-fns {:gene/id cast-gene-id-fn
                    :gene/species ->species
                    :gene/status (partial wnip/->status ent-ns)
@@ -259,7 +262,7 @@
                   :gene/biotype ->biotype}
          data (wnip/read-data data-tsv-path (:data export-conf) ent-ns cast-fns)]
      (transact-current-data conn data ent-ns person-lur)
-     (doseq [[gene-id gene-events] (map-history-actions actions-tsv-path)]
+     (doseq [[_ gene-events] (map-history-actions actions-tsv-path)]
        (let [event-txes (->> gene-events
                              (keep-indexed #(vector (inc %1) %2))
                              (pmap (partial apply transact-gene-event conn)))]

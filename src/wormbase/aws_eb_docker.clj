@@ -10,13 +10,11 @@
   (str/replace content proj-pattern (str "wormbase/names:" new-version)))
 
 (defn update-eb-json! [eb-json-path new-version]
-  (let [curr-content (slurp eb-json-path)
-        new-content (slurp eb-json-path)]
-    (spit eb-json-path (-> eb-json-path
-                           slurp
-                           (replace-version new-version)))))
+  (spit eb-json-path (-> eb-json-path
+                         slurp
+                         (replace-version new-version))))
 (defn -main
-  [& args]
+  [& _]
   (let [proj-meta (wu/read-app-config "meta.edn")
         version (:version proj-meta)
         target-filename "Dockerrun.aws.json"

@@ -4,7 +4,6 @@
    [datomic.api :as d]
    [java-time :as jt]
    [ring.util.http-response :refer [ok]]
-   [wormbase.db :as wdb]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.specs.recent :as wsr]

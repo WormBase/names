@@ -9,8 +9,7 @@
    [wormbase.util :as wu]
    [wormbase.names.agent :as wna]
    [wormbase.names.util :as wnu]
-   [wormbase.specs.person :as wsp]
-   [clojure.test :as t]))
+   [wormbase.specs.person :as wsp]))
 
 (def pull-expr '[:provenance/when
                  :provenance/why
@@ -66,7 +65,7 @@
      (when (inst? whence)
        {:provenance/when whence}))))
 
-(defmulti resolve-change (fn [db change]
+(defmulti resolve-change (fn [_ change]
                            (get change :attr :default)))
 
 (defmethod resolve-change :provenance/who
@@ -79,11 +78,10 @@
 
 (defmethod resolve-change :default
   [db change]
-  (let [cv (:value change)]
-    (if (and ((-> change :attr namespace set) "counter")
-             (= (-> change :attr name) "value"))
-      (select-keys change [:eid])
-      (assoc change :value (d/ident db (:value change))))))
+  (if (and ((-> change :attr namespace set) "counter")
+           (= (-> change :attr name) "value"))
+    (select-keys change [:eid])
+    (assoc change :value (d/ident db (:value change)))))
 
 (def ref-change-rules
   '[[(ref-changes ?e ?aname ?a ?eid)
@@ -91,7 +89,7 @@
      [(namespace ?aname) ?ns]
      (not [(#{"provenance" "db"} ?ns)])]])
 
-(defn- convert-reverse-ref [db eid change-data]
+(defn- convert-reverse-ref [_ eid change-data]
   (if (= (:eid change-data) eid)
     change-data
     (assoc change-data
@@ -164,7 +162,7 @@
     (-> (concat ent-txes ref-txes) set sort)))
 
 (defn pull-provenance
-  ([db entity-id prov-pull-expr tx]
+  ([db _ prov-pull-expr tx]
    (-> (wdb/pull db prov-pull-expr tx)
        (update :provenance/how wnu/unqualify-maybe)
        (update :provenance/what wnu/unqualify-maybe)

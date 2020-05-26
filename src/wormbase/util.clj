@@ -4,7 +4,6 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.walk :as w]
-   [datomic.api :as d]
    [aero.core :as aero]
    [java-time :as jt]
    [wormbase.ids.core :as wic])
@@ -35,7 +34,7 @@
                        (= (count m) 1)
                        (wic/attr-schema-unique? db (-> m first key))) (-> m first val)
                   (map? m) (dissoc m :db/id :db/txInstant)
-                  :default m))
+                  :else m))
               data))
 
 (defn elide-importer-info

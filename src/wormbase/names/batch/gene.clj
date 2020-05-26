@@ -5,15 +5,13 @@
    [ring.util.http-response :refer [bad-request! created ok]]
    [spec-tools.core :as stc]
    [wormbase.ids.batch :as wbids-batch]
-   [wormbase.names.auth :as wna]
    [wormbase.names.batch.generic :as wnbg]
    [wormbase.names.entity :as wne]   
-   [wormbase.names.gene :as wng]
+   [wormbase.names.gene]
    [wormbase.names.util :as wnu]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]
-   [wormbase.names.gene] ;; brings in multi-method registration
    [wormbase.names.provenance :as wnp]
    [wormbase.names.validation :as wnv]
    [expound.alpha :as expound]))
@@ -26,7 +24,7 @@
 (defmethod wne/transform-ident-ref-value :product-biotype [_ m]
   (wnu/transform-ident-ref :product-biotype m "biotype"))
 
-(defn merge-genes [event-type spec request]
+(defn merge-genes [_ spec request]
   (let [{conn :conn payload :body-params} request
         {data :data prov-data :prov} payload
         prov (wnp/assoc-provenance request
@@ -49,9 +47,8 @@
     (wne/transform-ident-ref-value k m)
     m))
 
-(defn split-genes [event-type spec request]
+(defn split-genes [_ spec request]
   (let [{conn :conn payload :body-params} request
-        data (:data payload)
         {data :data prov-data :prov} payload
         prov (wnp/assoc-provenance request
                                    (assoc-in payload

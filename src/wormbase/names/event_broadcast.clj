@@ -12,13 +12,10 @@
   (:require
    [clojure.tools.logging :as log]
    [datomic.api :as d]
-   [mount.core :as mount]
-   [wormbase.db :as wdb]
    [wormbase.names.util :as wnu]
-   [wormbase.names.event-broadcast.proto :as wneb]
-   [wormbase.names.event-broadcast.aws-s3 :as wneb-s3]))
+   [wormbase.names.event-broadcast.proto :as wneb]))
 
-(defn read-changes [{:keys [db-after tx-data] :as report}]
+(defn read-changes [{:keys [db-after tx-data]}]
   (d/q '[:find ?aname ?val
          :in $ [[_ ?a ?val]]
          :where
@@ -70,8 +67,7 @@
   e.g: via AWS SQS, or possibly email."
   [tx-report-queue event-broadcaster & {:keys [include-agents]
                                         :or {include-agents #{:agent/web}}}]
-  (let [peek-report #(.peek tx-report-queue)
-        qsize #(.size tx-report-queue)]
+  (let [peek-report #(.peek tx-report-queue)]
     (loop [report (peek-report)]
       (cond
         (nil? report) (Thread/sleep 5000)

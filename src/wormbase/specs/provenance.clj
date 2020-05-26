@@ -6,8 +6,7 @@
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.specs.person] ;; side effecting: to bring in specs
-   [wormbase.specs.agent :as wsa]
-   [wormbase.util :as wu]))
+   [wormbase.specs.agent :as wsa]))
 
 ;; internal datomic tx/Instant (java.util.Date instance)
 (s/def ::t (stc/spec {:spec sts/inst?

@@ -5,9 +5,6 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request! created ok]]
-   [spec-tools.core :as stc]
-   [spec-tools.spec :as sts]
-   [wormbase.db :as wdb]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
@@ -21,8 +18,8 @@
          (keyword "species"))))
 
 (defn new-item [request]
-  (let [{payload :body-params db :db conn :conn} request
-        {data :data prov :prov} payload]
+  (let [{payload :body-params conn :conn} request
+        {data :data} payload]
     (when-not (s/valid? ::wss/new data)
       (bad-request! data))
     (let [cdata (wnu/qualify-keys (wnu/conform-data ::wss/new data) "species")
@@ -38,8 +35,8 @@
 
 (defn update-item
   [request identifier]
-  (let [{payload :body-params db :db conn :conn} request
-        {data :data prov :prov} payload
+  (let [{payload :body-params conn :conn} request
+        {data :data} payload
         species-id (keyword "species" identifier)
         cdata* (wnu/conform-data ::wss/update data) 
         cdata (wnu/qualify-keys cdata* "species")

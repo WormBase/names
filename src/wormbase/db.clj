@@ -2,7 +2,6 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [clojure.walk :as w]
    [datomic.api :as d]
    [environ.core :as environ]
    [mount.core :as mount]

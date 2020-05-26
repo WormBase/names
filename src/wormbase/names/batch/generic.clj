@@ -1,25 +1,21 @@
 (ns wormbase.names.batch.generic
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.string :as str]
    [compojure.api.sweet :as sweet]
    [clj-uuid :as uuid]
    [datomic.api :as d]
    [java-time :as jt]
    [ring.util.http-response :refer [bad-request created not-found! not-modified ok]]
-   [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
-   [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.names.validation :as wnv]
    [wormbase.specs.batch :as wsb]
    [wormbase.specs.entity :as wse]
-   [wormbase.specs.provenance :as wsp]
-   [java-time :as jt]))
+   [wormbase.specs.provenance :as wsp]))
 
 (s/def ::entity-type sts/string?)
 
@@ -55,8 +51,7 @@
   If the collection is smaller that the default batch size, the the default (100) will be used,
   otherwise the collection size divided by the default batch size."
   [coll]
-  (let [coll-size (count coll)
-        cbsize (int (/ coll-size (min coll-size default-batch-size)))]
+  (let [coll-size (count coll)]
     (if (< coll-size default-batch-size)
       default-batch-size
       (int (/ coll-size default-batch-size)))))
@@ -182,8 +177,7 @@
   - conformer: function taking spec and data, responsible for coercion of input data.
   - validator: function to validate the coerced data.
   - request: the HTTP request."
-  [uiident item-pull-expr event-type spec conformer validator request]
-  ;; TODO: conformer no longer applied. Is it needeed?
+  [uiident item-pull-expr event-type spec _ validator request]
   (let [ent-ns (namespace uiident)
         data-transform (fn valdiating-conformer [_ data]
                          (let [{db :db} request
@@ -215,8 +209,7 @@
 
 (defn change-entity-statuses
   [uiident event-type to-status spec request]
-  (let [{conn :conn db :db payload :body-params} request
-        {data :data prov :prov} payload
+  (let [{db :db} request
         entity-type (namespace uiident)
         data-transform (fn txform-assign-status [_ data]
                          (->> data
@@ -234,7 +227,7 @@
 
 (defn retract-attr-vals
   "Retract values associated with attributes for a matching set of entities."
-  [uiident attr event-type spec conformer request]
+  [uiident attr _ spec conformer request]
   (let [{payload :body-params conn :conn} request
         ent-type (namespace uiident)
         data (:data payload)

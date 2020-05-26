@@ -11,7 +11,6 @@
    [expound.alpha :refer [expound-str]]
    [phrase.alpha :as ph]
    [ring.util.http-response :refer [bad-request conflict header not-found not-modified ok]]
-   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.validation :as wsv]))
@@ -81,7 +80,7 @@
     (if-let [ident (d/ident db v)]
       (assoc m k ident)
       (assoc m k (wdb/pull db '[*] v)))
-    :default
+    :else
     (assoc m k v)))
 
 (defn resolve-refs [db entity-like-mapping]
@@ -193,12 +192,10 @@
   "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
   [mapping entity-type]
   (reduce-kv (fn [m k v]
-               (try
-                 (if (and (qualified-keyword? k)
-                          (= (namespace k) entity-type))
-                   (assoc m (-> k name keyword) v)
-                   (assoc m k v))))
-
+               (if (and (qualified-keyword? k)
+                        (= (namespace k) entity-type))
+                 (assoc m (-> k name keyword) v)
+                 (assoc m k v)))
              {}
              mapping))
 

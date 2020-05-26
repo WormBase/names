@@ -1,6 +1,5 @@
 (ns wormbase.names.agent
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.walk :as w]
    [wormbase.util :as wu]
    [wormbase.specs.agent :as wsa])

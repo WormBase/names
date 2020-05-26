@@ -1,10 +1,8 @@
 (ns wormbase.names.event-broadcast.aws-s3
   (:require
-   [clojure.edn :as edn]
+   [clojure.string :as str]
    [amazonica.aws.s3 :as s3]
-   [wormbase.names.util :as wnu]
-   [wormbase.names.event-broadcast.proto :as evb-proto]
-   [clojure.string :as str])
+   [wormbase.names.event-broadcast.proto :as evb-proto])
   (:import
    (java.io ByteArrayInputStream)))
 
@@ -21,9 +19,9 @@
 (defrecord TxEventBroadcaster [config]
   evb-proto/TxEventBroadcaster
   (message-persisted? [this changes]
-    (not (nil? (s3/get-object-metadata
-                :bucket-name (bucket-name this)
-                :key (derive-bucket-key changes)))))
+    (some? (s3/get-object-metadata
+            {:bucket-name (bucket-name this)
+             :key (derive-bucket-key changes)})))
   (send-message [this changes]
     (let [data (.getBytes (pr-str changes) "UTF-8")
           input-stream (ByteArrayInputStream. data)]

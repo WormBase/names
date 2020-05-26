@@ -47,17 +47,12 @@
        (sc/mappify (select-keys conf [:header]))
        (sc/cast-with cast-fns {:exception-handler handle-cast-exc})))
 
-(defn read-data [tsv-path conf ent-ns cast-fns]
+(defn read-data [tsv-path conf _ cast-fns]
   (with-open [in-file (io/reader tsv-path)]
     (->> (parse-tsv in-file)
          (transform-cast conf cast-fns)
          (map wu/discard-empty-valued-entries)
          (doall))))
-
-(defn batch-data [data filter-fn map-fn batch-size]
-  (->> data
-       (filter filter-fn)
-       (map map-fn)))
 
 (defn handle-transact-exc [exc data]
   (throw (ex-info "Failed to transact data!"

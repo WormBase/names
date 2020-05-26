@@ -1,9 +1,7 @@
 (ns wormbase.specs.validation
   (:require
    [clojure.spec.alpha :as s]
-   [datomic.api :as d]
    [spec-tools.core :as stc]
-   [spec-tools.spec :as sts]
    [wormbase.specs.common :as wsc]))
 
 (s/def ::name string?)

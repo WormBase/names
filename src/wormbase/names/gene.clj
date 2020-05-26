@@ -1,12 +1,9 @@
 (ns wormbase.names.gene
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.string :as str]
-   [clojure.tools.logging :as log]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [java-time :as jt]
    [ring.util.http-response :refer [ok
                                     bad-request
                                     bad-request!
@@ -14,11 +11,9 @@
                                     created
                                     internal-server-error
                                     not-found not-found!]]
-   [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.util :as wu]
    [wormbase.names.entity :as wne]
-   [wormbase.names.matching :as wnm]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
    [wormbase.names.validation :refer [validate-names]]
@@ -49,10 +44,10 @@
     (let [db (:db request)
           species-lur (:gene/species data)
           species-ent (d/pull db '[*] species-lur)]
-      (if (empty? data)
+      (when (empty? data)
         (throw (ex-info "No names to validate (empty data)"
                         {:type :user/validation-error})))
-      (if-not (:db/id species-ent)
+      (when-not (:db/id species-ent)
         (throw (ex-info "Invalid species specified"
                         {:type :user/validation-error})))
       (let [patterns ((juxt :species/cgc-name-pattern :species/sequence-name-pattern) species-ent)
@@ -91,7 +86,7 @@
             :gene/cgc-name (all-regexp-patterns-for db :species/cgc-name-pattern)
             :gene/id #{wsg/gene-id-regexp}}
         result (reduce-kv (fn [m ident regexp-patterns]
-                            (if-let [match (some #(re-matches % identifier) regexp-patterns)]
+                            (if (some #(re-matches % identifier) regexp-patterns)
                               (into m [ident identifier])
                               m))
                           []
@@ -139,11 +134,13 @@
   (let [species-lur (-> data :gene/species vec)
         species-entid (d/entid db species-lur)
         biotype-ident (when-let [bt (get data :gene/biotype)]
-                        (keyword "biotype" ))
+                        (if (string? bt)
+                          (keyword "biotype" bt)
+                          bt))
         biotype-entid (d/entid db biotype-ident)
         res (vec (merge data
                         (when biotype-entid
-                          {:gene/biotype biotype-entid})
+                          {:gene/biotype biotype-ident})
                         (when species-entid
                           {:gene/species species-entid})))]
     res))
@@ -208,7 +205,7 @@
            (wu/elide-db-internals db)))
 
 (defn merge-genes [request into-id from-id]
-  (let [{conn :conn db :db payload :body-params} request
+  (let [{conn :conn payload :body-params} request
         data (:data payload)
         prov (wnp/assoc-provenance request payload :event/merge-genes)
         [[into-lur into-g] [from-lur from-g]] (validate-merge-request
@@ -244,8 +241,8 @@
                    (merge {:db/id "datomic.tx"
                            :provenance/compensates tx
                            :provenance/why "Undoing merge"}))
-          compensating-txes (wdb/invert-tx (d/log conn) tx prov)
-          tx-result @(d/transact-async conn compensating-txes)]
+          compensating-txes (wdb/invert-tx (d/log conn) tx prov)]
+      @(d/transact-async conn compensating-txes)
       (ok {:live into-id :dead from-id}))
     (not-found {:message "No transaction to undo"})))
 
@@ -254,7 +251,6 @@
         payload (:body-params request)
         data (:data payload)
         template (wbids/identifier-format db :gene/id)
-        spec ::wsg/split
         [lur from-gene] (identify request identifier)
         from-gene-status (:gene/status from-gene)]
     (when (nil? from-gene)
@@ -274,7 +270,6 @@
           {biotype :gene/biotype product :product} cdata
           {p-seq-name :gene/sequence-name
            p-biotype :gene/biotype} product
-          p-seq-name (get-in cdata [:product :gene/sequence-name])
           prov (wnp/assoc-provenance request payload :event/split-gene)
           species (get-in from-gene [:gene/species :species/latin-name])
           new-data (merge {:gene/species (s/conform :gene/species species)}
@@ -303,13 +298,13 @@
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
 
-(defn- invert-split-tx [db e a v tx added?]
+(defn- invert-split-tx [db e a v _ added?]
   (let [attr (d/ident db a)]
     (cond
       (= attr :gene/status) [:db/cas e a v (d/entid db :gene.status/dead)]
       (= attr :gene/id) [:db/add e a v]
       (= attr :counter/gene) nil ;; don't change anything to do with the counter value.
-      :default [(if added? :db/retract :db/add) e a v])))
+      :else [(if added? :db/retract :db/add) e a v])))
 
 (defn undo-split-gene [request from-id into-id]
   (if-let [tx (d/q '[:find ?tx .
@@ -330,8 +325,8 @@
           compensating-txes (wdb/invert-tx (d/log conn)
                                            tx
                                            prov
-                                           fact-mapper)
-          tx-result @(d/transact-async conn compensating-txes)]
+                                           fact-mapper)]
+      @(d/transact-async conn compensating-txes)
       (ok {:live from-id :dead into-id}))
     (not-found {:message "No transaction to undo"})))
 

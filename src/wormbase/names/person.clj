@@ -1,7 +1,6 @@
 (ns wormbase.names.person
   (:require
    [clojure.spec.alpha :as s]
-   [compojure.api.routes :as route]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
@@ -17,7 +16,7 @@
 (def admin-required! (partial wna/require-role! #{:person.role/admin}))
 
 (defmethod wnp/resolve-change :person/id
-  [attr db change]
+  [_ db change]
   (when-let [found (wnu/resolve-refs db (find change :person/id))]
     (assoc change
            :value
@@ -27,20 +26,20 @@
   (admin-required! request)
   (let [conn (:conn request)
         spec ::wsp/summary
-        person (some-> request :body-params)]
-    (let [transformed (stc/conform spec person stc/json-transformer)]
-      (if (s/invalid? transformed)
-        (let [problems (expound-str  spec person)]
-          (throw (ex-info "Invalid person data"
-                          {:type :user/validation-error
-                           :problems problems})))
-        (let [prov (wnp/assoc-provenance request person :event/new-person)
-              tx-data [(-> person
-                           (wnu/qualify-keys "person")
-                           (assoc :person/active? true)) prov]
-              tx-res @(d/transact conn tx-data)
-              pid (wdb/extract-id tx-res :person/id)]
-          (created (str "/person/" pid) person))))))
+        person (some-> request :body-params)
+        transformed (stc/conform spec person stc/json-transformer)]
+    (if (s/invalid? transformed)
+      (let [problems (expound-str  spec person)]
+        (throw (ex-info "Invalid person data"
+                        {:type :user/validation-error
+                         :problems problems})))
+      (let [prov (wnp/assoc-provenance request person :event/new-person)
+            tx-data [(-> person
+                         (wnu/qualify-keys "person")
+                         (assoc :person/active? true)) prov]
+            tx-res @(d/transact conn tx-data)
+            pid (wdb/extract-id tx-res :person/id)]
+        (created (str "/person/" pid) person)))))
 
 (defn summary [db lur]
   (let [person (d/pull db [:db/id
@@ -71,7 +70,7 @@
   (let [{db :db body-params :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (summary db lur)]
-    (if person
+    (when person
       (let [spec ::wsp/summary
             conn (:conn request)]
         (if (s/valid? spec body-params)

@@ -10,8 +10,7 @@
    [wormbase.db.schema :as wdbs]
    [wormbase.names.importers.processing :as wnip]
    [wormbase.names.importers.entity :as ent-importer]
-   [wormbase.names.importers.gene :as gene-importer]
-   [wormbase.util :as wu]))
+   [wormbase.names.importers.gene :as gene-importer]))
 
 (def cli-options [])
 

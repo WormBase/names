@@ -1,9 +1,6 @@
-(ns wormbase.names.validation
-  (:require
-   [clojure.spec.alpha :as s]
-   [datomic.api :as d]))
+(ns wormbase.names.validation)
 
-(defmulti validate-names (fn [request data]
+(defmulti validate-names (fn [_ data]
                            (some->> data
                                     (keys)
                                     (filter qualified-keyword?)

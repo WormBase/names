@@ -8,20 +8,16 @@
    [datomic.api :as d]
    [environ.core :as environ]
    [expound.alpha :as expound]
-   [muuntaja.core :as mc]
    [phrase.alpha :as ph]
    [ring.util.http-response :refer [bad-request
                                     conflict
-                                    content-type
                                     forbidden
-                                    internal-server-error
                                     not-found
                                     unauthorized]]
    [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.gene :as wn-gene]
-   [wormbase.names.util :as wnu]
-   [wormbase.names.response-formats :as wnrf])
+   [wormbase.names.util :as wnu])
   (:import
    (clojure.lang ExceptionInfo)
    (java.util.concurrent ExecutionException)))
@@ -33,17 +29,6 @@
 (ph/defphraser #(contains? % kw)
   [_ _ kw]
   (format "%s is required" (name kw)))
-
-(defn respond-with [response-fn request data]
-  (let [fmt (mc/default-format (or (:compojure.api.request/muuntaja request)
-                                   wnrf/json))]
-    (response-fn data)))
-
-(def respond-bad-request (partial respond-with bad-request))
-
-(def respond-conflict (partial respond-with conflict))
-
-(def respond-missing (partial respond-with not-found))
 
 (defn assoc-error-message [data exc & {:keys [message]}]
   (let [msg (or message (.getMessage exc) "No reason given")]
@@ -93,14 +78,15 @@
        {:data (pr-str (:value data))
         :message "Unable to determine spec error."})
       {:data (pr-str (:value data))
-        :message "Unable to determine spec error."})))
+       :message "Unable to determine spec error."
+       :error ex})))
 
 (defn handle-validation-error
-  [^Exception exc data request & {:keys [message]}]
+  [^Exception exc data _ & {:keys [message]}]
   (let [data* (dissoc data :request :spec :coercion :in)
         spec (:spec data)
         info (if (s/spec? spec)
-               (if-let [problems (some-> data* :problems)]
+               (if (some-> data* :problems)
                  (assoc data* :problems (prettify-spec-error-maybe spec data*))
                  data*)
                (-> data*
@@ -109,24 +95,24 @@
                                      (name x)
                                      x)))))
         body (assoc-error-message info exc :message message)]
-    (respond-bad-request request body)))
+    (bad-request body)))
 
-(defn handle-missing [^Exception exc data request]
+(defn handle-missing [^Exception exc data _]
   (when (some-> data :entity keyword?)
     (throw (ex-info (format "Schema %s not installed!" (:entity data))
                     {:ident (:entity data)})))
   (if-let [lookup-ref (:entity data)]
     (let [msg (apply format "%s '%s' does not exist" lookup-ref)]
-      (respond-missing request (assoc-error-message data exc :message msg)))
-    (respond-missing request (assoc-error-message data exc))))
+      (not-found (assoc-error-message data exc :message msg)))
+    (not-found (assoc-error-message data exc))))
 
-(defn handle-db-conflict [^Exception exc data request]
-  (respond-conflict request (assoc-error-message data exc)))
+(defn handle-db-conflict [^Exception exc data _]
+  (conflict (assoc-error-message data exc)))
 
-(defn handle-db-unique-conflict [^Exception exc data request]
+(defn handle-db-unique-conflict [^Exception exc data _]
   (let [uc-err (parse-exc-message exc)
         body (assoc-error-message data exc :message uc-err)]
-    (respond-conflict request body)))
+    (conflict body)))
 
 (defn handle-unexpected-error
   ([^Exception exc data request]
@@ -183,7 +169,7 @@
        request
        :message (ph/phrase-first {} spec value)))))
 
-(defn handle-unauthenticated [^Exception exc data request]
+(defn handle-unauthenticated [_ _ request]
   (if-not (authenticated? request)
     (unauthorized "Access denied")
     (forbidden)))
@@ -207,10 +193,10 @@
                                                   :message (-> batch-error :exc parse-exc-message)}})]
                                  (:body ed)))
                              batch-errors)}]
-      (respond-conflict request
-                        (assoc-error-message err-data
-                                             exc
-                                             :message "processing errors occurred")))
+      (conflict (assoc-error-message
+                 err-data
+                 exc
+                 :message "processing errors occurred")))
     (catch Exception exc
       (handle-unexpected-error exc))))
 

@@ -1,9 +1,6 @@
 (ns wormbase.names.importers.entity
   (:require
-   [clojure.string :as str]
    [datomic.api :as d]
-   [environ.core :refer [env]]
-   [mount.core :as mount]
    [wormbase.names.entity :as wne]
    [wormbase.names.importers.processing :as wnip]
    [wormbase.specs.entity :as wse]
@@ -11,14 +8,14 @@
 
 (defn make-export-conf
   [ent-ns named?]
-  (let [attrs (conj ["id" "status"] (if named? "name"))]
+  (let [attrs (conj ["id" "status"] (when named? "name"))]
     {:data {:header (->> attrs
                          (remove nil?)
                          (map (partial keyword ent-ns)))}}))
 (defn batch-data
   "Build the current entity representation of each variation."
-  [prov data ent-ns filter-fn & {:keys [batch-size]
-                                 :or {batch-size 500}}]
+  [prov data _ filter-fn & {:keys [batch-size]
+                            :or {batch-size 500}}]
   (->> data
        (filter filter-fn)
        (partition-all batch-size)
@@ -62,7 +59,9 @@
                             [name-ident])))
 
 (defn process
-  ([conn ent-ns id-template data-tsv-path]
-   (process conn ent-ns id-template data-tsv-path 10))
-  ([conn ent-ns id-template data-tsv-path n-in-flight]
-   (batch-transact-data conn ent-ns id-template data-tsv-path (wnip/default-who))))
+  [conn ent-ns id-template data-tsv-path]
+  (batch-transact-data conn
+                       ent-ns
+                       id-template
+                       data-tsv-path
+                       (wnip/default-who)))

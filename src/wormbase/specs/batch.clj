@@ -3,7 +3,6 @@
    [clojure.spec.alpha :as s]
    [datomic.api :as d]
    [spec-tools.core :as stc]
-   [spec-tools.spec :as sts]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.provenance :as wsp]))
 

@@ -1,7 +1,6 @@
 (ns wormbase.names.auth
   (:require
    [clojure.set :as set]
-   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [clojure.walk :as w]
    [buddy.auth :as auth]
@@ -9,7 +8,6 @@
    [buddy.auth.backends.token :as babt]
    [buddy.auth.middleware :as auth-mw]
    [buddy.sign.compact :as bsc]
-   [compojure.api.meta :as capi-meta]
    [datomic.api :as d]
    [ring.middleware.defaults :as rmd]
    [ring.util.http-response :as http-response]
@@ -18,7 +16,6 @@
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder
                                                  GoogleIdToken)
-   (com.google.api.client.json.webtoken JsonWebSignature)
    (com.google.api.client.http.javanet NetHttpTransport)
    (com.google.api.client.json.jackson2 JacksonFactory)))
 
@@ -96,17 +93,17 @@
   "Return a person from the database having a matching stored token."
   [db auth-token-conf parsed-token]
   (let [email (:email parsed-token)]
-    (if-let [{stored-token :person/auth-token} (d/pull db
+    (when-let [{stored-token :person/auth-token} (d/pull db
                                                        '[:person/auth-token]
                                                        [:person/email email])]
 
-      (when-let [unsigned-token (try
-                                  (bsc/unsign stored-token (:key auth-token-conf)
-                                              (select-keys auth-token-conf [:max-age]))
-                                  (catch Exception ex
-                                    (log/debug "Failed to unsigned stored token"
-                                               {:stored-token stored-token
-                                                :key (:key auth-token-conf)})))]
+      (when (try
+              (bsc/unsign stored-token (:key auth-token-conf)
+                          (select-keys auth-token-conf [:max-age]))
+              (catch Exception _
+                (log/debug "Failed to unsigned stored token"
+                           {:stored-token stored-token
+                            :key (:key auth-token-conf)})))
         (query-person db :person/email email)))))
 
 (defn identify
@@ -125,12 +122,12 @@
         (map->Identification {:token-info parsed-token :person person})
         (when-let [tok (verify-token token)]
           (if-let [person (query-person db :person/email (:email tok))]
-            (let [auth-token (sign-token auth-token-conf tok)
-                  tx-result @(d/transact-async (:conn request)
-                                               [[:db/add
-                                                 (:db/id person)
-                                                 :person/auth-token
-                                                 auth-token]])]
+            (let [auth-token (sign-token auth-token-conf tok)]
+              @(d/transact-async (:conn request)
+                                 [[:db/add
+                                   (:db/id person)
+                                   :person/auth-token
+                                   auth-token]])
               (map->Identification {:token-info parsed-token :person person}))
             (log/warn "NO PERSON FOUND IN DB:" tok)))))))
 
@@ -174,7 +171,7 @@
 
 (defn require-role! [required request]
   (let [roles (some-> request :identity :person :person/roles)]
-    (if-not (seq (set/intersection (set required) (set roles)))
+    (when-not (seq (set/intersection (set required) (set roles)))
       (http-response/unauthorized!
        {:text "Missing required role"
         :required required
