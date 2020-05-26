@@ -41,7 +41,7 @@
     (mount/start)
     (cond
       (:help options) (exit 0 (usage summary))
-
+      errors (exit 1 (str/join "\n" errors))
       (nil? importer-ns-name)
       (exit 1 (str "Please specifiy the importer to run, .e.g: \""
                    (str/join "," (-> importers keys sort))
