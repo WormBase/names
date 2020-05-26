@@ -27,16 +27,15 @@ which is modelled as attributes on the "transaction entity".
 ## Development
 
 ### Coding style
-The coding style for this project tries to adhere to both the [Clojure style guide][] and [how to ns][], both of which are supported by the source code linter [clj-kondo][].
+The coding style for this project tries to adhere to both the [Clojure style guide][16] and [how to ns][17], both of which are supported by the source code linter [clj-kondo][18].
 
 To run the source coder linter:
 
 ```bash
 for d in src test; do
-  clj -A:clj-kondo --lint
+  clj -A:clj-kondo --lint $d
 done
 ```
-
 
 ### Setup
 
@@ -332,3 +331,6 @@ Copyright ©  WormBase 2018, 2019
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
 [14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
 [15]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
+[16]: https://github.com/bbatsov/clojure-style-guide
+[17]: https://stuartsierra.com/2016/clojure-how-to-ns.html
+[18]: https://github.com/borkdude/clj-kondo
