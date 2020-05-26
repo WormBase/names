@@ -1,6 +1,5 @@
 (ns integration.person-test
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
@@ -54,7 +53,7 @@
           update-data {:roles #{"sequence-curator"}}]
       (tu/with-fixtures
         [sample]
-        (fn check-unauthorized [conn]
+        (fn check-unauthorized [_]
           (let [response (person-update identifier
                                         update-data
                                         :current-user tester2)]
@@ -87,7 +86,7 @@
   (t/testing "Getting summary for a person existant in the db by email"
     (tu/with-fixtures
       []
-      (fn check-person-summary [conn]
+      (fn check-person-summary [_]
         (let [response (person-summary "tester@wormbase.org")
               body (:body response)]
           (t/is (ru-hp/ok? response))
@@ -113,6 +112,6 @@
           identifier (:person/id sample)]
       (tu/with-fixtures
         sample
-        (fn check-404 [conn]
+        (fn check-404 [_]
           (let [response (deactivate-person identifier)]
             (t/is (ru-hp/not-found? response))))))))

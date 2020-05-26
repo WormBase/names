@@ -1,6 +1,5 @@
 (ns integration.new-test
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
@@ -8,10 +7,7 @@
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
-   [wormbase.gen-specs.species :as gss]
    [wormbase.gen-specs.variation :as gsv]
-   [wormbase.names.entity :as wne]
-   [wormbase.names.service :as service]
    [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
    [wormbase.gen-specs.gene :as gsg]
@@ -112,13 +108,12 @@
   (t/testing "Creating a cloned gene requires sequence name to be populated."
     (tu/with-gene-fixtures
       []
-      (fn new-uncloned [conn]
+      (fn new-uncloned [_]
         (let [response (new-gene
                         {:data {:sequence-name ""
                                 :biotype "cds"
                                 :species elegans-ln}
-                         :prov nil})
-              expected-id "WBGene00000001"]
+                         :prov nil})]
           (t/is (ru-hp/bad-request? response) (pr-str response))))))
   (t/testing "Naming one cloned gene succesfully returns ids"
     (tu/with-gene-fixtures
@@ -150,7 +145,7 @@
                 :prov basic-prov}]
       (tu/with-gene-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [response (new-gene data)]
             (t/is (ru-hp/conflict? response))))))))
 
@@ -200,7 +195,7 @@
                 :prov basic-prov}]
       (tu/with-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [response (new-variation data)]
             (t/is (ru-hp/conflict? response))))))))
 
@@ -224,8 +219,7 @@
       nil
       false
       (fn [_]
-        (let [data {}
-              response (new-sequence-feature {:data {} :prov basic-prov})]
+        (let [response (new-sequence-feature {:data {} :prov basic-prov})]
           (t/is (ru-hp/created? response))
           (t/is (some-> response :body :created :id) (pr-str response)))))))
 

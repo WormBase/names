@@ -1,7 +1,6 @@
 (ns wormbase.gen-specs.person
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
    [wormbase.gen-specs.util :as util]
    [wormbase.specs.person :as wsp]))

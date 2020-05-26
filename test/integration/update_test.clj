@@ -1,12 +1,10 @@
 (ns integration.update-test
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [basic-prov]]
-   [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth] ;; for side effect
    [wormbase.gen-specs.gene :as gsg]
@@ -38,12 +36,12 @@
         sample-data (merge sample {:gene/id identifier})]
     (tu/with-gene-fixtures
       sample-data
-      (fn [conn]
+      (fn [_]
         (t/testing (str "Updating name for existing gene requires "
                         "correct data structure.")
-          (let [data {}]
-            (let [response (update-gene identifier data)]
-              (t/is (ru-hp/bad-request? response)))))))))
+          (let [data {}
+                response (update-gene identifier data)]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (defn query-provenance [conn changed-attr]
   (when-let [tx-ids (d/q '[:find [?tx]
@@ -78,19 +76,14 @@
         [sample-data]
         (fn do-update [conn]
           (let [new-cgc-name (tu/cgc-name-for-sample (wnu/unqualify-keys sample-data "gene"))
-                species (tu/species-ref->latin-name sample)
                 payload {:data {:cgc-name new-cgc-name} :prov nil}
                 response (update-gene gid payload)]
             (t/is (ru-hp/ok? response))
-            (let [db (d/db conn)
-                  gid-2 (some-> response :body :updated :id)
+            (let [gid-2 (some-> response :body :updated :id)
                   updated (-> response :body :updated)]
               (t/is (= gid gid-2) (pr-str updated))
-              (let [species (:species updated)
-                    actual species
-                    expected (-> sample :gene/species second)]
-                (t/is (= (:species updated)
-                         (-> sample :gene/species second))))
+              (t/is (= (:species updated)
+                       (-> sample :gene/species second)))
               (t/is (= (:cgc-name updated) new-cgc-name))
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
@@ -111,7 +104,7 @@
                              :gene/cgc-name init-cgc-name)]
       (tu/with-gene-fixtures
         [sample-data]
-        (fn do-update [conn]
+        (fn do-update [_]
           (let [new-cgc-name (tu/cgc-name-for-species species)
                 payload {:data (-> sample-data
                                    (dissoc :gene/status)
@@ -145,7 +138,7 @@
                              :gene/cgc-name (tu/cgc-name-for-sample sample*))]
       (tu/with-gene-fixtures
         [sample-data]
-        (fn do-update [conn]
+        (fn do-update [_]
           (let [payload {:data (-> sample-data
                                    (wnu/unqualify-keys "gene")
                                    (update :biotype name)
@@ -182,9 +175,8 @@
                          :prov nil}
                 response (update-gene gid payload)]
             (t/is (ru-hp/ok? response))
-            (let [db (d/db conn)
-                  identifier (some-> response :body :updated :id)
-                  updated (-> response :body :updated)]
+            (let [
+                  identifier (some-> response :body :updated :id)]
               (t/is (empty? (some-> response :body :cgc-name)))
               (tu/query-provenance conn identifier :event/update-gene))))))))
 
@@ -218,26 +210,26 @@
                                    (dissoc :id :gene/status)
                                    (assoc :cgc-name new-cgc-name))
                          :prov {:why why
-                                :who {:email "tester@wormbase.org"}}}]
-            (let [response (update-gene gid payload)
-                  db (d/db conn)
-                  ent (d/entity db [:gene/id gid])]
-              (t/is (ru-hp/ok? response))
-              (let [provs (query-provenance conn :gene/cgc-name)
-                    act-prov (first provs)]
-                (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
-                      (pr-str act-prov))
-                (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
-                      (pr-str act-prov))
-                (t/is (= (:provenance/why act-prov) why))
-                (t/is (= (-> act-prov :provenance/who :person/email)
-                         "tester@wormbase.org"))
-                (t/is (not= nil (:provenance/when act-prov))))
-              (let [gs (:gene/status ent)]
-                (t/is (= :gene.status/live gs)
-                      (pr-str (:gene/status ent))))
-              (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
-              (t/is (= new-cgc-name (:gene/cgc-name ent))))))))))
+                                :who {:email "tester@wormbase.org"}}}
+                response (update-gene gid payload)
+                db (d/db conn)
+                ent (d/entity db [:gene/id gid])]
+            (t/is (ru-hp/ok? response))
+            (let [provs (query-provenance conn :gene/cgc-name)
+                  act-prov (first provs)]
+              (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
+                    (pr-str act-prov))
+              (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
+                    (pr-str act-prov))
+              (t/is (= (:provenance/why act-prov) why))
+              (t/is (= (-> act-prov :provenance/who :person/email)
+                       "tester@wormbase.org"))
+              (t/is (not= nil (:provenance/when act-prov))))
+            (let [gs (:gene/status ent)]
+              (t/is (= :gene.status/live gs)
+                    (pr-str (:gene/status ent))))
+            (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
+            (t/is (= new-cgc-name (:gene/cgc-name ent)))))))))
 
 (t/deftest variation-data-must-meet-spec
   (let [identifier (first (gen/sample gsv/id 1))
@@ -248,12 +240,12 @@
       :variation/id
       "WBVar%08d"
       sample-data
-      (fn [conn]
+      (fn [_]
         (t/testing (str "Updating name for existing variation requires "
                         "correct data structure.")
-          (let [payload {:data {} :prov basic-prov}]
-            (let [response (update-variation identifier payload)]
-              (t/is (ru-hp/bad-request? response)))))))))
+          (let [payload {:data {} :prov basic-prov}
+                response (update-variation identifier payload)]
+            (t/is (ru-hp/bad-request? response))))))))
 
 (t/deftest changing-variation-name-success
   (t/testing "Changing the name of an existing variation."
@@ -286,7 +278,7 @@
         :variation/id
         "WBVar&08d"
         samples
-        (fn [conn]
+        (fn [_]
           (let [data {:name (-> samples first :variation/name)}
                 payload {:data data :prov basic-prov}
                 response (update-variation subject-identifier payload)]
@@ -304,7 +296,7 @@
           species-id-name (-> samples second :species/id name)]
       (tu/with-fixtures
         samples
-        (fn [conn]
+        (fn [_]
           (let [payload {:data (-> samp-data
                                    second
                                    (assoc :latin-name dup-name))
@@ -326,9 +318,8 @@
           species-id-name (-> sample :species/id name)]
       (tu/with-fixtures
         sample
-        (fn [conn]
-          (let [new-name (-> gss/new-latin-name (gen/sample 1) first)
-                payload {:data (-> sample
+        (fn [_]
+          (let [payload {:data (-> sample
                                    (dissoc :species/id :species/latin-name)
                                    (wnu/unqualify-keys "species"))
                          :prov basic-prov}

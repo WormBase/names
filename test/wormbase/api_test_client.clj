@@ -1,7 +1,6 @@
 (ns wormbase.api-test-client
   (:require
    [clojure.string :as str]
-   [clojure.test :as t]
    [wormbase.fake-auth :as fake-auth]
    [wormbase.names.service :as service]
    [wormbase.test-utils :as tu])
@@ -52,9 +51,8 @@
   (send-request entity-kind :put data :sub-path identifier :current-user current-user))
 
 (defn summary
-  [entity-kind identifier & {:keys [current-user params extra-headers]
-                             :or {current-user "tester@wormbase.org"
-                                  params {}
+  [entity-kind identifier & {:keys [params extra-headers]
+                             :or {params {}
                                   extra-headers nil}}]
   (let [headers (merge {"content-type" "application/json"
                         "authorization" "Token FAKED"}

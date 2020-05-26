@@ -1,6 +1,5 @@
 (ns integration.merge-genes-test
   (:require
-   [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
    [java-time :as jt]
@@ -115,7 +114,7 @@
           [from-id into-id] (map :gene/id data-samples)]
       (tu/with-gene-fixtures
         data-samples
-        (fn check-biotype-validation-error [conn]
+        (fn check-biotype-validation-error [_]
           (let [[status body] (merge-genes {:data {:biotype "godzilla"}
                                             :prov nil}
                                            from-id
@@ -138,13 +137,11 @@
       (tu/with-gene-fixtures
         samples
         (fn check-provenance [conn]
-          (let [db (d/db conn)
-                [status body] (merge-genes
+          (let [[status body] (merge-genes
                                {:data {:biotype "transposable-element-gene"}
                                 :prov nil}
                                from-id
                                into-id)
-                [src tgt] (map #(d/entity db [:gene/id %]) [from-id into-id])
                 ppe '[*
                       {:provenance/what [:db/ident]
                        :provenance/who [:person/email :person/name :person/id]
@@ -198,12 +195,12 @@
                        :provenance/how :agent/console}]
           conn (db-testing/fixture-conn)]
       @(d/transact conn [init-from-gene])
-      (let [tx-result @(d/transact conn merge-txes)]
-        (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
-                      wdb/connect (fn get-fixture-conn [] conn)
-                      wdb/db (fn get-db [_] (d/db conn))]
-          (let [[status body] (undo-merge-genes merged-into merged-from)]
-            (t/is (ru-hp/ok? {:status status :body body}))
-            (t/is (map? body) (pr-str (type body)))
-            (t/is (= (:dead body) merged-from) (pr-str body))
-            (t/is (= (:live body) merged-into) (pr-str body))))))))
+      @(d/transact conn merge-txes)
+      (with-redefs [wdb/connection (fn get-fixture-conn [] conn)
+                    wdb/connect (fn get-fixture-conn [] conn)
+                    wdb/db (fn get-db [_] (d/db conn))]
+        (let [[status body] (undo-merge-genes merged-into merged-from)]
+          (t/is (ru-hp/ok? {:status status :body body}))
+          (t/is (map? body) (pr-str (type body)))
+          (t/is (= (:dead body) merged-from) (pr-str body))
+          (t/is (= (:live body) merged-into) (pr-str body)))))))

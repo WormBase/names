@@ -6,10 +6,8 @@
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
-   [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.variation :as gsv]
-   [wormbase.names.service :as service]
    [wormbase.names.util :as wnu]
    [wormbase.specs.agent :as wsa]
    [wormbase.test-utils :as tu]))
@@ -21,7 +19,6 @@
   (let [[sample] (tu/gene-samples 1)
         gene-id (first (gen/sample gsg/id 1))
         species (-> sample :gene/species second)
-        prod-seq-name (tu/seq-name-for-species species)
         data-sample (assoc sample
                            :gene/id gene-id
                            :gene/sequence-name (tu/seq-name-for-species species)
@@ -41,7 +38,7 @@
     [id data-sample]))
 
 (defn change-gene-status
-  [id & {:keys [current-user method payload uri]
+  [id & {:keys [current-user method payload _]
          :or {current-user "tester@wormbase.org"
               method :post
               payload {:prov nil}}}]
@@ -52,7 +49,7 @@
                        :current-user current-user))
 
 (defn change-entity-status
-  [entity-type id & {:keys [current-user method payload endpoint uri]
+  [entity-type id & {:keys [current-user method payload endpoint]
                      :or {current-user "tester@wormbase.org"
                           method :post
                           endpoint nil
@@ -61,6 +58,7 @@
     (api-tc/send-request nil
                          method
                          payload
+                         :current-user current-user
                          :uri (if endpoint
                                 (str uri* "/" endpoint)
                                 uri*))))
@@ -106,7 +104,7 @@
                     %)
            tx-ids))))
 
-(defn check-killed-dead [conn kill-fn ident sample id]
+(defn check-killed-dead [conn kill-fn ident sample _]
   (let [id (ident sample)
         response (kill-fn id)
         db (d/db conn)
@@ -140,7 +138,7 @@
         (fn check-dead-after-kill [conn]
           (check-killed-dead conn kill-gene :gene/id sample id)))))
   (t/testing "killed ok and provenance recorded."
-    (let [[id sample] (gene-sample)]
+    (let [[_ sample] (gene-sample)]
       (tu/with-gene-fixtures
         sample
         (fn check-prov-after-kill [conn]
@@ -149,7 +147,7 @@
     (let [[id sample] (gene-sample :current-status :gene.status/suppressed)]
       (tu/with-gene-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [response (kill-gene id)]
             (t/is (ru-hp/ok? response))))))))
 
@@ -158,14 +156,14 @@
     (let [[id sample] (gene-sample :current-status :gene.status/dead)]
       (tu/with-gene-fixtures
         (assoc sample :gene/id id)
-        (fn [conn]
+        (fn [_]
           (let [response (resurrect-gene id)]
             (t/is (ru-hp/ok? response)))))))
   (t/testing "Cannot resurrect live gene"
     (let [[id sample] (gene-sample)]
       (tu/with-gene-fixtures
         (assoc sample :gene/id id)
-        (fn [conn]
+        (fn [_]
           (let [response (resurrect-gene id)]
             (t/is (ru-hp/bad-request? response))))))))
 
@@ -174,14 +172,14 @@
     (let [[id sample] (gene-sample :current-status :gene.status/dead)]
       (tu/with-gene-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [response (suppress-gene id)]
             (t/is (ru-hp/bad-request? response)))))))
   (t/testing "Suppressing a live gene."
     (let [[id sample] (gene-sample)]
       (tu/with-gene-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [response (suppress-gene id)]
             (t/is (ru-hp/ok? response))))))))
 
@@ -193,7 +191,7 @@
         (fn check-dead-after-kill [conn]
           (check-killed-dead conn kill-variation :variation/id sample id)))))
   (t/testing "killed variation ok and provenance recorded."
-    (let [[id sample] (variation-sample)]
+    (let [[_ sample] (variation-sample)]
       (tu/with-variation-fixtures
         sample
         (fn check-dead-after-kill [conn]
@@ -204,13 +202,13 @@
     (let [[id sample] (variation-sample :current-status :variation.status/dead)]
       (tu/with-variation-fixtures
         [(assoc sample :variation/id id)]
-        (fn [conn]
+        (fn [_]
           (let [response (resurrect-variation id)]
             (t/is (ru-hp/ok? response)))))))
   (t/testing "Cannot resurrect live variation"
     (let [[id sample] (variation-sample)]
       (tu/with-variation-fixtures
         (assoc sample :variation/id id)
-        (fn [conn]
+        (fn [_]
           (let [response (resurrect-variation id)]
             (t/is (ru-hp/bad-request? response))))))))

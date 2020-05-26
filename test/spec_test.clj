@@ -9,6 +9,6 @@
   (stest/summarize-results (stest/check)))
 
 (defn -main
-  [& args]
+  [& _]
   (refresh :after 'spec-test/run-analysis))
 

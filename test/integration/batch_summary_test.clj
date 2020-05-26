@@ -4,11 +4,10 @@
    [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
-   [integration.batch-new-gene-test :refer [new-genes]]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [elegans-ln]]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.test-utils :as tu]))
 
@@ -43,7 +42,7 @@
         (fn [data]
           (tu/provenance data :batch-id bid))
         samples
-        (fn [conn]
+        (fn [_]
           (let [response (summary bid)]
             (t/is (ru-hp/ok? response))
             (t/is (some-> response :body map?))

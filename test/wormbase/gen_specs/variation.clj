@@ -1,7 +1,6 @@
 (ns wormbase.gen-specs.variation
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
    [wormbase.specs.variation :as wsv])
   (:refer-clojure :exclude [name]))

@@ -8,10 +8,6 @@
    [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
-   [wormbase.gen-specs.gene :as gsg]
-   [wormbase.gen-specs.species :as gss]
-   [wormbase.names.service :as service]
-   [wormbase.names.batch :as wnb]
    [wormbase.test-utils :as tu]
    [wormbase.fake-auth]))
 

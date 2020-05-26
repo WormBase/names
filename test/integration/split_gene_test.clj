@@ -3,7 +3,6 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
-   [integration.gene-summary-test :as gst]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [elegans-ln]]
    [wormbase.fake-auth :as fake-auth]
@@ -79,7 +78,7 @@
     (let [[data-sample] (tu/gene-samples 1)]
       (tu/with-gene-fixtures
         data-sample
-        (fn check-validation-error [conn]
+        (fn check-validation-error [_]
           (let [[status body] (split-gene
                                {:data {:biotype "godzilla"
                                        :product {}}
@@ -198,8 +197,7 @@
       (tu/with-gene-fixtures
         data-sample
         (fn check-provenance [conn]
-          (let [db (d/db conn)
-                user-email "tester@wormbase.org"
+          (let [user-email "tester@wormbase.org"
                 data {:product {:biotype "transposable-element-gene"
                                 :sequence-name prod-seq-name}
                       :biotype "cds"}
@@ -275,22 +273,13 @@
         @(d/transact conn [init-from-gene
                            {:db/id :counter/gene
                             :counter/gene 2N}])
-        (let [split-result @(d/transact conn split-txes)
-              tx (d/q '[:find ?tx .
-                        :in $ ?from-lur ?into-lur
-                        :where
-                        [?from-lur :gene/splits ?into-lur ?tx]
-                        [?into-lur :gene/splits ?from-lur ?tx]]
-                      (-> conn d/db d/history)
-                      [:gene/id split-from]
-                      [:gene/id split-into])
-              user-email "tester@wormbase.org"
+        @(d/transact conn split-txes)
+        (let [user-email "tester@wormbase.org"
               [status body] (undo-split-gene split-from
                                              split-into
                                              :current-user user-email)]
           (t/is (ru-hp/ok? {:status status :body body}))
           (let [db (d/db conn)
-                invoke (partial d/invoke db)
                 [from-g into-g] (map #(d/pull db '[*
                                                    {:gene/splits [[:gene/id]]
                                                     :gene/status [:db/ident]}]

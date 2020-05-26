@@ -6,7 +6,7 @@
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.gen-specs.variation :as gsv]

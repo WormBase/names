@@ -5,14 +5,11 @@
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth]
-   [wormbase.names.batch :as wnb]
-   [wormbase.names.service :as service]
-   [wormbase.names.util :as wnu]
-   [wormbase.test-utils :as tu]))
+   [wormbase.names.util :as wnu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 

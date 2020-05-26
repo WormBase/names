@@ -57,7 +57,7 @@
                       ids names stati)]
     (tu/with-variation-fixtures
       fixtures
-      (fn test-find-cases [conn]
+      (fn test-find-cases [_]
         (t/testing "Get a 200 response for a non-matching find term"
           (let [[status body] (find-variation "foobar")
                 matches (:matches body)]

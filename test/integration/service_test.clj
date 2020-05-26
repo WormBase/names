@@ -1,12 +1,10 @@
 (ns integration.service-test
   (:require
-   [clojure.string :as str]
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
    [ring.util.http-response :as http-response]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth]
-   [wormbase.names.response-formats :as wnrf]
    [wormbase.names.service :as service]))
 
 (t/use-fixtures :once db-testing/db-lifecycle)

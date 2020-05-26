@@ -47,7 +47,7 @@
   (let [data-samples (tu/gene-samples 3)]
     (tu/with-gene-fixtures
       data-samples
-      (fn test-find-cases [conn]
+      (fn test-find-cases [_]
         (t/testing "Get a 200 response for a non-matching find term"
           (let [[status body] (find-gene "foobar")
                 matches (:matches body)]

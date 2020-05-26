@@ -47,12 +47,12 @@
 
 (defn db-lifecycle [f]
   (let [uri (str "datomic:mem://" *ns* "-"
-                 (jt/to-millis-from-epoch (jt/instant)))]
-    (let [conn (fixture-conn)]
-      (mount/start-with {#'wdb/conn conn})
-      (f)
-      (wdb/checked-delete uri)
-      (mount/stop))))
+                 (jt/to-millis-from-epoch (jt/instant)))
+        conn (fixture-conn)]
+    (mount/start-with {#'wdb/conn conn})
+    (f)
+    (wdb/checked-delete uri)
+    (mount/stop)))
 
 (defn speculate [conn tx]
   (:db-after (d/with (d/db conn) tx)))

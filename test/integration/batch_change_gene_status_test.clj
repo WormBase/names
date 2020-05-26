@@ -8,7 +8,7 @@
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]
@@ -35,7 +35,7 @@
           gid (:gene/id g1)]
       (tu/with-gene-fixtures
         [g1 g2]
-        (fn [conn]
+        (fn [_]
           (let [data [{:id gid} {:id gid}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
@@ -47,7 +47,7 @@
           sn (:gene/sequence-name g1)]
       (tu/with-gene-fixtures
         [g1 g2]
-        (fn [conn]
+        (fn [_]
           (let [data [{:sequence-name sn} {:sequence-name sn}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
@@ -73,10 +73,10 @@
                                              (set (map :gene/id fixtures)))]
       (tu/with-gene-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/not-found? response))
-            (doseq [enf (sort expected-not-found)]
+            (doseq [_ (sort expected-not-found)]
               (t/is (= (some-> response :body :message) "Entity not found")))))))))
 
 (t/deftest change-status-succesfully

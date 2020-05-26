@@ -2,7 +2,6 @@
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
-   [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov]]
@@ -33,7 +32,7 @@
     (let [fixtures (make-fixtures)]
       (tu/with-variation-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [[f1 f2] fixtures
                 bdata (map #(wnu/unqualify-keys % "variation")
                            [(select-keys f1 [:variation/id :variation/name])
@@ -47,7 +46,7 @@
     (let [fixtures (make-fixtures)]
       (tu/with-variation-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [[f1 f2] fixtures
                 bdata (map #(wnu/unqualify-keys % "variation")
                            [(select-keys f1 [:variation/id :variation/name])

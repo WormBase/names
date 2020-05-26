@@ -1,7 +1,6 @@
 (ns wormbase.gen-specs.sequence-feature
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
    [wormbase.specs.sequence-feature :as wssf])
   (:refer-clojure :exclude [name]))

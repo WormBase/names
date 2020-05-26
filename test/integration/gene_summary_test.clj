@@ -1,14 +1,9 @@
 (ns integration.gene-summary-test
   (:require
-   [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
-   [ring.util.http-response :refer [not-found ok]]
-   [wormbase.fake-auth :as fake-auth]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
-   [wormbase.names.service :as service]
-   [wormbase.names.util :as wnu]
    [wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -28,15 +23,15 @@
     (let [[gene-id data-sample] (gen-sample)]
       (tu/with-gene-fixtures
         data-sample
-        (fn check-gene-summary [conn]
+        (fn check-gene-summary [_]
           (let [response (summary gene-id)]
             (t/is (ru-hp/ok? response))))))))
 
 (t/deftest maltformed-identifier
   (t/testing "A malformed identifier results in a 404 response."
-    (let [[id data-sample] (gen-sample)]
+    (let [[_ data-sample] (gen-sample)]
       (tu/with-fixtures
         data-sample
-        (fn check-missing [conn]
+        (fn check-missing [_]
           (let [response (summary "WBVar1231231231")]
             (t/is (ru-hp/not-found? response))))))))

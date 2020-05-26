@@ -3,12 +3,9 @@
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
-   [wormbase.fake-auth :as fake-auth]
    [wormbase.gen-specs.variation :as gsv]
-   [wormbase.names.entity :as wne]
    [wormbase.test-utils :as tu]
    [wormbase.db-testing :as db-testing]
-   [wormbase.names.service :as service]
    [wormbase.api-test-client :as api-tc]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -29,15 +26,15 @@
     (let [[id data-sample] (gen-sample)]
       (tu/with-variation-fixtures
         data-sample
-        (fn check-variation-summary [conn]
+        (fn check-variation-summary [_]
           (let [response (summary id)]
             (t/is (ru-hp/ok? response))))))))
 
 (t/deftest maltformed-identifier
   (t/testing "A malformed identifier results in a 404 response."
-    (let [[id data-sample] (gen-sample)]
+    (let [[_ data-sample] (gen-sample)]
       (tu/with-variation-fixtures
         data-sample
-        (fn check-variation-summary [conn]
+        (fn check-variation-summary [_]
           (let [response (summary "WBGene0123123123")]
             (t/is (ru-hp/not-found? response))))))))

@@ -1,16 +1,12 @@
 (ns integration.species-test
   (:require
-   [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
    [clojure.test :as t]
-   [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.db-testing :as db-testing]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [elegans-ln]]
    [wormbase.fake-auth :as fake-auth]
-   [wormbase.gen-specs.species :as wgsp]
    [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.species :as wsp]
@@ -52,7 +48,7 @@
                            :sequence-name-pattern ".*"}]
       (tu/with-fixtures
         sample
-        (fn [conn]
+        (fn [_]
           (let [payload {:data {:sequence-name-pattern "^[a-z].+"}
                          :prov {:email tester2}}
                 response (update-speices (-> sample :species/id name) payload)]
@@ -67,7 +63,7 @@
   (t/testing "Getting summary for a species existant in the db"
     (tu/with-fixtures
       []
-      (fn check-species-summary [conn]
+      (fn check-species-summary [_]
         (let [pct-encoded (str/replace elegans-ln " " "%20")
               response (api-tc/summary "species" pct-encoded)
               body (:body response)]

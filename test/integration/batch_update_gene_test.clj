@@ -1,14 +1,12 @@
 (ns integration.batch-update-gene-test
   (:require
-   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.test :as t]
    [clj-uuid :as uuid]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
-   [wormbase.names.util :as wnu]
    [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
@@ -27,7 +25,7 @@
           [g1 g2] fixtures]
       (tu/with-gene-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [bdata [{:gene/id (:gene/id g1)
                         :gene/cgc-name "dup-1"}
                        {:gene/id (:gene/id g2)
@@ -38,10 +36,10 @@
 (t/deftest invalid-cgc-name
   (t/testing "Errors are reported when provided with a invlaid CGC name"
     (let [fixtures (tu/gene-samples 2)
-          [g1 g2] fixtures]
+          [g1 _] fixtures]
       (tu/with-gene-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [bdata [{:gene/id (:gene/id g1)
                         :gene/cgc-name "invalid_CGC_NAME"}]
                 response (update-genes {:data bdata :prov basic-prov})]
@@ -50,10 +48,10 @@
 (t/deftest invalid-sequence-name
   (t/testing "Errors are reported when provided with a invlaid Sequence name"
     (let [fixtures (tu/gene-samples 2)
-          [g1 g2] fixtures]
+          [g1 _] fixtures]
       (tu/with-gene-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [bdata [{:gene/id (:gene/id g1)
                         :gene/sequence-name "invalid-sequence-name.1"}]
                 response (update-genes {:data bdata :prov basic-prov})]
@@ -66,7 +64,7 @@
           bad-species "Caenorhabditis donkey"]
       (tu/with-gene-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [bdata [{:cgc-name "duqp-1"
                         :species bad-species
                         :id gid}]
@@ -79,7 +77,7 @@
         gene-rec (first fixtures)]
     (tu/with-gene-fixtures
       fixtures
-      (fn [conn]
+      (fn [_]
         (t/testing "Batch with one item accepted, returns batch id."
           (let [species (-> gene-rec :gene/species second)
                 bdata [(merge {:species species
@@ -104,7 +102,7 @@
                   :species sp-2}]]
       (tu/with-gene-fixtures
         [g1 g2]
-        (fn [conn]
+        (fn [_]
           (let [response (update-genes {:data bdata :prov basic-prov})]
             (t/is (ru-hp/ok? response) (pr-str response))
             (let [bid (get-in response [:body :updated :id] "")]
@@ -118,7 +116,7 @@
                           :id "WBGene00000263"}]]
       (tu/with-gene-fixtures
         samples
-        (fn [conn]
+        (fn [_]
           (let [response (update-genes {:prov {},
                                         :data [{:species "Caenorhabditis elegans",
                                                 :cgc-name "xxx-1",
@@ -133,7 +131,7 @@
                           :id "WBGene00000263"}]]
       (tu/with-gene-fixtures
         samples
-        (fn [conn]
+        (fn [_]
           (let [response (update-genes {:prov {},
                                         :data [{:cgc-name "xxx-1" :id "WBGene00000263"}]})]
             (t/is (ru-hp/ok? response))))))))

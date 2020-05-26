@@ -1,18 +1,12 @@
 (ns wormbase.test-utils
   (:require
-   [clojure.java.io :as io]
-   [clojure.pprint :refer [pprint]]
-   [clojure.set :as set]
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [clojure.string :as str]
-   [clojure.test :as t]
    [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [datomic.api :as d]
-   [expound.alpha :refer [expound-str]]
    [java-time :as jt]
-   [miner.strgen :as sg]
    [muuntaja.core :as muuntaja]
    [peridot.core :as p]
    [wormbase.constdata :refer [elegans-ln]]
@@ -24,7 +18,6 @@
    [wormbase.names.entity :as wne]
    [wormbase.names.gene :as wng]
    [wormbase.names.response-formats :as wnrf]
-   [wormbase.names.service :as wns]
    [wormbase.names.util :as wnu]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.species :as wss])
@@ -40,14 +33,13 @@
     body))
 
 (defn- log-decode-err [^Exception exc body]
-  (let [divider #(format "-----------------: % :-----------------" %)]
-    (log/debug "Error type:" (type exc))
-    (log/debug "Cause:" (.getCause exc))
-    (log/debug "Invalid response data format? body was returned as:"
-               (type body))
-    (log/debug (if (or (nil? body) (str/blank? body))
-                 "BODY WAS NIL or empty string!"
-                 body))))
+  (log/debug "Error type:" (type exc))
+  (log/debug "Cause:" (.getCause exc))
+  (log/debug "Invalid response data format? body was returned as:"
+             (type body))
+  (log/debug (if (or (nil? body) (str/blank? body))
+               "BODY WAS NIL or empty string!"
+               body)))
 
 (defn parse-body [body]
   (let [body (read-body body)
@@ -161,7 +153,7 @@
   (let [[status body] (raw-post* app uri "" nil headers)]
     [status (parse-body body)]))
 
-(defn ring-request [m format data]
+(defn ring-request [_ format data]
   {:uri "/echo"
    :request-method :post
    :body (muuntaja/encode mformats format data)
@@ -206,12 +198,12 @@
                                          [:species/latin-name
                                           (species->latin-name [:species/id sv])]))
       (vector? species-value) data
-      :otherwise (update data
-                        :gene/species
-                        (fnil (fn use-latin-name [sname]
-                                (let [lur (s/conform ::wss/identifier sname)]
-                                  [:species/latin-name (species->latin-name lur)]))
-                              elegans-ln)))))
+      :else (update data
+                    :gene/species
+                    (fnil (fn use-latin-name [sname]
+                            (let [lur (s/conform ::wss/identifier sname)]
+                              [:species/latin-name (species->latin-name lur)]))
+                          elegans-ln)))))
 
 (defn species-ref->latin-name
   "Retrive the name of the gene species from a mapping."
@@ -242,11 +234,11 @@
         (assoc-if :gene/biotype biotype))))
 
 (defn provenance
-  [data & {:keys [how what whence why person status batch-id]
-           :or {how :agent/console
-                whence (jt/to-java-date (jt/instant))
-                what :event/test-fixture-assertion
-                person [:person/email "tester@wormbase.org"]}}]
+  [_ & {:keys [how what whence why person _ batch-id]
+        :or {how :agent/console
+             whence (jt/to-java-date (jt/instant))
+             what :event/test-fixture-assertion
+             person [:person/email "tester@wormbase.org"]}}]
   (merge {:db/id "datomic.tx"
           :provenance/how how
           :provenance/what what
@@ -410,11 +402,10 @@
         data-samples (keep-indexed
                       (fn [i gr]
                         (merge (get gene-refs i) gr)) gene-recs)
-        gene-ids (map :gene/id (-> gene-refs vals flatten))]
-    (let [dn (dup-names? data-samples)]
-      (if dn
-        (recur n)
-        data-samples))))
+        dn (dup-names? data-samples)]
+    (if dn
+      (recur n)
+      data-samples)))
 
 (defn person-samples [n]
   (let [data-samples (gen/sample gsp/person n)]

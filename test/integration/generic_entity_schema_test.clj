@@ -1,21 +1,12 @@
 (ns integration.generic-entity-schema-test
   (:require
-   [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
    [wormbase.db-testing :as db-testing]
-   [wormbase.gen-specs.species :as gss]
-   [wormbase.gen-specs.variation :as gsv]
    [wormbase.names.entity :as wne]
-   [wormbase.names.service :as service]
-   [wormbase.names.util :as wnu]
-   [wormbase.test-utils :as tu]
-   [wormbase.gen-specs.gene :as gsg]
-   [wormbase.db :as wdb]))
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -67,7 +58,7 @@
     (tu/with-installed-generic-entity
       :orange/id
       "WBOrange%d"
-      (fn [conn]
+      (fn [_]
         (let [response (list-entity-types)
               body (:body response)]
           (t/is (ru-hp/ok? response))
@@ -77,36 +68,31 @@
             (t/is (ent-types "orange"))))))))
 
 (t/deftest test-disable-entity-type
-  (let [apple-id-template "WBApple%08d"
-        plum-id-template "WBPlum%08d"
-        pear-id-template "WBPear%08d"]
-    (t/testing "Attempt to disable entity type that does not exist."
-      (let [response (disable-entity-type "plum")]
-        (t/is (ru-hp/not-found? response))))
-    (t/testing "We can mark a schema entity as disabled."
-      (tu/with-installed-generic-entity
-        :apple/id
-        "WBApple%08d"
-        (fn [conn]
-          (let [response (disable-entity-type "apple")
-                body (:body response)]
-            (t/is (ru-hp/ok? response))))))
-    (t/testing "Disabling an already disabled schema entity is ok."
-      (tu/with-installed-generic-entity
-        :apple/id
-        "WBApple%03d"
-        (fn [conn]
-          @(d/transact conn [[:db/add :apple/id wne/enabled-ident false]])
-          (let [response (disable-entity-type "apple")
-                body (:body response)]
-            (t/is (ru-hp/ok? response))))))))
+  (t/testing "Attempt to disable entity type that does not exist."
+    (let [response (disable-entity-type "plum")]
+      (t/is (ru-hp/not-found? response))))
+  (t/testing "We can mark a schema entity as disabled."
+    (tu/with-installed-generic-entity
+      :apple/id
+      "WBApple%08d"
+      (fn [_]
+        (let [response (disable-entity-type "apple")]
+          (t/is (ru-hp/ok? response))))))
+  (t/testing "Disabling an already disabled schema entity is ok."
+    (tu/with-installed-generic-entity
+      :apple/id
+      "WBApple%03d"
+      (fn [conn]
+        @(d/transact conn [[:db/add :apple/id wne/enabled-ident false]])
+        (let [response (disable-entity-type "apple")]
+          (t/is (ru-hp/ok? response)))))))
 
 (t/deftest test-enable-entity-type-schema
   (t/testing "Doesn't matter if already enabled."
     (tu/with-installed-generic-entity
       :pear/id
       "WBPear%08d"
-      (fn [conn]
+      (fn [_]
         (let [response (enable-entity-type "pear")]
           (t/is (ru-hp/ok? response))))))
   (t/testing "Succeed if entity type is disabled."

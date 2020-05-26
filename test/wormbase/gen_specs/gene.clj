@@ -3,13 +3,10 @@
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
    [miner.strgen :as sg]
-   [wormbase.db.schema :as wdbs]
    [wormbase.specs.agent :as wna]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.species]
-   [wormbase.gen-specs.util :as util]
-   [wormbase.gen-specs.person :as wgsp]
-   [wormbase.gen-specs.species :as gss])
+   [wormbase.gen-specs.util :as util])
   (:refer-clojure :exclude [identity update]))
 
 (defn species-vals [species-kw]

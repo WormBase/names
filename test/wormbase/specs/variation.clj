@@ -1,7 +1,6 @@
 (ns wormbase.specs.variation
   (:require
    [clojure.spec.alpha :as s]
-   [spec-tools.spec :as sts]
    [spec-tools.core :as stc]
    [wormbase.specs.provenance :as wsp]))
 

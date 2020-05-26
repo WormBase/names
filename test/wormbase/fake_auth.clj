@@ -2,8 +2,6 @@
   (:require
    [clojure.tools.logging :as log]
    [clojure.walk :as w]
-   [cheshire.core :as json]
-   [environ.core :as environ]
    [wormbase.names.auth :as wn-auth])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload)))
@@ -38,19 +36,19 @@
 
 (alter-var-root
  (var wn-auth/verify-token-gapi)
- (fn fake-google-api-verify-token [token]
-   (fn verify-token-pretend [token]
+ (fn fake-google-api-verify-token [_]
+   (fn verify-token-pretend [_]
      (log/debug "NOTICE: Faking verifying token with Google API")
      (when-not (nil? *gapi-verify-token-response*)
        (doseq [[k v] defaults]
-         (if-not (get *gapi-verify-token-response* k)
+         (when-not (get *gapi-verify-token-response* k)
            (.set *gapi-verify-token-response* k v)))
        *gapi-verify-token-response*))))
 
 (alter-var-root
  (var wn-auth/parse-token)
- (fn fake-parse-token [token]
-   (fn [x]
+ (fn fake-parse-token [_]
+   (fn [_]
      (log/debug "NOTICE: faking wna/parse-token")
      (merge
       (w/keywordize-keys defaults)

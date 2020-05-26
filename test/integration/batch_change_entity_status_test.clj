@@ -8,7 +8,7 @@
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
-   [wormbase.constdata :refer [basic-prov elegans-ln]]
+   [wormbase.constdata :refer [basic-prov]]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.sequence-feature :as gssf]
    [wormbase.names.util :as wnu]
@@ -47,7 +47,7 @@
           id (:sequence-feature/id s1)]
       (tu/with-fixtures
         [s1 s2]
-        (fn [conn]
+        (fn [_]
           (let [data [{:id id} {:id id}]
                 response (send-change-status-request :kill {:data data :prov basic-prov})]
             (t/is (ru-hp/ok? response))
@@ -74,7 +74,7 @@
           expected-not-found (set/difference (set all-ids) (set fixture-ids))]
       (tu/with-fixtures
         fixtures
-        (fn [conn]
+        (fn [_]
           (let [response (send-change-status-request :kill {:data ids :prov basic-prov})]
             (t/is (ru-hp/not-found? response))
             (t/is (some

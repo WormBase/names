@@ -1,20 +1,16 @@
 (ns integration.batch-merge-genes-test
   (:require
    [clj-uuid :as uuid]
-   [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
-   [clojure.string :as str]
    [clojure.test :as t]
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.api-test-client :as api-tc]
    [wormbase.constdata :refer [basic-prov]]
-   [wormbase.db :as wdb]
    [wormbase.db-testing :as db-testing]
    [wormbase.gen-specs.gene :as gsg]
    [wormbase.names.util :as wnu]
-   [wormbase.test-utils :as tu]
-   [wormbase.util :as wu]))
+   [wormbase.test-utils :as tu]))
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
@@ -45,7 +41,7 @@
                  :into-biotype (name into-biotype)}]]
       (tu/with-gene-fixtures
         fixtures**
-        (fn [conn]
+        (fn [_]
           (let [response (merge-genes {:data (map #(wnu/unqualify-keys % "gene") data)
                                        :prov basic-prov})]
             (t/is (ru-hp/ok? response))))))))
