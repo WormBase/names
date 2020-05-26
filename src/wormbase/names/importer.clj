@@ -69,7 +69,7 @@
       (if-let [importer (get importers importer-ns-name ent-importer/process)]
         (let [process-import (partial importer wdb/conn importer-ns-name id-template)]
           (wnip/check-environ!)
-          (wdbs/install wdb/conn)
+          (wdbs/ensure-schema wdb/conn)
           (print "Importing...")
           (apply process-import tsv-paths)
           (println "[ok]")
