@@ -48,3 +48,6 @@ Dockerrun.aws.json
 
 # Datomic database files
 data/
+
+# Source code linter cache
+/.clj-kondo/.cache/
