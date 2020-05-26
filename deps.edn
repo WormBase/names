@@ -47,7 +47,8 @@
                           :main-opts ["-m" "wormbase.aws-eb-docker"]}
   :event-broadcast
   {:extra-deps
-   {com.draines/postal {:mvn/version "2.0.3"}}}
+   {com.draines/postal {:mvn/version "2.0.3"}
+    amazonica {:mvn/version "0.3.152"}}}
   :prod
   {:extra-deps
    {wormbase/ids {:mvn/version "0.4.0"}}}
@@ -80,6 +81,8 @@
   :export
   {:extra-paths ["export/src" "ids/src"]
    :main-opts []}
+  :test-system
+  {:extra-paths ["test-system/src"]}
   :datomic-pro
   {:extra-deps
    {com.datomic/datomic-pro {:mvn/version "0.9.5951"
