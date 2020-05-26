@@ -1,0 +1,18 @@
+{:linters {:unused-namespace {:exclude [wormbase.specs.agent
+                                        wormbase.specs.batch
+                                        wormbase.specs.biotype
+                                        wormbase.specs.common
+                                        wormbase.specs.entity
+                                        wormbase.specs.gene
+                                        wormbase.specs.person
+                                        wormbase.specs.provenance
+                                        wormbase.specs.recent
+                                        wormbase.specs.species
+                                        wormbase.specs.valdiation]}}
+ :lint-as {compojure.api.sweet/context clj-kondo.lint-as/def-catch-all
+           phrase.alpha/defphraser clj-kondo.lint-as/def-catch-all
+           mount.core/defstate  clojure.core/def
+           spec-tools.core/spec clojure.spec.alpha/spec}
+ :unresolved-symbol {:exclude [(compojure.api.sweet/context)
+                               (phrase.alpha/defphraser)]}
+ :skip-comments true}
