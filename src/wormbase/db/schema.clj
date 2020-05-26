@@ -1,13 +1,10 @@
 (ns wormbase.db.schema
   (:require
-   [clojure.edn :as edn]
    [clojure.java.io :as io]
-   [cognitect.transcriptor :as xr]
    [datomic.api :as d]
    [magnetcoop.stork :as stork]
    [wormbase.names.entity :as wne]
-   [wormbase.util :as wu])
-  (:import (java.io PushbackReader)))
+   [wormbase.util :as wu]))
 
 (defn definitions [db]
   (d/q '[:find [?attr ...]
