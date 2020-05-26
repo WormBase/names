@@ -26,6 +26,18 @@ which is modelled as attributes on the "transaction entity".
 
 ## Development
 
+### Coding style
+The coding style for this project tries to adhere to both the [Clojure style guide][] and [how to ns][], both of which are supported by the source code linter [clj-kondo][].
+
+To run the source coder linter:
+
+```bash
+for d in src test; do
+  clj -A:clj-kondo --lint
+done
+```
+
+
 ### Setup
 
 Ensure you've installed the following software on your system:
