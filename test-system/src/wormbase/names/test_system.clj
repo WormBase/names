@@ -1,6 +1,5 @@
 (ns wormbase.names.test-system
   (:require
-   [clojure.set :refer [rename-keys]]
    [clojure.string :as str]
    [clojure.tools.cli :refer [parse-opts]]
    [amazonica.aws.cloudformation :as cfn]
