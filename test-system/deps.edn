@@ -6,6 +6,8 @@
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "1.0.0"}}}
+  :clj-kondo {:extra-deps {clj-kondo {:mvn/version "RELEASE"}}
+              :main-opts ["-m" "clj-kondo.main"]}
   :runner
   {:extra-deps {com.cognitect/test-runner
                 {:git/url "https://github.com/cognitect-labs/test-runner"
