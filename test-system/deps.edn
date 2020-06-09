@@ -1,4 +1,4 @@
-{:paths ["src" "resources"]
+{:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/tools.cli {:mvn/version "1.0.194"}
         amazonica {:mvn/version "0.3.152"}
@@ -15,5 +15,4 @@
    :main-opts ["-m" "cognitect.test-runner"
                "-d" "test"]}
   :uberjar {:extra-deps {seancorfield/depstar {:mvn/version "1.0.94"}}
-            :main-opts ["-m" "hf.depstar.uberjar" "wormbase.namees.test-system.jar"
-                        "-C" "-m" "wormbase.namees.test-system"]}}}
+            :main-opts ["-m" "hf.depstar.uberjar"]}}}
