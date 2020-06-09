@@ -20,6 +20,6 @@
                         :exclusions [org.clojure/test.check]}
     vvvvalvalval/datomock {:mvn/version "0.2.0"}}}
   :extra-paths ["test"]
-  :uberjar {:extra-deps {seancorfield/depstar {:mvn/version "0.5.2"}}
+  :uberjar {:extra-deps {seancorfield/depstar {:mvn/version "1.0.94"}}
             :main-opts ["-m" "hf.depstar.uberjar"]}}}
 
