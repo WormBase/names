@@ -3,6 +3,7 @@ JAR_NAME := wb-names-test-system.jar
 JAR := target/${JAR_NAME}
 
 ${JAR}: deps.edn src/**/*
+	@mkdir -p target
 	@clj -Spom
 	@clj -A:uberjar ${JAR}
 
