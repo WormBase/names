@@ -13,8 +13,6 @@
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]))
 
-(def admin-required! (partial wna/require-role! #{:person.role/admin}))
-
 (defmethod wnp/resolve-change :person/id
   [_ db change]
   (when-let [found (wnu/resolve-refs db (find change :person/id))]
@@ -23,7 +21,6 @@
            (:person/id found))))
 
 (defn create-person [request]
-  (admin-required! request)
   (let [conn (:conn request)
         spec ::wsp/summary
         person (some-> request :body-params)
@@ -66,7 +63,6 @@
 (defn update-person
   "Handler for apply an update a person."
   [identifier request]
-  (admin-required! request)
   (let [{db :db body-params :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (summary db lur)]
@@ -94,7 +90,6 @@
             :problems (expound-str spec body-params)}))))))
 
 (defn deactivate-person [identifier request]
-  (admin-required! request)
   (let [{conn :conn db :db payload :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         person (d/pull db [:person/email :person/active?] lur)

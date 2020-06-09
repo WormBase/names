@@ -76,7 +76,6 @@
   #:person{:id "WBPerson33035",
            :email "matthew.russell@wormbase.org",
            :name "Matthew Russell"
-           :roles #{:person.role/admin}
            :active? true}
   #:person{:id "WBPerson4055",
            :email "michael.paulini@wormbase.org",

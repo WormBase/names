@@ -27,14 +27,7 @@
         (t/is (ru-hp/bad-request? response))))))
 
 (t/deftest create-person
-  (t/testing "Security - only admins can create a person."
-    (let [sample #:person{:email tester2
-                          :active? true
-                          :id (first (gen/sample wgsp/id 1))
-                          :name "Person1"}
-          response (new-person (wnu/unqualify-keys sample "person") :current-user tester2)]
-      (t/is (ru-hp/unauthorized? response))))
-  (t/testing "Valid person data returns a created response (201)"
+  (t/testing "Creating a person with valid data."
     (let [sample #:person{:email tester2
                           :id (first (gen/sample wgsp/id 1))
                           :name "Person2"}
@@ -43,21 +36,6 @@
       (t/is (ru-hp/created? response)))))
 
 (def person-update (partial api-tc/update "person"))
-
-(t/deftest update-person-requires-admin
-  (t/testing "Security - updating person requires admin role"
-    (let [sample #:person{:email tester2
-                          :person/id (first (gen/sample wgsp/id 1))
-                          :active? true}
-          identifier (:person/id sample)
-          update-data {:roles #{"sequence-curator"}}]
-      (tu/with-fixtures
-        [sample]
-        (fn check-unauthorized [_]
-          (let [response (person-update identifier
-                                        update-data
-                                        :current-user tester2)]
-            (t/is (ru-hp/unauthorized? response))))))))
 
 (t/deftest update-person-name
   (t/testing "Successfully updating a person."
