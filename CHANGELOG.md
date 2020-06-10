@@ -1,6 +1,9 @@
 # Change-log
 #
-
+## [1.2.4]
+ - Fixed parameter passing for person API.
+ - Update release procedure to separate out the step of deploying application to  Elastic Beanstalk.
+ 
 ## [1.2.3]
  - Trust any WB staff member to add and modify users.
 
