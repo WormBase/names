@@ -8,7 +8,6 @@
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
-   [wormbase.names.auth :as wna]
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]))
