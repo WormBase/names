@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.2.3]
+ - Trust any WB staff member to add and modify users.
+
 ## [1.2.2]
  - Improved validation error messages.
 
