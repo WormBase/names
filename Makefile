@@ -134,7 +134,6 @@ vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to r
 release: deploy-ecr $(call print-help,release,"Release the applicaton.")
 	@git archive ${ARTIFACT_NAME} -o target/app.zip
 	@zip -u target/app.zip Dockerrun.aws.json
-	@eb deploy wormbase-names
 
 .PHONY: run-tests
 run-tests: $(call print-help,run-tests,"Run all tests.")

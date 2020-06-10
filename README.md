@@ -175,9 +175,16 @@ make show-version
 # Update <verison> in pom.xml to match.
 $EDITOR pom.xml
 
-# Build and deploy the application to the AWS Elastic Container Registry (ECR)
-# and ElasticBeanstalk (EB)
+# Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
 make release
+
+# Deploy the application to the selected ElasticBeanStalk environmnent
+# The environment that will deployed to will be marked by 
+# an asterisk in the output of the command:
+# > eb list
+# use: eb use <env-name> to change this.
+
+eb deploy
 ```
 
 ## Client application
