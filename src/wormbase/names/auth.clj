@@ -160,19 +160,4 @@
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
 
-(defn admin
-  "compojure restrucring predicate.
 
-  Requires that a map be present under `:identity` in the `request`,
-  having a matching `:role`."
-  [request]
-  (and (authenticated? request)
-       (#{:admin} (:role (:identity request)))))
-
-(defn require-role! [required request]
-  (let [roles (some-> request :identity :person :person/roles)]
-    (when-not (seq (set/intersection (set required) (set roles)))
-      (http-response/unauthorized!
-       {:text "Missing required role"
-        :required required
-        :roles roles}))))

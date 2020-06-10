@@ -28,13 +28,6 @@
 
 (s/def :person/id ::id)
 
-(s/def ::role string?)
-
-(s/def :role/id (stc/spec (s/keys :req-un [::role])))
-
-
-(s/def :person/roles (stc/spec (s/coll-of ::role :distinct true)))
-
 (s/def ::identified (stc/spec (s/keys :req-un [::name :person/email])))
 
 (s/def ::identifier (stc/spec {:spec (s/or :person/email ::email
@@ -42,19 +35,25 @@
                                :swagger/example "WBPerson33035"
                                :description "An identifier uniquely identifing a WormBase person."}))
 
+(def example-summary {:person-email "some-user@wormbas.eorg"
+                      :person/id "WBPerson007"
+                      :person/active? true
+                      :person/name "Test User"})
+
 (s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email
                                                    :person/id]
-                                          :opt-un [:person/roles
-                                                   :person/active?
-                                                   :person/name])}))
+                                          :opt-un [:person/active?
+                                                   :person/name])
+                            :swagger/example example-summary}))
 
 (s/def ::people (stc/spec {:spec (s/coll-of ::summary :kind sts/vector? :min-count 1)}))
 
-(s/def ::update (stc/spec (s/keys :opt-un [:person/active?
-                                           :person/email
-                                           :person/id
-                                           :person/name
-                                           :person/roles])))
+(s/def ::update (stc/spec {:spec (s/keys :opt-un [:person/active?
+                                                  :person/email
+                                                  :person/id
+                                                  :person/name])
+                           :swagger/example example-summary}))
+
 (s/def ::created ::summary)
 
 

@@ -48,7 +48,6 @@
   #:person{:id "WBPerson4025",
            :email "gary.williams@wormbase.org",
            :name "Gareth W Williams"
-           :roles #{:person.role/sequence-curator}
            :active? true}
   #:person{:id "WBPerson28994",
            :email "jane.lomax@wormbase.org",
@@ -88,7 +87,6 @@
   #:person{:id "WBPerson1983",
            :email "paul.davis@wormbase.org",
            :name "Paul Davis"
-           :roles #{:person.role/sequence-curator}
            :active? true}
   #:person{:id "WBPerson26085",
            :email "sibyl@wormbase.org",

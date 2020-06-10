@@ -43,8 +43,7 @@
                            :person/active?
                            :person/email
                            :person/id
-                           :person/name
-                           :person/roles] lur)]
+                           :person/name] lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
@@ -56,9 +55,7 @@
         person (summary db lur)]
     (when-not person
       (not-found! {:identifier identifier}))
-    (ok (-> (wnu/unqualify-keys person "person")
-            (update :roles (fn [roles]
-                             (map name roles)))))))
+    (ok (wnu/unqualify-keys person "person"))))
 
 (defn update-person
   "Handler for apply an update a person."

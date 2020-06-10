@@ -62,11 +62,6 @@
   #:db{:ident :sequence-feature.status/dead}
   #:db{:ident :sequence-feature.status/live}
 
-  ;; Person's roles
-  #:db{:ident :person.role/admin}
-  #:db{:ident :person.role/sequence-curator}
-  #:db{:ident :person.role/viewer}
-
   ;; Events
   #:db{:ident :event/import}
   #:db{:ident :event/deactivate-person}

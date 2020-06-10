@@ -17,15 +17,14 @@
   []
   (let [conn (dm/mock-conn)]
     (schema/ensure-schema conn)
-    ;; A set of fake users with different roles to test against.
+    ;; A set of fake users
     @(d/transact-async conn [{:person/email "tester@wormbase.org"
                               :person/id "WBPerson007"
                               :person/auth-token (wna/sign-token
                                                   (-> (wu/read-app-config)
                                                       :auth-token)
                                                   {"email" "tester@wormbase.org"
-                                                   "hd" "wormbase.org"})
-                              :person/roles #{:person.role/admin}}
+                                                   "hd" "wormbase.org"})}
                              {:person/email "tester2@wormbase.org"}
                              {:person/email "tester3@wormbase.org"}
                              {:db/ident :event/test-fixture-assertion}])
