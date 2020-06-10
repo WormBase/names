@@ -10,6 +10,7 @@
    [wormbase.specs.person :as wsp]
    [wormbase.util :as wu]
    [wormbase.names.provenance :as wnp]
+   [wormbase.specs.provenance :as wbsp]
    [wormbase.names.util :as wnu]))
 
 (defmethod wnp/resolve-change :person/id
@@ -22,7 +23,7 @@
 (defn create-person [request]
   (let [conn (:conn request)
         spec ::wsp/summary
-        person (some-> request :body-params)
+        person (some-> request :body-params :data)
         transformed (stc/conform spec person stc/json-transformer)]
     (if (s/invalid? transformed)
       (let [problems (expound-str  spec person)]
@@ -64,12 +65,13 @@
   [identifier request]
   (let [{db :db body-params :body-params} request
         lur (s/conform ::wsp/identifier identifier)
+        payload (:data body-params)
         person (summary db lur)]
     (when person
       (let [spec ::wsp/summary
             conn (:conn request)]
-        (if (s/valid? spec body-params)
-          (let [data (some-> body-params
+        (if (s/valid? spec payload)
+          (let [data (some-> payload
                              (wnu/qualify-keys "person")
                              (assoc :person/active? true))
                 data* (if (empty? data)
@@ -117,7 +119,7 @@
       {:post
        {:summary "Create a new person."
         :x-name ::new-person
-        :parameters {:body-params ::wsp/summary}
+        :parameters {:body-params {:data ::wsp/summary :prov ::wbsp/provenance}}
         :responses (wnu/response-map created {:schema ::wsp/summary})
         :handler create-person}}))
    (sweet/context "/person/:identifier" []
@@ -133,11 +135,12 @@
        {:summary "Update information about a person."
         :x-name ::update-person
         :responses (wnu/response-map ok {:schema ::wsp/summary})
-        :parameters {:body-params ::wsp/update}
+        :parameters {:body-params {:data ::wsp/update :prov ::wbsp/provenance}}
         :handler (wrap-id-validation update-person identifier)}
        :delete
        {:summary "Deactivate a person."
         :x-name ::deactivate-person
         :responses (wnu/response-map ok {:schema ::wsp/summary})
+        :parameters {:body-params {:prov ::wbsp/provenance}}
         :handler (wrap-id-validation deactivate-person identifier)}}))))
 

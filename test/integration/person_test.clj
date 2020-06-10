@@ -20,9 +20,9 @@
 
 (t/deftest must-meet-spec
   (t/testing "Attempting to create person without required fields yield 400"
-    (doseq [payload [{}
-                     {:person/email "nobody"}
-                     {:person/id "WBPerson123"}]]
+    (doseq [payload [{:data {} :prov nil}
+                     {:data {:person/email "nobody"} :prov nil}
+                     {:data {:person/id "WBPerson123"} :prov nil}]]
       (let [response (new-person payload)]
         (t/is (ru-hp/bad-request? response))))))
 
@@ -31,7 +31,8 @@
     (let [sample #:person{:email tester2
                           :id (first (gen/sample wgsp/id 1))
                           :name "Person2"}
-          payload (wnu/unqualify-keys (dissoc sample :id) "person")
+          payload {:data (wnu/unqualify-keys (dissoc sample :id) "person")
+                   :prov nil}
           response (new-person payload)]
       (t/is (ru-hp/created? response)))))
 
@@ -48,9 +49,10 @@
         [sample]
         (fn check-update-success [conn]
           (let [response (person-update identifier
-                                        (-> sample
-                                            (wnu/unqualify-keys "person")
-                                            (assoc :name "Joe Bloggs")))]
+                                        {:data (-> sample
+                                                   (wnu/unqualify-keys "person")
+                                                   (assoc :name "Joe Bloggs"))
+                                         :prov nil})]
             (t/is (ru-hp/ok? response))
             (let [result (d/pull (d/db conn) '[*] [:person/id identifier])]
               (t/is (= (:person/name result) "Joe Bloggs")))))))))
