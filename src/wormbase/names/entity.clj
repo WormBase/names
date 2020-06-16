@@ -304,12 +304,13 @@
                  min-chars-match
                  (count numbers))})))
 
-;; transducer for converting list of names to datalog variables.
-(def ->datalog-vars (map #(symbol (str "?" %))))
-
 (defn build-find-query
   [find-attrs unqualified-attrs rule-head]
-  (let [query-vars (sequence ->datalog-vars unqualified-attrs)
+  ;; generated symbols are used to bind result variables in the datalog query.
+  ;; this is done to avoid confusion with variable names used to bind
+  ;; predicates.
+  (let [query-vars (repeatedly (count unqualified-attrs)
+                               (partial gensym "?"))
         rule-clause (cons (symbol rule-head) '(?pattern ?name ?eid))
         var->ident (zipmap query-vars find-attrs)
         q-spec {:in '[$ % ?pattern]
@@ -317,8 +318,8 @@
                 [rule-clause
                  '[?eid ?id-ident ?id]]}
         get-else-clauses (->> query-vars
-                              (map (fn [name-sym]
-                                     [(list 'get-else '$ '?eid (name-sym var->ident) "") name-sym]))
+                              (map (fn [sym]
+                                     [(list 'get-else '$ '?eid (sym var->ident) "") sym]))
                               (vec))]
     (-> q-spec
         (update :where (fn [clause]
