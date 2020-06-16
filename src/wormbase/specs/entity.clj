@@ -31,9 +31,11 @@
 
 (s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template
                                                        ::entity-type
-                                                       ::generic?
                                                        ::name-required?])
-                               :description "Parameters required to install a new entity schema."}))
+                               :description "Parameters required to install a new entity schema."
+                               :swagger/example {:id-template "WBThing%d"
+                                                 :entiy-type "thing"
+                                                 :name-required true}}))
 
 (s/def ::named? (stc/spec {:spec sts/boolean?
                            :swagger/example "true"
