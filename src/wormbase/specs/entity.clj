@@ -34,7 +34,7 @@
                                                        ::name-required?])
                                :description "Parameters required to install a new entity schema."
                                :swagger/example {:id-template "WBThing%d"
-                                                 :entiy-type "thing"
+                                                 :entity-type "thing"
                                                  :name-required true}}))
 
 (s/def ::named? (stc/spec {:spec sts/boolean?
