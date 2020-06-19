@@ -1,6 +1,10 @@
 # Change-log
 #
 
+## [1.2.6]
+ - Fixed full ID search (gh issue #302)
+ - Upgraded to latest version of datomic-pro (1.0.6165)
+
 ## [1.2.5]
  - Removed all instance and usage person/roles from test fixtures and code.
 
