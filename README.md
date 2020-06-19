@@ -179,7 +179,7 @@ $EDITOR pom.xml
 make release
 
 # Deploy the application to the selected ElasticBeanStalk environmnent
-# The environment that will deployed to will be marked by 
+# The environment that will deployed to will be marked by
 # an asterisk in the output of the command:
 # > eb list
 # use: eb use <env-name> to change this.
