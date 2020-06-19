@@ -4,7 +4,7 @@
  ;; When this package is added, no logging statements appear in
  ;; console by default (compojure-api integration)
  :deps
- {com.datomic/datomic-pro {:mvn/version "0.9.5951"
+ {com.datomic/datomic-pro {:mvn/version "1.0.6165"
                            :exclusions [org.slf4j/slf4j-nop
                                         org.slf4j/slf4j-log4j12]}}
  ;; aliases
