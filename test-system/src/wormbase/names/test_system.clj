@@ -54,9 +54,11 @@
 
 (defn tags-for-op
   "Return a list of tags to associate with an AWS resource, specifying a `purpose`."
-  [purpose]
-  [{:key "CreatedBy" :value (aws-username)} 
-   {:key "Purpose" :value purpose}])
+  ([purpose]
+   [{:key "CreatedBy" :value (aws-username)}
+    {:key "Purpose" :value purpose}])
+  ([purpose extra-tags]
+   (concat extra-tags (tags-for-op purpose))))
 
 ;; DynamoDB operations
 
@@ -172,7 +174,8 @@
       :change-set-name cs-name
       :use-previous-template true
       :parameters params
-      :tags (tags-for-op "test system reset")})
+      :tags (tags-for-op "test system reset"
+                         [{:key "Name" :value stack-name}])})
     (wait-for-status (partial change-set-ready?
                               creds
                               {:stack-name stack-name
@@ -323,4 +326,3 @@
                              :test-table-name-prefix test-table-name-prefix
                              :cfn-stack-name cfn-stack-name
                              :eb-env-name eb-env-name})))))
-
