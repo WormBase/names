@@ -58,7 +58,9 @@
    [{:key "CreatedBy" :value (aws-username)}
     {:key "Purpose" :value purpose}])
   ([purpose extra-tags]
-   (concat extra-tags (tags-for-op purpose))))
+   (->> (tags-for-op purpose)
+        (concat extra-tags)
+        (vec))))
 
 ;; DynamoDB operations
 
@@ -223,9 +225,10 @@
         datomic-uri (str "WB_DB_URI=datomic:ddb://us-east-1/"
                                  ddb-table
                                  "/wormbase")
-        option-settings [{:option-name "EnvironmentVariables",
-                          :namespace "aws:cloudformation:template:parameter",
-                          :value (str datomic-uri ",_JAVA_OPTIONS=-Xmx4g")}]]
+        option-settings [{:option-name "EnvironmentVariables"
+                          :namespace "aws:elasticbeanstalk:application:environment"
+                          :name "WB_DB_URI"
+                          :value datomic-uri}]]
     (eb/update-environment creds
                            {:environment-name eb-env-name
                             :option-settings option-settings})
