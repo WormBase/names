@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.2.7]
+ - test-system: Apply Name tag to transactors.
+
 ## [1.2.6]
  - Fixed full ID search (gh issue #302)
  - Upgraded to latest version of datomic-pro (1.0.6165)
