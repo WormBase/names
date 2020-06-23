@@ -222,12 +222,10 @@
    a new DynamoDB table `ddb-table`."
   [eb-env-name ddb-table]
   (let [creds (assume-credentials)
-        datomic-uri (str "WB_DB_URI=datomic:ddb://us-east-1/"
-                                 ddb-table
-                                 "/wormbase")
-        option-settings [{:option-name "EnvironmentVariables"
+        datomic-uri (str "datomic:ddb://us-east-1/" ddb-table "/wormbase")
+        option-settings [{:option-name "WB_DB_URI"
                           :namespace "aws:elasticbeanstalk:application:environment"
-                          :name "WB_DB_URI"
+
                           :value datomic-uri}]]
     (eb/update-environment creds
                            {:environment-name eb-env-name
