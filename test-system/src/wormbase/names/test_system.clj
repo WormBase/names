@@ -235,6 +235,11 @@
      1200
      "Updating ElasticBeanStalk configuration for staging web app.")))
 
+(defn eb-restart-app-server
+  "Restart ElasticBeanstalk app server."
+  [eb-env-name]
+  (eb/restart-app-server {:environment-name eb-env-name}))
+
 (defn print-status-summary
   [table-name stack-name eb-env-name]
   (let [creds (assume-credentials)
@@ -272,6 +277,7 @@
                                target-table-name)
     (cfn-update-stack cfn-stack-name target-table-name)
     (eb-env-update-config eb-env-name target-table-name)
+    (eb-restart-app-server eb-env-name)
     (remove-old-test-tables test-tables target-table-name)
     (println "Done.")
     (print-status-summary target-table-name cfn-stack-name eb-env-name)))
