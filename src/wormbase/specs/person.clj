@@ -40,9 +40,9 @@
                       :person/active? true
                       :person/name "Test User"})
 
-(s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email
-                                                   :person/id]
+(s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email]
                                           :opt-un [:person/active?
+                                                   :person/id
                                                    :person/name])
                             :swagger/example example-summary}))
 
