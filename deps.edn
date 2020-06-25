@@ -90,8 +90,7 @@
    {com.datomic/datomic-pro {:mvn/version "1.0.6165"
                              :exclusions [org.slf4j/slf4j-nop
                                           org.slf4j/slf4j-log4j12]}
-    com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.600"
-                                         :exclusions [joda-time]}}}
+    com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.11.600"}}}
   :logging
   {:extra-deps
    ;; Use Logback as the main logging implementation:
