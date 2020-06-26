@@ -4,7 +4,8 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
-   [ring.util.http-response :refer [bad-request created not-found! ok]]
+   [ring.util.http-response :refer [bad-request created not-found!
+                                    not-modified ok]]
    [spec-tools.core :as stc]
    [wormbase.db :as wdb]
    [wormbase.specs.person :as wsp]
@@ -69,20 +70,14 @@
             conn (:conn request)]
         (if (s/valid? spec payload)
           (let [data (some-> payload
-                             (wnu/qualify-keys "person")
-                             (assoc :person/active? true))
-                data* (if (empty? data)
-                        data
-                        (merge data
-                               (when-not (:person/email data)
-                                 (select-keys person [:person/email]))
-                               (when-not (:person/id data)
-                                 (select-keys person [:person/id]))))
-                tx-res @(d/transact-async conn [data*])]
-            (ok (-> tx-res
-                    :db-after
-                    (summary lur)
-                    (wnu/unqualify-keys "person"))))
+                             (wnu/qualify-keys "person"))]
+            (if data
+              (let [tx-res @(d/transact-async conn [data])]
+                (ok (-> tx-res
+                        :db-after
+                        (summary lur)
+                        (wnu/unqualify-keys "person"))))
+              (not-modified)))
           (bad-request
            {:type :user/validation-error
             :problems (expound-str spec body-params)}))))))
