@@ -1,6 +1,8 @@
 # Change-log
 #
-
+## [1.2.9]
+ - Fixed person update API.
+ 
 ## [1.2.8]
  - Fixes for person API.
  
