@@ -1,6 +1,9 @@
 # Change-log
 #
 
+## [1.2.8]
+ - Fixes for person API.
+ 
 ## [1.2.7]
  - test-system: Apply Name tag to transactors.
 
