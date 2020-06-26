@@ -6,6 +6,11 @@ This sub-project provides a shared library used within datomic transactions and 
 Latest released version here:
 [![Clojars Project](https://img.shields.io/clojars/v/wormbase/ids.svg)](https://clojars.org/wormbase/ids)
 
+## Build
+```bash
+make target/wbids.jar
+```
+
 ## Releases
 
 ```bash

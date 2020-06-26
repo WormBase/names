@@ -66,19 +66,20 @@ which uses a GPG2 key to encrypt tokens.
 ### Setup client app
 Setup client app **either by [making a production build of the client app](#building-the-client-app) or running a client development server**, as show here:
 
-- First, ensure `client/package.json` has proxy configured to point at the backend API.
+1. Ensure the back-end application is running and an API endpoint is available locally (see [below](#Run-the-application-locally))
 
-- Then, run:
+2. Ensure `client/package.json` has proxy configured to point at the backend API, at the correct port (default 4010).
+
+3. Run:
 ```bash
 cd client/
 nvm use # optionally `nvm install` to install the latest compatible version of node.js
 npm install
 npm run start
 ```
-  - This will start service serving the client assets on port 3000,
-  the server should be started with the `PORT` environment variable set to *4010*.
+  - This will start service serving the client assets on port 3000.
 
-- Finally, ensure the authentication callback URL at Google Cloud Console is configured to match the client development server configuration.
+4. Finally, ensure the authentication callback URL at [Google Cloud Console](https://console.developers.google.com/apis/credentials?project=wormbase-names-service&folder=&supportedpurview=project) is configured to match the client development server configuration. Under OAuth 2.0 Client IDs, click _"WormBase Names Service (Web)"_ and have a look at the _"Authorized JavaScript origins"_ section.
 
 Notes:
 - **Node.js and NPM***
@@ -109,11 +110,16 @@ Run with:
 export WB_DB_URI="[datomic-uri]"
 ```
 
-(An example of `[datomic-uri]` may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI. For a persistent database, a transactor needs to be configured, in which case, the `[datomic-uri]` is based the your transactor configuration and database name.)
+An example of `[datomic-uri]` may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI.
+For a persistent database (like `ddb-local`), a transactor needs to be configured, in which case the `[datomic-uri]` is based the your transactor configuration and database name. Make sure to define the ```DATOMIC_EXT_CLASSPATH``` env variable to point to the wormbase/ids jar when setting up the transactor (see [these instruction](./ids/README.md#Build) to build the ids jar).
+
+```bash
+export DATOMIC_EXT_CLASSPATH="$HOME/git/wormbase-names/ids/target/wbids.jar"
+```
 
 Run with `make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri]`.
 
-To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json).
+To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json) (standardly 4010 is used).
 
 
 ### Tools
