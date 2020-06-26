@@ -5,7 +5,7 @@
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]))
 
-(def email? #(and (string? %) (str/includes? % "@")))
+(def email-regexp #".*@wormbase\.org")
 
 (def id-regexp #"^WBPerson\d{1,}")
 
@@ -23,7 +23,7 @@
 
 (s/def :person/active? sts/boolean?)
 
-(s/def ::email (stc/spec {:spec email?
+(s/def ::email (stc/spec {:spec (s/and sts/string? #(re-matches email-regexp %))
                           :swagger/example "some-name@wormbase.org"
                           :description "The Google email address of the associated WormBase person."}))
 
