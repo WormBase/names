@@ -1,10 +1,11 @@
 (ns wormbase.specs.person
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]))
 
-(def email-regexp #"[a-z0-9][a-z0-9.]+?@wormbase\.org")
+(def email? #(and (string? %) (str/includes? % "@")))
 
 (def id-regexp #"^WBPerson\d{1,}")
 
@@ -13,36 +14,35 @@
                        :description "The WBPerson identfiier associated with the person."}))
 
 (s/def ::name (stc/spec {:spec (s/and sts/string? not-empty)
-                         :swagger/example "Matt Russell"
+                         :swagger/example "Joe Bloggs"
                          :description "The name of the WormBase person as known to the names service."}))
+
+(s/def :person/id ::id)
 
 (s/def :person/name ::name)
 
 (s/def :person/active? sts/boolean?)
 
-(s/def ::email (stc/spec {:spec (s/and sts/string? #(re-matches email-regexp %))
-                          :swagger/example "matthew.russell@wormbase.org"
+(s/def ::email (stc/spec {:spec email?
+                          :swagger/example "some-name@wormbase.org"
                           :description "The Google email address of the associated WormBase person."}))
 
 (s/def :person/email ::email)
-
-(s/def :person/id ::id)
 
 (s/def ::identified (stc/spec (s/keys :req-un [::name :person/email])))
 
 (s/def ::identifier (stc/spec {:spec (s/or :person/email ::email
                                            :person/id ::id)
-                               :swagger/example "WBPerson33035"
+                               :swagger/example "some.name@wormbase.org"
                                :description "An identifier uniquely identifing a WormBase person."}))
 
 (def example-summary {:person-email "some-user@wormbas.eorg"
-                      :person/id "WBPerson007"
+                      :person/id "WBPerson11111007"
                       :person/active? true
                       :person/name "Test User"})
 
-(s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email]
+(s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email :person/id]
                                           :opt-un [:person/active?
-                                                   :person/id
                                                    :person/name])
                             :swagger/example example-summary}))
 
