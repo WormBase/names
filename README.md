@@ -160,14 +160,11 @@ Releasing is a 4 step process:
 
 ### Commands
 ```bash
-# Build the client application
+# Build the client application to check it works.
 make ui-build
 
 # specify $LEVEL as one of <major|minor|patch>
 make vc-release LEVEL=$LEVEL
-
-# push release tag to github.
-git push --follow-tags
 
 # print the version being deployed
 make show-version
