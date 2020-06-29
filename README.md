@@ -166,6 +166,8 @@ make ui-build
 # specify $LEVEL as one of <major|minor|patch>
 make vc-release LEVEL=$LEVEL
 
+git push --follow-tags 
+
 # print the version being deployed
 make show-version
 
