@@ -94,10 +94,10 @@
 (defn ddb-table-status
   [credentials ddb-table-name]
   (when ((-> credentials ddb/list-tables :table-names set) ddb-table-name)
-    (->  credentials
-         (ddb/describe-table ddb-table-name)
-         :table
-         :table-status)))
+    (-> credentials
+        (ddb/describe-table ddb-table-name)
+        :table
+        :table-status)))
 
 (defn ddb-table-restoring?
   [credentials ddb-table-name]
