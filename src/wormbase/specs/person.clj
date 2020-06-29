@@ -36,7 +36,7 @@
                                :swagger/example "some.name@wormbase.org"
                                :description "An identifier uniquely identifing a WormBase person."}))
 
-(def example-summary {:person-email "some-user@wormbas.eorg"
+(def example-summary {:person-email "some.name@wormbase.org"
                       :person/id "WBPerson11111007"
                       :person/active? true
                       :person/name "Test User"})
