@@ -238,7 +238,9 @@
 (defn eb-restart-app-server
   "Restart ElasticBeanstalk app server."
   [eb-env-name]
-  (eb/restart-app-server {:environment-name eb-env-name}))
+  (eb/restart-app-server
+   (assume-credentials)
+   {:environment-name eb-env-name}))
 
 (defn print-status-summary
   [table-name stack-name eb-env-name]
