@@ -1,5 +1,9 @@
 # Change-log
 #
+
+## [1.3.0]
+ - Fix: Provenance association in person update API.
+
 ## [1.2.9]
  - Fixed person update API.
  
