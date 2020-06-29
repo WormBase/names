@@ -20,7 +20,7 @@ help: ; @echo $(if $(need-help),,\
 	Type \'$(MAKE)$(dash-f) help\' to get help)
 
 .PHONY: show-version
-show-version: $(call print-help,show-version,"Show the current application verison.")
+show-version: $(call print-help,show-version,"Show the current application version.")
 	@echo "${VERSION}"
 
 .PHONY: build

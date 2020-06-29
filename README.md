@@ -177,7 +177,7 @@ git push --follow-tags
 # print the version being deployed
 make show-version
 
-# Update <verison> in pom.xml to match.
+# Update <version> in pom.xml to match.
 $EDITOR pom.xml
 
 # Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
