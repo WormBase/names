@@ -39,12 +39,15 @@
             pid (wdb/extract-id tx-res :person/id)]
         (created (str "/person/" pid) person)))))
 
+(defn pull-person [db lur]
+  (d/pull db [:db/id
+              :person/active?
+              :person/email
+              :person/id
+              :person/name] lur))
+
 (defn summary [db lur]
-  (let [person (d/pull db [:db/id
-                           :person/active?
-                           :person/email
-                           :person/id
-                           :person/name] lur)]
+  (let [person (pull-person db lur)]
     (when (:db/id person)
       (wu/elide-db-internals db person))))
 
@@ -64,20 +67,22 @@
   (let [{db :db body-params :body-params} request
         lur (s/conform ::wsp/identifier identifier)
         payload (:data body-params)
-        person (summary db lur)]
-    (when person
+        prov (wnp/assoc-provenance request payload :event/update-person)
+        person (pull-person db lur)
+        eid (:db/id person)]
+    (when eid
       (let [spec ::wsp/update
             conn (:conn request)]
         (if (s/valid? spec payload)
-          (let [data (some-> payload
-                             (wnu/qualify-keys "person"))]
-            (if data
-              (let [tx-res @(d/transact-async conn [data])]
-                (ok (-> tx-res
-                        :db-after
-                        (summary lur)
-                        (wnu/unqualify-keys "person"))))
-              (not-modified)))
+          (if-let [data (some-> payload
+                                (wnu/qualify-keys "person")
+                                (assoc :db/id eid))]
+            (let [tx-res @(d/transact-async conn [data prov])]
+              (ok (-> tx-res
+                      :db-after
+                      (summary eid)
+                      (wnu/unqualify-keys "person"))))
+            (not-modified))
           (bad-request
            {:type :user/validation-error
             :problems (expound-str spec body-params)}))))))
