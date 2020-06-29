@@ -66,6 +66,7 @@
   #:db{:ident :event/import}
   #:db{:ident :event/deactivate-person}
   #:db{:ident :event/new-person}
+  #:db{:ident :event/update-person}
   #:db{:ident :event/new-gene}
   #:db{:ident :event/new-unnamed-gene}
   #:db{:ident :event/update-gene}
