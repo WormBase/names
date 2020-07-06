@@ -53,12 +53,14 @@
                                    :gene/sequence-name
                                    :gene/species]
                           :opt-un [:gene/cgc-name
+                                   :gene/other-names
                                    :gene/status]))))
 
 (s/def ::uncloned (stc/spec
                    (stc/merge
                     (s/keys :req-un [:gene/cgc-name]
-                            :opt-un [:gene/species
+                            :opt-un [:gene/other-names
+                                     :gene/species
                                      :gene/status]))))
 
 (s/def ::new (stc/spec {:spec (s/and seq        
