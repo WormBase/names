@@ -341,7 +341,7 @@
        :responses (wnu/http-responses-for-read {:schema ::wsg/find-result})
        :parameters {:query-params ::wsc/find-request}
        :x-name ::find-gene
-       :handler (wne/finder "gene" ["cgc-name" "sequence-name" "id"])}
+       :handler (wne/finder "gene" ["cgc-name" "sequence-name" "id" "other-names"])}
       :post
       {:summary "Create new names for a gene (cloned or un-cloned)"
        :x-name ::new-gene

@@ -305,26 +305,16 @@
                  (count numbers))})))
 
 (defn build-find-query
-  [find-attrs unqualified-attrs rule-head]
+  [rule-head]
   ;; generated symbols are used to bind result variables in the datalog query.
   ;; this is done to avoid confusion with variable names used to bind
   ;; predicates.
-  (let [query-vars (repeatedly (count unqualified-attrs)
-                               (partial gensym "?"))
-        rule-clause (cons (symbol rule-head) '(?pattern ?name ?eid))
-        var->ident (zipmap query-vars find-attrs)
-        q-spec {:in '[$ % ?pattern]
-                :where
-                [rule-clause
-                 '[?eid ?id-ident ?id]]}
-        get-else-clauses (->> query-vars
-                              (map (fn [sym]
-                                     [(list 'get-else '$ '?eid (sym var->ident) "") sym]))
-                              (vec))]
-    (-> q-spec
-        (update :where (fn [clause]
-                         (concat clause get-else-clauses)))
-        (assoc :find query-vars :keys find-attrs))))
+  (let [rule-clause (cons (symbol rule-head) '(?pattern ?name ?eid))
+        q-spec {:find '[[?eid ...]]
+                :in '[$ % ?pattern]
+                :where [rule-clause
+                       '[?eid ?id-ident ?id]]}]
+    q-spec))
 
 (defn finder
   [entity-type unqualified-attrs]
@@ -336,9 +326,11 @@
               find-attrs (map (partial keyword entity-type) unqualified-attrs)
               rule-head (str entity-type "-name")
               matching-rules (wnm/make-rules rule-head find-attrs)
-              query (build-find-query find-attrs unqualified-attrs rule-head)
-              regexp-pattern (re-pattern (str "^" s-pattern))
-              q-result (d/q query db matching-rules regexp-pattern)
+              query (build-find-query rule-head)
+              matching-pattern (re-pattern (str "^" s-pattern))
+              pull-pattern (vec find-attrs)
+              q-ids (d/q query db matching-rules matching-pattern)
+              q-result (d/pull-many db pull-pattern q-ids)
               res {:matches (if (seq q-result)
                               (vec (map #(wnu/unqualify-keys % entity-type) q-result))
                               [])}]

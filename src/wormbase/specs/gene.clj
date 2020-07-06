@@ -12,6 +12,8 @@
 
 (s/def ::name (s/and string?))
 
+(s/def ::names-coll (s/coll-of ::name))
+
 (s/def :gene/id (stc/spec {:spec ::name
                            :swagger/example "WBGene00000421"
                            :description "The primary identifier of a Gene."}))
@@ -19,6 +21,10 @@
 (s/def :gene/cgc-name (stc/spec {:spec (s/nilable ::name)
                                  :swagger/example "unc-22"
                                  :description "The CGC name."}))
+
+(s/def :gene/other-names (stc/spec {:spec (s/nilable ::names-coll)
+                                 :swagger/example "[\"UNCoordinated-22\", \"Other-name\"]"
+                                 :description "Alternative gene name(s)."}))
 
 (s/def :gene/sequence-name (stc/spec {:spec (s/nilable ::name)
                                       :swagger/example "AAH1.1"
@@ -77,6 +83,7 @@
 
 (s/def ::update (stc/spec {:spec (s/and (s/keys :opt-un [:gene/cgc-name
                                                          :gene/sequence-name
+                                                         :gene/other-names
                                                          :gene/biotype
                                                          :gene/species])
                                         seq)
@@ -166,7 +173,8 @@
 
 (s/def ::find-match (stc/spec {:spec (s/keys :req-un [:gene/id]
                                              :opt-un [:gene/cgc-name
-                                                      :gene/sequence-name])
+                                                      :gene/sequence-name
+                                                      :gene/other-names])
                                :description "A mappings describing a search result match."}))
 (s/def ::matches (stc/spec {:spec (s/coll-of ::find-match :kind vector?)
                             :description "A collection of search result matches."}))

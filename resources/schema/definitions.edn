@@ -23,6 +23,9 @@
        :valueType :db.type/string
        :cardinality :db.cardinality/one
        :unique :db.unique/value}
+  #:db{:ident :gene/other-names
+       :valueType :db.type/string
+       :cardinality :db.cardinality/many}
   #:db{:ident :gene/status
        :valueType :db.type/ref
        :cardinality :db.cardinality/one}
