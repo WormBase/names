@@ -23,7 +23,7 @@
                                  :description "The CGC name."}))
 
 (s/def :gene/other-names (stc/spec {:spec (s/nilable ::names-coll)
-                                 :swagger/example "[\"UNCoordinated-22\", \"Other-name\"]"
+                                 :swagger/example ["UNCoordinated-22", "P34358"]
                                  :description "Alternative gene name(s)."}))
 
 (s/def :gene/sequence-name (stc/spec {:spec (s/nilable ::name)
