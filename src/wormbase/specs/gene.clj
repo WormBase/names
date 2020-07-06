@@ -87,7 +87,7 @@
                                                          :gene/biotype
                                                          :gene/species])
                                         seq)
-                           :description "The data requried to update a Gene."}))
+                           :description "The data required to update a Gene."}))
 
 (s/def ::updated (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data from updating a Gene."}))

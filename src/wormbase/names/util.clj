@@ -189,7 +189,7 @@
              mapping))
 
 (defn unqualify-keys
-  "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
+  "Transform `mapping` such that all qualfied keys with namespace `entity-type` are unqualfied."
   [mapping entity-type]
   (reduce-kv (fn [m k v]
                (if (and (qualified-keyword? k)
