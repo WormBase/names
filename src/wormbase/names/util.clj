@@ -231,3 +231,13 @@
                          {:reason reason})
                        {:reason (ph/phrase {} prob)})))))))
 
+(defn primary-ident
+  "Return a keyword representing the  \"primary ident\" for a given entity.
+
+  Determined by the convention of one and only one attribute of an
+  entity having the name \"id\". "
+  [ent]
+  (some->> (keys ent)
+           (filter (fn [k]
+                     (= (name k) "id")))
+           (first)))
