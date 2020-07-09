@@ -443,6 +443,32 @@
                            (nil? (:cgc-name data)))
                       (bad-request! {:message "CGC name cannot be removed from an uncloned gene."}))
                     (update-gene request identifier)))}})
+    (sweet/context "/update-other-names" []
+      (sweet/resource
+       {:put
+        {:summary "Add a set of other-names to a gene."
+         :x-name ::add-other-names-gene
+         :parameters {:body-params {:data ::wsg/update-other-names
+                                    :prov ::wsp/provenance}}
+         :responses (-> wnu/default-responses
+                        (dissoc conflict)
+                        (assoc bad-request {:schema ::wsv/error-response})
+                        (wnu/response-map))
+         :handler (fn [request]
+                    (let [add-other-names (wne/update-multi-card identify :gene/id :db/add ':gene/other-names)]
+                      (add-other-names request identifier)))}
+        :delete
+        {:summary "Delete a set of other-names from a gene."
+         :x-name ::delete-other-names-gene
+         :parameters {:body-params {:data ::wsg/update-other-names
+                                    :prov ::wsp/provenance}}
+         :responses (-> wnu/default-responses
+                        (dissoc conflict)
+                        (assoc bad-request {:schema ::wsv/error-response})
+                        (wnu/response-map))
+         :handler (fn [request]
+                    (let [delete-other-names (wne/update-multi-card identify :gene/id :db/retract ':gene/other-names)]
+                      (delete-other-names request identifier)))}}))
     (sweet/context "/merge/:from-identifier" [from-identifier]
       (sweet/resource
        {:post

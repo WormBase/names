@@ -85,7 +85,6 @@
 
 (s/def ::update (stc/spec {:spec (s/and (s/keys :opt-un [:gene/cgc-name
                                                          :gene/sequence-name
-                                                         :gene/other-names
                                                          :gene/biotype
                                                          :gene/species])
                                         seq)
@@ -93,6 +92,9 @@
 
 (s/def ::updated (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data from updating a Gene."}))
+
+(s/def ::update-other-names (stc/spec {:spec :gene/other-names
+                                        :description "A collection of other names."}))
 
 (s/def ::merge (stc/spec {:spec (s/keys :req-un [:gene/biotype])
                           :description "The data requried to update a Gene."}))

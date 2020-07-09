@@ -195,6 +195,27 @@
                 (not-found
                  (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
 
+(defn update-multi-card
+  [identify-fn uiident dt-transact-fn attr]
+  (fn handle-multi-card [request identifier]
+    (let [{conn :conn payload :body-params} request
+          ent-ns (namespace uiident)
+          data (some-> payload :data)
+          [lur entity] (identify-fn request identifier)]
+      (when (and entity data)
+        (let [build-tx (fn [id attr ^String val] (vec [dt-transact-fn id attr val]))
+              ;;retriev db-id to add values to
+              db-id (:db/id entity)
+              ;;build transaction statements to make
+              txes (map #(build-tx db-id attr %) data)
+              ;;transact data to datomic
+              tx-result @(d/transact-async conn txes)]
+          (when-let [db-after (:db-after tx-result)]
+            (if-let [updated (wdb/pull db-after [attr uiident] lur)]
+              (ok (or (attr updated) []))
+              (not-found
+               (format "%s '%s' does not exist" ent-ns (last lur))))))))))
+
 (defn status-changer
   "Return a handler to change the status of an entity to `to-status`.
 
