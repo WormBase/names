@@ -100,7 +100,7 @@
 (defn remove-entities-with-blank-values
   [data]
   (reduce-kv (fn [m k v]
-               ((if (str/blank? v)
+               ((if (and (string? v) (str/blank? v))
                   dissoc
                   assoc) m k v))
              {}
