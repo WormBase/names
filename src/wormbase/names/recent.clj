@@ -62,7 +62,6 @@
                            [?g :gene/merges ?e ?tx-id]
                            [?g :gene/id ?gid]]
                          db tx-id))]
-
     [(merge info {:attr "merges" :added true})]))
 
 (defn changes-and-prov-puller
