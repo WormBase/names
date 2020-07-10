@@ -156,14 +156,14 @@
             (t/is (ru-hp/ok? {:status status :body body}))
             (t/is (jt/zoned-date-time? (:provenance/when prov)) (pr-str prov))
 
-            (let [{src-merges :gene/merges} (d/pull (d/db conn)
-                                                    [{:gene/merges [[:gene/id]]}]
-                                                    [:gene/id from-id])
-                  {tgt-merges :gene/_merges} (d/pull (d/db conn)
+            (let [{src-merges :gene/_merges} (d/pull (d/db conn)
                                                      [{:gene/_merges [[:gene/id]]}]
-                                                     [:gene/id into-id])]
-              (t/is (contains? (set (map :gene/id src-merges)) into-id))
-              (t/is ((set (map :gene/id tgt-merges)) from-id))
+                                                     [:gene/id from-id])
+                  {tgt-merges :gene/merges} (d/pull (d/db conn)
+                                                    [{:gene/merges [[:gene/id]]}]
+                                                    [:gene/id into-id])]
+              (t/is ((set (map :gene/id src-merges)) into-id))
+              (t/is (contains? (set (map :gene/id tgt-merges)) from-id))
               (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
               (t/is (= "web" (:provenance/how prov))))))))))
 
