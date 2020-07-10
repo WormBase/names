@@ -53,13 +53,7 @@
      (d/q query db rules log from-t until-t needle how))))
 
 (defn handle-redundant-merge-tx
-  "Create a faux entry to provide information for a null-change merge.
-  A null change occurs when no entity-data was associated with a gene
-  in a datomic transaction for a merge event.
-
-  The algorithm is to find a transaction with the same :db/txInstant
-  associated with the merge, returning a map of the
-  corresponding merged gene id."
+  "Create a faux mapping representing a merge event."
   [db tx-id]
   (let [info (first (d/q '[:find ?gid
                            :keys :value
@@ -81,6 +75,11 @@
                         (not= tx-id ent-id) (wnu/primary-ident
                                              (d/entity db ent-id))
                         :else (keyword ent-ns "id"))
+                ;; tx-id and ent-id are the same when a transaction would cause
+                ;; no attributes of an entity to change (redundant tx).
+                ;; https://github.com/WormBase/names/issues/306 Affects
+                ;; historical gene merge transactions prior to deployment
+                ;; of change: 688d830ab90d05bc0fc6737609613b5d6c2065c4
                 pull-changes (if (= tx-id ent-id)
                                (partial handle-redundant-merge-tx db)
                                (partial wnp/query-tx-changes-for-event db log ent-id))]
