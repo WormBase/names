@@ -196,7 +196,7 @@
                  (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
 
 (defn update-multi-card
-  [identify-fn uiident dt-transact-fn attr]
+  [identify-fn uiident event dt-transact-fn attr]
   (fn handle-multi-card [request identifier]
     (let [{conn :conn payload :body-params} request
           ent-ns (namespace uiident)
@@ -206,10 +206,12 @@
         (let [build-tx (fn [id attr ^String val] (vec [dt-transact-fn id attr val]))
               ;;retriev db-id to add values to
               db-id (:db/id entity)
+              ;;retrieve provenance
+              prov (wnp/assoc-provenance request payload event)
               ;;build transaction statements to make
               txes (map #(build-tx db-id attr %) data)
               ;;transact data to datomic
-              tx-result @(d/transact-async conn txes)]
+              tx-result @(d/transact-async conn (conj txes prov))]
           (when-let [db-after (:db-after tx-result)]
             (if-let [updated (wdb/pull db-after [attr uiident] lur)]
               (ok (or (attr updated) []))
