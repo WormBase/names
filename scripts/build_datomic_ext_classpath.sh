@@ -21,7 +21,7 @@ aws_console "ARTIFACT VERSION: $ARTIFACT_VERSION"
 
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
 
-DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS")
+DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS" | sed 's|:|\n|g' | grep "wormbase/ids")
 aws_console "DEPS:"
 aws_console "$DEPS"
 
