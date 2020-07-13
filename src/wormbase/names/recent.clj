@@ -52,42 +52,24 @@
      ;; jvm (warm): 30.054339 msecs
      (d/q query db rules log from-t until-t needle how))))
 
-(defn handle-redundant-merge-tx
-  "Create a faux mapping representing a merge event."
-  [db tx-id]
-  (let [info (first (d/q '[:find ?gid
-                           :keys :value
-                           :in $ ?tx-id
-                           :where
-                           [?g :gene/merges ?e ?tx-id]
-                           [?g :gene/id ?gid]]
-                         db tx-id))]
-    [(merge info {:attr "merges" :added true})]))
-
 (defn changes-and-prov-puller
   "Creates a transducer for pulling changes and provenance."
-  ([request ent-ns]
-   (map (fn [[tx-id ent-id]]
-          (let [{db :db conn :conn} request
-                log (d/log conn)
-                ident (cond
-                        (not= tx-id ent-id) (wnu/primary-ident
-                                             (d/entity db ent-id))
-                        :else (keyword ent-ns "id"))
-                ;; tx-id and ent-id are the same when a transaction would cause
-                ;; no attributes of an entity to change (redundant tx).
-                ;; https://github.com/WormBase/names/issues/306 Affects
-                ;; historical gene merge transactions prior to deployment
-                ;; of change: 688d830ab90d05bc0fc6737609613b5d6c2065c4
-                pull-changes (if (= tx-id ent-id)
-                               (partial handle-redundant-merge-tx db)
-                               (partial wnp/query-tx-changes-for-event db log ent-id))]
-            (-> (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
-                (merge (when (and ident (not= ent-id tx-id))
-                         (d/pull db [ident] ent-id)))
-                (wnu/unqualify-keys (namespace ident)))))))
-  ([request]
-   (changes-and-prov-puller request nil)))
+  [request]
+  (map (fn [[tx-id ent-id]]
+         (when-not (= tx-id ent-id)
+           (let [{db :db conn :conn} request
+                 log (d/log conn)
+                 pull-changes (partial wnp/query-tx-changes-for-event db log ent-id)
+                 ent (d/entity db ent-id)
+                 ident (some->> (keys ent)
+                                (filter (fn [k]
+                                          (= (name k) "id")))
+                                (first))]
+             (when ident
+               (-> (wnp/pull-provenance db ent-id wnp/pull-expr tx-id pull-changes)
+                   (merge (when ident
+                            (find ent ident)))
+                   (wnu/unqualify-keys (namespace ident)))))))))
 
 (defn prov-only-puller
   [request]
@@ -152,12 +134,7 @@
                (sweet/GET "/batch" request
                  :tags ["recent" "batch"]
                  :summary "List recent batch activity."
-                 (handle request
-                         batch-rules
-                         (changes-and-prov-puller request)
-                         ""
-                         from
-                         until))
+                 (handle request batch-rules (changes-and-prov-puller request) "" from until))
                (sweet/GET "/person/:id" request
                  :tags ["recent" "person"]
                  :path-params [id :- :person/id]
@@ -167,7 +144,7 @@
                                      (some-> request :identity :person))]
                    (handle request
                            person-rules
-                           (changes-and-prov-puller request "person")
+                           (changes-and-prov-puller request)
                            (:person/email person)
                            from
                            until)))
@@ -178,7 +155,7 @@
                    :query-params [{how :- [::wsr/how] #{:agent/console :agent/web}}]
                    (handle request
                            entity-rules
-                           (changes-and-prov-puller request entity-type)
+                           (changes-and-prov-puller request)
                            entity-type
                            from
                            until
@@ -188,7 +165,7 @@
                    :path-params [agent :- ::wsr/agent]
                    (handle request
                            entity-rules
-                           (changes-and-prov-puller request entity-type)
+                           (changes-and-prov-puller request)
                            entity-type
                            from
                            until
@@ -201,7 +178,7 @@
   ;; Then define `conn` d/connect and db with d/db.
   (binding [db (d/db conn) log (d/log conn)
             pull-prov-only (prov-only-puller db log)
-            pull-changes-and-prov (changes-and-prov-puller {:db db :conn conn} "gene")
+            pull-changes-and-prov (changes-and-prov-puller db log)
             from (jt/to-java-date (jt/instant))
             until (wu/days-ago 2)]
     (activities db log entity-rules pull-changes-and-prov "gene")
