@@ -27,15 +27,6 @@ install_tools_deps () {
 # install tools.deps (clojure)
 [ ! -e $CLOJURE ] && install_tools_deps;
 
-clj_version=`cat $CLOJURE | awk '/Version/{print $NF}'`
-
-if [ $clj_version = $TOOLS_DEPS_VERSION ]; then
-    aws_console "Already have the latest version of tools deps, not installing."
-else
-    aws_console "Installing latest version of tools.deps"
-    install_tools_deps
-fi
-
 # install jq if needed
 if [ ! -e $JQ ]; then
     aws_console "Downloading and installing jq"
