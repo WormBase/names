@@ -124,7 +124,7 @@ deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
 .PHONY: vc-release
 vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to release the applicaton.")
 	@echo "Edit version of application in pom.xml to match:"
-	@clj -A:release ${LEVEL}
+	@clj -A:release --without-sign ${LEVEL}
 	@clj -A:spit-version
 	@clj -A:datomic-pro:prod:aws-eb-docker-version
 	@rm resources/meta.edn
