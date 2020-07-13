@@ -1,4 +1,9 @@
 # Change-log
+
+# [1.4.1]
+ - Revert attempt to display historic gene merges that produced no
+   data change for the gene being merged into (gh issue #306).
+ 
 # [1.4.0]
  - Fix: Merge history bugfix (gh issue #306).
 
