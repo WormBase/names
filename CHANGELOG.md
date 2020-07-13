@@ -1,5 +1,6 @@
 # Change-log
-#
+# [1.4.0]
+ - Fix: Merge history bugfix (gh issue #306).
 
 ## [1.3.0]
  - Fix: Provenance association in person update API.
