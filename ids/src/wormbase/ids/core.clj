@@ -143,7 +143,7 @@
         into-gene (d/pull db attrs-signifying-cloned into-id)
         from-seq-name (:gene/sequence-name from-gene)
         uncloned-gene? (fn uncloned? [gene]
-                         (let [cloned-values ((apply juxt attrs-signifying-cloned) into-gene)]
+                         (let [cloned-values ((apply juxt attrs-signifying-cloned) gene)]
                            (every? nil? cloned-values)))]
     (concat
      [['wormbase.ids.core/cas-batch from-id {:gene/status :gene.status/dead}]
