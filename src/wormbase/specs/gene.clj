@@ -100,7 +100,8 @@
                           :description "The data requried to update a Gene."}))
 
 (s/def ::product (stc/spec
-                  {:spec (s/keys :req-un [:gene/sequence-name :gene/biotype])}))
+                  {:spec (s/keys :req-un [:gene/sequence-name :gene/biotype]
+                                 :opt-un [:gene/other-names])}))
 
 (s/def ::split (stc/spec
                 {:spec (s/keys :req-un [:gene/biotype ::product])

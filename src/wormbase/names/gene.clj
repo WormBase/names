@@ -267,16 +267,21 @@
                     (wnu/qualify-keys "gene")
                     (assoc :product product)
                     (wne/transform-ident-ref-values))
-          {biotype :gene/biotype product :product} cdata
-          {p-seq-name :gene/sequence-name
-           p-biotype :gene/biotype} product
+          {biotype :gene/biotype} cdata
+          {p-seq-name    :gene/sequence-name
+           p-biotype     :gene/biotype
+           p-other-names :gene/other-names} product
           prov (wnp/assoc-provenance request payload :event/split-gene)
           species (get-in from-gene [:gene/species :species/latin-name])
-          new-data (merge {:gene/species (s/conform :gene/species species)}
+          new-data (->> (merge {:gene/species (s/conform :gene/species species)}
                           (assoc product
                                  :db/id p-seq-name
                                  :gene/biotype p-biotype
+                                 :gene/other-names p-other-names
                                  :gene/status :gene.status/live))
+                        ;;Remove potential nil values (:gene/other-names)
+                        (remove (comp nil? val))
+                        (into {}))
           curr-bt (d/entid db (:gene/biotype from-gene))
           new-bt (d/entid db biotype)
           p-gene-lur [:gene/sequence-name p-seq-name]
