@@ -29,9 +29,9 @@ export function getActivityDescriptor(activityItem = {}, selfGeneId) {
 
   let eventType;
   if (what === 'merge-genes' && !statusChange) {
-    eventType = 'merge_from';
-  } else if (what === 'merge-genes' && statusChange === 'dead') {
     eventType = 'merge_into';
+  } else if (what === 'merge-genes' && statusChange === 'dead') {
+    eventType = 'merge_from';
   } else if (what === 'split-gene' && !statusChange) {
     eventType = 'split_into';
   } else if (what === 'split-gene' && statusChange === 'live') {
