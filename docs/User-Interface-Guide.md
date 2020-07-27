@@ -29,12 +29,9 @@ Once a gene has been created, the names of the Gene cannot be removed (or set to
 ## Changing the status of gene
 There are distinct operations for changing the gene status.
  * Kill (-> "dead" status)
- * Supressed (-> "suppresssed" status)
+ * Supressed (-> "suppressed" status)
  * Ressurect (-> "live" status)
 
 **_Dead genes cannot be suppressed, or otherwise interacted with._**
 
-The only action available for a dead gene is to ressurect it, at which point further actions can be taken.
-
-
-
+The only action available for a dead gene is to ressurect it, after which further actions can be taken.

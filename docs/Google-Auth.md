@@ -1,5 +1,4 @@
-Client credentials
-==================
+# Client credentials
 All members of the WormBase organisation should have a Google account,
 and thus the names service uses Google-Auth as the mechanism for authentication.
 
@@ -15,8 +14,7 @@ For use with scripts, you'll want the credentials for the Console application.
 The Web application is credentials are used by the names web service. 
 
 
-Client token
-============
+# Client token
 The names service requires that the a valid id_token is passed in a HTTP(S) Authorization header.
 To obtain a token for use with the API, you can use the example script as follows:
 
