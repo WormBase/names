@@ -51,3 +51,6 @@ data/
 
 # Source code linter cache
 /.clj-kondo/.cache/
+
+# VS Code calva extension configs
+.calva
