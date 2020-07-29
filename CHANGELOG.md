@@ -1,5 +1,9 @@
 # Change-log
 
+# [current-beta]
+ - Improved & complemented docs
+ - Deployment scripts & procedure fixes & updates (#310)
+
 # [1.4.2]
  - Updated version of wormbase/ids to 0.6.1
  
