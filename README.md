@@ -11,6 +11,8 @@ This repository also contains:
  - [A clojure library](./ids) `wormbase.ids` that is used by the REST API to perform atomic
    (identifier) operations within a Datomic transactor process.
  - A [command line application](./export) to export the data from the names service.
+ - A [clojure package](./test-system) to export the data from the names service.
+   For more info, see the [README](./test-system/README.md).
 
 More general code features are:
  - User authentication (against the wormbase.org google organisation)
