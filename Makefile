@@ -9,6 +9,9 @@ WB_ACC_NUM := 357210185381
 VERSION ?= $(shell clj -A:spit-version -v | jq .version)
 ARTIFACT_NAME ?= $(shell git describe --tags --abbrev=0)
 FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${VERSION}
+# Set AWS (EB) profile env vars if undefined
+AWS_EB_PROFILE ?= ${AWS_PROFILE}
+AWS_PROFILE ?= ${AWS_EB_PROFILE}
 
 define print-help
         $(if $(need-help),$(warning $1 -- $2))
@@ -50,7 +53,7 @@ docker-build: clean build \
               $(call print-help,docker-build, "Create docker container")
 
 .PHONY: docker-ecr-login
-docker-ecr-login: $(call print-help,docker-ecr-login,"Login to ECR")
+docker-ecr-login: $(call print-help,docker-ecr-login [AWS_PROFILE=<profile_name>],"Login to ECR")
 	docker login -u AWS -p "$(shell aws ecr get-login-password)" https://${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
 
 .PHONY: docker-push-ecr
@@ -68,9 +71,9 @@ docker-tag: $(call print-help,docker-tag,\
 		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
 
 .PHONY: eb-create
-eb-create: $(call print-help,eb-create,\
+eb-create: $(call print-help,eb-create [AWS(_EB)?_PROFILE=<profile_name>] [AWS_IAM_UNAME=<iam_username>],\
 	    "Create an ElasticBeanStalk environment using \
-	     the Docker platofrm.")
+	     the Docker platform.")
 	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
 	                             || aws iam get-user --query "User.UserName"))
 	@test ${AWS_IAM_UNAME} || (\
@@ -83,25 +86,26 @@ eb-create: $(call print-help,eb-create,\
 	        --cname="wormbase-names"
 
 .PHONY: eb-deploy
-eb-deploy: $(call print-help,eb-deploy,"Deploy the application using ElasticBeanstalk.")
+eb-deploy: $(call print-help,eb-deploy [AWS_EB_PROFILE=<profile_name>],"Deploy the application using ElasticBeanstalk.")
 	@eb use wormbase-names
 	@eb deploy
 
 .PHONY: eb-env
-eb-setenv: $(call print-help,eb-env,\
+eb-setenv: $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>],\
 	     "Set enviroment variables for the \
 	      ElasticBeanStalk environment")
-	@eb setenv WB_DB_URI="${WB_DB_URI}" \
+	@eb setenv \
+		WB_DB_URI="${WB_DB_URI}" \
 		_JAVA_OPTIONS="-Xmx14g" \
 		AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
 		AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
 		-e "${PROJ_NAME}"
 
 .PHONY: eb-local
-eb-local: docker-ecr-login $(call print-help,eb-local,\
+eb-local: docker-ecr-login $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>],\
 			     "Runs the ElasticBeanStalk/docker \
 			      build and run locally.")
-	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI} --profile ${AWS_EB_PROFILE}
+	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI}
 
 .PHONY: run
 run: $(call print-help,run,"Run the application in docker (locally).")
@@ -128,7 +132,7 @@ deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
                 "Deploy the application to the AWS container registry.")
 
 .PHONY: vc-release
-vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to release the applicaton.")
+vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,"Perform the Version Control tasks to release the applicaton.")
 	@echo "Edit version of application in pom.xml to match:"
 	@clj -A:release --without-sign ${LEVEL}
 	@clj -A:spit-version
@@ -137,7 +141,7 @@ vc-release: $(call print-help,vc-release,"Perform the Version Control tasks to r
 
 
 .PHONY: release
-release: deploy-ecr $(call print-help,release,"Release the applicaton.")
+release: deploy-ecr $(call print-help,release [AWS_PROFILE=<profile_name>],"Release the applicaton.")
 	@git archive ${ARTIFACT_NAME} -o target/app.zip
 	@zip -u target/app.zip Dockerrun.aws.json
 
@@ -146,5 +150,5 @@ run-tests: $(call print-help,run-tests,"Run all tests.")
 	@clj -A:datomic-pro:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
-run-dev-webserver: $(call print-help,run-dev-webserver,"Run a development webserver.")
+run-dev-webserver: $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri>,"Run a development webserver.")
 	@clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service

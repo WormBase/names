@@ -223,12 +223,12 @@ git push --follow-tags
 $EDITOR pom.xml
 
 # Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
-make release
+make release [AWS_PROFILE=<profile_name>]
 
 # Deploy the application to an EB environmnent.
 # Ensure to specify the correct environment name, in order to prevent
 # accidental deployments to the production environment!
-eb deploy <env-name>
+[AWS_EB_PROFILE=<profile_name>] eb deploy <env-name>
 ```
 
 ### Deploying the IDs library
