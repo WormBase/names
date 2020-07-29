@@ -71,10 +71,16 @@ docker-tag: $(call print-help,docker-tag,\
 eb-create: $(call print-help,eb-create,\
 	    "Create an ElasticBeanStalk environment using \
 	     the Docker platofrm.")
+	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
+	                             || aws iam get-user --query "User.UserName"))
+	@test ${AWS_IAM_UNAME} || (\
+		echo "Failed to retrieve IAM user-name. Define IAM username as AWS_IAM_UNAME arg." \
+		&& exit 1 \
+	)
 	@eb create wormbase-names \
-		--region=us-east-1 \
-		--tags="CreatedBy=${AWS_EB_PROFILE},Role=RestAPI" \
-		--cname="wormbase-names"
+	        --region=us-east-1 \
+	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
+	        --cname="wormbase-names"
 
 .PHONY: eb-deploy
 eb-deploy: $(call print-help,eb-deploy,"Deploy the application using ElasticBeanstalk.")
