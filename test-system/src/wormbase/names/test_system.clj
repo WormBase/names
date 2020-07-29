@@ -189,7 +189,7 @@
                              :change-set-name cs-name})))
 
 (defn cfn-stack-ready?
-  "Return true iif the datomic tranasctors CloudFormation stack is ready to use."
+  "Return true if the datomic tranasctors CloudFormation stack is ready to use."
   [creds stack-name]
   (= (cfn-stack-status creds stack-name) "UPDATE_COMPLETE"))
 
