@@ -186,6 +186,26 @@ Ensure you've installed the following software on your system to enable building
 * [awsebcli][10]
 
 ### Deploying the application (REST API + client) <a id="deploying-application"></a>
+
+#### First time setup
+Before being able to deploy for the first time (after creating a new local clone of the repository),
+a local EB environment must be configured.
+
+The `--profile` is optional, but saves a default profile, which prevents
+you from having to provide your profile name as input argument or
+bash environment variable on every EB operation (if it's not "default").
+```bash
+eb init [--profile <aws-profile-name>]
+```
+This command will interactively walk you through saving some EB configurations in the
+`.elasticbeanstalk` directory. Provide the following parameters when asked for:
+* Default region: `us-east-1`
+* Application to use: `names`
+* Default environment: `wormbase-names-test` (this prevents accidental deployement to the production environment)
+* CodeCommit?: `N`
+	
+
+#### Update release & deployment
 Deploying the main application is a 3 step process:
  1. Release code - revision, push. (creates `resources/meta.edn` that's included in the build artefacts)
  2. Build application and deploy in the AWS Elastic Container Registry (ECR).
