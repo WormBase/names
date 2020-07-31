@@ -104,9 +104,8 @@ eb-deploy: eb-def-app-env $(call print-help,eb-deploy [PROJ_NAME=<eb-env-name>] 
 	@eb deploy ${PROJ_NAME}
 
 .PHONY: eb-env
-eb-setenv: $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>],\
-	     "Set enviroment variables for the \
-	      ElasticBeanStalk environment")
+eb-setenv: $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-uri>] [PROJ_NAME=<eb-env-name>],\
+	     "Set enviroment variables for the ElasticBeanStalk environment")
 	@eb setenv \
 		WB_DB_URI="${WB_DB_URI}" \
 		_JAVA_OPTIONS="-Xmx14g" \
@@ -115,13 +114,13 @@ eb-setenv: $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>],\
 		-e "${PROJ_NAME}"
 
 .PHONY: eb-local
-eb-local: docker-ecr-login $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>],\
+eb-local: docker-ecr-login $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>] [PORT=<port>] [WB_DB_URI=<datomic-uri>],\
 			     "Runs the ElasticBeanStalk/docker \
 			      build and run locally.")
 	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI}
 
 .PHONY: run
-run: $(call print-help,run,"Run the application in docker (locally).")
+run: $(call print-help,run [WB_DB_URI=<datomic-uri>] [PORT=<port>] [PROJ_NAME=<docker-project-name>],"Run the application in docker (locally).")
 	@docker run \
 		--name ${PROJ_NAME} \
 		--publish-all=true \
@@ -134,7 +133,7 @@ run: $(call print-help,run,"Run the application in docker (locally).")
 		${ECR_REPO_NAME}:${ARTIFACT_NAME}
 
 .PHONY: docker-clean
-docker-clean: $(call print-help,docker-clean,\
+docker-clean: $(call print-help,docker-clean [PROJ_NAME=<docker-project-name>],\
                "Stop and remove the docker container (if running).")
 	@docker stop ${PROJ_NAME}
 	@docker rm ${PROJ_NAME}
