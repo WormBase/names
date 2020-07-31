@@ -228,9 +228,12 @@ $EDITOR pom.xml
 make release [AWS_PROFILE=<profile_name>]
 
 # Deploy the application to an EB environmnent.
-# Ensure to specify the correct environment name, in order to prevent
-# accidental deployments to the production environment!
-[AWS_EB_PROFILE=<profile_name>] eb deploy <env-name>
+# Before execution:
+# * Ensure to specify the correct EB environment name, in order to prevent
+#   accidental deployments to the production environment!
+# * Check if the hard-coded WB_DB_URI default (see MakeFile) applies.
+#   If not, define WB_DB_URI to point to the appropriate datomic DB.
+make eb-deploy PROJ_NAME=<env-name> [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
 ```
 
 ### Deploying the IDs library

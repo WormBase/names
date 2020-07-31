@@ -1,8 +1,11 @@
 ECR_REPO_NAME := wormbase/names
-EBX_CONFIG := .ebextensions/app-env.config
-WB_DB_URI ?= $(shell sed -rn 's|value:(.*)|\1|p' \
-                  ${EBX_CONFIG} | tr -d " " | head -n 1)
-PROJ_NAME := "wormbase-names"
+EB_APP_ENV_FILE := app-env.config
+PROJ_NAME ?= "wormbase-names"
+ifeq ($(PROJ_NAME), "wormbase-names")
+	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
+else
+	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+endif
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
@@ -70,25 +73,35 @@ docker-tag: $(call print-help,docker-tag,\
 	@docker tag ${ECR_REPO_NAME}:${VERSION} \
 		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
 
+.PHONY: eb-def-app-env
+eb-def-app-env: $(call print-help,eb-def-app-env [WB_DB_URI=<datomic-db-uri>],\
+	    "Define the ElasticBeanStalk app-environment config file.")
+ifndef WB_DB_URI
+	$(error WB_DB_URI not set! Define datomic-DB-URI as WB_DB_URI arg)
+endif
+	@cp ebextensions-templates/${EB_APP_ENV_FILE} .ebextensions/
+	@sed -i -r 's~(WB_DB_URI:\s+)".*"~\1"'"${WB_DB_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+
 .PHONY: eb-create
-eb-create: $(call print-help,eb-create [AWS(_EB)?_PROFILE=<profile_name>] [AWS_IAM_UNAME=<iam_username>],\
-	    "Create an ElasticBeanStalk environment using \
-	     the Docker platform.")
+eb-create: eb-def-app-env $(call print-help,eb-create [AWS(_EB)?_PROFILE=<profile_name>] \
+		[AWS_IAM_UNAME=<iam_username>] [PROJ_NAME=<eb-env-name>] [WB_DB_URI=<datomic-db-uri>],\
+	    "Create an ElasticBeanStalk environment using the Docker platform.")
 	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
 	                             || aws --profile ${AWS_PROFILE} iam get-user --query "User.UserName"))
 	@test ${AWS_IAM_UNAME} || (\
 		echo "Failed to retrieve IAM user-name. Define IAM username as AWS_IAM_UNAME arg." \
 		&& exit 1 \
 	)
-	@eb create wormbase-names \
+	@eb create ${PROJ_NAME} \
 	        --region=us-east-1 \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
-	        --cname="wormbase-names"
+	        --cname="${PROJ_NAME}"
 
 .PHONY: eb-deploy
-eb-deploy: $(call print-help,eb-deploy [AWS_EB_PROFILE=<profile_name>],"Deploy the application using ElasticBeanstalk.")
-	@eb use wormbase-names
-	@eb deploy
+eb-deploy: eb-def-app-env $(call print-help,eb-deploy [PROJ_NAME=<eb-env-name>] \
+		[AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-db-uri>],\
+		"Deploy the application using ElasticBeanstalk.")
+	@eb deploy ${PROJ_NAME}
 
 .PHONY: eb-env
 eb-setenv: $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>],\
