@@ -75,7 +75,7 @@ eb-create: $(call print-help,eb-create [AWS(_EB)?_PROFILE=<profile_name>] [AWS_I
 	    "Create an ElasticBeanStalk environment using \
 	     the Docker platform.")
 	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
-	                             || aws iam get-user --query "User.UserName"))
+	                             || aws --profile ${AWS_PROFILE} iam get-user --query "User.UserName"))
 	@test ${AWS_IAM_UNAME} || (\
 		echo "Failed to retrieve IAM user-name. Define IAM username as AWS_IAM_UNAME arg." \
 		&& exit 1 \
