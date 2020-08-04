@@ -63,7 +63,7 @@ make release
 ### Update Datomic transactors
 For instructions on how to update the datomic transactors
 so they would use a new release of the IDs library,
-see the [wormbase-architecture/transactor README](https://github.com/WormBase/wormbase-architecture/tree/develop/transactor#rolling-updates-change-set).
+see the [wormbase-architecture/transactor README](https://github.com/WormBase/wormbase-architecture/tree/develop/transactor#rolling-updates-console).
 
 ### Update the main name-service application dependency
 Update the main name-service to use the new version of the `wormbase/ids` dependency by:
