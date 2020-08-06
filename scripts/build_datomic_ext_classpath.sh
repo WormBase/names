@@ -1,4 +1,4 @@
-#!/bin/bash -o pipefail
+#!/bin/bash
 
 # build the classpath for the datomic transactor using tools.deps
 if [ -z "$CONSOLE_DEVICE" ]; then
@@ -29,10 +29,7 @@ fi
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version \"$ARTIFACT_VERSION\"}}}"
 
 DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS" | sed 's|:|\n|g' | grep "wormbase/ids")
-if [ $? -ne 0 ]; then
-    print_log "Building Classpath failed. Aborting."
-    exit 1
-fi
-print_log "DEPS: $DEPS"
+print_log "DEPS:"
+print_log "$DEPS"
 
 echo $DEPS
