@@ -5,8 +5,10 @@ if [ -z "$CONSOLE_DEVICE" ]; then
     CONSOLE_DEVICE=/dev/console
 fi
 
-aws_console () {
+print_log () {
     local msg=$1;
+    #Print logs to STDERR and to AWS console (System Log)
+    >&2 echo $1
     echo $1 > $CONSOLE_DEVICE
 }
 
@@ -16,13 +18,13 @@ ARTIFACT_INFO=$(curl -s -H 'accept: application/json' https://clojars.org/api/ar
 ARTIFACT_NAME=$(echo $ARTIFACT_INFO | $JQ '"\(.group_name)/\(.jar_name)"' | tr -d '"')
 ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[0].version)"')
 
-aws_console "ARTIFACT NAME: $ARTIFACT_NAME"
-aws_console "ARTIFACT VERSION: $ARTIFACT_VERSION"
+print_log "ARTIFACT NAME: $ARTIFACT_NAME"
+print_log "ARTIFACT VERSION: $ARTIFACT_VERSION"
 
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
 
 DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS" | sed 's|:|\n|g' | grep "wormbase/ids")
-aws_console "DEPS:"
-aws_console "$DEPS"
+print_log "DEPS:"
+print_log "$DEPS"
 
 echo $DEPS
