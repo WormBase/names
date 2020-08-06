@@ -29,7 +29,6 @@ fi
 TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version \"$ARTIFACT_VERSION\"}}}"
 
 DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS" | sed 's|:|\n|g' | grep "wormbase/ids")
-print_log "DEPS:"
-print_log "$DEPS"
+print_log "DEPS: $DEPS"
 
 echo $DEPS
