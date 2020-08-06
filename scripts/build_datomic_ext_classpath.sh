@@ -16,12 +16,17 @@ JQ="/usr/local/bin/jq"
 CLOJURE="/usr/local/bin/clojure"
 ARTIFACT_INFO=$(curl -s -H 'accept: application/json' https://clojars.org/api/artifacts/wormbase/ids)
 ARTIFACT_NAME=$(echo $ARTIFACT_INFO | $JQ '"\(.group_name)/\(.jar_name)"' | tr -d '"')
-ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.recent_versions[0].version)"')
 
 print_log "ARTIFACT NAME: $ARTIFACT_NAME"
-print_log "ARTIFACT VERSION: $ARTIFACT_VERSION"
 
-TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version $ARTIFACT_VERSION}}}"
+if [ -z "$ARTIFACT_VERSION" ]; then
+    ARTIFACT_VERSION=$(echo $ARTIFACT_INFO | $JQ '"\(.latest_version)"' | tr -d '"')
+    print_log "ARTIFACT VERSION (latest): $ARTIFACT_VERSION"
+else
+    print_log "ARTIFACT VERSION (env): $ARTIFACT_VERSION"
+fi
+
+TRANSACTOR_DEPS="{:deps {$ARTIFACT_NAME {:mvn/version \"$ARTIFACT_VERSION\"}}}"
 
 DEPS=$($CLOJURE -Spath -Sdeps "$TRANSACTOR_DEPS" | sed 's|:|\n|g' | grep "wormbase/ids")
 print_log "DEPS:"
