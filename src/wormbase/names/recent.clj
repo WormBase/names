@@ -33,7 +33,7 @@
              [(tx-ids ?log ?start ?end) [?tx ...]]
              [?tx :provenance/how ?how]
              (filter-events ?tx ?needle)
-             [(tx-data ?log ?tx) [[?e]]]])
+             [(tx-data ?log ?tx) [[?e _ _ _ _]]]])
 
 (defn query-activities
   ([db log rules ^Date from ^Date until how]

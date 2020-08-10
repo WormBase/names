@@ -1,33 +1,35 @@
 # wormbase-names
 
-This repository provides:
- - A web app that facilitates the sharing of identifiers and names of a subset of WormBase data types.
- - A shared library (functions used within the datomic transactor, and the web app)
- - A command line application to export the data from the names service.
+The main functionality of this repository is to provide a web service that
+facilitates the sharing of identifiers and names of a subset of WormBase data types.  
+The web service comprises of:
+ - A REST API (+ swagger documentation) for reading and manipulating data from the service (full CRUD support).
+   Main code to be found [here](./src/wormbase).
+ - [A Web interface](./client), providing forms to perform operations via the REST API.
 
-The web app comprises:
+This repository also contains:
+ - [A clojure library](./ids) `wormbase.ids` that is used by the REST API to perform atomic
+   (identifier) operations within a Datomic transactor process.
+ - A [command line application](./export) to export the data from the names service.
+ - A [clojure package](./test-system) to export the data from the names service.
+   For more info, see the [README](./test-system/README.md).
 
- - A REST API for manipulating WormBase data types
-   - Recording new entities, updating, changing entity status and more.
- - A Web interface, providing forms to perform operations via the REST API.
- - A library `wormbase.ids` that is used by the REST API to perform atomic
-   identifier operations within a datomic transactor process.
- - Schema and database related functions
+More general code features are:
+ - User authentication (against the wormbase.org google organisation)
+ - Provenance provisioning (who, when, where and why) with every write operation,
+   modelled as attributes on the "transaction entity" in Datomic.
+ - Schema and database related functions  
    The schema and related database functions are intended to evolve to
    eventually become the "central" database within the WormBase
    architecture.
- - A basic user interface to interact with the name-service.
  - Serialisation of events to a queueing system, such that those
    events can be "replayed" into various ACeDB databases.
- - User authentication (agianst the wormbase.org google organisation)
-
-With every write operation, this names service provides provenance (who, when, where and why),
-which is modelled as attributes on the "transaction entity".
 
 ## Development
 
 ### Coding style
-The coding style for this project tries to adhere to both the [Clojure style guide][16] and [how to ns][17], both of which are supported by the source code linter [clj-kondo][18].
+The coding style for all clojure code in this project tries to adhere to both the [Clojure style guide][16]
+ and [how to ns][17], both of which are supported by the source code linter [clj-kondo][18].
 
 To run the source coder linter:
 
@@ -37,73 +39,27 @@ for d in src test; do
 done
 ```
 
-### Setup
+### Requirements
 
-Ensure you've installed the following software on your system:
-
-[clojure CLI_tools][4]
-
-[nvm][7]
-
-[docker][8]
-
-[awscli][9]
-
-[awsebcli][10]
+Ensure you've installed the following software on your system to enable local building, testing and troubleshooting:
+* [clojure CLI_tools][4]
+* [nvm][7]
+* [docker][8]
+* [awscli][9]
 
 #### Docker credentials
 
-The Makefile target `ecr-login` command will, by default, store the
+The [Makefile](./Makefile) target `ecr-login` command will, by default, store the
 authentication token un-encrypted in the file: `~/.docker/config.json`.
 
-There is a plugin that can be used to use a store to save these tokens encrypted,
+There is a plugin that can be used to save these tokens encrypted in a store,
 but varies depending on operating system.
 
 For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
 which uses a GPG2 key to encrypt tokens.
 
 
-### Setup client app
-Setup client app **either by [making a production build of the client app](#building-the-client-app) or running a client development server**, as show here:
-
-1. Ensure the back-end application is running and an API endpoint is available locally (see [below](#Run-the-application-locally))
-
-2. Ensure `client/package.json` has proxy configured to point at the backend API, at the correct port (default 4010).
-
-3. Run:
-```bash
-cd client/
-nvm use # optionally `nvm install` to install the latest compatible version of node.js
-npm install
-npm run start
-```
-  - This will start service serving the client assets on port 3000.
-
-4. Finally, ensure the authentication callback URL at [Google Cloud Console](https://console.developers.google.com/apis/credentials?project=wormbase-names-service&folder=&supportedpurview=project) is configured to match the client development server configuration. Under OAuth 2.0 Client IDs, click _"WormBase Names Service (Web)"_ and have a look at the _"Authorized JavaScript origins"_ section.
-
-Notes:
-- **Node.js and NPM***
-  - This client requires compatible versions of node.js and NPM, as specified in the `engines` property [package.json](client/package.json). The easiest way to use the right version of node.js and NPM, is through the [Node Version Manage (nvm)][7].
-  - To invoke `nvm use` automatically, setup Deeper Shell Integration by following the nvm documentation.
-- **Create-React-App**
-  - `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
-- **Port:**
-	- To run the client on a different port:
-```bash
-PORT=[PORT] npm run start
-```
-- **Dependencies:**
-	- Most errors about missing dependencies can be resolved with `npm install`, which installs dependencies into the `./node_modules` directory. It's safe to delete the content of `./node_modules` and/or re-run `npm install`.
-	- Be sure to checking in changes in `package-lock.json`, which specifies the exact versions of npm packages installed, and allows package installation to happen in a reproducible way based on `package-lock.json` with `npm ci`.
-- **Mock:**
-	- Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
-	- Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
-	- `shouldMock` defaults to the `REACT_APP_SHOULD_MOCK` environment variable, when it's not passed in as an argument.
-- **Directory structure**
-	- [create-react-app][11] is responsible for the directory structure of `client/` except `client/src`, and relies it staying this way.
-	- `client/src` primarily consists of `containers` (React components involving business logic) `components/elements` (React components involving only appearance and/or UI logic).
-
-### Run the application locally
+### REST API
 Run with:
 
 ```bash
@@ -121,32 +77,79 @@ Run with `make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri]`.
 
 To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json) (standardly 4010 is used).
 
+#### Tools
 
-### Tools
-
-#### Running a Clojure REPL
+##### Running a Clojure REPL
 
 Examples
 
- Emacs + CIDER :
- ```bash
-  # Example. `:mvn/version` of nrepl changes frequently, CIDER/emacs will prompt when upgrade required.
-clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.23.0"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware]"
- ```
+  - Emacs + CIDER :
+```bash
+# Example. `:mvn/version` of nrepl changes frequently, CIDER/emacs will prompt when upgrade required.
+clj -A:datomic-pro:webassets:dev -Sdeps '{:deps {cider/cider-nrepl {:mvn/version "0.23.0"}}}' -m nrepl.cmdline --middleware "[cider.nrepl/ cider-middleware]"
+```
 
- "Vanilla" REPL:
- ```bash
- clj -A:datomic-pro:webassets:dev -m nrepl.cmdline
- ```
+  - "Vanilla" REPL:
+```bash
+clj -A:datomic-pro:webassets:dev -m nrepl.cmdline
+```
 
 From time to time it is good to check for outdated dependencies.
 This can be done via the following command:
-```
+```bash
 clj -A:outdated
 ```
 
+### Client app (web interface)
+Correct functionality of the client app can be tested in two ways:
+- Running a client development server (during development), to test individual functionality. See [instructions below](#local-rest).
+- Making a production build of the client app. Failure during this process means fixes will be needed before deployment.
+```bash
+# performs a npm clean install of dependencies based on package-lock.json
+make ui-build
+```
 
-### Testing
+To start up a local client development server:<a id="local-rest"></a>
+1. Ensure the back-end application is running and an API endpoint is available locally (see [above](#REST-API))
+
+2. Ensure `client/package.json` has proxy configured to point at the backend API, at the correct port (default 4010).
+
+3. Run (bash):
+```bash
+cd client/
+nvm use # optionally `nvm install` to install the latest compatible version of node.js
+npm install
+npm run start
+```
+  - This will start service serving the client assets on port 3000.
+
+4. Finally, ensure the authentication callback URL at [Google Cloud Console](https://console.developers.google.com/apis/credentials?project=wormbase-names-service&folder=&supportedpurview=project) is configured to match the client development server configuration. Under OAuth 2.0 Client IDs, click _"WormBase Names Service (Web)"_ and have a look at the _"Authorized JavaScript origins"_ section.
+
+Notes:
+- **Node.js and NPM**
+  - This client requires compatible versions of node.js and NPM, as specified in the `engines` property [package.json](client/package.json). The easiest way to use the right version of node.js and NPM, is through the [Node Version Manager (nvm)][7].
+  - To invoke `nvm use` automatically, setup Deeper Shell Integration by following the nvm documentation.
+- **Create-React-App**
+  - `client/` is bootstrapped with [create-react-app][11], where you can find out more about its setup and capability
+- **Port:**
+	- To run the client on a different port:
+```bash
+PORT=[PORT] npm run start
+```
+- **Dependencies:**
+	- Most errors about missing dependencies can be resolved with `npm install`, which installs dependencies into the `./node_modules` directory. It's safe to delete the content of `./node_modules` and/or re-run `npm install`.
+	- Be sure to checking in changes in `package-lock.json`, which specifies the exact versions of npm packages installed, and allows package installation to happen in a reproducible way based on `package-lock.json` with `npm ci`.
+- **Mock:**
+	- Ajax calls through `mockFetchOrNot` function allows one to provide a mock implementation of an API call, in addition to the native API call.
+	- Whether the mock implementation or the native implementation is invoked is determined by the 3rd argument (`shouldMock`) passed to mockFetchOrNot function.
+	- `shouldMock` defaults to the `REACT_APP_SHOULD_MOCK` environment variable, when it's not passed in as an argument.
+- **Directory structure**
+	- [create-react-app][11] is responsible for the directory structure of `client/` except `client/src`, and relies it staying this way.
+	- `client/src` primarily consists of
+		- `containers`: React components involving business logic
+		- `components/elements`: React components involving only appearance and/or UI logic
+
+## Testing
 Use built-in testing utilities as provided by your environment, else use the `make` command
 below to run all tests.
 Ensure to run all tests and check they pass before submitting new pull requests.
@@ -155,70 +158,110 @@ Ensure to run all tests and check they pass before submitting new pull requests.
 make run-tests
 ```
 
-## Releases
+## Release & deployment
+As described in [the intro](#wormbase-names), the name service exists of several components,
+for which release versioning and deployment steps differ:
+- Main application (REST API + web client)
+  - Versioned through the repository git tags
+  - Deployed through AWS EB (& ECR)
+- IDs clojure library
+  - Manually versioned through the `ids/pom.xml` file (and clojars)
+  - Library deployed to [clojars](https://clojars.org/wormbase/ids/) (thin jar)
+  - Datomic transactors (which use this library) deployed through AWS CloudFormation
+- Export package
+  - Not versioned
+  - Deployed to S3 (uber jar)
 
-Releasing is a 4 step process:
+When release & deployment is required to both the IDs library and the main application,
+the correct order of deployment is to deploy the IDs library first, then update the transactors
+and lastly the main application.
 
- 1. Release code - revision, push. creates `resources/meta.edn` that's included in the build artefacts).
+### Requirements
+
+Ensure you've installed the following software on your system to enable building and deployment:
+* [clojure CLI_tools][4]
+* [nvm][7]
+* [docker][8]
+* [awscli][9]
+* [awsebcli][10]
+
+### Deploying the application (REST API + client) <a id="deploying-application"></a>
+
+#### First time setup
+Before being able to deploy for the first time (after creating a new local clone of the repository),
+a local EB environment must be configured.
+
+The `--profile` is optional, but saves a default profile, which prevents
+you from having to provide your profile name as input argument or
+bash environment variable on every EB operation (if it's not "default").
+```bash
+eb init [--profile <aws-profile-name>]
+```
+This command will interactively walk you through saving some EB configurations in the
+`.elasticbeanstalk` directory. Provide the following parameters when asked for:
+* Default region: `us-east-1`
+* Application to use: `names`
+* Default environment: `wormbase-names-test` (this prevents accidental deployement to the production environment)
+* CodeCommit?: `N`
+	
+
+#### Update release & deployment
+Deploying the main application is a 3 step process:
+ 1. Release code - revision, push. (creates `resources/meta.edn` that's included in the build artefacts)
  2. Build application and deploy in the AWS Elastic Container Registry (ECR).
  3. Deploy the application in AWS ElasticBeanstalk.
 
-
-### Commands
-```bash
-# Build the client application to check it works.
-make ui-build
-
-# specify $LEVEL as one of <major|minor|patch>
-make vc-release LEVEL=$LEVEL
-
-git push --follow-tags
-
-# print the version being deployed
-make show-version
-
-# Update <version> in pom.xml to match.
-$EDITOR pom.xml
-
-# Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
-make release
-
-# Deploy the application to the selected ElasticBeanStalk environmnent
-# The environment that will deployed to will be marked by
-# an asterisk in the output of the command:
-# > eb list
-# use: eb use <env-name> to change this.
-
-eb deploy
-```
-
-## Client application
-
-### Development
-The Reach (Javascript) client application can be run using:
-```bash
-cd ./client
-nvm use
-npm run start
-```
-This will start service serving the client assets on port 3000,
-the server should be started with the `PORT` environment variable set to *4010*.
-
-### Building
-```bash
-cd client
-nvm use
-npm ci   # a clean install of dependencies based on package-lock.json
-npm run build
-```
-
-For a full list of tasks, type:
-
+The release and deployment process heavily uses `make` for its automation.
+For a full list of all available `make` commands, type:
 ```bash
 make help
 ```
 
-### Importing from GeneACe export data
+To deploy an update for the main application, change your working dir
+to the repository root dir and execute the following commands (bash):
+```bash
+# Build the client application to ensure no errors occur.
+make ui-build
+
+# Generate/update the pom.xml file (not version-controlled)
+clj -Spom
+
+# Specify $LEVEL as one of <major|minor|patch>.
+# This will bump the x, y or z version number.
+# SLF4J messages can be ignored (warnings, not errors).
+# Clashing jar warnings can be ignored.
+make vc-release LEVEL=$LEVEL
+
+# print the version being deployed and confirm it's correctness (e.g. prevent DIRTY deployments to production)
+make show-version
+
+# Once confirmed to be correct, push the created tag to github
+git push --follow-tags
+
+# Update the pom.xml to
+#   * match the version reported by make as <version> tag value
+#   * have "wormbase" (unquoted) as <groupId> tag value
+#   * have "names" (unquoted) as <artifactId> tag value
+$EDITOR pom.xml
+
+# Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
+make release [AWS_PROFILE=<profile_name>]
+
+# Deploy the application to an EB environmnent.
+# Before execution:
+# * Ensure to specify the correct EB environment name, in order to prevent
+#   accidental deployments to the production environment!
+# * Check if the hard-coded WB_DB_URI default (see MakeFile) applies.
+#   If not, define WB_DB_URI to point to the appropriate datomic DB.
+make eb-deploy PROJ_NAME=<env-name> [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
+```
+
+### Deploying the IDs library
+For instruction about developing, building and deploying the IDs library sub-project, see the sub-project's [README](./ids/README.md).
+
+## Other tasks
+
+### Importing GeneACe export data in datomic DB
 
 Conventionally, the export files have been named in the form: `DDMMYYY_<topic>`,
 and we give the datomic database a corresponding name.
@@ -226,10 +269,11 @@ and we give the datomic database a corresponding name.
 The best way to run the imports is against a local `datomic:ddb-local` or `datomic:dev` transactor.
 
 e.g: dynamodb-local
-
+```bash
 export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019 # The Dynamo DB table here is `WSNames`
+```
 
-See [here][14] for creating a local DynamoDB database.
+See [here][14] for instructions on creating a local DynamoDB database.
 
 #### Import genes
 
@@ -261,7 +305,7 @@ import pipeline takes ~5 mins to run.
 We do not attempt to replay all Sequence features from an export,
 and instead just record the latest ID and status.
 
-From a fresh database install, enter the following from a REPL session
+From a fresh database install, enter the following in a REPL session
 after exporting the `WB_DB_URI` environment variable appropriately:
 
 ```clojure
@@ -299,18 +343,18 @@ Ensure to configure the application via the `.ebextensions/app-env.config` file 
 After deploying a release, verify that the URI has changed in the ElasticBeanStalk configuration section.
 
 ### Exporting names data to CSV
-The primary function of the export is for reconcilation of the datomic
-names db against an ACeDB database.
+The primary function of the export output is for reconcilation of the datomic
+names db against an ACeDB database.  
 The IDs, names and status of each entity in the database are output as CSV.
 
-A jar file is deployed to the WormBase S3 account for convenience.
+A jar file is deployed to the WormBase S3 bucket (`s3://wormbase/names/exporter/wb-names-export.jar`) for convenience.
 
 ```bash
 # export genes
-java -cp <path-to-worrmbase-names-export.jar> clojure.main -m wormbase.names.export genes  /tmp/genes.csv
+java -cp <path-to-wormbase-names-export.jar> clojure.main -m wormbase.names.export genes /tmp/genes.csv
 
 # export variations
-java -cp <path-to-worrmbase-names-export.jar> clojure.main -m wormbase.names.export variations  /tmp/variations.csv
+java -cp <path-to-wormbase-names-export.jar> clojure.main -m wormbase.names.export variations /tmp/variations.csv
 ```
 
 The exporter can also be run from a checkout of this repository:
@@ -326,14 +370,10 @@ clojure -A:dev:datomic-pro -m wormbase.names.export variations  /tmp/variations.
 ```
 
 ## License
-EPL (Eclipse Public License)
+EPL (Eclipse Public License)  
 Copyright ©  WormBase 2018, 2019
 
-[1]: https://github.com/rkneufeld/conformity
-[2]: https://clojure.org/community/downloads
-[3]: https://clojure.org/about/spec
 [4]: https://clojure.org/guides/getting_started
-[6]: https://nodejs.org/en/
 [7]: https://github.com/nvm-sh/nvm
 [8]: https://docs.docker.com/install/
 [9]: https://docs.aws.amazon.com/cli/latest/userguide/installing.html
@@ -342,7 +382,6 @@ Copyright ©  WormBase 2018, 2019
 [12]: https://github.com/docker/docker-credential-helpers/releases
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
 [14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
-[15]: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
 [16]: https://github.com/bbatsov/clojure-style-guide
 [17]: https://stuartsierra.com/2016/clojure-how-to-ns.html
 [18]: https://github.com/borkdude/clj-kondo

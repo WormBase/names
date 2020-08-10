@@ -1,5 +1,18 @@
 # Change-log
-#
+
+# [current-beta]
+ - Improved & complemented docs
+ - Deployment scripts & procedure fixes & updates (#310)
+
+# [1.4.2]
+ - Updated version of wormbase/ids to 0.6.1
+ 
+# [1.4.1]
+ - Revert attempt to display historic gene merges that produced no
+   data change for the gene being merged into (gh issue #306).
+ 
+# [1.4.0]
+ - Fix: Merge history bugfix (gh issue #306).
 
 ## [1.3.0]
  - Fix: Provenance association in person update API.

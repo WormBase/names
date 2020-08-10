@@ -54,9 +54,11 @@
                  (default :gene/cgc-name "")
                  (default :gene/sequence-name "")
                  {:gene/status [[:db/ident]]
-                  :gene/biotype [[:db/ident]]}]
+                  :gene/biotype [[:db/ident]]
+                  :gene/species [[:species/latin-name]]}]
                {:gene/biotype abbrev-ident
-                :gene/status abbrev-ident}))
+                :gene/status abbrev-ident
+                :gene/species :species/latin-name}))
 
 (defn export-entities
   "Export all records for a given entity type to a CSV file."

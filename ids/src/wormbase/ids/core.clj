@@ -148,7 +148,7 @@
     (concat
      [['wormbase.ids.core/cas-batch from-id {:gene/status :gene.status/dead}]
       ['wormbase.ids.core/cas-batch into-id {:gene/biotype into-biotype}]
-      [:db/add from-id m-attr into-id]]
+      [:db/add into-id m-attr from-id]]
      (when (uncloned-gene? into-gene)
        [[:db/retract from-id :gene/sequence-name from-seq-name]
         [:db/cas into-id :gene/sequence-name nil from-seq-name]]))))

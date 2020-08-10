@@ -27,10 +27,11 @@ target/
 .cpcache/
 
 # Elastic Beanstalk Files
-Dockerrun.aws.json
+.ebextensions/app-env.config
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+Dockerrun.aws.json
 /docker/app.jar
 /.dockerignore
 
@@ -51,3 +52,6 @@ data/
 
 # Source code linter cache
 /.clj-kondo/.cache/
+
+# VS Code calva extension configs
+.calva
