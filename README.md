@@ -60,20 +60,20 @@ which uses a GPG2 key to encrypt tokens.
 
 
 ### REST API
-Run with:
+To be able to run the REST API locally, one must define the (local) datomic DB URI as the env variable `WB_DB_URI`.
 
-```bash
-export WB_DB_URI="[datomic-uri]"
-```
-
-An example of `[datomic-uri]` may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI.
-For a persistent database (like `ddb-local`), a transactor needs to be configured, in which case the `[datomic-uri]` is based the your transactor configuration and database name. Make sure to define the ```DATOMIC_EXT_CLASSPATH``` env variable to point to the wormbase/ids jar when setting up the transactor (see [these instruction](./ids/README.md#Build) to build the ids jar).
+An example of a valid datomic URI may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI.
+For a persistent database (like `ddb-local`), a transactor needs to be configured, in which case the `WB_DB_URI` is based on your transactor configuration and database name. Make sure to define the `DATOMIC_EXT_CLASSPATH` env variable to point to the wormbase/ids jar when setting up the transactor (see [these instruction](./ids/README.md#Build) to build the ids jar).
 
 ```bash
 export DATOMIC_EXT_CLASSPATH="$HOME/git/wormbase-names/ids/target/wbids.jar"
 ```
 
-Run with `make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri]`.
+When using a `ddb-local` transactor, ensure to have set AWS environment variables with mock credentials,
+then run the following command to launch the local REST API service:
+```bash
+make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri]
+```
 
 To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json) (standardly 4010 is used).
 
