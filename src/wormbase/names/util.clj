@@ -174,7 +174,7 @@
     response))
 
 (defn qualify-keys
-  "Transform `mapping` such all non-qualfiied keys have the namespace `entity-type` applied."
+  "Transform `mapping` such all non-qualfied keys have the namespace `entity-type` applied."
   [mapping entity-type & {:keys [skip-keys]
                           :or {skip-keys #{}}}]
   (reduce-kv (fn [m k v]
@@ -189,7 +189,7 @@
              mapping))
 
 (defn unqualify-keys
-  "Transform `mapping` such that all qualfiied keys with namespace `entity-type` are unqualfieid."
+  "Transform `mapping` such that all qualfied keys with namespace `entity-type` are unqualfied."
   [mapping entity-type]
   (reduce-kv (fn [m k v]
                (if (and (qualified-keyword? k)
