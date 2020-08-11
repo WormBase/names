@@ -227,10 +227,13 @@
        {:message "Errant program logic."}))))
 
 (defn undo-merge-gene [request into-id from-id]
+  ;; Search for :gene/merges both ways, because the
+  ;; :gene/merges attribute changed side on commit 688d830a
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?into ?from
                      :where
-                     [?from :gene/merges ?into ?tx]]
+                     (or [?from :gene/merges ?into ?tx]
+                         [?into :gene/merges ?from ?tx])]
                    (-> request :db d/history)
                    [:gene/id into-id]
                    [:gene/id from-id])]
