@@ -170,19 +170,19 @@
   "Perform a batch update.
 
   - uiident : Uniquely Identifing Ident - A datomic entity attribute.
-  - item-pull-expr: a datomic pull expression describing the data for each entity
-                    that's fetched as defaults when the data isn't supplied in the request.
+  - get-info-fn: a fn to pull the datomic data for each entity
+                 that's fetched as defaults when the data isn't supplied in the request.
   - event-type: A datomic ident that identifies the kind of event.
   - spec: The spec desribing the shape of the data.
   - conformer: function taking spec and data, responsible for coercion of input data.
   - validator: function to validate the coerced data.
   - request: the HTTP request."
-  [uiident item-pull-expr event-type spec _ validator request]
+  [uiident get-info-fn event-type spec _ validator request]
   (let [ent-ns (namespace uiident)
         data-transform (fn valdiating-conformer [_ data]
                          (let [{db :db} request
                                qdata (map #(wnu/qualify-keys % ent-ns) data)
-                               db-data (map #(wdb/pull db item-pull-expr (find % uiident)) qdata)
+                               db-data (map #(get-info-fn db (find % uiident)) qdata)
                                transformed (->> qdata
                                                 (map merge db-data)
                                                 (map wne/transform-ident-ref-values))]
@@ -293,9 +293,9 @@
        :handler (fn handle-update [request]
                   (let [ent-ident (keyword entity-type "id")
                         event-ident (keyword "event" (str "update-" entity-type))
-                        pull-expr (wne/make-summary-pull-expr entity-type)]
+                        summary-fn (partial wne/pull-ent-summary entity-type)]
                     (update-entities ent-ident
-                                     pull-expr
+                                     summary-fn
                                      event-ident
                                      ::wse/update-batch
                                      wnu/conform-data

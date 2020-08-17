@@ -5,6 +5,7 @@
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
    [ring.util.http-response :refer [bad-request! created ok]]
+   [wormbase.db :as wdb]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
@@ -96,9 +97,11 @@
        :x-name ::species-summary
        :responses (wnu/http-responses-for-read {:schema ::wss/item})
        :handler (fn handle-summary [request]
-                  (let [summarize (wne/summarizer (partial wne/identify ::wss/identifier "species")
-                                                  '[*]
-                                                  #{})]
+                  (let [db          (:db request)
+                        get-info-fn #(wdb/pull %1 '[*] %2)
+                        summarize   (wne/summarizer (partial wne/identify ::wss/identifier "species")
+                                                    get-info-fn
+                                                    #{})]
                     (summarize request identifier)))}
       :put
       {:summary "Update species details."
