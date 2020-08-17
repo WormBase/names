@@ -77,7 +77,7 @@
 
 (defn identify
   "Identify a gene given an `identifier` string.
-  Return a tuple of lookup-ref and corrsponding entity from the database,
+  Return a tuple of lookup-ref and corresponding entity from the database,
   or nil if none found."
   [request ^String identifier]
   (let [{db :db} request
