@@ -139,9 +139,8 @@
 (defn- validate-merge-request
   [request into-gene-id from-gene-id into-biotype]
   (let [db (:db request)
-        [[into-lur into-gene]
-         [from-lur from-gene]] (map (partial identify request)
-                                    [into-gene-id from-gene-id])]
+        [into-lur into-gene] (identify request into-gene-id)
+        [from-lur from-gene] (identify request from-gene-id)]
     (when (some nil? [into-gene from-gene])
       (throw (ex-info "Missing gene in database, cannot merge."
                       {:missing (if-not into-gene
@@ -254,7 +253,7 @@
             from-gene (get-gene-info dba from-gid)
             into-gene (get-gene-info dba into-gid)]
         (ok {:updated (wnu/unqualify-keys into-gene "gene")
-             :merges (:gene/merges from-gene)
+             :merges (:gene/merges into-gene)
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
       (internal-server-error
