@@ -188,9 +188,21 @@
   (let [names ((juxt :gene/biotype :gene/sequence-name) target)]
     (every? nil? names)))
 
-(defn get-gene-info [data-db gid]
+(defn get-gene-info
+  "Function to pull gene info for a given gene from a given db.
+   Input args: [db gid :fmt-output]
+     db                  Datomic db object to pull data from
+     gid                 Identifier to pull data for (can be a datomic expression)
+     :fmt-output         Optional named flag (boolean) to indicating wether or not
+                         to clean the returned object structure and elide some
+                         internal datomic keys and values."
+  [data-db gid & {:keys [fmt-output]}]
+
   (let
-    [hist-db           (d/history data-db)
+    [;Default values
+     fmt-output        (if (nil? fmt-output) true fmt-output)
+
+     hist-db           (d/history data-db)
      summary-pull-expr '[* {:gene/biotype [[:db/ident]]
                             :gene/species [[:species/latin-name]]
                             :gene/status [[:db/ident]]
@@ -226,13 +238,16 @@
      merged-into (map #(second %) (filter #(and
                                             (= (:db/ident (:gene/status (first  %))) :gene.status/dead)
                                             (= (:db/ident (:gene/status (second %))) :gene.status/live))
-                                          merged-gene-pairs))]
+                                          merged-gene-pairs))
+     cleaned-pull-results (if fmt-output
+                            (wdb/fmt-pull-result data-db pull-results)
+                            pull-results)]
 
     ;Ensure (count merged-from) + (count merged-into) = (count all-merges).
     ; otherwise unexpected merge-gene statusses occurred (one dead one live expected)
     (when (not= (+ (count merged-from) (count merged-into)) (count all-merges))
       (internal-server-error {:message "Errant program logic."}))
-    (cond-> (dissoc (wdb/fmt-pull-result data-db pull-results) :gene/merges :gene/_merges)
+    (cond-> (dissoc cleaned-pull-results :gene/merges :gene/_merges)
       (not-empty merged-from) (assoc :merged-from (map #(:gene/id %) merged-from))
       (not-empty merged-into) (assoc :merged-into (map #(:gene/id %) merged-into)))))
 
@@ -250,8 +265,8 @@
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
       (let [[into-gid from-gid] (map :gene/id [into-g from-g])
-            from-gene (get-gene-info dba from-gid)
-            into-gene (get-gene-info dba into-gid)]
+            from-gene (get-gene-info dba from-gid :fmt-output true)
+            into-gene (get-gene-info dba into-gid :fmt-output true)]
         (ok {:updated (wnu/unqualify-keys into-gene "gene")
              :merges (:gene/merges into-gene)
              :statuses {from-id (:gene/status from-gene)
@@ -305,7 +320,7 @@
                     (wne/transform-ident-ref-values))
           {biotype :gene/biotype product :product} cdata
           {p-seq-name :gene/sequence-name
-           p-biotype :gene/biotype} product
+           p-biotype  :gene/biotype} product
           prov (wnp/assoc-provenance request payload :event/split-gene)
           species (get-in from-gene [:gene/species :species/latin-name])
           new-data (merge {:gene/species (s/conform :gene/species species)}
@@ -324,8 +339,7 @@
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
           from-gene-lur (find from-gene :gene/id)
-          p-gene (wdb/pull dba '[:gene/id] p-gene-lur)
-          p-gene-id (:gene/id p-gene)
+          p-gene-id (wdb/pull dba '[:gene/id] p-gene-lur)
           p-gene-lur* [:gene/id p-gene-id]]
       (->> [p-gene-lur* from-gene-lur]
            (map (fn [x]
@@ -388,7 +402,7 @@
                   (let [new-gene (wne/creator :gene/id
                                               (partial wnu/conform-data-drop-label ::wsg/new)
                                               :event/new-gene
-                                              get-gene-info
+                                              #(get-gene-info %1 %2 :fmt-output true)
                                               validate-names)]
                     (new-gene request)))}})))
 
@@ -451,7 +465,7 @@
        :responses (wnu/http-responses-for-read {:schema ::wsg/summary})
        :handler (fn [request]
                   ((wne/summarizer identify
-                                   get-gene-info
+                                   #(get-gene-info %1 %2 :fmt-output true)
                                    #{:gene/splits :gene/merges})
                    request
                    identifier))}
@@ -469,7 +483,7 @@
                                                  :gene/id
                                                  (partial wnu/conform-data ::wsg/update)
                                                  :event/update-gene
-                                                 get-gene-info
+                                                 #(get-gene-info %1 %2 :fmt-output true)
                                                  validate-names
                                                  resolve-refs-to-dbids)
                         data (some-> request :body-params :data)]

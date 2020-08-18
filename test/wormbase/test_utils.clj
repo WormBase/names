@@ -414,4 +414,4 @@
 (def ->json wnrf/encode-content)
 
 (defn query-gene-batch [db bid]
-  (wnu/query-batch db bid wng/summary-pull-expr))
+  (wnu/query-batch db bid #(wng/get-gene-info %1 %2 :fmt-output false)))

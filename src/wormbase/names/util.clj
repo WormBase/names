@@ -149,8 +149,8 @@
   (let [cdata (conform-data spec data)]
     (second cdata)))
 
-(defn query-batch [db bid pull-expr]
-  (map (partial d/pull db pull-expr)
+(defn query-batch [db bid query-info-fn]
+  (map #(query-info-fn db %)
        (d/q '[:find [?e ...]
               :in $ ?bid
               :where
