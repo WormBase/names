@@ -255,20 +255,19 @@
   (let [{conn :conn payload :body-params} request
         data (:data payload)
         prov (wnp/assoc-provenance request payload :event/merge-genes)
-        [[into-lur into-g] [from-lur from-g]] (validate-merge-request
-                                               request
-                                               into-id
-                                               from-id
-                                               (:biotype data))
+        [[into-lur _] [from-lur _]] (validate-merge-request
+                                     request
+                                     into-id
+                                     from-id
+                                     (:biotype data))
         into-biotype (keyword "biotype" (:biotype data))
         txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
-      (let [[into-gid from-gid] (map :gene/id [into-g from-g])
-            from-gene (get-gene-info dba from-gid :fmt-output true)
-            into-gene (get-gene-info dba into-gid :fmt-output true)]
+      (let [from-gene (get-gene-info dba from-lur :fmt-output true)
+            into-gene (get-gene-info dba into-lur :fmt-output true)]
         (ok {:updated (wnu/unqualify-keys into-gene "gene")
-             :merges (:gene/merges into-gene)
+             :merges (:merged-into from-gene)
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
       (internal-server-error
