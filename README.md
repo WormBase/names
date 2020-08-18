@@ -152,7 +152,8 @@ PORT=[PORT] npm run start
 ## Testing
 Use built-in testing utilities as provided by your environment, else use the `make` command
 below to run all tests.
-Ensure to run all tests and check they pass before submitting new pull requests.
+Ensure to run all tests and check they pass before committing large code changes,
+before submitting new pull requests and before deploying to any live AWS environment (test or production).
 
 ```bash
 make run-tests
