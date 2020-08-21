@@ -132,16 +132,22 @@
 (defn merge-genes
   "Merge two genes.
 
-  Transfer (retract and add) sequence-name from the \"from-gene\" if the \"into-gene\" is uncloned.
-  The \"from-gene\" will be marked as dead.
+  - Transfer (retract and add) sequence-name from the \"from-gene\" if the \"into-gene\" is uncloned.
+  - Transfer (add) other-names from the \"from-gene\" to the \"into-gene\".
+  - The \"from-gene\" will be marked as dead.
 
   Return transaction data."
   [db from-id into-id into-biotype]
   (let [m-attr :gene/merges
         attrs-signifying-cloned [:gene/biotype :gene/sequence-name]
-        from-gene (d/pull db [:gene/sequence-name] from-id)
-        into-gene (d/pull db attrs-signifying-cloned into-id)
+        from-gene (d/pull db [:gene/sequence-name :gene/other-names] from-id)
+        into-gene (d/pull db (conj attrs-signifying-cloned :gene/other-names) into-id)
         from-seq-name (:gene/sequence-name from-gene)
+        from-other-names (:gene/other-names from-gene)
+        ;;fn to build other-names txs
+        build-tx-fn (fn [id attr ^String val] (vec [:db/add id attr val]))
+        ;;build other-names transaction statements
+        other-names-txes (map #(build-tx-fn into-id :gene/other-names %) from-other-names)
         uncloned-gene? (fn uncloned? [gene]
                          (let [cloned-values ((apply juxt attrs-signifying-cloned) gene)]
                            (every? nil? cloned-values)))]
@@ -149,6 +155,7 @@
      [['wormbase.ids.core/cas-batch from-id {:gene/status :gene.status/dead}]
       ['wormbase.ids.core/cas-batch into-id {:gene/biotype into-biotype}]
       [:db/add into-id m-attr from-id]]
+     other-names-txes
      (when (uncloned-gene? into-gene)
        [[:db/retract from-id :gene/sequence-name from-seq-name]
         [:db/cas into-id :gene/sequence-name nil from-seq-name]]))))
