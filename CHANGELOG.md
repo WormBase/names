@@ -4,6 +4,7 @@
  - Improved & complemented docs
  - Deployment scripts & procedure fixes & updates (#310)
  - Follow-up fixes (#308, #313) on merge reference side swap (done for #306 fix)
+ - Fixed repetitive (un)split and (un)merge transaction selection
 
 ## [1.4.2]
  - Updated version of wormbase/ids to 0.6.1

@@ -276,7 +276,7 @@
 (defn undo-merge-gene [request into-id from-id]
   ;; Search for :gene/merges both ways, because the
   ;; :gene/merges attribute changed side on commit 688d830a
-  (if-let [tx (d/q '[:find ?tx .
+  (if-let [tx (d/q '[:find (max ?tx) .
                      :in $ ?into ?from
                      :where
                      (or [?from :gene/merges ?into ?tx]
@@ -361,7 +361,7 @@
       :else [(if added? :db/retract :db/add) e a v])))
 
 (defn undo-split-gene [request from-id into-id]
-  (if-let [tx (d/q '[:find ?tx .
+  (if-let [tx (d/q '[:find (max ?tx) .
                      :in $ ?from ?into
                      :where
                      [?from :gene/splits ?into ?tx]]
