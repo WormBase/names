@@ -23,7 +23,7 @@
 (defn query-batch [db bid entity-type]
   (let [status-attr (keyword entity-type "status")
         pull-expr (conj '[*] {status-attr [:db/ident]})]
-    (wnu/query-batch db bid pull-expr)))
+    (wnu/query-batch db bid #(d/pull %1 pull-expr %2))))
 
 (t/deftest batch-empty
   (t/testing "Empty batches are rejected."

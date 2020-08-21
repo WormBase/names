@@ -4,6 +4,7 @@
    [compojure.api.sweet :as sweet]
    [ring.util.http-response :refer [bad-request! created ok]]
    [spec-tools.core :as stc]
+   [wormbase.db :as wdb]
    [wormbase.ids.batch :as wbids-batch]
    [wormbase.names.batch.generic :as wnbg]
    [wormbase.names.entity :as wne]   
@@ -75,13 +76,14 @@
        :parameters {:body-params {:data ::wsg/update-batch
                                   :prov ::prov}}
        :handler (fn update-handler [request]
-                  (wnbg/update-entities :gene/id
-                                        [{:gene/species [[:species/latin-name]]}]
-                                        :event/update-gene
-                                        ::wsg/update-batch
-                                        wnu/conform-data
-                                        (partial wnv/validate-names request)
-                                        request))}
+                  (let [get-info-fn #(wdb/pull %1 [{:gene/species [[:species/latin-name]]}] %2)]
+                    (wnbg/update-entities :gene/id
+                                          get-info-fn
+                                          :event/update-gene
+                                          ::wsg/update-batch
+                                          wnu/conform-data
+                                          (partial wnv/validate-names request)
+                                          request)))}
       :post
       {:summary "Assign identifiers and associate names, creating new genes."
        :x-name ::batch-new-genes

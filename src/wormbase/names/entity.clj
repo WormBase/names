@@ -57,10 +57,14 @@
              data
              data))
 
-(defn make-summary-pull-expr [entity-type]
-  (let [pe '[*]
-        attr-spec {(keyword entity-type "status") [:db/ident]}]
-    (conj pe attr-spec)))
+(defn pull-ent-summary
+  "Pull an entity's attributes, dereferencing the entity-type's status."
+  [entity-type db eid]
+  (let
+    [pe '[*]
+     attr-spec {(keyword entity-type "status") [:db/ident]}
+     pull-exp  (conj pe attr-spec)]
+    (wdb/pull db pull-exp eid)))
 
 (defn identify
   "Return an lookup ref and entity for a given identifier.
@@ -108,7 +112,7 @@
 
 (defn creator
   "Return an endpoint handler for new entity creation."
-  [uiident conform-spec-fn event summary-pull-expr & [validate]]
+  [uiident conform-spec-fn event get-info-fn & [validate]]
   (fn handle-new [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
@@ -135,7 +139,7 @@
             dba (:db-after tx-res)]
         (when dba
           (let [new-id (wdb/extract-id tx-res uiident)
-                emap (wdb/pull dba summary-pull-expr [uiident new-id])
+                emap  (get-info-fn dba [uiident new-id])
                 emap* (reduce-kv (fn [m k v]
                                    (if (qualified-keyword? v)
                                      (assoc m k (name v))
@@ -158,13 +162,13 @@
            data)))
 
 (defn updater
-  [identify-fn uiident conform-spec-fn event summary-pull-expr & [validate ref-resolver-fn]]
+  [identify-fn uiident conform-spec-fn event get-info-fn & [validate ref-resolver-fn]]
   (fn handle-update [request identifier]
     (let [{db :db conn :conn payload :body-params} request
           ent-ns (namespace uiident)
           [lur entity] (identify-fn request identifier)]
       (when entity
-        (let [ent-data (wdb/pull db summary-pull-expr lur)
+        (let [ent-data (get-info-fn db lur)
               names-validator (if validate
                                 (partial validate request)
                                 identity)
@@ -190,7 +194,7 @@
                 txes [['wormbase.ids.core/cas-batch lur cdata] prov]
                 tx-result @(d/transact-async conn txes)]
             (when-let [db-after (:db-after tx-result)]
-              (if-let [updated (wdb/pull db-after summary-pull-expr lur)]
+              (if-let [updated (get-info-fn db-after lur)]
                 (ok {:updated (wnu/unqualify-keys updated ent-ns)})
                 (not-found
                  (format "%s '%s' does not exist" ent-ns (last lur)))))))))))
@@ -287,7 +291,7 @@
                                   :precondition-failure-msg precond-fail-msg)]
     (resurrect request identifier)))
 
-(defn summarizer [identify-fn pull-expr ref-attrs]
+(defn summarizer [identify-fn get-info-fn ref-attrs]
   (fn handle-summary [request identifier]
     (let [{db :db conn :conn} request
           log (d/log conn)
@@ -301,7 +305,7 @@
                                 (assoc m k (name v))
                                 (assoc m k v)))
                             {}
-                            (-> (wdb/pull db pull-expr lur)
+                            (-> (get-info-fn db lur)
                                 (wnu/unqualify-keys ent-ns)))
             prov (map
                   (fn [prov-data]
@@ -567,11 +571,11 @@
                   (let [id-ident (keyword entity-type "id")
                         event-ident (keyword "event" (str "new-" entity-type))
                         conformer (partial wnu/conform-data ::wse/new)
-                        spe (make-summary-pull-expr entity-type)
+                        summary-fn (partial pull-ent-summary entity-type)
                         new-entity (creator id-ident
                                             conformer
                                             event-ident
-                                            spe
+                                            summary-fn
                                             validate-names)]
                     (new-entity request)))}})
     (sweet/context "/:identifier" []
@@ -598,12 +602,12 @@
                     (let [id-ident (keyword entity-type "id")
                           update-spec ::wse/update
                           event-ident (keyword "event" (str "update-" entity-type))
-                          summary-pull-expr (make-summary-pull-expr entity-type)
+                          summary-fn (partial pull-ent-summary entity-type)
                           update-handler (updater (partial identify ::wse/identifier entity-type)
                                                   id-ident
                                                   (partial wnu/conform-data update-spec)
                                                   event-ident
-                                                  summary-pull-expr
+                                                  summary-fn
                                                   validate-names)]
                       (update-handler request identifier)))}
         :get
@@ -611,9 +615,9 @@
          :x-name ::about-entity
          :responses (wnu/http-responses-for-read {:schema ::wse/summary})
          :handler (fn handle-entity-summary [request]
-                    (let [summary-pull-expr (make-summary-pull-expr entity-type)
+                    (let [summary-fn (partial pull-ent-summary entity-type)
                           summarize (summarizer (partial identify ::wse/identifier entity-type)
-                                                summary-pull-expr
+                                                summary-fn
                                                 #{})]
                       (summarize request identifier)))}})
       (sweet/context "/resurrect" []

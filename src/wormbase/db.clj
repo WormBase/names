@@ -84,9 +84,15 @@
          (remove (fn [[e _ _ tx _]]
                    (= e tx)))
          (map (fn [[e a v tx added?]]
-                (if-let [fact (fact-mapper e a v tx added?)]
-                  fact
-                  [(if added? :db/retract :db/add) e a v]))))
+                (let [fact (fact-mapper e a v tx added?)]
+                  (cond
+                    (vector? fact)     fact
+                    (true? fact)       [(if added? :db/retract :db/add) e a v]
+                    (not (nil? fact))  (throw (ex-info "fact-mapper returned invalid type"
+                                                       {:tx tx
+                                                        :type ::invert-tx-problem
+                                                        :return-type (type fact)}))))))
+         (remove nil?))
         conj
         [provenance]
         datoms)
@@ -95,7 +101,7 @@
                         :type ::invert-tx-problem
                         :range (d/tx-range log t (inc t))})))))
   ([log tx provenance]
-   (invert-tx log tx provenance (constantly nil))))
+   (invert-tx log tx provenance (constantly true))))
 
 (defn extract-id [tx-result identity-kw]
   (some->> (:tx-data tx-result)
@@ -126,9 +132,10 @@
 
 (def txfn-schema (partial edn-definition "tx-fns"))
 
+(defn fmt-pull-result [db result]
+  (->> result
+       (wu/elide-importer-info)
+       (wu/elide-db-internals db)))
+
 (defn pull [db expr & args]
-  (let [format-result (fn [result]
-                        (->> result
-                             (wu/elide-importer-info)
-                             (wu/elide-db-internals db)))]
-    (format-result (apply d/pull db expr args))))
+  (fmt-pull-result db (apply d/pull db expr args)))

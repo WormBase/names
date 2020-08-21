@@ -12,7 +12,6 @@
                                     internal-server-error
                                     not-found not-found!]]
    [wormbase.db :as wdb]
-   [wormbase.util :as wu]
    [wormbase.names.entity :as wne]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]
@@ -78,7 +77,7 @@
 
 (defn identify
   "Identify a gene given an `identifier` string.
-  Return a tuple of lookup-ref and corrsponding entity from the database,
+  Return a tuple of lookup-ref and corresponding entity from the database,
   or nil if none found."
   [request ^String identifier]
   (let [{db :db} request
@@ -94,14 +93,6 @@
     (when (seq result)
       (when-let [ent (d/entity db result)]
         [result ent]))))
-
-(def summary-pull-expr '[* {:gene/biotype [[:db/ident]]
-                            :gene/species [[:species/latin-name]]
-                            :gene/status [[:db/ident]]
-                            [:gene/merges :as :merged-into] [[:gene/id]]
-                            [:gene/_merges :as :merged-from] [[:gene/id]]
-                            [:gene/splits :as :split-into] [[:gene/id]]
-                            [:gene/_splits :as :split-from] [[:gene/id]]}])
 
 (defmethod wnp/resolve-change :gene/id
   [db change]
@@ -148,9 +139,8 @@
 (defn- validate-merge-request
   [request into-gene-id from-gene-id into-biotype]
   (let [db (:db request)
-        [[into-lur into-gene]
-         [from-lur from-gene]] (map (partial identify request)
-                                    [into-gene-id from-gene-id])]
+        [into-lur into-gene] (identify request into-gene-id)
+        [from-lur from-gene] (identify request from-gene-id)]
     (when (some nil? [into-gene from-gene])
       (throw (ex-info "Missing gene in database, cannot merge."
                       {:missing (if-not into-gene
@@ -198,39 +188,99 @@
   (let [names ((juxt :gene/biotype :gene/sequence-name) target)]
     (every? nil? names)))
 
-(defn merged-info [db id & more-ids]
-  (some->> (cons id more-ids)
-           (map (partial vector :gene/id))
-           (map (partial d/pull db summary-pull-expr))
-           (wu/elide-db-internals db)))
+(defn get-gene-info
+  "Function to pull gene info for a given gene from a given db.
+   Input args: [db gid :fmt-output]
+     db                  Datomic db object to pull data from
+     gid                 Identifier to pull data for (can be a datomic expression)
+     :fmt-output         Optional named flag (boolean) to indicating wether or not
+                         to clean the returned object structure and elide some
+                         internal datomic keys and values."
+  [data-db gid & {:keys [fmt-output]}]
+
+  (let
+    [;Default values
+     fmt-output        (if (nil? fmt-output) true fmt-output)
+
+     hist-db           (d/history data-db)
+     summary-pull-expr '[* {:gene/biotype [[:db/ident]]
+                            :gene/species [[:species/latin-name]]
+                            :gene/status [[:db/ident]]
+                            [:gene/merges] [[:gene/id] [:db/id]]
+                            [:gene/_merges] [[:gene/id] [:db/id]]
+                            [:gene/splits :as :split-into] [[:gene/id]]
+                            [:gene/_splits :as :split-from] [[:gene/id]]}]
+     pull-results       (d/pull data-db summary-pull-expr gid)
+
+     ;; Strategy for merged into/from detection:
+     ;; * Get the merged gene-pairs' statusses at moment of (right after) merge transaction
+     ;; * One gene should be dead & one live. Dead gene merged into live gene
+     gene-dbid       (:db/id pull-results)
+     all-merges         (concat (:gene/merges pull-results) (:gene/_merges pull-results))
+     all-merge-dbids    (map #(:db/id %) all-merges)
+     ;;Retrieve tupples of merged gene statusses
+     merged-gene-pairs (map #(let
+                              [;Retrieve the merge transaction-ID for gene-dbid and merge-dbid
+                               tx-id (d/q '[:find (max ?tx) .
+                                            :in $ ?e ?merge-e
+                                            :where (or [?e :gene/merges ?merge-e ?tx true]
+                                                       [?merge-e :gene/merges ?e ?tx true])]
+                                          hist-db gene-dbid %)
+                             ;Get the merged genes' statusses at moment of (right after) merge
+                               db-at-merge (d/as-of data-db tx-id)]
+                               (d/pull-many db-at-merge '[:db/id :gene/id {:gene/status [[:db/ident]]}] [gene-dbid %]))
+                            all-merge-dbids)
+     ;;Assign merge genes to merged-from or merged-into based on gene-pair dead/alive status
+     merged-from (map #(second %) (filter #(and
+                                            (= (:db/ident (:gene/status (first  %))) :gene.status/live)
+                                            (= (:db/ident (:gene/status (second %))) :gene.status/dead))
+                                          merged-gene-pairs))
+     merged-into (map #(second %) (filter #(and
+                                            (= (:db/ident (:gene/status (first  %))) :gene.status/dead)
+                                            (= (:db/ident (:gene/status (second %))) :gene.status/live))
+                                          merged-gene-pairs))
+     cleaned-pull-results (if fmt-output
+                            (wdb/fmt-pull-result data-db pull-results)
+                            pull-results)]
+
+    ;Ensure (count merged-from) + (count merged-into) = (count all-merges).
+    ; otherwise unexpected merge-gene statusses occurred (one dead one live expected)
+    (when (not= (+ (count merged-from) (count merged-into)) (count all-merges))
+      (internal-server-error {:message "Errant program logic."}))
+    (cond-> (dissoc cleaned-pull-results :gene/merges :gene/_merges)
+      (not-empty merged-from) (assoc :merged-from (map #(:gene/id %) merged-from))
+      (not-empty merged-into) (assoc :merged-into (map #(:gene/id %) merged-into)))))
 
 (defn merge-genes [request into-id from-id]
   (let [{conn :conn payload :body-params} request
         data (:data payload)
         prov (wnp/assoc-provenance request payload :event/merge-genes)
-        [[into-lur into-g] [from-lur from-g]] (validate-merge-request
-                                               request
-                                               into-id
-                                               from-id
-                                               (:biotype data))
+        [[into-lur _] [from-lur _]] (validate-merge-request
+                                     request
+                                     into-id
+                                     from-id
+                                     (:biotype data))
         into-biotype (keyword "biotype" (:biotype data))
         txes [['wormbase.ids.core/merge-genes from-lur into-lur into-biotype] prov]
         tx-result @(d/transact-async conn txes)]
     (if-let [dba (:db-after tx-result)]
-      (let [[into-gid from-gid] (map :gene/id [into-g from-g])
-            [from-gene into-gene] (merged-info dba from-gid into-gid)]
+      (let [from-gene (get-gene-info dba from-lur :fmt-output true)
+            into-gene (get-gene-info dba into-lur :fmt-output true)]
         (ok {:updated (wnu/unqualify-keys into-gene "gene")
-             :merges (:gene/merges from-gene)
+             :merges (:merged-into from-gene)
              :statuses {from-id (:gene/status from-gene)
                         into-id (:gene/status into-gene)}}))
       (internal-server-error
        {:message "Errant program logic."}))))
 
 (defn undo-merge-gene [request into-id from-id]
+  ;; Search for :gene/merges both ways, because the
+  ;; :gene/merges attribute changed side on commit 688d830a
   (if-let [tx (d/q '[:find ?tx .
                      :in $ ?into ?from
                      :where
-                     [?from :gene/merges ?into ?tx]]
+                     (or [?from :gene/merges ?into ?tx]
+                         [?into :gene/merges ?from ?tx])]
                    (-> request :db d/history)
                    [:gene/id into-id]
                    [:gene/id from-id])]
@@ -293,8 +343,7 @@
           tx-result @(d/transact-async conn txes)
           dba (:db-after tx-result)
           from-gene-lur (find from-gene :gene/id)
-          p-gene (wdb/pull dba summary-pull-expr p-gene-lur)
-          p-gene-id (:gene/id p-gene)
+          p-gene-id (wdb/pull dba '[:gene/id] p-gene-lur)
           p-gene-lur* [:gene/id p-gene-id]]
       (->> [p-gene-lur* from-gene-lur]
            (map (fn [x]
@@ -357,7 +406,7 @@
                   (let [new-gene (wne/creator :gene/id
                                               (partial wnu/conform-data-drop-label ::wsg/new)
                                               :event/new-gene
-                                              summary-pull-expr
+                                              #(get-gene-info %1 %2 :fmt-output true)
                                               validate-names)]
                     (new-gene request)))}})))
 
@@ -420,7 +469,7 @@
        :responses (wnu/http-responses-for-read {:schema ::wsg/summary})
        :handler (fn [request]
                   ((wne/summarizer identify
-                                   summary-pull-expr
+                                   #(get-gene-info %1 %2 :fmt-output true)
                                    #{:gene/splits :gene/merges})
                    request
                    identifier))}
@@ -438,7 +487,7 @@
                                                  :gene/id
                                                  (partial wnu/conform-data ::wsg/update)
                                                  :event/update-gene
-                                                 summary-pull-expr
+                                                 #(get-gene-info %1 %2 :fmt-output true)
                                                  validate-names
                                                  resolve-refs-to-dbids)
                         data (some-> request :body-params :data)]

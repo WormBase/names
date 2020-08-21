@@ -149,8 +149,8 @@
   (let [cdata (conform-data spec data)]
     (second cdata)))
 
-(defn query-batch [db bid pull-expr]
-  (map (partial d/pull db pull-expr)
+(defn query-batch [db bid query-info-fn]
+  (map #(query-info-fn db %)
        (d/q '[:find [?e ...]
               :in $ ?bid
               :where
@@ -174,7 +174,7 @@
     response))
 
 (defn qualify-keys
-  "Transform `mapping` such all non-qualfiied keys have the namespace `entity-type` applied."
+  "Transform `mapping` such all non-qualfied keys have the namespace `entity-type` applied."
   [mapping entity-type & {:keys [skip-keys]
                           :or {skip-keys #{}}}]
   (reduce-kv (fn [m k v]

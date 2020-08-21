@@ -109,7 +109,7 @@
 
 (s/def ::split-response (stc/spec
                          {:spec (s/keys :req-un [::updated ::created])
-                          :description "The resposne data from splitting a Gene."}))
+                          :description "The response data from splitting a Gene."}))
 
 (s/def ::live :gene/id)
 

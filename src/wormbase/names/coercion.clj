@@ -5,7 +5,7 @@
    [spec-tools.core :as st]))
 
 ;;; Modified copies of the compojure-api's coercion to prevent stripping of keys.
-;;; TODO!!: This neesd to be kept in sync with compojure-api releases if the implementation changes.
+;;; TODO!!: This needs to be kept in sync with compojure-api releases if the implementation changes.
 ;;;         Add developer documentation.
 
 (def string-transformer
