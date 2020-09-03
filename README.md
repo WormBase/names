@@ -245,6 +245,10 @@ git push --follow-tags
 #   * have "names" (unquoted) as <artifactId> tag value
 $EDITOR pom.xml
 
+# Before building the application, ensure docker (daemon) is running.
+# If not, start it. On Ubuntu you can do so with the following cmd:
+sudo service docker start
+
 # Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
 make release [AWS_PROFILE=<profile_name>]
 
