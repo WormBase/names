@@ -1,6 +1,8 @@
 # Change-log
 
 ## [current-beta]
+
+## [1.4.3]
  - Improved & complemented docs
  - Deployment scripts & procedure fixes & updates (#310, #311, #312)
  - Follow-up fixes (#308, #313) on merge reference side swap (done for #306 fix)
