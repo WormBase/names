@@ -71,7 +71,7 @@ docker-build: clean build \
 docker-ecr-login: \
                   $(call print-help,docker-ecr-login [AWS_PROFILE=<profile_name>],\
                   Login to ECR.)
-	docker login -u AWS -p "$(shell aws ecr get-login-password)" https://${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
+	docker login -u AWS -p "$(shell aws --profile ${AWS_PROFILE} ecr get-login-password)" https://${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
 
 .PHONY: docker-push-ecr
 docker-push-ecr: docker-ecr-login \
