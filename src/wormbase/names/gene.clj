@@ -347,13 +347,17 @@
            (zipmap [:created :updated])
            (created (str "/api/gene/" p-gene-id))))))
 
-(defn- invert-split-tx [db e a v _ added?]
+; Do not revert split product properties. Instead:
+;   * Kill the split product (status live => dead)
+;   * Revert any changes made to the origin gene (only!)
+(defn- invert-split-tx [db product-e e a _ _ _]
   (let [attr (d/ident db a)]
     (cond
-      (= attr :gene/status) [:db/cas e a v (d/entid db :gene.status/dead)]
-      (= attr :gene/id) [:db/add e a v]
-      (= attr :counter/gene) nil ;; don't change anything to do with the counter value.
-      :else [(if added? :db/retract :db/add) e a v])))
+      (= attr :counter/gene) nil ;; don't revert any counter changes
+      (= e product-e)        nil ;; don't revert split-product attributes
+      (= attr :gene/status)  nil ;; don't change gene-status, should be handled separately
+      :else true ;; let wdb/invert-tx handle the tx inversion
+      )))
 
 (defn undo-split-gene [request from-id into-id]
   (if-let [tx (d/q '[:find (max ?tx) .
@@ -364,17 +368,21 @@
                    [:gene/id from-id]
                    [:gene/id into-id])]
     (let [conn (:conn request)
+          db   (d/db conn)
+          product-eid (:db/id (d/pull db '[:db/id] [:gene/id into-id]))
           payload (get request :body-params {})
           prov (-> request
                    (wnp/assoc-provenance payload :event/undo-split-gene)
                    (merge {:db/id "datomic.tx"
                            :provenance/compensates tx
                            :provenance/why "Undoing split"}))
-          fact-mapper (partial invert-split-tx (d/db conn))
-          compensating-txes (wdb/invert-tx (d/log conn)
+          fact-mapper (partial invert-split-tx db product-eid)
+          compensating-txes (conj
+                             (wdb/invert-tx (d/log conn)
                                            tx
                                            prov
-                                           fact-mapper)]
+                                           fact-mapper)
+                             [:db/add product-eid :gene/status (d/entid db :gene.status/dead)])]
       @(d/transact-async conn compensating-txes)
       (ok {:live from-id :dead into-id}))
     (not-found {:message "No transaction to undo"})))
