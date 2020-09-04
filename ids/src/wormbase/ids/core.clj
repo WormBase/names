@@ -171,14 +171,17 @@
                          :gene/species [:species/latin-name]}
         pull-from-gene (partial d/pull db (conj '[*] pull-attr-specs))
         id-template (identifier-format db :gene/id)
-        new-data (map (fn [{:keys [from-id product-sequence-name product-biotype]}]
+        new-data (map (fn [{:keys [from-id product-sequence-name product-biotype product-other-names]}]
                         (let [from-gene (pull-from-gene from-id)
-                              from-species (:gene/species from-gene)]
-                          {:db/id product-sequence-name
-                           :gene/sequence-name product-sequence-name
-                           :gene/biotype product-biotype
-                           :gene/species (find from-species :species/latin-name)
-                           :gene/status :gene.status/live}))
+                              from-species (:gene/species from-gene)
+                              product {:db/id product-sequence-name
+                               :gene/sequence-name product-sequence-name
+                               :gene/biotype product-biotype
+                               :gene/species (find from-species :species/latin-name)
+                               :gene/status :gene.status/live}]
+                          (if (not (nil? product-other-names))
+                            (assoc product :gene/other-names product-other-names)
+                            product)))
                       xs)]
     (some->> xs
              (mapcat (fn [{:keys [from-id new-biotype product-sequence-name]}]

@@ -170,7 +170,9 @@
 (s/def ::new-biotype (s/nilable :gene/biotype))
 (s/def ::product-biotype :gene/biotype)
 (s/def ::product-sequence-name :gene/sequence-name)
-(s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]))
+(s/def ::product-other-names :gene/other-names)
+(s/def ::batch-split-item (s/keys :req-un [::from-id ::new-biotype ::product-sequence-name ::product-biotype]
+                                  :opt-un [::product-other-names]))
 (s/def ::split-gene-batch (stc/spec
                            {:spec (s/coll-of ::batch-split-item :min-count 1)
                             :description "A collection of mappings describing the genes to be split."}))
