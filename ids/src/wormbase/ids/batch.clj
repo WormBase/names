@@ -19,7 +19,7 @@
    [clojure.core :as cc]
    [clojure.set :as set]
    [datomic.api :as d]
-   [wormbase.ids.core :refer [attr-schema-unique? identifier-format]]))
+   [wormbase.ids.core :refer [identifier-format]]))
 
 (defn- assoc-prov
   "Attach an identifier to `prov` making this a mapping suitable for tracking provenance for a batch.
@@ -65,32 +65,32 @@
   (let [sp (assoc-prov prov)
         batch (partition-all batch-size coll)
         db (d/db conn)
-        init-tx-res (map->BatchResult {:tx-result {:db-after db} :errors nil})]
-    (let [result (reduce
-                  (partial processor-fn
-                           sp
-                           (fn [result xs]
-                             (when (get-in result [:tx-result :db-after])
-                               (attempt-batch result xs))))
-                  init-tx-res
-                  batch)]
-      (let [errors (-> result :errors seq)]
-        (when (seq errors)
-          (throw (ex-info "Errors during batch processing"
-                          {:errors errors
-                           :type ::db-errors}))))
-      (let [b-result (reduce (partial processor-fn
-                                      sp
-                                      (fn [_ xs]
-                                        (assoc result
-                                               :tx-result
-                                               @(d/transact-async conn xs))))
-                             (map->BatchResult {:tx-result {:db-after db}})
-                             batch)]
-        (when (get-in b-result [:tx-result :db-after])
-          (-> sp
-              (select-keys [:batch/id])
-              (set/rename-keys {:batch/id :id})))))))
+        init-tx-res (map->BatchResult {:tx-result {:db-after db} :errors nil})
+        result (reduce
+                (partial processor-fn
+                         sp
+                         (fn [result xs]
+                           (when (get-in result [:tx-result :db-after])
+                             (attempt-batch result xs))))
+                init-tx-res
+                batch)]
+    (let [errors (-> result :errors seq)]
+      (when (seq errors)
+        (throw (ex-info "Errors during batch processing"
+                        {:errors errors
+                         :type ::db-errors}))))
+    (let [b-result (reduce (partial processor-fn
+                                    sp
+                                    (fn [_ xs]
+                                      (assoc result
+                                             :tx-result
+                                             @(d/transact-async conn xs))))
+                           (map->BatchResult {:tx-result {:db-after db}})
+                           batch)]
+      (when (get-in b-result [:tx-result :db-after])
+        (-> sp
+            (select-keys [:batch/id])
+            (set/rename-keys {:batch/id :id}))))))
 
 (defn merge-genes
   "Merge genes.
