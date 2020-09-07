@@ -175,11 +175,9 @@
                       xs)]
     (some->> xs
              (mapcat (fn [{:keys [from-id new-biotype product-sequence-name]}]
-                       (let [from-gene (pull-from-gene from-id)
-                             curr-bt (d/entid db (->> (find pull-attr-specs :gene/biotype)
-                                                      (flatten)
-                                                      (get-in from-gene)))
-                             new-bt (or (d/entid db new-biotype) curr-bt)]
-                         [[:db/add from-id :gene/splits product-sequence-name]
-                          [:db/add from-id :gene/biotype curr-bt new-bt]])))
+                       (let [new-split-tx [[:db/add from-id :gene/splits product-sequence-name]]]
+                         (if-let [new-bt (d/entid db new-biotype)]
+                           (conj new-split-tx
+                                 [:db/add from-id :gene/biotype new-bt])
+                           new-split-tx))))
              (cons ['wormbase.ids.core/new id-template :gene/id new-data]))))

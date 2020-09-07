@@ -1,6 +1,7 @@
 # Change-log
 
 ## [current-beta]
+ - Fixed batch split API new-biotype argument processing (#319)
 
 ## [1.4.3]
  - Improved & complemented docs
