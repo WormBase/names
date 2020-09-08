@@ -6,7 +6,7 @@ export function pastTense(eventText = '') {
 }
 
 export function getActivityDescriptor(activityItem = {}, selfGeneId) {
-  const what = activityItem['what'];
+  const what = activityItem['what'] || '';
   const { statusChange, relatedGeneId } = (activityItem.changes || []).reduce(
     (result, change) => {
       const { attr, value, added } = change || {};
