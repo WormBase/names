@@ -227,11 +227,11 @@
 
 (defn retract-attr-vals
   "Retract values associated with attributes for a matching set of entities."
-  [uiident attr _ spec conformer request]
+  [uiident attr event spec conformer request]
   (let [{payload :body-params conn :conn} request
         ent-type (namespace uiident)
         data (:data payload)
-        prov (wnp/assoc-provenance request payload :event/remove-cgc-names)
+        prov (wnp/assoc-provenance request payload event)
         conformed (conformer spec data)]
     (if (s/invalid? conformed)
       (bad-request {:data data})
