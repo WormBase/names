@@ -198,7 +198,7 @@
   [conn uiident attr coll prov & {:keys [batch-size]
                                   :or {batch-size 100}}]
   (process-batch
-   (fn process-retract-data [sp transact-fn db items]
+   (fn [sp transact-fn db items]
      (when (and db (seq items))
        (some->> items
                 (map (fn [item]
