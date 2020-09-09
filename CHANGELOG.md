@@ -2,6 +2,7 @@
 
 ## [current-beta]
  - Fixed batch split API new-biotype argument processing (#319)
+ - Fixed UI history view for null events (#318)
 
 ## [1.4.3]
  - Improved & complemented docs
