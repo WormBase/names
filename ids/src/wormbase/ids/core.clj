@@ -5,6 +5,12 @@
    [clojure.walk :as w]
    [datomic.api :as d]))
 
+(def log-file "/home/mlp/logs/wormbase-ids-core.log")
+(spit log-file "")
+(defn debug-log
+  [log-str]
+  (spit log-file (str log-str "\n") :append true))
+
 (defn attr-schema-unique? [db attr]
   (try
     (let [s-attr (:db/unique (d/entity db attr))]
