@@ -194,17 +194,37 @@
    prov
    batch-size))
 
-(defn retract
-  [conn uiident attr coll prov & {:keys [batch-size]
+(defn adjust-attr
+  "Adjust (add/retract) `attr` values for entities identified by `uiident` with data provided in `coll`.
+
+  `conn` - The datomic connection.
+  `add` - Boolean indicating whether to add (true) or retract (false) value(s) to/from `attr`
+  `uiident` - The datomic `ident`
+              that uniquely identifies an entity for each mapping in `coll`.
+  `attr` - the datomic attribute name to add/retract value(s) to/from
+           for each mapping in `coll`.
+  `coll` - A sequence of maps, each should contain the key `uiident`,
+           uniquely identifiying the entity to update.
+  `prov` - the provenance to associate with each batch.
+
+  A unique identifier for the batch `:batch/id` will be attached to
+  the provenance for each batch to transact, and returned upon
+  successful completion. If no transactions are to be done (eg. no
+  changes detected), returns `nil`."
+  [conn ^Boolean add uiident attr coll prov & {:keys [batch-size]
                                   :or {batch-size 100}}]
   (process-batch
    (fn [sp transact-fn db items]
      (when (and db (seq items))
        (some->> items
-                (map (fn [item]
-                       (let [eid (find item uiident)
-                             value (attr item)]
-                         [:db/retract eid attr value])))
+                (mapcat (fn [item]
+                          (let [eid (find item uiident)
+                                value (attr item)
+                                dt-transact-fn (if add :db/add :db/retract)]
+                            (if (= (type value) clojure.lang.PersistentVector)
+                              (let [build-tx (fn [id attr ^String val] (vec [dt-transact-fn id attr val]))]
+                                (map #(build-tx eid attr %) value))
+                              [dt-transact-fn eid attr value]))))
                 (add-prov-maybe sp)
                 (transact-fn db))))
    conn

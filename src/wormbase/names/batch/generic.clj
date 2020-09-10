@@ -225,9 +225,19 @@
                         request)]
     (ok {resp-key result})))
 
-(defn retract-attr-vals
-  "Retract values associated with attributes for a matching set of entities."
-  [uiident attr event spec conformer request]
+(defn adjust-attr-vals
+  "Adjust (add/retract) values associated with attributes for a matching set of entities.
+
+   - uiident : The datomic `ident` that uniquely identifies
+               an entity for each mapping in the request.
+   - attr: the datomic attribute name to add/retract value(s) to/from
+           for each mapping in the request.
+   - event: A datomic ident that identifies the kind of event.
+   - spec: The spec desribing the shape of the data.
+   - conformer: function taking spec and data, responsible for coercion of input data.
+   - add: boolean indicating whether to add (true) or retract (false) values to/from `attr`.
+   - request: the HTTP request."
+  [uiident attr event spec conformer ^Boolean add request]
   (let [{payload :body-params conn :conn} request
         ent-type (namespace uiident)
         data (:data payload)
@@ -239,24 +249,26 @@
                            (map #(wnu/qualify-keys % ent-type))
                            (filter #(some? (attr %))))
             bsize (batch-size cdata)
-            result (wbids-batch/retract
+            result (wbids-batch/adjust-attr
                     conn
+                    add
                     uiident
                     attr
                     cdata
                     prov
                     :batch-size bsize)]
-        (ok {:retracted result})))))
+        (ok result)))))
 
 (defn retract-names [request entity-type]
   (let [name-attr (keyword entity-type "name")
         event-ident (keyword "event" (str "remove-" entity-type "-name"))]
-    (retract-attr-vals name-attr
-                       name-attr
-                       event-ident
-                       ::wse/names
-                       wnu/conform-data
-                       request)))
+    (adjust-attr-vals name-attr
+                      name-attr
+                      event-ident
+                      ::wse/names
+                      wnu/conform-data
+                      false
+                      request)))
 
 (defn summary [request bid pull-expr]
   (let [{db :db} request

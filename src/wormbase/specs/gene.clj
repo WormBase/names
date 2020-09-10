@@ -144,6 +144,10 @@
                                :min-count 1)
                         :description "A collection of mappings describing the genes to be updated."}))
 
+(s/def ::update-other-names-batch (stc/spec
+                    {:spec (s/coll-of (s/keys :req-un [:gene/id :gene/other-names]) :min-count 1)
+                     :description "A collection of mapppings describing the other-names to be added to or retracted from genes."}))
+
 (s/def ::change-status-batch (stc/spec {:spec (s/coll-of (s/keys :req-un [(or :gene/id
                                                                               :gene/cgc-name
                                                                               :gene/sequence-name)])

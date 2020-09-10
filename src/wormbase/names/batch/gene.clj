@@ -113,6 +113,39 @@
                    :gene.status/dead
                    ::wsg/kill-batch
                    request))}})
+    (sweet/context "/update-other-names" []
+      :tags ["batch" "gene"]
+      (sweet/resource
+       {:put
+        {:summary "Add sets of other-names to genes."
+         :x-name ::batch-add-other-names-genes
+         :parameters {:body-params {:data ::wsg/update-other-names-batch
+                                    :prov ::wsp/provenance}}
+         :responses (wnu/response-map ok {:schema ::wsb/success-response})
+         :handler (fn [request]
+                    (wnbg/adjust-attr-vals :gene/id
+                                           :gene/other-names
+                                           :event/add-gene-other-names
+                                           ::wsg/update-other-names-batch
+                                           wnu/conform-data
+                                           true
+                                           request))
+         }
+        :delete
+        {:summary "Delete sets of other-names from genes."
+         :x-name ::batch-delete-other-names-genes
+         :parameters {:body-params {:data ::wsg/update-other-names-batch
+                                    :prov ::wsp/provenance}}
+         :responses (wnu/response-map ok {:schema ::wsb/success-response})
+         :handler (fn [request]
+                    (wnbg/adjust-attr-vals :gene/id
+                                           :gene/other-names
+                                           :event/retract-gene-other-names
+                                           ::wsg/update-other-names-batch
+                                           wnu/conform-data
+                                           false
+                                           request))
+         }}))
     (sweet/POST "/resurrect" request
       :summary "Resurrect dead genes."
       :responses wnbg/status-changed-responses
@@ -135,15 +168,16 @@
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
-      :responses wnbg/status-changed-responses
+      :responses (wnu/response-map ok {:schema ::wsb/success-response})
       :body [data {:data ::wsg/cgc-names}
              prov {:prov ::wsp/provenance}]
-      (wnbg/retract-attr-vals :gene/cgc-name
-                              :gene/cgc-name
-                              :event/remove-cgc-names
-                              ::wsg/cgc-names
-                              wnu/conform-data
-                              request))
+      (wnbg/adjust-attr-vals :gene/cgc-name
+                             :gene/cgc-name
+                             :event/remove-cgc-names
+                             ::wsg/cgc-names
+                             wnu/conform-data
+                             false
+                             request))
     (sweet/context "/merge" []
       :tags ["batch" "gene"]
       (sweet/resource
