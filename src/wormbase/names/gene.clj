@@ -193,7 +193,7 @@
    Input args: [db gid :fmt-output]
      db                  Datomic db object to pull data from
      gid                 Identifier to pull data for (can be a datomic expression)
-     :fmt-output         Optional named flag (boolean) to indicating wether or not
+     :fmt-output         Optional named flag (boolean) to indicating whether or not
                          to clean the returned object structure and elide some
                          internal datomic keys and values."
   [data-db gid & {:keys [fmt-output]}]
