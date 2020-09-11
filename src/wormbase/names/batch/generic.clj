@@ -27,7 +27,7 @@
   (-> wnu/default-responses
       (dissoc not-modified)
       (assoc ok {:schema ::wsb/status-changed
-                 :descrpition "Information provided about entity status changes."})
+                 :description "Information provided about entity status changes."})
       (wnu/response-map)))
 
 (def data-changed-responses
