@@ -23,6 +23,9 @@
 (s/def ::status-changed (stc/spec (s/map-of (s/and keyword #{:dead :live :suppressed :retracted})
                                             ::success-response)))
 
+(s/def ::data-changed (stc/spec (s/map-of (s/and keyword #{:added :retracted})
+                                            ::success-response)))
+
 (s/def ::merge-into :gene/id)
 (s/def ::merge-from :gene/id)
 

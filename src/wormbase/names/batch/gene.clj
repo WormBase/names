@@ -121,7 +121,7 @@
          :x-name ::batch-add-other-names-genes
          :parameters {:body-params {:data ::wsg/update-other-names-batch
                                     :prov ::wsp/provenance}}
-         :responses (wnu/response-map ok {:schema ::wsb/success-response})
+         :responses wnbg/data-changed-responses
          :handler (fn [request]
                     (wnbg/adjust-attr-vals :gene/id
                                            :gene/other-names
@@ -136,7 +136,7 @@
          :x-name ::batch-delete-other-names-genes
          :parameters {:body-params {:data ::wsg/update-other-names-batch
                                     :prov ::wsp/provenance}}
-         :responses (wnu/response-map ok {:schema ::wsb/success-response})
+         :responses wnbg/data-changed-responses
          :handler (fn [request]
                     (wnbg/adjust-attr-vals :gene/id
                                            :gene/other-names
@@ -168,7 +168,7 @@
                                    request))
     (sweet/DELETE "/cgc-name" request
       :summary "Remove CGC names from a gene."
-      :responses (wnu/response-map ok {:schema ::wsb/success-response})
+      :responses wnbg/data-changed-responses
       :body [data {:data ::wsg/cgc-names}
              prov {:prov ::wsp/provenance}]
       (wnbg/adjust-attr-vals :gene/cgc-name

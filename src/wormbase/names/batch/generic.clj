@@ -30,6 +30,13 @@
                  :descrpition "Information provided about entity status changes."})
       (wnu/response-map)))
 
+(def data-changed-responses
+  (-> wnu/default-responses
+      (dissoc not-modified)
+      (assoc ok {:schema ::wsb/data-changed
+                 :description "Information provided about entity data changes."})
+      (wnu/response-map)))
+
 (defn conform-data-drop-labels
   "Conform data to an 'or' spec, striping away the label.
 
@@ -257,7 +264,7 @@
                     cdata
                     prov
                     :batch-size bsize)]
-        (ok result)))))
+        (ok {(if add :added :retracted) result})))))
 
 (defn retract-names [request entity-type]
   (let [name-attr (keyword entity-type "name")
