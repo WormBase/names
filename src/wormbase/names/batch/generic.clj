@@ -124,7 +124,7 @@
 
   - uiident : Uniquely Identifing Ident - A datomic entity attribute.
   - event-type: A datomic ident that identifies the kind of event.
-  - spec: The spec desribing the shape of the data.
+  - spec: The spec describing the shape of the data.
   - conformer: function taking spec and data, responsible for coercion of input data.
   - validator: function to validate the coerced data.
   - name-attrs: A set of attributes desciring the names for the entities in input data.
@@ -180,7 +180,7 @@
   - get-info-fn: a fn to pull the datomic data for each entity
                  that's fetched as defaults when the data isn't supplied in the request.
   - event-type: A datomic ident that identifies the kind of event.
-  - spec: The spec desribing the shape of the data.
+  - spec: The spec describing the shape of the data.
   - conformer: function taking spec and data, responsible for coercion of input data.
   - validator: function to validate the coerced data.
   - request: the HTTP request."
@@ -240,7 +240,7 @@
    - attr: the datomic attribute name to add/retract value(s) to/from
            for each mapping in the request.
    - event: A datomic ident that identifies the kind of event.
-   - spec: The spec desribing the shape of the data.
+   - spec: The spec describing the shape of the data.
    - conformer: function taking spec and data, responsible for coercion of input data.
    - add: boolean indicating whether to add (true) or retract (false) values to/from `attr`.
    - request: the HTTP request."
