@@ -3,6 +3,7 @@
 ## [current-beta]
  - Fixed batch split API new-biotype argument processing (#319)
  - Fixed UI history view for null events (#318)
+ - Replaced security certificate (website#7883)
 
 ## [1.4.3]
  - Improved & complemented docs
