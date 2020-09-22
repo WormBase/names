@@ -45,6 +45,8 @@ curl -s -H 'accept: application/json' https://clojars.org/api/artifacts/wormbase
 #   * have a new unique version as <version> tag value (bump x, y or z release nr from current version)
 #   * have "wormbase" (unquoted) as <groupId> tag value
 #   * have "ids" (unquoted) as <artifactId> tag value
+#   * Review the dependencies and compare them to deps.edn
+#     (to ensure no extra dependencies slipped in through your ~/.clojure/deps.edn file)
 $EDITOR pom.xml
 ```
 
