@@ -2,6 +2,9 @@
 
 ## [current-beta]
 
+## [1.4.6]
+ - Updated version of wormbase/ids to 0.6.5
+
 ## [1.4.5]
  - EB config cleanup
 ## [1.4.4]
