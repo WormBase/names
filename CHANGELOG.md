@@ -1,7 +1,16 @@
 # Change-log
 
 ## [current-beta]
+
+## [1.4.6]
+ - Updated version of wormbase/ids to 0.6.5
+
+## [1.4.5]
+ - EB config cleanup
+## [1.4.4]
  - Fixed batch split API new-biotype argument processing (#319)
+ - Fixed UI history view for null events (#318)
+ - Replaced security certificate (website#7883)
 
 ## [1.4.3]
  - Improved & complemented docs

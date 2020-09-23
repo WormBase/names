@@ -51,7 +51,7 @@
     amazonica {:mvn/version "0.3.152"}}}
   :prod
   {:extra-deps
-   {wormbase/ids {:mvn/version "0.6.2"}}}
+   {wormbase/ids {:mvn/version "0.6.5"}}}
   :test
   {:extra-paths ["test" "test/resources" "ids/src"]
    :extra-deps
