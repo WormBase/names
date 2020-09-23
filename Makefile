@@ -1,7 +1,7 @@
 ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= "wormbase-names"
-ifeq ($(PROJ_NAME), "wormbase-names")
+ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 else
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
