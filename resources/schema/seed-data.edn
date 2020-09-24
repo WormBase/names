@@ -85,14 +85,17 @@
   #:db{:ident :event/kill-variation}
   #:db{:ident :event/update-variation}
   #:db{:ident :event/resurrect-variation}
+  #:db{:ident :event/remove-name-variation}
   #:db{:ident :event/new-sequence-feature}
   #:db{:ident :event/kill-sequence-feature}
   #:db{:ident :event/resurrect-sequence-feature}
+  #:db{:ident :event/remove-name-sequence-feature}
   #:db{:ident :event/new-species}
   #:db{:ident :event/update-species}
   #:db{:ident :event/new-entity-type}
   #:db{:ident :event/disable-entity-type}
   #:db{:ident :event/enable-entity-type}
+  #:db{:ident :event/remove-name-strain}
 
   ;; nonce schema for import only
   #:db{:ident :importer/historical-gene-version

@@ -268,7 +268,7 @@
 
 (defn retract-names [request entity-type]
   (let [name-attr (keyword entity-type "name")
-        event-ident (keyword "event" (str "remove-" entity-type "-name"))]
+        event-ident (keyword "event" (str "remove-name-" entity-type))]
     (adjust-attr-vals name-attr
                       name-attr
                       event-ident
