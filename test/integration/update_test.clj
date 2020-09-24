@@ -207,7 +207,7 @@
                                    (update :biotype name)
                                    (update :status name) 
                                    (assoc :species species)
-                                   (dissoc :id :gene/status)
+                                   (dissoc :id :gene/status :other-names)
                                    (assoc :cgc-name new-cgc-name))
                          :prov {:why why
                                 :who {:email "tester@wormbase.org"}}}
