@@ -125,7 +125,7 @@
          :handler (fn [request]
                     (wnbg/adjust-attr-vals :gene/id
                                            :gene/other-names
-                                           :event/add-gene-other-names
+                                           :event/add-other-names-gene
                                            ::wsg/update-other-names-batch
                                            wnu/conform-data
                                            true
@@ -140,7 +140,7 @@
          :handler (fn [request]
                     (wnbg/adjust-attr-vals :gene/id
                                            :gene/other-names
-                                           :event/retract-gene-other-names
+                                           :event/retract-other-names-gene
                                            ::wsg/update-other-names-batch
                                            wnu/conform-data
                                            false

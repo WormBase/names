@@ -515,7 +515,7 @@
                         (assoc bad-request {:schema ::wsv/error-response})
                         (wnu/response-map))
          :handler (fn [request]
-                    (let [add-other-names (wne/update-multi-card identify :gene/id :event/add-gene-other-names :db/add ':gene/other-names)]
+                    (let [add-other-names (wne/update-multi-card identify :gene/id :event/add-other-names-gene :db/add ':gene/other-names)]
                       (add-other-names request identifier)))}
         :delete
         {:summary "Delete a set of other-names from a gene."
@@ -527,7 +527,7 @@
                         (assoc bad-request {:schema ::wsv/error-response})
                         (wnu/response-map))
          :handler (fn [request]
-                    (let [delete-other-names (wne/update-multi-card identify :gene/id :event/retract-gene-other-names :db/retract ':gene/other-names)]
+                    (let [delete-other-names (wne/update-multi-card identify :gene/id :event/retract-other-names-gene :db/retract ':gene/other-names)]
                       (delete-other-names request identifier)))}}))
     (sweet/context "/merge/:from-identifier" [from-identifier]
       (sweet/resource
