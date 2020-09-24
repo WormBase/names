@@ -224,7 +224,7 @@
                             (if (= (type value) clojure.lang.PersistentVector)
                               (let [build-tx (fn [id attr ^String val] (vec [dt-transact-fn id attr val]))]
                                 (map #(build-tx eid attr %) value))
-                              [dt-transact-fn eid attr value]))))
+                              (list [dt-transact-fn eid attr value])))))
                 (add-prov-maybe sp)
                 (transact-fn db))))
    conn
