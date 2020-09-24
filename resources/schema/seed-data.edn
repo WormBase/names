@@ -1,6 +1,6 @@
 {:id :wormbase.names/seed-data
  :tx-data
- [ ;; biotypes
+ [;; biotypes
   #:db{:ident :biotype/transcript}
   #:db{:ident :biotype/transposable-element-gene}
   #:db{:ident :biotype/pseudogene}
