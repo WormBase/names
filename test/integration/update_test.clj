@@ -201,7 +201,7 @@
         (fn [conn]
           (let [unqual-sample-data (wnu/unqualify-keys sample-data "gene")
                 new-cgc-name (tu/cgc-name-for-sample unqual-sample-data)
-                why "udpate prov test"
+                why "update prov test"
                 species (tu/species-ref->latin-name sample-data)
                 payload {:data (-> unqual-sample-data
                                    (update :biotype name)
