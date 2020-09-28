@@ -2,6 +2,9 @@
 
 ## [current-beta]
 
+## [1.4.7]
+ - Implement new wildcard security certificate (website#7883 extension)
+
 ## [1.4.6]
  - Updated version of wormbase/ids to 0.6.5
 

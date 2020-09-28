@@ -36,10 +36,10 @@
                                :swagger/example "some.name@wormbase.org"
                                :description "An identifier uniquely identifing a WormBase person."}))
 
-(def example-summary {:person-email "some.name@wormbase.org"
-                      :person/id "WBPerson11111007"
-                      :person/active? true
-                      :person/name "Test User"})
+(def example-summary {:email "some.name@wormbase.org"
+                      :id "WBPerson11111007"
+                      :active? true
+                      :name "Test User"})
 
 (s/def ::summary (stc/spec {:spec (s/keys :req-un [:person/email :person/id]
                                           :opt-un [:person/active?
