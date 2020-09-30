@@ -15,6 +15,9 @@ FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${VERSI
 # Set AWS (EB) profile env vars if undefined
 AWS_EB_PROFILE ?= ${AWS_PROFILE}
 AWS_PROFILE ?= ${AWS_EB_PROFILE}
+ifneq (${AWS_EB_PROFILE},)
+	export AWS_EB_PROFILE
+endif
 
 define target-help
 	$1
