@@ -1,6 +1,7 @@
 (ns wormbase.specs.gene
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [phrase.alpha :as ph]
    [spec-tools.core :as stc]
    [wormbase.specs.biotype :as wsb]
@@ -10,7 +11,9 @@
 
 (def gene-id-regexp #"WBGene\d{8}")
 
-(s/def ::name (s/and string?))
+(s/def ::non-blank-string (s/and string? (complement str/blank?)))
+
+(s/def ::name (s/and ::non-blank-string))
 
 (s/def ::names-coll (s/coll-of ::name))
 
@@ -39,7 +42,7 @@
                                 :description "The species associated with the Gene."}))
 
 
-(s/def :gene/status (stc/spec {:spec string?
+(s/def :gene/status (stc/spec {:spec ::non-blank-string
                                :swagger/example "live"
                                :description "The status of the Gene."}))
 
