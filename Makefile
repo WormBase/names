@@ -13,9 +13,12 @@ VERSION ?= $(shell clj -A:spit-version -v | jq .version)
 ARTIFACT_NAME ?= $(shell git describe --tags --abbrev=0)
 FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${VERSION}
 # Set AWS (EB) profile env vars if undefined
-AWS_EB_PROFILE ?= ${AWS_PROFILE}
-AWS_PROFILE ?= ${AWS_EB_PROFILE}
+ifneq (${AWS_PROFILE},)
+	AWS_EB_PROFILE ?= ${AWS_PROFILE}
+endif
 ifneq (${AWS_EB_PROFILE},)
+	AWS_PROFILE ?= ${AWS_EB_PROFILE}
+
 	export AWS_EB_PROFILE
 endif
 
