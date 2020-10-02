@@ -6,8 +6,11 @@
    [wormbase.specs.agent :as wna]
    [wormbase.specs.gene :as wsg]
    [wormbase.specs.species]
-   [wormbase.gen-specs.util :as util])
+   [wormbase.gen-specs.util :as util]
+   [clojure.string :as str])
   (:refer-clojure :exclude [identity update]))
+
+(s/def ::non-blank-string (s/and string? (complement str/blank?)))
 
 (defn species-vals [species-kw]
   (->> (util/load-seed-data)
@@ -44,6 +47,10 @@
 (def sequence-name (one-of-name-regexps :species/sequence-name-pattern))
 
 (def cgc-name (one-of-name-regexps :species/cgc-name-pattern))
+
+(defn gen-other-names
+  [n]
+  (gen/sample (s/gen ::non-blank-string) n))
 
 (s/def ::species-id
   (s/with-gen

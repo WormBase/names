@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.gen.alpha :as gen]
    [clojure.test :as t]
+   [clojure.set :as cset]
    [datomic.api :as d]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [basic-prov]]
@@ -230,6 +231,43 @@
                     (pr-str (:gene/status ent))))
             (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
             (t/is (= new-cgc-name (:gene/cgc-name ent)))))))))
+
+(t/deftest update-other-names-gene
+  (t/testing "Testing successful addition to / removal from gene's other-names."
+    (let [gid (first (gen/sample gsg/id 1))
+          sample* (first (tu/gen-sample gsg/uncloned 1))
+          sample  (-> sample*
+                      (wnu/qualify-keys "gene")
+                      (tu/species->ref)
+                      (select-keys [:gene/other-names]))
+          sample-data (assoc sample
+                             :gene/id gid
+                             :gene/other-names (gsg/gen-other-names 2))]
+      (tu/with-gene-fixtures
+        [sample-data]
+        (fn [_]
+          ; Test successful PUT /gene/*/update-other-names operation
+          (let [original-other-names (:gene/other-names sample-data)
+                add-names (gsg/gen-other-names 2)
+                payload {:data add-names :prov nil}
+                response (api-tc/add-other-names "gene" gid payload)]
+            (t/is (ru-hp/ok? response))
+            ; Compare successful PUT /gene/*/update-other-names operation return value to expected results
+            (let [add-result (some-> response :body)
+                  expected-add-result (distinct (concat original-other-names add-names))]
+              (t/is (= (set add-result) (set expected-add-result)) (pr-str add-result))
+              ; Test successful DELETE /gene/*/update-other-names operation
+              (let [n (- (count add-result) 1)
+                    retract-names (take n (shuffle add-result))
+                    payload {:data retract-names :prov nil}
+                    response (api-tc/retract-other-names "gene" gid payload)]
+                (t/is (ru-hp/ok? response))
+                ; Compare successful DELETE /gene/*/update-other-names operation return value to expected results
+                (let [retract-result (some-> response :body)
+                      expected-retract-result (cset/difference (set add-result) (set retract-names))]
+                  (t/is (= (set retract-result) (set expected-retract-result)) (pr-str retract-result))
+                  (t/is (= (count retract-result) 1) "Unexpected gene retract other-names result-size"))
+                ))))))))
 
 (t/deftest variation-data-must-meet-spec
   (let [identifier (first (gen/sample gsv/id 1))

@@ -50,6 +50,16 @@
                                   :or {current-user default-user}}]
   (send-request entity-kind :put data :sub-path identifier :current-user current-user))
 
+(defn add-other-names
+  [entity-kind identifier data & {:keys [current-user]
+                                  :or {current-user default-user}}]
+  (send-request entity-kind :put data :sub-path (str identifier "/update-other-names") :current-user current-user))
+
+(defn retract-other-names
+  [entity-kind identifier data & {:keys [current-user]
+                                  :or {current-user default-user}}]
+  (send-request entity-kind :delete data :sub-path (str identifier "/update-other-names") :current-user current-user))
+
 (defn summary
   [entity-kind identifier & {:keys [params extra-headers]
                              :or {params {}
