@@ -20,7 +20,7 @@ clojure expressions are read from `.repl` files in `resources/schema/updates` an
 
 Enter a repl:
 ```bash
-clj -A:datomic-pro
+clj -A:datomic-pro:test
 ```
 Then apply all updates (safe, as changes are idempotent):
 ```clojure
