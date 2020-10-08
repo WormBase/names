@@ -183,9 +183,10 @@ vc-release: \
 
 .PHONY: release
 release: deploy-ecr \
-         $(call print-help,release [AWS_PROFILE=<profile_name>],\
+         $(call print-help,release [AWS_PROFILE=<profile_name>] [ARTIFACT_NAME=<tag-or-gitref>],\
          Release the applicaton.)
 	@git archive ${ARTIFACT_NAME} -o target/app.zip
+	@clj -A:datomic-pro:prod:aws-eb-docker-version
 	@zip -u target/app.zip Dockerrun.aws.json
 
 .PHONY: run-tests
