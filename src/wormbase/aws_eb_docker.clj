@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [wormbase.util :as wu]))
 
-(def proj-pattern #"wormbase/names:.*[\d.]+")
+(def proj-pattern #"wormbase/names:[^\"]+")
 
 (defn replace-version [content new-version]
   (str/replace content proj-pattern (str "wormbase/names:" new-version)))

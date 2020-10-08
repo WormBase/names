@@ -250,6 +250,8 @@ $EDITOR pom.xml
 sudo service docker start
 
 # Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
+# HINT: To deploy the current (untagged) working-directory version of the repository (for testing purpose on test env)
+#       , use the additional argument ARTIFACT_NAME=HEAD
 make release [AWS_PROFILE=<profile_name>]
 
 # Deploy the application to an EB environmnent.
