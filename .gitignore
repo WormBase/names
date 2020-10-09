@@ -41,9 +41,6 @@ Dockerrun.aws.json
 # Generated assets
 /resources/client_build
 
-# Generated meta info
-/resources/meta.edn
-
 # Datomic Transactor properties (with secret keys)
 *transactor.properties
 

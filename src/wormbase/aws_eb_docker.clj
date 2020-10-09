@@ -1,8 +1,7 @@
 (ns wormbase.aws-eb-docker
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as str]
-   [wormbase.util :as wu]))
+   [clojure.string :as str]))
 
 (def proj-pattern #"wormbase/names:[^\"]+")
 
@@ -15,10 +14,10 @@
                          (replace-version new-version))))
 (defn -main
   [& _]
-  (let [proj-meta (wu/read-app-config "meta.edn")
-        version (:version proj-meta)
+  (let [version (System/getenv "VERSION_TAG")
         target-filename "Dockerrun.aws.json"
         files (map io/file ["Dockerrun.aws.json.template" target-filename])]
+    (assert (not (empty? version)) "VERSION_TAG envvar must be defined!")
     (when-not (.exists (last files))
       (apply io/copy files))
     (update-eb-json! target-filename version)))

@@ -41,10 +41,7 @@
                   :main-opts ["-m" "metav.display"]}
   :release {:extra-deps {metav {:mvn/version "1.5.2"}}
             :main-opts ["-m" "metav.release"]}
-  :spit-version {:extra-deps {metav {:mvn/version "1.5.2"}}
-                 :main-opts ["-m" "metav.spit"]}
-  :aws-eb-docker-version {:extra-deps {metav {:mvn/version "1.5.2"}}
-                          :main-opts ["-m" "wormbase.aws-eb-docker"]}
+  :aws-eb-docker-version {:main-opts ["-m" "wormbase.aws-eb-docker"]}
   :event-broadcast
   {:extra-deps
    {com.draines/postal {:mvn/version "2.0.3"}
