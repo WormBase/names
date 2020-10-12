@@ -208,7 +208,7 @@ This command will interactively walk you through saving some EB configurations i
 
 #### Update release & deployment
 Deploying the main application is a 3 step process:
- 1. Release code - revision, push. (creates `resources/meta.edn` that's included in the build artefacts)
+ 1. Release code - revision, push.
  2. Build application and deploy in the AWS Elastic Container Registry (ECR).
  3. Deploy the application in AWS ElasticBeanstalk.
 
@@ -250,8 +250,9 @@ $EDITOR pom.xml
 sudo service docker start
 
 # Build the application and deploy the docker image to the AWS Elastic Container Registry (ECR)
-# HINT: To deploy the current (untagged) working-directory version of the repository (for testing purpose on test env)
-#       , use the additional argument ARTIFACT_NAME=HEAD
+# NOTE: To deploy a tagged or branched codeversion that does not equal your (potentially dirty) working-dir content,
+#       use the additional argument REF_NAME=<ref-name>
+#       E.g. make release AWS_PROFILE=wormbase REF_NAME=wormbase-names-1.4.7
 make release [AWS_PROFILE=<profile_name>]
 
 # Deploy the application to an EB environmnent.

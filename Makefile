@@ -9,9 +9,21 @@ endif
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
-VERSION ?= $(shell clj -A:spit-version -v | jq .version)
-ARTIFACT_NAME ?= $(shell git describe --tags --abbrev=0)
-FQ_TAG := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}:${VERSION}
+
+REVISION_NAME_CMD := git describe --tags
+# If REF_NAME is defined, convert provided ref in matching name
+# (ref could be a tagname, a reference like "HEAD", branch-names...)
+ifneq (${REF_NAME},)
+	REVISION_NAME := $(shell ${REVISION_NAME_CMD} ${REF_NAME})
+# Else, assume working-directory deployment
+else
+	REVISION_NAME := $(shell ${REVISION_NAME_CMD} --dirty=-DIRTY)
+endif
+
+VERSION_TAG ?= $(shell echo "${REVISION_NAME}" | sed 's/^wormbase-names-//')
+
+ECR_REPO_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
+ECR_IMAGE_URI := ${ECR_REPO_URI}:${VERSION_TAG}
 # Set AWS (EB) profile env vars if undefined
 ifneq (${AWS_PROFILE},)
 	AWS_EB_PROFILE ?= ${AWS_PROFILE}
@@ -41,13 +53,13 @@ help: ; @echo $(if $(need-help),,\
 show-version: \
               $(call print-help,show-version,\
               Show the current application version.)
-	@echo "${VERSION}"
+	@echo "${VERSION_TAG}"
 
 .PHONY: build
 build: clean ui-build docker/${DEPLOY_JAR} \
        $(call print-help,build,\
        Build the docker images from using the current git revision.)
-	@docker build -t ${ECR_REPO_NAME}:${VERSION} \
+	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
 		--build-arg uberjar_path=${DEPLOY_JAR} \
 		--rm ./docker/
 
@@ -83,15 +95,14 @@ docker-ecr-login: \
 docker-push-ecr: docker-ecr-login \
                  $(call print-help,docker-push-ecr,\
                  Push the image tagged with the current git revision to ECR.)
-	@docker push ${FQ_TAG}
+	@docker push ${ECR_IMAGE_URI}
 
 .PHONY: docker-tag
 docker-tag: \
             $(call print-help,docker-tag,\
             Tag the image with current git revision and ':latest' alias.)
-	@docker tag ${ECR_REPO_NAME}:${VERSION} ${FQ_TAG}
-	@docker tag ${ECR_REPO_NAME}:${VERSION} \
-		    ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
+	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_IMAGE_URI}
+	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_REPO_URI}
 
 .PHONY: eb-def-app-env
 eb-def-app-env: \
@@ -156,7 +167,7 @@ run: \
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e WB_DB_URI=${WB_DB_URI} \
 		-e PORT=${PORT} \
-		${ECR_REPO_NAME}:${ARTIFACT_NAME}
+		${ECR_REPO_NAME}:${VERSION_TAG}
 
 .PHONY: docker-clean
 docker-clean: \
@@ -171,23 +182,21 @@ deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
             Deploy the application to the AWS container registry.)
 
 .PHONY: vc-release
+vc-release: export VERSION_TAG := ${VERSION_TAG}
 vc-release: \
             $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	@echo "Edit version of application in pom.xml to match:"
 	@clj -A:release --without-sign ${LEVEL}
-	@clj -A:spit-version
 	@clj -A:datomic-pro:prod:aws-eb-docker-version
-	@rm resources/meta.edn
 
 
 .PHONY: release
+release: export VERSION_TAG := ${VERSION_TAG}
 release: deploy-ecr \
-         $(call print-help,release [AWS_PROFILE=<profile_name>] [ARTIFACT_NAME=<tag-or-gitref>],\
+         $(call print-help,release [AWS_PROFILE=<profile_name>] [REF_NAME=<tag-or-gitref>],\
          Release the applicaton.)
-	@git archive ${ARTIFACT_NAME} -o target/app.zip
 	@clj -A:datomic-pro:prod:aws-eb-docker-version
-	@zip -u target/app.zip Dockerrun.aws.json
 
 .PHONY: run-tests
 run-tests: \
