@@ -5,8 +5,16 @@
    [clojure.walk :as w]
    [datomic.api :as d]))
 
-(def log-file "/home/mlp/logs/wormbase-ids-core.log")
-(spit log-file "")
+;In order to use these functions for debugging:
+; 1. Adjust the code to initialise a local debug log file (below)
+; (def log-file "/home/mlp/logs/wormbase-ids-core.log")
+; (init-empty-debug-log log-file)
+; 2. Add debug-log statements in any wormbase.ids code to debug
+; (debug-log "print statement")
+(def log-file nil)
+(defn init-empty-debug-log
+  [log-file]
+  (spit log-file ""))
 (defn debug-log
   [log-str]
   (spit log-file (str log-str "\n") :append true))
