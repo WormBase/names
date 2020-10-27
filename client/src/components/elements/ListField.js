@@ -3,9 +3,17 @@ import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import DeleteIcon from '@material-ui/icons/Delete';
-import TextField from './TextField';
+import FormLabel from '@material-ui/core/FormLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import TextField from '@material-ui/core//TextField';
 
-const ListField = ({ value: values = [''], onChange, ...TextFieldProps }) => {
+const ListField = ({
+  value: values = [''],
+  label,
+  helperText,
+  onChange,
+  ...TextFieldProps
+}) => {
   const handleAddValue = (value) => {
     if (onChange) {
       onChange({
@@ -42,8 +50,9 @@ const ListField = ({ value: values = [''], onChange, ...TextFieldProps }) => {
 
   return (
     <React.Fragment>
+      <FormLabel component="legend">{label}</FormLabel>
       {values.map((v, index) => (
-        <div>
+        <div style={{ margin: '0.5em' }}>
           <TextField
             variant="outlined"
             {...TextFieldProps}
@@ -58,10 +67,10 @@ const ListField = ({ value: values = [''], onChange, ...TextFieldProps }) => {
           </IconButton>
         </div>
       ))}
-
       <IconButton aria-label="add-name" onClick={handleAddValue}>
         <AddCircleOutlineIcon />
       </IconButton>
+      {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
     </React.Fragment>
   );
 };
