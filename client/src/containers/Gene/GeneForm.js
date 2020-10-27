@@ -8,7 +8,12 @@ import {
 
 class GeneForm extends Component {
   render() {
-    const { withFieldData, cloned = false } = this.props;
+    const {
+      withFieldData,
+      cloned = false,
+      isEdit = false,
+      addNamesOtherButton,
+    } = this.props;
     const CgcNameField = withFieldData(TextField, 'cgc-name');
     const SequenceNameField = withFieldData(TextField, 'sequence-name');
     const SpeciesSelectField = withFieldData(SpeciesSelect, 'species');
@@ -31,6 +36,8 @@ class GeneForm extends Component {
             "For cloned genes, biotype is required. Otherwise, it's optional"
           }
         />
+        <br />
+        {addNamesOtherButton}
       </React.Fragment>
     );
   }
@@ -39,6 +46,7 @@ class GeneForm extends Component {
 GeneForm.propTypes = {
   withFieldData: PropTypes.func.isRequired,
   cloned: PropTypes.bool,
+  isEdit: PropTypes.bool,
 };
 
 export default GeneForm;

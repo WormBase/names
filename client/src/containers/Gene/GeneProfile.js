@@ -13,12 +13,14 @@ import GeneForm from './GeneForm';
 import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
+import DialogGeneAddOtherName from './DialogGeneAddOtherName';
 
 const OPERATION_KILL = 'kill';
 const OPERATION_RESURRECT = 'resurrect';
 const OPERATION_SUPPRESS = 'suppress';
 const OPERATION_MERGE = 'merge';
 const OPERATION_SPLIT = 'split';
+const OPERATION_ADD_NAMES_OTHER = 'add_names_other';
 
 class GeneProfile extends Component {
   getDisplayName = (data = {}) =>
@@ -129,13 +131,26 @@ class GeneProfile extends Component {
               <SuppressGeneDialog {...getDialogProps(OPERATION_SUPPRESS)} />
               <MergeGeneDialog {...getDialogProps(OPERATION_MERGE)} />
               <SplitGeneDialog {...getDialogProps(OPERATION_SPLIT)} />
+              <DialogGeneAddOtherName
+                {...getDialogProps(OPERATION_ADD_NAMES_OTHER)}
+              />
             </React.Fragment>
           );
         }}
-        renderForm={({ data, changes, ...props }) => (
+        renderForm={({ data, changes, getOperationProps, ...props }) => (
           <GeneForm
             {...props}
             cloned={Boolean(data['sequence-name'] || data['biotype'])}
+            isEdit
+            addNamesOtherButton={
+              <Button
+                {...getOperationProps(OPERATION_ADD_NAMES_OTHER)}
+                variant="raised"
+                size="small"
+              >
+                Add alternative names
+              </Button>
+            }
           />
         )}
         renderOperationTip={({ data, Wrapper }) =>

@@ -62,6 +62,7 @@ export { default as TextField } from './TextField';
 export { default as Timestamp } from './Timestamp';
 export { default as Humanize } from './Humanize';
 export { default as ValidationError } from './ValidationError';
+export { default as ListField } from './ListField';
 
 export { default as useClipboard } from './useClipboard';
 
