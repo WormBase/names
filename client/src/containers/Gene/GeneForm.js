@@ -4,6 +4,7 @@ import {
   BiotypeSelect,
   TextField,
   SpeciesSelect,
+  ListField,
 } from '../../components/elements';
 
 class GeneForm extends Component {
@@ -18,6 +19,7 @@ class GeneForm extends Component {
     const SequenceNameField = withFieldData(TextField, 'sequence-name');
     const SpeciesSelectField = withFieldData(SpeciesSelect, 'species');
     const BiotypeSelectField = withFieldData(BiotypeSelect, 'biotype');
+    const OtherNamesField = withFieldData(ListField, 'other-names');
 
     return (
       <React.Fragment>
@@ -37,7 +39,11 @@ class GeneForm extends Component {
           }
         />
         <br />
-        {addNamesOtherButton}
+        {isEdit ? (
+          addNamesOtherButton
+        ) : (
+          <OtherNamesField label="Alternative name" />
+        )}
       </React.Fragment>
     );
   }

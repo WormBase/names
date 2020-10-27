@@ -55,7 +55,7 @@ class DialogGeneAddOtherName extends Component {
           <ProgressButton {...props}>Add name</ProgressButton>
         )}
         data={{
-          'other-names': ['zzz'],
+          'other-names': [''],
         }}
         {...otherProps}
       >

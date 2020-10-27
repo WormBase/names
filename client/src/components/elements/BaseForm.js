@@ -237,7 +237,7 @@ class BaseForm extends Component {
         return (
           <WrappedComponent
             {...this.props}
-            id={fieldId}
+            //id={fieldId} // multiple input could have same id when field is an array
             disabled={disabled || this.props.disabled}
             value={this.state.value}
             error={Boolean(this.state.error)} //Boolean function not constructor
