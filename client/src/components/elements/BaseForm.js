@@ -114,7 +114,7 @@ class BaseForm extends Component {
 
   unpackFields = (props) => {
     function flatten(result, tree, prefix) {
-      if (typeof tree === 'object' && tree !== null) {
+      if (typeof tree === 'object' && tree !== null && !Array.isArray(tree)) {
         Object.keys(tree).reduce((result, keySegment) => {
           flatten(
             result,
