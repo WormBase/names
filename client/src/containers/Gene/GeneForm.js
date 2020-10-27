@@ -42,7 +42,7 @@ class GeneForm extends Component {
         {isEdit ? (
           addNamesOtherButton
         ) : (
-          <OtherNamesField label="Alternative name" />
+          <OtherNamesField label="Alternative name(s)" />
         )}
       </React.Fragment>
     );

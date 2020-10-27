@@ -52,7 +52,7 @@ class DialogGeneAddOtherName extends Component {
         title={`Add alternative names to ${entityType} ${name}`}
         submitter={this.submitData}
         renderSubmitButton={(props) => (
-          <ProgressButton {...props}>Add name</ProgressButton>
+          <ProgressButton {...props}>Add name(s)</ProgressButton>
         )}
         data={{
           'other-names': [''],
@@ -74,7 +74,8 @@ class DialogGeneAddOtherName extends Component {
               <DialogContentText>
                 <ValidationError {...errorMessage} />
               </DialogContentText>
-              <OtherNamesField label="Alternative name" />
+              <br />
+              <OtherNamesField label="Alternative name(s)" />
               <ReasonField
                 label="Reason"
                 helperText={`Enter the reason for the alternative name`}
