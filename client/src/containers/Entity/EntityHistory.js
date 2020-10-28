@@ -22,9 +22,15 @@ class EntityHistory extends Component {
     }
 
     const changeLookup = changes.reduce((result, changeEntry) => {
+      const { added: previousAdded = [], retracted: previousRetracted = [] } =
+        result[changeEntry.attr] || {};
       const changeSumamry = {
-        ...result[changeEntry.attr],
-        [changeEntry.added ? 'added' : 'retracted']: changeEntry.value,
+        added: changeEntry.added
+          ? [...previousAdded, changeEntry.value]
+          : previousAdded,
+        retracted: changeEntry.added
+          ? previousRetracted
+          : [...previousRetracted, changeEntry.value],
       };
       return {
         ...result,
@@ -51,10 +57,10 @@ class EntityHistory extends Component {
                   {attr}
                 </TableCell>
                 <TableCell className={this.props.classes.changeTableCell}>
-                  {changeLookup[attr].retracted || '-'}
+                  {changeLookup[attr].retracted.join(', ') || '-'}
                 </TableCell>
                 <TableCell className={this.props.classes.changeTableCell}>
-                  <strong>{changeLookup[attr].added || '-'}</strong>
+                  <strong>{changeLookup[attr].added.join(', ') || '-'}</strong>
                 </TableCell>
               </TableRow>
             );
