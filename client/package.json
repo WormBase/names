@@ -48,7 +48,7 @@
       "pre-commit": "lint-staged"
     }
   },
-  "proxy": "http://lvh.me:4010",
+  "proxy": "https://test-names.wormbase.org",
   "browserslist": [
     ">0.2%",
     "not dead",
