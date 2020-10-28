@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import FormLabel from '@material-ui/core/FormLabel';
 import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 import { Button, Humanize, Typography } from '../../components/elements';
 import {
   EntityProfile,
@@ -157,13 +158,15 @@ class GeneProfile extends Component {
                   {(data['other-names'] || []).map((otherName) => (
                     <div>
                       <span>{otherName} </span>
-                      <IconButton
-                        {...getOperationProps(OPERATION_DELETE_NAME_OTHER, {
-                          otherName,
-                        })}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Tooltip title="Delete name" placement="right">
+                        <IconButton
+                          {...getOperationProps(OPERATION_DELETE_NAME_OTHER, {
+                            otherName,
+                          })}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                     </div>
                   ))}
                   <Button

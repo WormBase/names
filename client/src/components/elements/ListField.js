@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FormLabel from '@material-ui/core/FormLabel';
@@ -59,15 +60,17 @@ const ListField = ({
             onChange={(event) => handleValueChange(event, index)}
             value={v}
           />
-          <IconButton
-            aria-label="delete-name"
-            onClick={() => handleValueDelete(index)}
-          >
-            <DeleteIcon />
-          </IconButton>
+          <Tooltip title="Delete" placement="right">
+            <IconButton
+              aria-label="delete"
+              onClick={() => handleValueDelete(index)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
         </div>
       ))}
-      <IconButton aria-label="add-name" onClick={handleAddValue}>
+      <IconButton onClick={handleAddValue}>
         <AddCircleOutlineIcon />
       </IconButton>
       {helperText ? <FormHelperText>{helperText}</FormHelperText> : null}
