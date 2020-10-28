@@ -31,7 +31,12 @@ function AutocompleteSuggestion({
         suggestion['sequence-name'] ||
         suggestion.name ||
         'Undefined'}{' '}
-      <span className={classes.wbId}>[{suggestion.id}]</span>
+      <span className={classes.wbId}>[{suggestion.id}]</span>{' '}
+      {suggestion['other-names'] ? (
+        <span>
+          <small>a.k.a.</small> {suggestion['other-names'].join(', ')}
+        </span>
+      ) : null}
     </MenuItem>
   );
 }
