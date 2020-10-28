@@ -13,7 +13,7 @@ class GeneForm extends Component {
       withFieldData,
       cloned = false,
       isEdit = false,
-      addNamesOtherButton,
+      otherNamesEdit,
     } = this.props;
     const CgcNameField = withFieldData(TextField, 'cgc-name');
     const SequenceNameField = withFieldData(TextField, 'sequence-name');
@@ -39,8 +39,9 @@ class GeneForm extends Component {
           }
         />
         <br />
+        <br />
         {isEdit ? (
-          addNamesOtherButton
+          otherNamesEdit
         ) : (
           <OtherNamesField label="Alternative name(s)" />
         )}

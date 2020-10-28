@@ -66,10 +66,7 @@ class DialogGeneAddOtherName extends Component {
             <DialogContent>
               <DialogContentText>
                 Please enter the alternative name to be associated with{' '}
-                {capitalize(entityType)}{' '}
-                <strong>
-                  {name} ({wbId})
-                </strong>
+                {capitalize(entityType)} <strong>{name}</strong>({wbId})
               </DialogContentText>
               <DialogContentText>
                 <ValidationError {...errorMessage} />

@@ -150,28 +150,31 @@ class GeneProfile extends Component {
             {...props}
             cloned={Boolean(data['sequence-name'] || data['biotype'])}
             isEdit
-            addNamesOtherButton={
-              <React.Fragment>
-                {(data['other-names'] || []).map((otherName) => (
-                  <div>
-                    <span>{otherName} </span>
-                    <IconButton
-                      {...getOperationProps(OPERATION_DELETE_NAME_OTHER, {
-                        otherName,
-                      })}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </div>
-                ))}
-                <Button
-                  {...getOperationProps(OPERATION_ADD_NAMES_OTHER)}
-                  variant="raised"
-                  size="small"
-                >
-                  Add alternative names
-                </Button>
-              </React.Fragment>
+            otherNamesEdit={
+              <div>
+                <FormLabel component="legend">Alternative names(s)</FormLabel>
+                <div style={{ margin: '0 0.5em' }}>
+                  {(data['other-names'] || []).map((otherName) => (
+                    <div>
+                      <span>{otherName} </span>
+                      <IconButton
+                        {...getOperationProps(OPERATION_DELETE_NAME_OTHER, {
+                          otherName,
+                        })}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </div>
+                  ))}
+                  <Button
+                    {...getOperationProps(OPERATION_ADD_NAMES_OTHER)}
+                    variant="raised"
+                    size="small"
+                  >
+                    Add alternative names
+                  </Button>
+                </div>
+              </div>
             }
           />
         )}
