@@ -26,6 +26,7 @@ function EntityEdit({
     shortMessage: null,
     shortMessageVariant: 'info',
     dialog: null,
+    operationPayload: {},
   });
 
   function reducer(state, action = {}) {
@@ -36,11 +37,13 @@ function EntityEdit({
         return {
           ...state,
           dialog: payload.operation,
+          operationPayload: payload,
         };
       case 'DIALOG_CLOSE':
         return {
           ...state,
           dialog: null,
+          operationPayload: {},
         };
       case 'DIALOG_OPERATION_SUCCESS':
         return {
@@ -316,9 +319,13 @@ function EntityEdit({
                 entityType: entityType,
                 withFieldData,
               },
-              getOperationProps: (operation) => ({
+              getOperationProps: (operation, payload = {}) => ({
                 onClick: () => {
-                  dispatch({ type: 'DIALOG_OPEN', payload: { operation } });
+                  console.log(`operation: ${operation}`);
+                  dispatch({
+                    type: 'DIALOG_OPEN',
+                    payload: { operation, ...payload },
+                  });
                 },
               }),
               getDialogProps: (operation) => ({
@@ -328,6 +335,7 @@ function EntityEdit({
                 name: renderDisplayName(data),
                 data: data,
                 open: state.dialog === operation,
+                operationPayload: state.operationPayload,
                 onClose: () => dispatch({ type: 'DIALOG_CLOSE' }),
                 onSubmitSuccess: ({ created = {}, updated = {} }) => {
                   dispatch({
