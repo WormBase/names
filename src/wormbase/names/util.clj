@@ -188,17 +188,6 @@
              {}
              mapping))
 
-(defn unqualify-keys
-  "Transform `mapping` such that all qualfied keys with namespace `entity-type` are unqualfied."
-  [mapping entity-type]
-  (reduce-kv (fn [m k v]
-               (if (and (qualified-keyword? k)
-                        (= (namespace k) entity-type))
-                 (assoc m (-> k name keyword) v)
-                 (assoc m k v)))
-             {}
-             mapping))
-
 (defn unqualify-keyword
   "Transform `keyword` such that it gets unqualified if it contains namespace `entity-type`."
   [kw entity-type]
@@ -206,6 +195,15 @@
            (= (namespace kw) entity-type))
     (-> kw name keyword)
     kw))
+
+(defn unqualify-keys
+  "Transform `mapping` such that all qualfied keys with namespace `entity-type` are unqualfied."
+  [mapping entity-type]
+  (reduce-kv (fn [m k v]
+               (let [unqualified-k (unqualify-keyword k entity-type)]
+                 (assoc m unqualified-k v)))
+             {}
+             mapping))
 
 (defn transform-ident-ref [k m kw-ns]
   (update m k (fn [old]
