@@ -22,7 +22,8 @@ endif
 
 VERSION_TAG ?= $(shell echo "${REVISION_NAME}" | sed 's/^wormbase-names-//')
 
-ECR_REPO_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com/${ECR_REPO_NAME}
+ECR_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
+ECR_REPO_URI := ${ECR_URI}/${ECR_REPO_NAME}
 ECR_IMAGE_URI := ${ECR_REPO_URI}:${VERSION_TAG}
 # Set AWS (EB) profile env vars if undefined
 ifneq (${AWS_PROFILE},)
@@ -89,7 +90,7 @@ docker-build: clean build \
 docker-ecr-login: \
                   $(call print-help,docker-ecr-login [AWS_PROFILE=<profile_name>],\
                   Login to ECR.)
-	docker login -u AWS -p "$(shell aws --profile ${AWS_PROFILE} ecr get-login-password)" https://${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
+	aws --profile ${AWS_PROFILE} ecr get-login-password | docker login -u AWS --password-stdin https://${ECR_URI}
 
 .PHONY: docker-push-ecr
 docker-push-ecr: docker-ecr-login \
