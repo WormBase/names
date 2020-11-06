@@ -204,16 +204,19 @@
   (fn handle-multi-card [request identifier]
     (let [{conn :conn payload :body-params} request
           ent-ns (namespace uiident)
-          data (some-> payload :data)
+          unqualified-attr (wnu/unqualify-keyword attr ent-ns)
+          update-elements (some-> payload
+                                  :data
+                                  unqualified-attr)
           [lur entity] (identify-fn request identifier)]
-      (when (and entity data)
+      (when (and entity update-elements)
         (let [build-tx (fn [id attr ^String val] (vec [dt-transact-fn id attr val]))
               ;;retriev db-id to add values to
               db-id (:db/id entity)
               ;;retrieve provenance
               prov (wnp/assoc-provenance request payload event)
               ;;build transaction statements to make
-              txes (map #(build-tx db-id attr %) data)
+              txes (map #(build-tx db-id attr %) update-elements)
               ;;transact data to datomic
               tx-result @(d/transact-async conn (conj txes prov))]
           (when-let [db-after (:db-after tx-result)]

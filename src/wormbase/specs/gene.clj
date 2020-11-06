@@ -96,7 +96,7 @@
 (s/def ::updated (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data from updating a Gene."}))
 
-(s/def ::update-other-names (stc/spec {:spec :gene/other-names
+(s/def ::update-other-names (stc/spec {:spec (s/keys :req-un [:gene/other-names])
                                         :description "A collection of other names."}))
 
 (s/def ::merge (stc/spec {:spec (s/keys :req-un [:gene/biotype])

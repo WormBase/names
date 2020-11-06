@@ -199,6 +199,14 @@
              {}
              mapping))
 
+(defn unqualify-keyword
+  "Transform `keyword` such that it gets unqualified if it contains namespace `entity-type`."
+  [kw entity-type]
+  (if (and (qualified-keyword? kw)
+           (= (namespace kw) entity-type))
+    (-> kw name keyword)
+    kw))
+
 (defn transform-ident-ref [k m kw-ns]
   (update m k (fn [old]
                 (keyword kw-ns (if (keyword old)
