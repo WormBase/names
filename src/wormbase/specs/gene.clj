@@ -80,9 +80,6 @@
   [_ problems]
   (str "A new gene requires at least a species and a name."))
 
-(s/def ::new-unnamed (s/keys :req-un [:gene/id
-                                      :gene/species]))
-
 (s/def ::created (stc/spec {:spec (s/keys :req-un [:gene/id])
                             :description "The response data return from creating a new Gene."}))
 
