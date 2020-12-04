@@ -10,6 +10,7 @@ import {
   ProgressButton,
   TextArea,
   TextField,
+  ListField,
   ValidationError,
 } from '../../components/elements';
 import { createOpenOnlyTypeChecker } from '../../utils/types';
@@ -79,6 +80,7 @@ class SplitGeneDialog extends Component {
         data={{
           ...data,
           'product:biotype': data.biotype,
+          'product:other-names': [],
         }}
       >
         {({ withFieldData, errorMessage }) => {
@@ -94,6 +96,10 @@ class SplitGeneDialog extends Component {
           const BiotypeSelectField = withFieldData(
             BiotypeSelect,
             'product:biotype'
+          );
+          const OtherNamesField = withFieldData(
+            ListField,
+            'product:other-names'
           );
           return (
             <DialogContent>
@@ -117,6 +123,7 @@ class SplitGeneDialog extends Component {
               </DialogContentText>
               <SequenceNameField label="Sequence name" />
               <BiotypeSelectField required />
+              <OtherNamesField label="Alternative name(s)" />
               <ReasonField
                 label="Reason"
                 helperText="Enter the reason for splitting the gene"

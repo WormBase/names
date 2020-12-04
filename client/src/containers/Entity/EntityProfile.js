@@ -175,7 +175,11 @@ class EntityProfile extends Component {
                       {renderStatus(renderProps)}
                       {renderForm ? (
                         <ErrorBoundary>
-                          {renderForm({ ...renderProps, ...formContext })}
+                          {renderForm({
+                            ...renderProps,
+                            ...formContext,
+                            getOperationProps,
+                          })}
                           {dirtinessContext(({ dirty }) =>
                             dirty ? (
                               <ReasonField

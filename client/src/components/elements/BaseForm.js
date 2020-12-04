@@ -114,7 +114,7 @@ class BaseForm extends Component {
 
   unpackFields = (props) => {
     function flatten(result, tree, prefix) {
-      if (typeof tree === 'object' && tree !== null) {
+      if (typeof tree === 'object' && tree !== null && !Array.isArray(tree)) {
         Object.keys(tree).reduce((result, keySegment) => {
           flatten(
             result,
@@ -237,7 +237,7 @@ class BaseForm extends Component {
         return (
           <WrappedComponent
             {...this.props}
-            id={fieldId}
+            //id={fieldId} // multiple input could have same id when field is an array
             disabled={disabled || this.props.disabled}
             value={this.state.value}
             error={Boolean(this.state.error)} //Boolean function not constructor

@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import FormLabel from '@material-ui/core/FormLabel';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 import { Button, Humanize, Typography } from '../../components/elements';
 import {
   EntityProfile,
@@ -13,12 +16,17 @@ import GeneForm from './GeneForm';
 import SuppressGeneDialog from './SuppressGeneDialog';
 import MergeGeneDialog from './MergeGeneDialog';
 import SplitGeneDialog from './SplitGeneDialog';
+import DialogGeneAddOtherName from './DialogGeneAddOtherName';
+import DialogGeneDeleteOtherName from './DialogGeneDeleteOtherName';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 const OPERATION_KILL = 'kill';
 const OPERATION_RESURRECT = 'resurrect';
 const OPERATION_SUPPRESS = 'suppress';
 const OPERATION_MERGE = 'merge';
 const OPERATION_SPLIT = 'split';
+const OPERATION_ADD_NAMES_OTHER = 'add_names_other';
+const OPERATION_DELETE_NAME_OTHER = 'delete_names_other';
 
 class GeneProfile extends Component {
   getDisplayName = (data = {}) =>
@@ -129,13 +137,48 @@ class GeneProfile extends Component {
               <SuppressGeneDialog {...getDialogProps(OPERATION_SUPPRESS)} />
               <MergeGeneDialog {...getDialogProps(OPERATION_MERGE)} />
               <SplitGeneDialog {...getDialogProps(OPERATION_SPLIT)} />
+              <DialogGeneAddOtherName
+                {...getDialogProps(OPERATION_ADD_NAMES_OTHER)}
+              />
+              <DialogGeneDeleteOtherName
+                {...getDialogProps(OPERATION_DELETE_NAME_OTHER)}
+              />
             </React.Fragment>
           );
         }}
-        renderForm={({ data, changes, ...props }) => (
+        renderForm={({ data, changes, getOperationProps, ...props }) => (
           <GeneForm
             {...props}
             cloned={Boolean(data['sequence-name'] || data['biotype'])}
+            isEdit
+            otherNamesEdit={
+              <div>
+                <FormLabel component="legend">Alternative names(s)</FormLabel>
+                <div style={{ margin: '0 0.5em' }}>
+                  {(data['other-names'] || []).map((otherName) => (
+                    <div>
+                      <span>{otherName} </span>
+                      <Tooltip title="Delete name" placement="right">
+                        <IconButton
+                          {...getOperationProps(OPERATION_DELETE_NAME_OTHER, {
+                            otherName,
+                          })}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  ))}
+                  <Button
+                    {...getOperationProps(OPERATION_ADD_NAMES_OTHER)}
+                    variant="raised"
+                    size="small"
+                  >
+                    Add alternative names
+                  </Button>
+                </div>
+              </div>
+            }
           />
         )}
         renderOperationTip={({ data, Wrapper }) =>
