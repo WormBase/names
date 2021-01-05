@@ -46,6 +46,7 @@ Ensure you've installed the following software on your system to enable local bu
 * [nvm][7]
 * [docker][8]
 * [awscli][9]
+* [build-essential (ubuntu)][19] or similar package containing `make`
 
 #### Docker credentials
 
@@ -393,3 +394,4 @@ Copyright ©  WormBase 2018, 2019
 [16]: https://github.com/bbatsov/clojure-style-guide
 [17]: https://stuartsierra.com/2016/clojure-how-to-ns.html
 [18]: https://github.com/borkdude/clj-kondo
+[19]: https://packages.ubuntu.com/search?keywords=build-essential&searchon=names
