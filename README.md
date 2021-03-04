@@ -43,6 +43,8 @@ done
 
 Ensure you've installed the following software on your system to enable local building, testing and troubleshooting:
 * [clojure CLI_tools][4]
+* [datomic (on-prem) Pro (or pro starter)](https://my.datomic.com/downloads/pro): My datomic account required.
+  Installation requires `mvn` (ubuntu package `maven`) to be installed.
 * [nvm][7]
 * [docker][8]
 * [awscli][9]
@@ -180,7 +182,7 @@ and lastly the main application.
 
 ### Requirements
 
-Ensure you've installed the following software on your system to enable building and deployment:
+Ensure you've installed the following software on your system to enable building, testing and deployment:
 * [clojure CLI_tools][4]
 * [nvm][7]
 * [docker][8]
@@ -390,7 +392,7 @@ Copyright ©  WormBase 2018, 2019
 [11]: https://github.com/facebook/create-react-app
 [12]: https://github.com/docker/docker-credential-helpers/releases
 [13]: https://github.com/docker/docker-credential-helpers/issues/102
-[14]: https://github.com/WormBase/wormbase-architecture/wiki/Simulating-Production-Datomic-Database-with-local-storage-and-transactor
+[14]: https://github.com/WormBase/wormbase-architecture/blob/develop/docs/Simulating-Production-Datomic-Database-with-local-storage-and-transactor.md
 [16]: https://github.com/bbatsov/clojure-style-guide
 [17]: https://stuartsierra.com/2016/clojure-how-to-ns.html
 [18]: https://github.com/borkdude/clj-kondo
