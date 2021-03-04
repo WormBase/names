@@ -296,17 +296,22 @@
             (ok))))))
 
 (defn finding-resticted?
-  [pattern & {:keys [min-chars-match
+  "Check if `search-pattern` could match a WB entity ID (defined as `id-pattern`) and
+   return a warning message if it does and has < `min-chars-match` digits.
+
+  `search-pattern` - Search pattern to be analysed
+  `min-chars-match` - Minimum number of digits `search-pattern` should have
+  `id-pattern` - regex that matches the WB entity ID format"
+  [search-pattern & {:keys [min-chars-match
                      id-pattern]
               :or {min-chars-match 7
                    id-pattern #"WB[a-zA-Z]+(\d+)"}}]
-  (when-let [[_ numbers] (re-find id-pattern pattern)]
+  (when-let [[_ numbers] (re-find id-pattern search-pattern)]
     (when (< (count numbers) min-chars-match)
-      {:matches []
-       :message (format
-                 "Identifier must contain at least %d digits (received %d)."
-                 min-chars-match
-                 (count numbers))})))
+      (format
+       "Identifier must contain at least %d digits (received %d). Returning perfect matches only."
+       min-chars-match
+       (count numbers)))))
 
 (defn build-find-query
   [find-attrs unqualified-attrs rule-head]
@@ -334,19 +339,23 @@
   [entity-type unqualified-attrs]
   (fn handle-find [request]
     (when-let [s-pattern (some-> request :query-params :pattern str/trim)]
-      (if-let [restricted (finding-resticted? s-pattern)]
-        (ok restricted)
-        (let [db (:db request)
-              find-attrs (map (partial keyword entity-type) unqualified-attrs)
-              rule-head (str entity-type "-name")
-              matching-rules (wnm/make-rules rule-head find-attrs)
-              query (build-find-query find-attrs unqualified-attrs rule-head)
-              regexp-pattern (re-pattern (str "^" s-pattern))
-              q-result (d/q query db matching-rules regexp-pattern)
-              res {:matches (if (seq q-result)
-                              (vec (map #(wnu/unqualify-keys % entity-type) q-result))
-                              [])}]
-          (ok res))))))
+      (let [db (:db request)
+            restricted-msg (finding-resticted? s-pattern)
+            find-attrs (map (partial keyword entity-type) unqualified-attrs)
+            rule-head (str entity-type "-name")
+            matching-rules (wnm/make-rules rule-head find-attrs)
+            query (build-find-query find-attrs unqualified-attrs rule-head)
+            match-pattern (if restricted-msg
+                            (re-pattern (str "^" s-pattern "$"))
+                            (re-pattern (str "^" s-pattern)))
+            q-result (d/q query db matching-rules match-pattern)
+            matches (if (seq q-result)
+                      (vec (map #(wnu/unqualify-keys % entity-type) q-result))
+                      [])
+            res (if restricted-msg
+                  {:matches matches :message restricted-msg}
+                  {:matches matches})]
+        (ok res)))))
 
 (defn generic-attrs
   "Return the datomic attribute schema for a generic entity."
