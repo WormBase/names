@@ -308,7 +308,7 @@ The best way to run the imports is against a local `datomic:ddb-local` or `datom
 
 e.g: dynamodb-local
 ```bash
-export WB_DB_URI="datmomic:ddb-local://localhost:8000/WSNames/12022019 # The Dynamo DB table here is `WSNames`
+export WB_DB_URI="datomic:ddb-local://localhost:8000/WSNames/12022019 # The Dynamo DB table here is `WSNames`
 ```
 
 See [here][14] for instructions on creating a local DynamoDB database.
