@@ -61,6 +61,33 @@ but varies depending on operating system.
 For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
 which uses a GPG2 key to encrypt tokens.
 
+#### Google API secrets
+Before being able to run `make run-tests` (and possibly some other NS functionality as well),
+you need to store the Google API ID and secrets in a few files on your local system.
+These files are not (and should **never** be!) versioned in git or pushed to github, as doing so would pose a security vulnerability.
+To intantiate these file locally:
+1. change your working directory to your local repository clone directory
+2. Execute the following commands:
+   ```bash
+   install -d resources/secrets -m 700
+   install -m 700 /dev/null resources/secrets/wb-ns-google-console.edn
+   install -m 700 /dev/null resources/secrets/wb-ns-google-web.edn
+   ```
+
+3. Paste the following content in each of the above created files:
+   ```clojure
+   {
+     :client-id ""
+     :client-secret ""
+   }
+   ```
+
+4. Go to the [wormbase-names-service google console credentials page](https://console.cloud.google.com/apis/credentials?project=wormbase-names-service).
+
+5. Under OAuth 2.0 Client IDs, click on "WormBase Names Service (Web)"
+	From the right-hand side of the page, copy the "Client ID" and the "Client Secret" in the appropriate strings in `resources/secrets/wb-ns-google-web.edn`
+
+6. Repeat the previous step with "WormBase Names Service (Programmatic Access)" and copy-paste the appropriate strings in `resources/secrets/wb-ns-google-console.edn`
 
 ### REST API
 To be able to run the REST API locally, one must define the (local) datomic DB URI as the env variable `WB_DB_URI`.
