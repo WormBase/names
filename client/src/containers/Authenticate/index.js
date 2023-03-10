@@ -1,11 +1,13 @@
 import React, {
   useMemo,
+  useState,
   useRef,
   //  useReducer,
   useCallback,
   useEffect,
 } from 'react';
 import { useSessionStorageReducer } from 'react-storage-hooks';
+import axios from 'axios';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -14,6 +16,7 @@ import AuthorizationContext, {
   DEFAULT_AUTHENTICATION_STATE,
 } from './AuthorizationContext';
 import useDataFetch from './useDataFetch';
+import { googleLogout, useGoogleLogin } from '@react-oauth/google';
 
 export default function Authenticate({ children }) {
   const [state, dispatch] = useSessionStorageReducer(
@@ -53,81 +56,104 @@ export default function Authenticate({ children }) {
     }
   }
 
-  const auth2Ref = useRef();
+  const userRef = useRef([]);
+  const profileRef = useRef([]);
 
   useEffect(() => {
-    // adapted from https://developers.google.com/identity/sign-in/web/build-button
-    const gapi = window.gapi;
-    gapi.load('auth2', () => {
-      // Retrieve the singleton for the GoogleAuth library and set up the client.
-      auth2Ref.current = gapi.auth2.init({
-        client_id:
-          '514830196757-8464k0qoaqlb4i238t8o6pc6t9hnevv0.apps.googleusercontent.com',
-        cookiepolicy: 'single_host_origin',
-        // Request scopes in addition to 'profile' and 'email'
-        //scope: 'additional_scope'
-      });
-      auth2Ref.current.isSignedIn.listen((isSignedIn) => {
-        if (isSignedIn) {
-          const googleUser = auth2Ref.current.currentUser.get();
-          const googleUserProfile = googleUser.getBasicProfile();
-          const name = googleUserProfile.getName();
-          const email = googleUserProfile.getEmail();
-          const id_token = googleUser.getAuthResponse().id_token;
+    console.log('Change detected. Verifying if user is set.');
+    const user = userRef.current;
+    if (user && user.length) {
+      console.log('User change detected. Retrieving profile for user', user);
+      getUserInfo(user);
+    } else {
+      console.log('User not set, deleting profile.');
+      profileRef.current = null;
+    }
+  }, []);
 
-          const newHeaders = new Headers();
-          newHeaders.append('Authorization', `Token ${id_token}`);
-          newHeaders.append('Content-Type', 'application/json');
-          newHeaders.append('Accept', 'application/json');
+  const handleLogin = useGoogleLogin({
+    flow: 'auth-code',
+    onSuccess: (codeResponse) => onLoginSuccess(codeResponse),
+    onError: (error) => dispatch({ type: 'LOGIN_FAILURE', payload: { error } }),
+    // redirect_uri: 'urn:ietf:wg:oauth:2.0:oob'
+    redirect_uri: 'http://lvh.me:3000',
+    // redirect_uri: 'https://names.wormbase.org'
+  });
 
-          dispatch({ type: 'LOGIN_BEGIN' });
-          // Verify the backend API is working and
-          // accepts the id_token
-          return fetch(`/api/person/${email}`, {
-            headers: newHeaders,
-          }).then((response) => {
-            if (response.ok) {
-              response.json().then(({ id }) => {
-                dispatch({
-                  type: 'LOGIN_SUCCESS',
-                  payload: {
-                    user: {
-                      name,
-                      email,
-                      id_token,
-                      id,
-                    },
+  function onLoginSuccess(codeResponse) {
+    console.log('Successful login received. Setting user.');
+    console.log('codeResponse', codeResponse);
+    userRef.current = codeResponse;
+    console.log('New user:', userRef.current);
+
+    getUserInfo(userRef.current);
+  }
+
+  function getUserInfo(user) {
+    console.log('Retrieving user info for user', user);
+    axios
+      .get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${
+          user.access_token
+        }`,
+        {
+          headers: {
+            Authorization: `${user.token_type} ${user.access_token}`,
+            Accept: 'application/json',
+          },
+        }
+      )
+      .then((res) => {
+        const userInfo = res.data;
+        console.log('Retrieved userInfo:', userInfo);
+
+        // const id_token = user.getCredentialResponse().credential;
+        const id_token = user.access_token;
+        const user_code = user.code;
+        const name = userInfo.name;
+        const email = userInfo.email;
+
+        const newHeaders = new Headers();
+        newHeaders.append('Authorization', `Token ${user_code}`);
+        newHeaders.append('Content-Type', 'application/json');
+        newHeaders.append('Accept', 'application/json');
+
+        dispatch({ type: 'LOGIN_BEGIN' });
+        // Verify the backend API is working and
+        // accepts the id_token
+        return fetch(`/api/person/${email}`, {
+          headers: newHeaders,
+        }).then((response) => {
+          if (response.ok) {
+            response.json().then(({ id }) => {
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: {
+                  user: {
+                    name,
+                    email,
+                    user_code,
+                    id,
                   },
-                });
+                },
               });
-            } else {
-              response.text().then((error) => {
-                dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
-              });
-            }
-          });
-        } else {
-          dispatch({ type: 'ACCESS_REVOKED' });
-        }
-      });
-      auth2Ref.current.then(() => {
-        if (!auth2Ref.current.isSignedIn.get()) {
-          // now we know for certain the user isn't signed in, instead of auth initialization taking a while
-          dispatch({ type: 'ACCESS_REVOKED' });
-        }
-      });
-    });
-  }, []);
+            });
+          } else {
+            response.text().then((error) => {
+              dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
+            });
+          }
+        });
+      })
+      .catch((err) => {
+        console.log(err);
 
-  const handleLogin = useCallback(() => {
-    auth2Ref.current.signIn().catch((error) => {
-      dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
-    });
-  }, []);
+        dispatch({ type: 'ACCESS_REVOKED' });
+      });
+  }
 
   const handleLogout = useCallback(() => {
-    auth2Ref.current.disconnect(); // revoke scopes
-    auth2Ref.current.signOut();
+    googleLogout();
   }, []);
 
   const authorizedFetch = useCallback(

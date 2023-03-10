@@ -45,7 +45,8 @@ function Main({ classes }) {
       <Header isAuthenticated={isAuthenticated}>
         <ProfileButton name={user.name} />
       </Header>
-      {isAuthenticated === undefined || (isAuthenticated && entityTypesAll.length === 0) ? (
+      {isAuthenticated === undefined ||
+      (isAuthenticated && entityTypesAll.length === 0) ? (
         <div className={classes.content}>
           <Page>
             <CircularProgress />
