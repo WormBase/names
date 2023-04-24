@@ -131,7 +131,7 @@
      :path-params [identifier :- ::wsp/identifier]
      (sweet/resource
       {:get
-       {:summary "Summaraise a person."
+       {:summary "Summarize a person."
         :x-name ::person-summary
         :responses (wnu/http-responses-for-read {:schema ::wsp/summary})
         :handler (wrap-id-validation about-person identifier)}

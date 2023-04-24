@@ -77,7 +77,7 @@
        nil)))
 
 (defn verify-token-gapi
-  "Return a truthy value iif the token is valid."
+  "Return a truthy value if the token is valid."
   [token]
   (some->> (.verify token-verifier token)
            (.getPayload)))
@@ -136,7 +136,7 @@
    Token can be either Google Auth code or Google ID token.
    In case Google Auth code, auth code will be exchanged for a Google ID token.
    Conditionally associates the authentication token with the user in the database.
-   Return an Identificaiton record."
+   Return an Identification record."
   [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
         google-ID-token (or (google-auth-code-to-id-token token)
