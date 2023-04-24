@@ -26,8 +26,8 @@
    :redirect-uri "http://lvh.me:3000"
    :scopes [:profile :email :openid]
    :grant-type "offline"
-   :client-id ^:ref [:secrets :client-id]
-   :client-secret ^:ref [:secrets :client-secret]
+   :client-id ^:ref [:google-apps :web :client-id]
+   :client-secret ^:ref [:google-apps :web :client-secret]
    :landing-uri "/gene/"
    :basic-auth? true}}
  :test
