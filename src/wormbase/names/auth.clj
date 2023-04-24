@@ -1,23 +1,23 @@
 (ns wormbase.names.auth
-  (:require
-   [clojure.set :as set]
-   [clojure.tools.logging :as log]
-   [clojure.walk :as w]
-   [buddy.auth :as auth]
-   [buddy.auth.accessrules :as baa]
-   [buddy.auth.backends.token :as babt]
-   [buddy.auth.middleware :as auth-mw]
-   [buddy.sign.compact :as bsc]
-   [datomic.api :as d]
-   [ring.middleware.defaults :as rmd]
-   [ring.util.http-response :as http-response]
-   [wormbase.util :as wu]
-   [wormbase.names.agent :as wn-agent])
-  (:import
-   (com.google.api.client.googleapis.auth.oauth2 GoogleIdTokenVerifier$Builder
-                                                 GoogleIdToken)
-   (com.google.api.client.http.javanet NetHttpTransport)
-   (com.google.api.client.json.jackson2 JacksonFactory)))
+  (:require [buddy.auth :as auth]
+            [buddy.auth.accessrules :as baa]
+            [buddy.auth.backends.token :as babt]
+            [buddy.auth.middleware :as auth-mw]
+            [buddy.sign.compact :as bsc]
+            [clojure.tools.logging :as log]
+            [clojure.walk :as w]
+            [datomic.api :as d]
+            [environ.core :as environ]
+            [ring.middleware.defaults :as rmd]
+            [ring.util.http-response :as http-response]
+            [wormbase.names.agent :as wn-agent]
+            [wormbase.util :as wu])
+  (:import (com.google.api.client.auth.oauth2 TokenResponseException)
+           (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest
+                                                         GoogleIdTokenVerifier$Builder
+                                                         GoogleIdToken)
+           (com.google.api.client.http.javanet NetHttpTransport)
+           (com.google.api.client.json.jackson2 JacksonFactory)))
 
 (def ^:private net-transport (NetHttpTransport.))
 
@@ -34,22 +34,47 @@
                                                     (apply list)))
                                   (build)))
 
-(defn parse-token
-  "Parse a Google ID token, returns a map containing the information associated with Google ID token.
-  Returns nil if the token cannot be parsed."
-  [^String token]
-  (try
-    (some->> (GoogleIdToken/parse json-factory token)
-             (.getPayload)
-             (into {})
-             (w/keywordize-keys))
-    (catch IllegalArgumentException _
-      nil)))
-
 (defn client-id
   "Returns the Google client-id from application configuration give the client type."
   [client-type]
   (-> gapps-conf client-type :client-id))
+
+(defn client-secret
+  "Returns the Google client-secret from application configuration give the client type."
+  [client-type]
+  (-> gapps-conf client-type :client-secret))
+
+(defn google-auth-code-to-id-token
+  "Exchange a Google authentication code, returns a map containing a Google access token and a Google-signed JWT ID token.
+  Returns nil if the authentication code cannot be parsed.
+   Each authCode can only be exchanged exactly once. Subsequent exchanges will fail."
+  [^String authCode]
+  (try
+    (some->>
+     (new GoogleAuthorizationCodeTokenRequest
+          net-transport
+          json-factory
+          "https://oauth2.googleapis.com/token"
+          (client-id :web)
+          (client-secret :web)
+          authCode
+          (get environ/env :google-redirect-uri))
+     (.execute)
+     (.getIdToken))
+    (catch TokenResponseException _
+      nil)))
+
+(defn parse-token
+  "Parse provided Google ID token, returns a map containing the information associated with the token.
+   Returns nil if the token cannot be parsed as Google Auth code nor Google ID token."
+  [^String token]
+   (try
+     (some->> (GoogleIdToken/parse json-factory token)
+              (.getPayload)
+              (into {})
+              (w/keywordize-keys))
+     (catch IllegalArgumentException _
+       nil)))
 
 (defn verify-token-gapi
   "Return a truthy value iif the token is valid."
@@ -87,7 +112,7 @@
   [auth-token-conf token]
   (bsc/sign (str token) (:key auth-token-conf)))
 
-(defrecord Identification [token-info person])
+(defrecord Identification [id-token token-info person])
 
 (defn verified-person
   "Return a person from the database having a matching stored token."
@@ -107,19 +132,23 @@
         (query-person db :person/email email)))))
 
 (defn identify
-  "Identify the wormbase user associated with request.
+  "Identify the wormbase user associated with request based on token.
+   Token can be either Google Auth code or Google ID token.
+   In case Google Auth code, auth code will be exchanged for a Google ID token.
    Conditionally associates the authentication token with the user in the database.
    Return an Identificaiton record."
   [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
+        google-ID-token (or (google-auth-code-to-id-token token)
+                                 token)
         parsed-token (try
-                       (parse-token token)
+                       (parse-token google-ID-token)
                        (catch Exception ex
                          (log/error ex "Malformed token")))
         db (:db request)]
     (when parsed-token
       (if-let [person (verified-person db auth-token-conf parsed-token)]
-        (map->Identification {:token-info parsed-token :person person})
+        (map->Identification {:id-token google-ID-token :token-info parsed-token :person person})
         (when-let [tok (verify-token token)]
           (if-let [person (query-person db :person/email (:email tok))]
             (let [auth-token (sign-token auth-token-conf tok)]
@@ -128,7 +157,7 @@
                                    (:db/id person)
                                    :person/auth-token
                                    auth-token]])
-              (map->Identification {:token-info parsed-token :person person}))
+              (map->Identification {:id-token google-ID-token :token-info parsed-token :person person}))
             (log/warn "NO PERSON FOUND IN DB:" tok)))))))
 
 (def backend (babt/token-backend {:authfn identify}))

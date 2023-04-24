@@ -3,8 +3,13 @@ EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= "wormbase-names"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
+	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
+else ifeq ($(PROJ_NAME), wormbase-names-test)
+	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+	GOOGLE_REDIRECT_URI ?= https://test-names.wormbase.org/
 else
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+#   Ensure GOOGLE_REDIRECT_URI is defined as appropriate as an env variable or CLI argument
 endif
 DEPLOY_JAR := app.jar
 PORT := 3000
@@ -107,18 +112,24 @@ docker-tag: \
 
 .PHONY: eb-def-app-env
 eb-def-app-env: \
-                $(call print-help,eb-def-app-env [WB_DB_URI=<datomic-db-uri>],\
+                $(call print-help,eb-def-app-env \
+				[WB_DB_URI=<datomic-db-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
                 Define the ElasticBeanStalk app-environment config file.)
 ifndef WB_DB_URI
 	$(error WB_DB_URI not set! Define datomic-DB-URI as WB_DB_URI arg)
 endif
+ifndef GOOGLE_REDIRECT_URI
+	$(error GOOGLE_REDIRECT_URI not set! Define the google redirect-uri to use for authentication as GOOGLE_REDIRECT_URI arg)
+endif
 	@cp ebextensions-templates/${EB_APP_ENV_FILE} .ebextensions/
 	@sed -i -r 's~(WB_DB_URI:\s+)".*"~\1"'"${WB_DB_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	@sed -i -r 's~(GOOGLE_REDIRECT_URI:\s+)".*"~\1"'"${GOOGLE_REDIRECT_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 
 .PHONY: eb-create
 eb-create: eb-def-app-env \
            $(call print-help,eb-create [AWS(_EB)?_PROFILE=<profile_name>] \
-           [AWS_IAM_UNAME=<iam_username>] [PROJ_NAME=<eb-env-name>] [WB_DB_URI=<datomic-db-uri>],\
+           [AWS_IAM_UNAME=<iam_username>] [PROJ_NAME=<eb-env-name>] [WB_DB_URI=<datomic-db-uri>] \
+		   [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Create an ElasticBeanStalk environment using the Docker platform.)
 	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
 	                             || aws --profile ${AWS_PROFILE} iam get-user --query "User.UserName"))
@@ -134,16 +145,19 @@ eb-create: eb-def-app-env \
 .PHONY: eb-deploy
 eb-deploy: eb-def-app-env \
            $(call print-help,eb-deploy [PROJ_NAME=<eb-env-name>] \
-           [AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-db-uri>],\
+           [AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-db-uri>] \
+		   [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Deploy the application using ElasticBeanstalk.)
 	@eb deploy ${PROJ_NAME}
 
 .PHONY: eb-env
 eb-setenv: \
-           $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-uri>] [PROJ_NAME=<eb-env-name>],\
+           $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>] [PROJ_NAME=<eb-env-name>] \
+		   [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Set enviroment variables for the ElasticBeanStalk environment.)
 	@eb setenv \
 		WB_DB_URI="${WB_DB_URI}" \
+		GOOGLE_REDIRECT_URI="${GOOGLE_REDIRECT_URI}" \
 		_JAVA_OPTIONS="-Xmx14g" \
 		AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
 		AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
@@ -151,13 +165,15 @@ eb-setenv: \
 
 .PHONY: eb-local
 eb-local: docker-ecr-login \
-          $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>] [PORT=<port>] [WB_DB_URI=<datomic-uri>],\
+          $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>] [PORT=<port>] \
+		  [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
           Runs the ElasticBeanStalk/docker build and run locally.)
-	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI}
+	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
 .PHONY: run
 run: \
-     $(call print-help,run [WB_DB_URI=<datomic-uri>] [PORT=<port>] [PROJ_NAME=<docker-project-name>],\
+     $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
+	 [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
      Run the application in docker (locally).)
 	@docker run \
 		--name ${PROJ_NAME} \
@@ -167,6 +183,7 @@ run: \
 		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e WB_DB_URI=${WB_DB_URI} \
+		-e GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} \
 		-e PORT=${PORT} \
 		${ECR_REPO_NAME}:${VERSION_TAG}
 
@@ -207,6 +224,7 @@ run-tests: \
 
 .PHONY: run-dev-server
 run-dev-webserver: \
-                   $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri>,\
+                   $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
+				   GOOGLE_REDIRECT_URI=<google-redirect-uri>,\
                    Run a local development webserver.)
 	@clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service

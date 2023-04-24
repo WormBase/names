@@ -13,6 +13,7 @@
    [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
+   [wormbase.names.identity :as wn-identity]
    [wormbase.names.person :as wn-person]
    [wormbase.names.recent :as wn-recent]
    [wormbase.names.response-formats :as wnrf]
@@ -93,6 +94,7 @@
        :middleware [wna/restrict-to-authenticated]
        wn-species/routes
        wn-gene/routes
+       wn-identity/routes
        wn-person/routes
        wn-recent/routes
        wn-batch/routes

@@ -90,7 +90,8 @@ To intantiate these file locally:
 6. Repeat the previous step with "WormBase Names Service (Programmatic Access)" and copy-paste the appropriate strings in `resources/secrets/wb-ns-google-console.edn`
 
 ### REST API
-To be able to run the REST API locally, one must define the (local) datomic DB URI as the env variable `WB_DB_URI`.
+To be able to run the REST API locally, define the (local) datomic DB URI as the env variable `WB_DB_URI`,
+and the URI to use during Google authentication as the env variable `GOOGLE_REDIRECT_URI`.
 
 An example of a valid datomic URI may be `datomic:mem://localhost:4334/names`. No transactor setup is needed for this in-memory database URI.
 For a persistent database (like `ddb-local`), a transactor needs to be configured, in which case the `WB_DB_URI` is based on your transactor configuration and database name. Make sure to define the `DATOMIC_EXT_CLASSPATH` env variable to point to the wormbase/ids jar when setting up the transactor (see [these instruction](./ids/README.md#Build) to build the ids jar).
@@ -102,7 +103,8 @@ export DATOMIC_EXT_CLASSPATH="$HOME/git/wormbase-names/ids/target/wbids.jar"
 When using a `ddb-local` transactor, ensure to have set AWS environment variables with mock credentials,
 then run the following command to launch the local REST API service:
 ```bash
-make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri]
+
+make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri] GOOGLE_REDIRECT_URI="http://lvh.me:3000"
 ```
 
 To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json) (standardly 4010 is used).
@@ -291,7 +293,8 @@ make release [AWS_PROFILE=<profile_name>]
 #   accidental deployments to the production environment!
 # * Check if the hard-coded WB_DB_URI default (see MakeFile) applies.
 #   If not, define WB_DB_URI to point to the appropriate datomic DB.
-make eb-deploy PROJ_NAME=<env-name> [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
+# * Ensure to define the correct GOOGLE_REDIRECT_URI for google authentication (http://lvh.me:3000 when developing locally)
+make eb-deploy PROJ_NAME=<env-name> [GOOGLE_REDIRECT_URI=<google-redirect-uri>] [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
 ```
 
 ### Deploying the IDs library
