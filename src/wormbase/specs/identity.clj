@@ -32,15 +32,7 @@
                              :swagger/example "4/P7q7W91a-oMsCeLvIaQm6bTrgtp7"
                              :description "A Google OAuth2 authorization response code"}))
 
-(def example-exchange-response {:access_token "..."
-                                :id_token "..."
-                                :expires_in 30
-                                :scope []
-                                :token_type "Bearer"})
+(def example-id-token-response {:id_token "..."})
 
-(s/def ::exchange-response (stc/spec {:spec (s/keys :req-un [::access_token ::id_token]
-                                                    :opt-un [::expires_in
-                                                             ::scope
-                                                             ::token_type
-                                                             ::refresh_token])
-                                      :swagger/example example-exchange-response}))
+(s/def ::id-token-response (stc/spec {:spec (s/keys :req-un [::id_token])
+                                      :swagger/example example-id-token-response}))
