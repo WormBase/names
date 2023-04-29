@@ -2,7 +2,12 @@
   (:require
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]
-   [spec-tools.spec :as sts]))
+   [spec-tools.spec :as sts]
+   [wormbase.specs.person :as wsp]))
+
+(s/def ::person (stc/spec {:spec ::wsp/summary
+                                 :swagger/example ::wsp/example-summary
+                                 :description "A WB names person summary"}))
 
 (s/def ::authcode (stc/spec {:spec sts/string?
                              :swagger/example "4/P7q7W91a-oMsCeLvIaQm6bTrgtp7"
@@ -12,7 +17,7 @@
                              :swagger/example "..."
                              :description "A Google API access token"}))
 
-(s/def ::id_token (stc/spec {:spec sts/string?
+(s/def ::id-token (stc/spec {:spec sts/string?
                              :swagger/example "..."
                              :description "A Google-signed JWT containing identity information about the user"}))
 
@@ -32,7 +37,16 @@
                              :swagger/example "4/P7q7W91a-oMsCeLvIaQm6bTrgtp7"
                              :description "A Google OAuth2 authorization response code"}))
 
-(def example-id-token-response {:id_token "..."})
+(def example-id-token-response {:id-token "..."})
 
-(s/def ::id-token-response (stc/spec {:spec (s/keys :req-un [::id_token])
+(s/def ::id-token-response (stc/spec {:spec (s/keys :req-un [::id-token])
                                       :swagger/example example-id-token-response}))
+
+(def example-identity {:id-token "..."})
+
+(s/def ::token-info (stc/spec {:spec sts/any?
+                               :swagger/example "{:email \"user@wormbase.org\", :email_verified true, :hd \"wormbase.org\", ...}"
+                               :description "Parsed JWT token info."}))
+
+(s/def ::identity-response (stc/spec {:spec (s/keys :req-un [::id-token ::token-info ::person])
+                                      :swagger/example example-identity}))

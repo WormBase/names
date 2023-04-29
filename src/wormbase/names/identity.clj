@@ -12,19 +12,23 @@
 
 (def ^:private gapps-conf (:google-apps app-conf))
 
-(defn get-identity-id-token [request]
-  (let [id_token (-> request :identity :id-token)
-        id_response {:identity/id_token id_token}]
-    (ok (wnu/unqualify-keys id_response "identity"))))
+(defn get-identity [request]
+  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")
+        person (wnu/unqualify-keys (:person identity) "person")
+        id-token (:id-token identity)
+        token-info (:token-info identity)]
+    (ok {:person person
+         :id-token id-token
+         :token-info token-info} )))
 
 
 (def routes
   (sweet/routes
-   (sweet/context "/identity/id-token" []
+   (sweet/context "/identity" []
      :tags ["identity"]
      (sweet/resource
       {:get
-       {:summary "Get the ID token for the authenticated and authorized user making the request."
-        :x-name ::get-id-token
-        :responses (wnu/http-responses-for-read {:schema ::wsident/id-token-response})
-        :handler get-identity-id-token}}))))
+       {:summary "Get the identity for the authenticated and authorized user making the request."
+        :x-name ::get-identity
+        :responses (wnu/http-responses-for-read {:schema ::wsident/identity-response})
+        :handler get-identity}}))))

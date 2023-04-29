@@ -63,93 +63,82 @@ export default function Authenticate({ children }) {
     console.log('Change detected. Verifying if user is set.');
     const user = userRef.current;
     if (user && user.length) {
-      console.log('User change detected. Retrieving profile for user', user);
-      getUserInfo(user);
+      console.log('User change detected. New user:', user);
     } else {
       console.log('User not set, deleting profile.');
       profileRef.current = null;
     }
   }, []);
 
+  const locationHref = window.location.href;
+
   const handleLogin = useGoogleLogin({
     flow: 'auth-code',
     onSuccess: (codeResponse) => onLoginSuccess(codeResponse),
     onError: (error) => dispatch({ type: 'LOGIN_FAILURE', payload: { error } }),
-    // redirect_uri: 'urn:ietf:wg:oauth:2.0:oob'
-    redirect_uri: 'http://lvh.me:3000',
-    // redirect_uri: 'https://names.wormbase.org'
+    redirect_uri: locationHref,
   });
 
   function onLoginSuccess(codeResponse) {
     console.log('Successful login received. Setting user.');
     console.log('codeResponse', codeResponse);
-    userRef.current = codeResponse;
-    console.log('New user:', userRef.current);
 
-    getUserInfo(userRef.current);
+    const user = getUserInfo(codeResponse);
+
+    userRef.current = user;
+    console.log('New user:', userRef.current);
   }
 
-  function getUserInfo(user) {
-    console.log('Retrieving user info for user', user);
-    axios
-      .get(
-        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${
-          user.access_token
-        }`,
-        {
-          headers: {
-            Authorization: `${user.token_type} ${user.access_token}`,
-            Accept: 'application/json',
-          },
-        }
-      )
-      .then((res) => {
-        const userInfo = res.data;
-        console.log('Retrieved userInfo:', userInfo);
+  function getUserInfo(gooleLoginResponse) {
+    console.log(
+      'Retrieving User info for Google Login repsponse',
+      gooleLoginResponse
+    );
 
-        // const id_token = user.getCredentialResponse().credential;
-        const id_token = user.access_token;
-        const user_code = user.code;
-        const name = userInfo.name;
-        const email = userInfo.email;
+    const identityHeaders = new Headers();
+    identityHeaders.append('Authorization', `Token ${gooleLoginResponse.code}`);
+    identityHeaders.append('Content-Type', 'application/json');
+    identityHeaders.append('Accept', 'application/json');
 
-        const newHeaders = new Headers();
-        newHeaders.append('Authorization', `Token ${user_code}`);
-        newHeaders.append('Content-Type', 'application/json');
-        newHeaders.append('Accept', 'application/json');
+    dispatch({ type: 'LOGIN_BEGIN' });
 
-        dispatch({ type: 'LOGIN_BEGIN' });
-        // Verify the backend API is working and
-        // accepts the id_token
-        return fetch(`/api/person/${email}`, {
-          headers: newHeaders,
-        }).then((response) => {
-          if (response.ok) {
-            response.json().then(({ id }) => {
-              dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: {
-                  user: {
-                    name,
-                    email,
-                    user_code,
-                    id,
-                  },
+    var return_val;
+
+    try {
+      return_val = fetch(`/api/identity`, {
+        headers: identityHeaders,
+      }).then((response) => {
+        if (response.ok) {
+          response.json().then((identity) => {
+            console.log('Received identity response:', identity);
+            const name = identity.person.name;
+            const email = identity.person.email;
+            const wb_person_id = identity.person.id;
+            const id_token = identity['id-token'];
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: {
+                user: {
+                  name: name,
+                  email: email,
+                  id_token: id_token,
+                  id: wb_person_id,
                 },
-              });
+              },
             });
-          } else {
-            response.text().then((error) => {
-              dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
-            });
-          }
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-
-        dispatch({ type: 'ACCESS_REVOKED' });
+          });
+        } else {
+          response.text().then((error) => {
+            dispatch({ type: 'LOGIN_FAILURE', payload: { error } });
+          });
+        }
       });
+
+      return return_val;
+    } catch (err) {
+      console.log(err);
+      dispatch({ type: 'ACCESS_REVOKED' });
+    }
   }
 
   const handleLogout = useCallback(() => {
