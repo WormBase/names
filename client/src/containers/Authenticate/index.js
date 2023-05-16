@@ -55,11 +55,12 @@ export default function Authenticate({ children }) {
 
   useEffect(
     () => {
-      console.log('Change detected. Verifying if user is set.');
-      console.log('locationHref:', locationHref);
+      console.log(
+        'Authentication state change detected. Verifying if user is set.'
+      );
 
       if (state.user.id_token) {
-        console.log('User change detected. New user:', state.user);
+        console.log('User set. User email:', state.user.email);
       } else {
         console.log('User not set.');
       }
@@ -77,19 +78,13 @@ export default function Authenticate({ children }) {
   });
 
   function onLoginSuccess(codeResponse) {
-    console.log('Successful login received. Setting user.');
-    console.log('codeResponse', codeResponse);
+    console.log('Successful login received. Getting user info.');
 
-    const user = getUserInfo(codeResponse);
-
-    console.log('New user:', user);
+    getUserInfo(codeResponse);
   }
 
   function getUserInfo(gooleLoginResponse) {
-    console.log(
-      'Retrieving User info for Google Login repsponse',
-      gooleLoginResponse
-    );
+    console.log('Retrieving user info using Google Login response.');
 
     const identityHeaders = new Headers();
     identityHeaders.append('Authorization', `Token ${gooleLoginResponse.code}`);
@@ -106,7 +101,9 @@ export default function Authenticate({ children }) {
       }).then((response) => {
         if (response.ok) {
           response.json().then((identity) => {
-            console.log('Received identity response:', identity);
+            console.log(
+              'Successfull identity response received. User authorized.'
+            );
             const name = identity.person.name;
             const email = identity.person.email;
             const wb_person_id = identity.person.id;

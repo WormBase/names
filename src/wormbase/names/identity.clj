@@ -1,16 +1,9 @@
 (ns wormbase.names.identity
   (:require
    [compojure.api.sweet :as sweet]
-   [ring.util.http-response :refer [bad-request created not-found!
-                                    not-modified ok]]
+   [ring.util.http-response :refer [ok]]
    [wormbase.specs.identity :as wsident]
-   [wormbase.util :as wu]
-   [wormbase.names.util :as wnu]
-   [wormbase.names.auth :as wna]))
-
-(def ^:private app-conf (wu/read-app-config))
-
-(def ^:private gapps-conf (:google-apps app-conf))
+   [wormbase.names.util :as wnu]))
 
 (defn get-identity [request]
   (let [identity (wnu/unqualify-keys (-> request :identity) "identity")
