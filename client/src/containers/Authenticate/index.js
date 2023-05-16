@@ -1,13 +1,10 @@
 import React, {
   useMemo,
-  useState,
-  useRef,
   //  useReducer,
   useCallback,
   useEffect,
 } from 'react';
 import { useSessionStorageReducer } from 'react-storage-hooks';
-import axios from 'axios';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -56,19 +53,19 @@ export default function Authenticate({ children }) {
     }
   }
 
-  const userRef = useRef([]);
-  const profileRef = useRef([]);
+  useEffect(
+    () => {
+      console.log('Change detected. Verifying if user is set.');
+      console.log('locationHref:', locationHref);
 
-  useEffect(() => {
-    console.log('Change detected. Verifying if user is set.');
-    const user = userRef.current;
-    if (user && user.length) {
-      console.log('User change detected. New user:', user);
-    } else {
-      console.log('User not set, deleting profile.');
-      profileRef.current = null;
-    }
-  }, []);
+      if (state.user.id_token) {
+        console.log('User change detected. New user:', state.user);
+      } else {
+        console.log('User not set.');
+      }
+    },
+    [state.isAuthenticated]
+  );
 
   const locationHref = window.location.href;
 
@@ -85,8 +82,7 @@ export default function Authenticate({ children }) {
 
     const user = getUserInfo(codeResponse);
 
-    userRef.current = user;
-    console.log('New user:', userRef.current);
+    console.log('New user:', user);
   }
 
   function getUserInfo(gooleLoginResponse) {
@@ -143,6 +139,7 @@ export default function Authenticate({ children }) {
 
   const handleLogout = useCallback(() => {
     googleLogout();
+    dispatch({ type: 'ACCESS_REVOKED' });
   }, []);
 
   const authorizedFetch = useCallback(
