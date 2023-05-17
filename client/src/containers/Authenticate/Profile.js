@@ -11,13 +11,16 @@ const Profile = (props) => {
       <br />
       <span>Email: {props.email}</span>
       <span>
-        ID-token: <textarea>{props.id_token}</textarea>
-        <br />
-        <CopyToClipboard text={props.id_token}>
-          <div>
-            <button>Copy to clipboard</button>
-          </div>
-        </CopyToClipboard>
+        ID-token:{' '}
+        <div>
+          <textarea>{props.id_token}</textarea>
+          <br />
+          <CopyToClipboard text={props.id_token}>
+            <div>
+              <button>Copy to clipboard</button>
+            </div>
+          </CopyToClipboard>
+        </div>
       </span>
       <div className={props.classes.logout}>{props.children}</div>
     </div>
