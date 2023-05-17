@@ -15,8 +15,7 @@
   :aws-s3
   {:bucket-name "wormbase"}}
  :google-apps
- {:web #include "secrets/wb-ns-google-web.edn"
-  :console #include "secrets/wb-ns-google-console.edn"}
+ {:web #include "secrets/wb-ns-google-web.edn"}
  :oauth2
  {:google
   {:launch-uri "/oauth2/google"

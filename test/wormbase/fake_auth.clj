@@ -6,8 +6,6 @@
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload)))
 
-(def console-client-id (wn-auth/client-id :console))
-
 (def web-client-id (wn-auth/client-id :web))
 
 (def tokens {"tester@wormbase.org" "TOKEN_HERE_tester1"
