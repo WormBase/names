@@ -45,8 +45,8 @@
   (-> gapps-conf client-type :client-secret))
 
 (defn google-auth-code-to-id-token
-  "Exchange a Google authentication code, returns a map containing a Google access token and a Google-signed JWT ID token.
-  Returns nil if the authentication code cannot be parsed.
+  "Exchange a Google authentication code, returns a Google-signed JWT ID token.
+   Returns nil if the authentication code cannot be parsed.
    Each authCode can only be exchanged exactly once. Subsequent exchanges will fail."
   [^String authCode]
   (try
