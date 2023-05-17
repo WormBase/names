@@ -2,38 +2,38 @@
 All members of the WormBase organisation should have a Google account,
 and thus the names service uses Google-Auth as the mechanism for authentication.
 
-The CLIENT_ID and CLIENT_SECRET for the names service applications can be obtained from
-the [credentials section of the Google Developers Console][1].
-
-There are two applications:
-
- * Web
- * Console
-
-For use with scripts, you'll want the credentials for the Console application.
-The Web application is credentials are used by the names web service. 
+Log in to the name service website using your wormbase google email (ending on `@wormbase.org`).
 
 
-# Client token
-The names service requires that the a valid id_token is passed in a HTTP(S) Authorization header.
-To obtain a token for use with the API, you can use the example script as follows:
+# API Authorization token
+As authorization mechanism, the names service requires that either a temporary Google Auth Code
+(for exchange using the identity endpoint) or a valid id_token is passed in through the HTTP(S) request Authorization header
+sent to all API endpoints.
+To obtain a valid ID-token for calling the API, log in to the name service website with your personal account,
+browse to your profile page (`/me`) and copy the ID-token shown (by clicking the `copy to clipboard` button).
 
-```bash
-CLIENT_ID=<copy console app client_id from google dev console)>
-CLIENT_SECRET=<copy console app client_secret from google dev console)>
-TOKEN=$(./obtaintoken.sh "$CLIENT_ID" "$CLIENT_SECRET")
-```
-
-The token is then passed in the header as described above.
+The token should then be passed in the header as described below.
 For example; given a suitable JSON file for the payload,
 the _curl_ command below creates a number of genes via the names service batch API:
 
 ```bash
 curl -H "Content-type: application/json" \
-     -H "Authorization: Token $TOKEN" \
+     -H "Authorization: Token $ID_TOKEN" \
      --data @payload.json \
      https://names.wormbase.org/api/batch/gene
 ```
 
+## Google Oath 2.0 Clients
+The Google Oath 2.0 clients used by the Name service can be accessed through
+the [credentials section of the Google Developers Console][1].
+The Name Service uses two Google Oath 2.0 Client applications for different environments:
+ * Web - Dev
+ * Web - Prod
+
+For local testing and development, use the application credentials of the `Web - Dev` application.
+For applications deployed to the stage or production environment, use the `Web - Prod` application credentials.
+
+Click on the respective application name in the console to access the details page showing the Client ID and Client secret
+to be used by the Name Service to enable Google Authentication.
 
 [1]: https://console.developers.google.com/apis/credentials?project=wormbase-names-service
