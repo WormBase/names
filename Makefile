@@ -1,6 +1,7 @@
 ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= "wormbase-names"
+LOCAL_GOOGLE_REDIRECT_URI = "http://lvh.me:3000"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
@@ -220,7 +221,7 @@ release: deploy-ecr \
 run-tests: \
            $(call print-help,run-tests,\
            Run all tests.)
-	@clj -A:datomic-pro:webassets:dev:test:run-tests
+	@GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} clj -A:datomic-pro:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
 run-dev-webserver: \
