@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
-import { useSessionStorageReducer } from 'react-storage-hooks';
+import { useStorageReducer } from 'react-storage-hooks';
 import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
@@ -16,7 +16,8 @@ import AuthorizationContext, {
 import useDataFetch from './useDataFetch';
 
 export default function Authenticate({ children }) {
-  const [state, dispatch] = useSessionStorageReducer(
+  const [state, dispatch] = useStorageReducer(
+    sessionStorage,
     'authentication',
     reducer,
     {
