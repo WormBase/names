@@ -131,7 +131,10 @@ eb-create: eb-def-app-env \
 	        --region=us-east-1 \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
 	        --cname="${PROJ_NAME}" \
-	        -p docker
+	        -p docker \
+			--elb-type application \
+			--vpc.id vpc-8e0087e9 --vpc.ec2subnets subnet-1ce4c744,subnet-a33a2bd5 --vpc.elbsubnets subnet-1ce4c744,subnet-a33a2bd5 \
+			--vpc.elbpublic --vpc.publicip
 
 .PHONY: eb-deploy
 eb-deploy: eb-def-app-env \
