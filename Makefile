@@ -191,9 +191,9 @@ deploy-ecr: docker-build docker-tag docker-push-ecr
 vc-release: export VERSION_TAG := ${VERSION_TAG}
 vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
-	@echo "Edit version of application in pom.xml to match:"
-	@clj -A:release --without-sign ${LEVEL}
-	@clj -A:datomic-pro:prod
+	clj -A:release --without-sign ${LEVEL}
+	clj -A:datomic-pro:prod
+	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
 .PHONY: release
