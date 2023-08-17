@@ -1,7 +1,10 @@
 # The precense of this file tells the AWS EB CLI to not use  git for deployment as per
 # https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-deploy.html
 #
-.git
-Dockerrun.aws.json.template
-test/
-*.pom
+
+# Ignore everything
+*
+
+# but not these files
+!docker-compose.yml
+!.ebextensions/*

@@ -35,6 +35,9 @@ Dockerrun.aws.json
 /docker/app.jar
 /.dockerignore
 
+#Local docker-compose env-variable files
+.env
+
 # secrets
 /resources/secrets/
 

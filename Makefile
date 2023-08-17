@@ -62,7 +62,7 @@ build: clean ui-build docker/${DEPLOY_JAR} \
        Build the docker images from using the current git revision.)
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
 		--build-arg uberjar_path=${DEPLOY_JAR} \
-		--rm ./docker/
+		./docker/
 
 .PHONY: ui-build
 ui-build: \
@@ -114,6 +114,7 @@ ifndef WB_DB_URI
 endif
 	@cp ebextensions-templates/${EB_APP_ENV_FILE} .ebextensions/
 	@sed -i -r 's~(WB_DB_URI:\s+)".*"~\1"'"${WB_DB_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i 's/\(WB_NAMES_RELEASE: \).\+/\1'${VERSION_TAG}'/' .ebextensions/${EB_APP_ENV_FILE}
 
 .PHONY: eb-create
 eb-create: eb-def-app-env \
@@ -129,7 +130,11 @@ eb-create: eb-def-app-env \
 	@eb create ${PROJ_NAME} \
 	        --region=us-east-1 \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
-	        --cname="${PROJ_NAME}"
+	        --cname="${PROJ_NAME}" \
+	        -p docker \
+			--elb-type application \
+			--vpc.id vpc-8e0087e9 --vpc.ec2subnets subnet-1ce4c744,subnet-a33a2bd5 --vpc.elbsubnets subnet-1ce4c744,subnet-a33a2bd5 \
+			--vpc.elbpublic --vpc.publicip
 
 .PHONY: eb-deploy
 eb-deploy: eb-def-app-env \
@@ -178,18 +183,17 @@ docker-clean: \
 	@docker rm ${PROJ_NAME}
 
 .PHONY: deploy-ecr
-deploy-ecr: docker-build docker-ecr-login docker-tag docker-push-ecr
+deploy-ecr: docker-build docker-tag docker-push-ecr
             $(call print-help,deploy-ecr,\
             Deploy the application to the AWS container registry.)
 
 .PHONY: vc-release
 vc-release: export VERSION_TAG := ${VERSION_TAG}
-vc-release: \
-            $(call print-help,vc-release LEVEL=<major|minor|patch>,\
+vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	@echo "Edit version of application in pom.xml to match:"
 	@clj -A:release --without-sign ${LEVEL}
-	@clj -A:datomic-pro:prod:aws-eb-docker-version
+	@clj -A:datomic-pro:prod
 
 
 .PHONY: release
@@ -197,7 +201,7 @@ release: export VERSION_TAG := ${VERSION_TAG}
 release: deploy-ecr \
          $(call print-help,release [AWS_PROFILE=<profile_name>] [REF_NAME=<tag-or-gitref>],\
          Release the applicaton.)
-	@clj -A:datomic-pro:prod:aws-eb-docker-version
+	@clj -A:datomic-pro:prod
 
 .PHONY: run-tests
 run-tests: \
