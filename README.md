@@ -281,20 +281,10 @@ to the repository root dir and execute the following commands (bash):
 make ui-build
 
 # Generate the pom.xml file (not version-controlled)
+# to ensure no errors occur (in API code)
 rm pom.xml
 clj -Spom
-```
 
-Manually update the generated pom.xml file to contain
-(update `version` to represent the currently released version number):
-```xml
-<groupId>wormbase</groupId>
-<artifactId>names</artifactId>
-<version>x.y.z</version>
-```
-
-Then continue on the terminal (bash):
-```bash
 # Specify $LEVEL as one of <major|minor|patch>.
 # This will bump the x, y or z version number.
 # SLF4J messages can be ignored (warnings, not errors).
