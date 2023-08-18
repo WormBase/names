@@ -192,7 +192,6 @@ vc-release: export VERSION_TAG := ${VERSION_TAG}
 vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	clj -A:release --without-sign ${LEVEL}
-	clj -A:datomic-pro:prod
 	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
@@ -201,7 +200,6 @@ release: export VERSION_TAG := ${VERSION_TAG}
 release: deploy-ecr \
          $(call print-help,release [AWS_PROFILE=<profile_name>] [REF_NAME=<tag-or-gitref>],\
          Release the applicaton.)
-	@clj -A:datomic-pro:prod
 
 .PHONY: run-tests
 run-tests: \
