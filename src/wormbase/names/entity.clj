@@ -305,7 +305,7 @@
   [search-pattern & {:keys [min-chars-match
                      id-pattern]
               :or {min-chars-match 7
-                   id-pattern #"WB[a-zA-Z]+(\d+)"}}]
+                   id-pattern #"WB[a-zA-Z]+(\d*)"}}]
   (when-let [[_ numbers] (re-find id-pattern search-pattern)]
     (when (< (count numbers) min-chars-match)
       (format

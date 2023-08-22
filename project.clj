@@ -15,23 +15,7 @@
   :main ^:skip-aot wormbase.names.importer
   :monkeypatch-clojure-test false
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
-  :aliases {"import" ["run" "-m" "org.wormbase.names.importer"]
-            "update-eb-docker-container-version" ["run" "-m" "wormbase.aws-eb-setup"]
-            "aws-ecr-publish" ["do"
-                               ["shell" "make" "clean"]
-                               ["shell" "make" "docker-build"]
-                               ["shell" "make" "docker-ecr-login"]
-                               ["shell" "make" "docker-tag"]
-                               ["shell" "make" "docker-push-ecr"]]}
-  :release-tasks [["vcs" "assert-committed"]
-                  ["change" "version" "leiningen.release/bump-version" "release"]
-                  ["update-eb-docker-container-version"]
-                  ["vcs" "commit"]
-                  ["vcs" "tag"]
-                  ["aws-ecr-publish"]
-                  ["change" "version" "leiningen.release/bump-version"]
-                  ["vcs" "commit"]
-                  ["vcs" "push"]]
+  :aliases {"import" ["run" "-m" "org.wormbase.names.importer"]}
   :profiles
   {:provided
    {:lein-tools-deps/config {:resolve-aliases [:datomic-pro :logging]}}

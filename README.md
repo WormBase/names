@@ -1,5 +1,31 @@
 # wormbase-names
 
+## Contents
+ - [General overview](#General-overview)
+ - [Development](#development)
+    * [Coding style](#coding-style)
+    * [Requirements](#requirements)
+       - [Docker credentials](#docker-credentials)
+       - [Google API secrets](#google-api-secrets)
+    * [REST API](#rest-api)
+       - [Tools](#tools)
+          * [Running a Clojure REPL](#running-a-clojure-repl)
+    * [Client app (web interface)](#client-app-web-interface)
+ - [Testing](#testing)
+ - [Release & deployment](#release--deployment)
+    * [Requirements](#release-requirements)
+    * [Deploying the application (REST API + client)](#deploying-application)
+       - [First time setup](#first-time-setup)
+       - [Update release & deployment](#update-release--deployment)
+    * [Deploying the IDs library](#Deploying-the-IDs-library)
+ - [Other tasks](#other-tasks)
+    * [Importing GeneACe export data in datomic DB](#importing-geneace-export-data-in-datomic-db)
+    * [Import Sequence Features](#import-sequence-features)
+    * [Restoring the datomic database to AWS](#restoring-the-datomic-database-to-aws)
+    * [Exporting names data to CSV](#exporting-names-data-to-csv)
+
+
+## General overview
 The main functionality of this repository is to provide a web service that
 facilitates the sharing of identifiers and names of a subset of WormBase data types.  
 The web service comprises of:
@@ -189,7 +215,7 @@ make run-tests
 ```
 
 ## Release & deployment
-As described in [the intro](#wormbase-names), the name service exists of several components,
+As described in [the intro](#general-overview), the name service exists of several components,
 for which release versioning and deployment steps differ:
 - Main application (REST API + web client)
   - Versioned through the repository git tags
@@ -206,7 +232,7 @@ When release & deployment is required to both the IDs library and the main appli
 the correct order of deployment is to deploy the IDs library first, then update the transactors
 and lastly the main application.
 
-### Requirements
+### Requirements <a id="release-requirements"></a>
 
 Ensure you've installed the following software on your system to enable building, testing and deployment:
 * [clojure CLI_tools][4]
@@ -253,7 +279,9 @@ to the repository root dir and execute the following commands (bash):
 # Build the client application to ensure no errors occur.
 make ui-build
 
-# Generate/update the pom.xml file (not version-controlled)
+# Generate the pom.xml file (not version-controlled)
+# to ensure no errors occur (in API code)
+rm pom.xml
 clj -Spom
 
 # Specify $LEVEL as one of <major|minor|patch>.

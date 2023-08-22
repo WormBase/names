@@ -42,7 +42,6 @@ export default function AutocompleteLoader({
         apiPrefix &&
         inputValue &&
         inputValue.length >= prefixLengthMin &&
-        !inputValue.match(/^WB[a-zA-Z]*\d{0,6}$/) &&
         !resultItem
       ) {
         setFetchFunc((authorizedFetch) => {
