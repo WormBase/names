@@ -1,9 +1,4 @@
-import React, {
-  useMemo,
-  //  useReducer,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useSessionStorageReducer } from 'react-storage-hooks';
 import Login from './Login';
 import Logout from './Logout';
@@ -52,21 +47,6 @@ export default function Authenticate({ children }) {
         throw new Error();
     }
   }
-
-  useEffect(
-    () => {
-      console.log(
-        'Authentication state change detected. Verifying if user is set.'
-      );
-
-      if (state.user.id_token) {
-        console.log('User set. User email:', state.user.email);
-      } else {
-        console.log('User not set.');
-      }
-    },
-    [state.isAuthenticated]
-  );
 
   const locationHref = window.location.href;
 
@@ -134,10 +114,13 @@ export default function Authenticate({ children }) {
     }
   }
 
-  const handleLogout = useCallback(() => {
-    googleLogout();
-    dispatch({ type: 'ACCESS_REVOKED' });
-  }, []);
+  const handleLogout = useCallback(
+    () => {
+      googleLogout();
+      dispatch({ type: 'ACCESS_REVOKED' });
+    },
+    [dispatch]
+  );
 
   const authorizedFetch = useCallback(
     (url, options = {}) => {
@@ -157,7 +140,7 @@ export default function Authenticate({ children }) {
         return response;
       });
     },
-    [state.user]
+    [state.user, dispatch]
   );
 
   const authorizationContextValue = useMemo(
