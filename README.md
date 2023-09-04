@@ -6,7 +6,7 @@
     * [Coding style](#coding-style)
     * [Requirements](#requirements)
        - [Docker credentials](#docker-credentials)
-       - [Google API secrets](#google-api-secrets)
+       - [Google OAuth 2.0 Client secrets](#google-oauth-20-client-secrets)
     * [REST API](#rest-api)
        - [Tools](#tools)
           * [Running a Clojure REPL](#running-a-clojure-repl)
@@ -87,30 +87,18 @@ but varies depending on operating system.
 For linux, there's [docker-credential-pass][12] and [pass][13], which can be used together,
 which uses a GPG2 key to encrypt tokens.
 
-#### Google API secrets
-Before being able to run `make run-tests` (and possibly some other NS functionality as well),
-you need to store the Name Service application's Google Oauth 2.0 Client ID and secret in a file on your local system.
-This file is not (and should **never** be!) versioned in git or pushed to github, as doing so would create a security vulnerability.
-To intantiate these file locally:
-1. change your working directory to your local repository clone directory
-2. Execute the following commands:
-   ```bash
-   install -d resources/secrets -m 700
-   install -m 700 /dev/null resources/secrets/wb-ns-google-web.edn
-   ```
+#### Google OAuth 2.0 Client secrets
+On execution (both UI and API), the application requires a set of environment variables to be set
+ in order to be able to correctly authenticate through the Name Service application's Google Oauth 2.0 Client.
 
-3. Paste the following content in the above created file:
-   ```clojure
-   {
-     :client-id ""
-     :client-secret ""
-   }
-   ```
+The Name service OAuth 2.0 Clients can be found on the [wormbase-names-service google console credentials page](https://console.cloud.google.com/apis/credentials?project=wormbase-names-service). Under OAuth 2.0 Client IDs:
+  * Click `WormBase Names Service (Web - Dev)` for details used for local development and testing
+  * Click `WormBase Names Service (Web - Prod)` for details used for deployments to AWS (both test and prod environments)
 
-4. Go to the [wormbase-names-service google console credentials page](https://console.cloud.google.com/apis/credentials?project=wormbase-names-service).
-
-5. Under OAuth 2.0 Client IDs, click on "WormBase Names Service (Web - Dev)"
-	From the right-hand side of the page, copy the "Client ID" and the "Client Secret" in the appropriate strings in `resources/secrets/wb-ns-google-web.edn`. The AWS deployments (both stage and production) use the `WormBase Names Service (Web - Prod)` application details.
+The respective OAuth 2.0 Clients' client-id and client-secrets are stored in AWS SSM,
+and automatically retrieved through the `google-oauth2-secrets` and set through the execution and deployment targets in the Makefile.
+Ensure the correct `AWS_PROFILE` or other relevant AWS environment variables are set and exported to allow access to those SSM parameters
+before executing any of the execution or deployment targets using `make`.
 
 ### REST API
 To be able to run the REST API locally, define the (local) datomic DB URI as the env variable `WB_DB_URI`,
@@ -319,6 +307,8 @@ make release [AWS_PROFILE=<profile_name>]
 # * Check if the hard-coded WB_DB_URI default (see MakeFile) applies.
 #   If not, define WB_DB_URI to point to the appropriate datomic DB.
 # * Ensure to define the correct GOOGLE_REDIRECT_URI for google authentication (http://lvh.me:3000 when developing locally)
+# Executing this make target will automatically set the required execution environment variables
+# for Google Oauth2 authentication, through EB (retrieved from AWS SSM).
 make eb-deploy PROJ_NAME=<env-name> [GOOGLE_REDIRECT_URI=<google-redirect-uri>] [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
 ```
 

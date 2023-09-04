@@ -25,24 +25,11 @@
 
 (def ^:private app-conf (wu/read-app-config))
 
-(def ^:private gapps-conf (:google-apps app-conf))
-
 (def ^:private token-verifier (.. (GoogleIdTokenVerifier$Builder. net-transport
                                                                   json-factory)
-                                  (setAudience (->> (vals gapps-conf)
-                                                    (map :client-id)
+                                  (setAudience (->> (get environ/env :api-google-oauth-client-id)
                                                     (apply list)))
                                   (build)))
-
-(defn client-id
-  "Returns the Google client-id from application configuration give the client type."
-  [client-type]
-  (-> gapps-conf client-type :client-id))
-
-(defn client-secret
-  "Returns the Google client-secret from application configuration give the client type."
-  [client-type]
-  (-> gapps-conf client-type :client-secret))
 
 (defn google-auth-code-to-id-token
   "Exchange a Google authentication code, returns a Google-signed JWT ID token.
@@ -55,8 +42,8 @@
           net-transport
           json-factory
           "https://oauth2.googleapis.com/token"
-          (client-id :web)
-          (client-secret :web)
+          (get environ/env :api-google-oauth-client-id)
+          (get environ/env :api-google-oauth-client-secret)
           authCode
           (get environ/env :google-redirect-uri))
      (.execute)

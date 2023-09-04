@@ -14,8 +14,6 @@
     :ReceiveMessageWaitTimeSeconds 10}}
   :aws-s3
   {:bucket-name "wormbase"}}
- :google-apps
- {:web #include "secrets/wb-ns-google-web.edn"}
  :oauth2
  {:google
   {:launch-uri "/oauth2/google"
@@ -25,8 +23,6 @@
    :redirect-uri "http://lvh.me:3000"
    :scopes [:profile :email :openid]
    :grant-type "offline"
-   :client-id ^:ref [:google-apps :web :client-id]
-   :client-secret ^:ref [:google-apps :web :client-secret]
    :landing-uri "/gene/"
    :basic-auth? true}}
  :test

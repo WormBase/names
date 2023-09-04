@@ -1,13 +1,11 @@
 (ns wormbase.names.agent
   (:require
    [clojure.walk :as w]
-   [wormbase.util :as wu]
+   [environ.core :as environ]
    [wormbase.specs.agent :as wsa])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload
                                                  GoogleIdToken)))
-
-(def gapps-conf (:google-apps (wu/read-app-config)))
 
 (defprotocol AgentIdentity
   (-identify [token]))
@@ -26,7 +24,7 @@
   (-identify [token]
     (let [client-types (:form wsa/all-agents)
           client-id-map (zipmap
-                         (map #(-> gapps-conf % :client-id)
+                         (map (get environ/env :api-google-oauth-client-id)
                               (map (comp keyword name) client-types))
                          client-types)
           aud (:aud token)]

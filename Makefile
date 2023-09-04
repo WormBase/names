@@ -5,12 +5,17 @@ LOCAL_GOOGLE_REDIRECT_URI = "http://lvh.me:3000"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
+	GOOGLE_APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= https://test-names.wormbase.org/
+	GOOGLE_APP_PROFILE ?= "prod"
 else
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
-#   Ensure GOOGLE_REDIRECT_URI is defined as appropriate as an env variable or CLI argument
+#   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
+#   if intended for AWS deployment (default is set for local execution)
+	GOOGLE_REDIRECT_URI ?= ${LOCAL_GOOGLE_REDIRECT_URI}
+	GOOGLE_APP_PROFILE ?= "dev"
 endif
 DEPLOY_JAR := app.jar
 PORT := 3000
@@ -112,7 +117,7 @@ docker-tag: \
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_REPO_URI}
 
 .PHONY: eb-def-app-env
-eb-def-app-env: \
+eb-def-app-env: google-oauth2-secrets \
                 $(call print-help,eb-def-app-env \
 				[WB_DB_URI=<datomic-db-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
                 Define the ElasticBeanStalk app-environment config file.)
@@ -124,6 +129,9 @@ ifndef GOOGLE_REDIRECT_URI
 endif
 	@cp ebextensions-templates/${EB_APP_ENV_FILE} .ebextensions/
 	sed -i -r 's~(WB_DB_URI:\s+)".*"~\1"'"${WB_DB_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(REACT_APP_GOOGLE_OAUTH_CLIENT_ID:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_ID}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_ID:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_ID}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_SECRET:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_SECRET}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(GOOGLE_REDIRECT_URI:\s+)".*"~\1"'"${GOOGLE_REDIRECT_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed  -i -r 's~(WB_NAMES_RELEASE: ).+~\1'${VERSION_TAG}'~' .ebextensions/${EB_APP_ENV_FILE}
 
@@ -220,14 +228,37 @@ release: deploy-ecr \
          Release the applicaton.)
 
 .PHONY: run-tests
-run-tests: \
+run-tests: google-oauth2-secrets \
            $(call print-help,run-tests,\
            Run all tests.)
-	@GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} clj -A:datomic-pro:webassets:dev:test:run-tests
+	@ API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	  API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
+	  GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
+	  clj -A:datomic-pro:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
-run-dev-webserver: \
+run-dev-webserver: google-oauth2-secrets \
                    $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
 				   GOOGLE_REDIRECT_URI=<google-redirect-uri>,\
                    Run a local development webserver.)
-	@clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
+	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	 export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
+	 clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
+
+.PHONY: google-oauth2-secrets
+google-oauth2-secrets: \
+                       $(call print-help,google-oauth2-secrets,\
+                       Store the Google oauth2 client details in a secrets file.)
+	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID)
+	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET)
+	@echo "Retrieved google-oauth2-secrets."
+
+check_defined = \
+    $(strip $(foreach 1,$1, \
+        $(call __check_defined,$1,$(strip $(value 2)))))
+__check_defined = \
+    $(if $(value $1),, \
+      $(error Failed to retrieve $1. Check the defined GOOGLE_APP_PROFILE value\
+	and ensure the AWS_PROFILE variable is appropriately defined) )

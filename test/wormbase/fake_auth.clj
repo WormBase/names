@@ -2,11 +2,12 @@
   (:require
    [clojure.tools.logging :as log]
    [clojure.walk :as w]
+   [environ.core :as environ]
    [wormbase.names.auth :as wn-auth])
   (:import
    (com.google.api.client.googleapis.auth.oauth2 GoogleIdToken$Payload)))
 
-(def web-client-id (wn-auth/client-id :web))
+(def oauth2-client-id (get environ/env :api-google-oauth-client-id))
 
 (def tokens {"tester@wormbase.org" "TOKEN_HERE_tester1"
              "tester2@wormbase.org" "TOKEN_HERE_tester2"
@@ -14,8 +15,8 @@
 
 (def defaults
   {"iat" 1234567890
-   "aud" web-client-id
-   "azp" web-client-id
+   "aud" oauth2-client-id
+   "azp" oauth2-client-id
    "sub" "0101010101010101010101"
    "hd" "wormbase.org"
    "iss" "accounts.google.com"
