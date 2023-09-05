@@ -245,6 +245,16 @@ run-dev-webserver: google-oauth2-secrets \
 	 export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
 	 clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
 
+.PHONY: run-dev-ui
+run-dev-ui: google-oauth2-secrets\
+		$(call print-help,run-dev-ui [REACT_APP_GOOGLE_OAUTH_CLIENT_ID=<google-client-id>] \
+		Run a local development UI.)
+	@export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	 cd client/ && \
+	 . $(HOME)/.nvm/nvm.sh && nvm use && \
+	 npm install && \
+	 npm run start
+
 .PHONY: google-oauth2-secrets
 google-oauth2-secrets: \
                        $(call print-help,google-oauth2-secrets,\

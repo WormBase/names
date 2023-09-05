@@ -157,16 +157,18 @@ To start up a local client development server:<a id="local-rest"></a>
 
 2. Ensure `client/package.json` has proxy configured to point at the backend API, at the correct port (default 4010).
 
-3. Run (bash):
-```bash
-cd client/
-nvm use # optionally `nvm install` to install the latest compatible version of node.js
-npm install
-npm run start
-```
+3. Ensure the correct `AWS_PROFILE` or other relevant AWS environment variables are set and exported to allow access to the necessary
+    google client secrets (stored as AWS SSM parameters).
+
+4. Run (bash):
+    ```bash
+    make run-dev-ui
+    ```
   - This will start service serving the client assets on port 3000.
 
-4. Finally, ensure the authentication callback URL at [Google Cloud Console](https://console.developers.google.com/apis/credentials?project=wormbase-names-service&folder=&supportedpurview=project) is configured to match the client development server configuration. Under OAuth 2.0 Client IDs, click _"WormBase Names Service (Web)"_ and have a look at the _"Authorized JavaScript origins"_ section.
+5. Finally, ensure the authentication callback URL at [Google Cloud Console](https://console.developers.google.com/apis/credentials?project=wormbase-names-service&folder=&supportedpurview=project)
+    is configured to match the client development server configuration.
+    Under OAuth 2.0 Client IDs, click _"WormBase Names Service (Web - Dev)"_ and have a look at the _"Authorized JavaScript origins"_ section.
 
 Notes:
 - **Node.js and NPM**
