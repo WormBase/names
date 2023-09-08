@@ -231,9 +231,9 @@ release: deploy-ecr \
 run-tests: google-oauth2-secrets \
            $(call print-help,run-tests,\
            Run all tests.)
-	@ API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	  API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
-	  GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
+	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	  export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
+	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
 	  clj -A:datomic-pro:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
