@@ -20,23 +20,6 @@
     kw
     (keyword domain (name kw))))
 
-(defn namespace-keywords
-  "Add namespace `domain` to keys in `data` mapping.
-
-  Used to setup data to be consistent for specs without requiring
-  input data (that typically comes from JSON) to use fully-qualified
-  namespaces.
-
-  Returns a new map."
-  [domain data]
-  (map #(reduce-kv (fn [rec kw v]
-                     (-> rec
-                         (dissoc kw)
-                         (assoc (nsify domain kw) v)))
-                   (empty %)
-                   %)
-       data))
-
 ;; trunc and datom-table taken from day-of-datomic repo (congnitect).
 
 (defn trunc
@@ -102,8 +85,6 @@
 
 (def dead? (partial has-status? "dead"))
 
-(def suppressed? (partial has-status? "suppressed"))
-
 (def not-live? #(not (live? %)))
 
 (def ^{:doc (str "The set of default responses used to generate swagger documentation "
@@ -163,10 +144,6 @@
 
 (defn encode-etag [latest-t]
   (some-> latest-t str b64/encode codecs/bytes->str))
-
-(defn decode-etag [^String etag]
-  {:pre [(not (str/blank? etag))]}
-  (some-> etag codecs/str->bytes b64/decode codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]
   (if (seq etag)

@@ -56,7 +56,6 @@
 
 (s/def ::find-match (stc/spec (s/keys :req-un [(or :variation/id :variation/name)])))
 (s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
-(s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
 
 (s/def ::created (stc/spec {:spec (s/keys :req-un [:variation/id])
                             :description "A mapping describing a newly created variation."}))

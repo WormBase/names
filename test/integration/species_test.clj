@@ -16,8 +16,6 @@
 
 (def new-species (partial api-tc/new "species"))
 
-(def summary (partial api-tc/summary "species"))
-
 (def tester2 "tester2@wormbase.org")
 
 (t/deftest must-meet-spec

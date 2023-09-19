@@ -14,22 +14,6 @@
 
 (t/use-fixtures :each db-testing/db-lifecycle)
 
-(defn query-provenance [conn prov-attr lur]
-  (when-let [mtx (d/q '[:find ?tx
-                        :in $ ?prov-attr ?lur
-                        :where
-                        [?pa :db/ident ?prov-attr]
-                        [?tx ?pa ?lur]]
-                      (-> conn d/db d/history)
-                      prov-attr
-                      lur)]
-    (d/pull (d/db conn)
-            '[:provenance/why
-              :provenance/when
-              {:provenance/how [:db/ident]
-               :provenance/who [:person/email]}]
-            mtx)))
-
 (defn merge-genes
   [payload from-id into-id
    & {:keys [current-user]

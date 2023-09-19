@@ -52,6 +52,3 @@
     (f)
     (wdb/checked-delete uri)
     (mount/stop)))
-
-(defn speculate [conn tx]
-  (:db-after (d/with (d/db conn) tx)))

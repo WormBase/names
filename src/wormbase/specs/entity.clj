@@ -133,7 +133,6 @@
 
 (s/def ::find-match (stc/spec (s/keys :req-un [(or ::id ::name)])))
 (s/def ::matches (stc/spec (s/coll-of ::find-match :kind vector?)))
-(s/def ::find-result (stc/spec (s/keys :req-un [::matches])))
 
 (s/def ::created (stc/spec {:spec (s/keys :req-un [::id])
                             :description "A mapping describing a newly created entity."}))
