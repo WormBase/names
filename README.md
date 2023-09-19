@@ -2,6 +2,7 @@
 
 ## Contents
  - [General overview](#General-overview)
+ - [Authentication](#authentication)
  - [Development](#development)
     * [Coding style](#coding-style)
     * [Requirements](#requirements)
@@ -50,6 +51,12 @@ More general code features are:
    architecture.
  - Serialisation of events to a queueing system, such that those
    events can be "replayed" into various ACeDB databases.
+
+## Authentication
+Login to the Name Service happens through your `*@wormbase.org` Google account.
+Hit the "Login With Google" button and select the correct account or fill in the required details.
+
+For more details on the Authentication and how to obtain a token for API authentication, see the [Google-Auth docs](./docs/Google-Auth.md).
 
 ## Development
 
