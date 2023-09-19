@@ -120,6 +120,8 @@ make run-dev-webserver PORT=[port] WB_DB_URI=[datomic-uri] GOOGLE_REDIRECT_URI="
 
 To allow the UI webpackDevServer to proxy to the ring server, the ring server has to be run at the host and port configured in the `"proxy"` section in [client/package.json](client/package.json) (standardly 4010 is used).
 
+When the API is running locally, the API documentation should be available at http://localhost:4010/api-docs/.
+
 #### Tools
 
 ##### Running a Clojure REPL
