@@ -18,8 +18,10 @@
    :headers response-headers})
 
 (defn send-request
-  [entity-kind method data & {:keys [current-user sub-path uri]
-                                :or {current-user default-user sub-path ""}}]
+  [entity-kind method data & {:keys [current-user sub-path uri extra-headers]
+                                :or {current-user default-user
+                                     sub-path ""
+                                     extra-headers {}}}]
    (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
                                                      :current-user
                                                      current-user)]
@@ -37,18 +39,20 @@
                      method
                      data
                      "application/json"
-                     {"authorization" "Token FAKED"})]
+                     (merge {"authorization" "Token FAKED"} extra-headers))]
        (parsed-response response))))
 
 (defn new
-  [entity-kind data & {:keys [current-user]
-                       :or {current-user default-user}}]
-  (send-request entity-kind :post data :current-user current-user))
+  [entity-kind data & {:keys [current-user extra-headers]
+                       :or {current-user default-user
+                            extra-headers {}}}]
+  (send-request entity-kind :post data :current-user current-user :extra-headers extra-headers))
 
 (defn update
-  [entity-kind identifier data & {:keys [current-user]
-                                  :or {current-user default-user}}]
-  (send-request entity-kind :put data :sub-path identifier :current-user current-user))
+  [entity-kind identifier data & {:keys [current-user extra-headers]
+                                  :or {current-user default-user
+                                       extra-headers {}}}]
+  (send-request entity-kind :put data :sub-path identifier :current-user current-user :extra-headers extra-headers))
 
 (defn summary
   [entity-kind identifier & {:keys [params extra-headers]
@@ -66,16 +70,18 @@
       headers))))
 
 (defn delete
-  [entity-kind path & {:keys [payload current-user]
+  [entity-kind path & {:keys [current-user payload extra-headers]
                        :or {current-user default-user
-                            payload {:prov {}}}}]
+                            payload {:prov {}}
+                            extra-headers {}}}]
   (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
                                                     :current-user
                                                     current-user)]
-    (let [uri (str "/api/" entity-kind "/" (str/replace-first path #"^/" ""))]
+    (let [uri (str "/api/" entity-kind "/" (str/replace-first path #"^/" ""))
+          headers (merge {"authorization" "Token FAKED"} extra-headers)]
       (parsed-response
        (tu/delete service/app
                   uri
                   "application/json"
                   (tu/->json payload)
-                  {"authorization" "Token FAKED"})))))
+                  headers)))))

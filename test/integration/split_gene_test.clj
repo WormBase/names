@@ -235,7 +235,7 @@
               (t/is ((set (map :gene/id (:gene/_splits prod))) src-id))
               (t/is (= user-email (some-> prov :provenance/who :person/email)))
               (t/is (= (:gene/species prod) (:gene/species src)))
-              (t/is (= :agent/web (-> prov :provenance/how :db/ident))))))))))
+              (t/is (= :agent/console (-> prov :provenance/how :db/ident))))))))))
 
 (t/deftest undo-split
   (t/testing "Undo a split operation."

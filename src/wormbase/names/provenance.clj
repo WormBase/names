@@ -1,15 +1,14 @@
 (ns wormbase.names.provenance
-  (:require
-   [clojure.set :as set]
-   [clojure.spec.alpha :as s]
-   [clojure.string :as str]
-   [datomic.api :as d]
-   [java-time :as jt]
-   [wormbase.db :as wdb]
-   [wormbase.util :as wu]
-   [wormbase.names.agent :as wna]
-   [wormbase.names.util :as wnu]
-   [wormbase.specs.person :as wsp]))
+  (:require [clojure.set :as set]
+            [clojure.spec.alpha :as s]
+            [clojure.string :as str]
+            [datomic.api :as d]
+            [java-time :as jt]
+            [wormbase.db :as wdb]
+            [wormbase.names.agent :as wna]
+            [wormbase.names.util :as wnu]
+            [wormbase.specs.person :as wsp]
+            [wormbase.util :as wu]))
 
 (def pull-expr '[:provenance/when
                  :provenance/why
@@ -49,7 +48,7 @@
                    (jt/zoned-date-time tz)
                    (jt/with-zone-same-instant tz)
                    (jt/to-java-date))
-        how (-> auth-identity :token-info wna/identify)
+        how (-> request :headers wna/identify)
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
               :provenance/what what

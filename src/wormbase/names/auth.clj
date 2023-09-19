@@ -10,12 +10,9 @@
             [environ.core :as environ]
             [ring.middleware.defaults :as rmd]
             [ring.util.http-response :as http-response]
-            [wormbase.names.agent :as wn-agent]
             [wormbase.util :as wu])
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
-           (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest
-                                                         GoogleIdTokenVerifier$Builder
-                                                         GoogleIdToken)
+           (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
            (com.google.api.client.http.javanet NetHttpTransport)
            (com.google.api.client.json.jackson2 JacksonFactory)))
 
@@ -49,7 +46,9 @@
      (.execute)
      (.getIdToken))
     (catch TokenResponseException _
-      nil)))
+      (log/warn "Caught TokenResponseException during GoogleAuthorizationCodeTokenRequest construction & execution."))
+    (catch Exception e
+      (log/warn "Caught Exception during GoogleAuthorizationCodeTokenRequest construction & execution:" e))))
 
 (defn parse-token
   "Parse provided Google ID token, returns a map containing the information associated with the token.
@@ -77,7 +76,6 @@
     (when-let [gtoken (verify-token-gapi token)]
       (when (and
              gtoken
-             (wn-agent/identify gtoken)
              (= (.getHostedDomain gtoken) "wormbase.org")
              (true? (.getEmailVerified gtoken)))
         (w/keywordize-keys (into {} gtoken))))
@@ -127,7 +125,7 @@
   [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
         google-ID-token (or (google-auth-code-to-id-token token)
-                                 token)
+                            token)
         parsed-token (try
                        (parse-token google-ID-token)
                        (catch Exception ex

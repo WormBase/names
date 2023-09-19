@@ -165,7 +165,7 @@
               (t/is ((set (map :gene/id src-merges)) into-id))
               (t/is (contains? (set (map :gene/id tgt-merges)) from-id))
               (t/is (= (-> prov :provenance/who :person/email) "tester@wormbase.org") (pr-str prov))
-              (t/is (= "web" (:provenance/how prov))))))))))
+              (t/is (= "console" (:provenance/how prov))))))))))
 
 (t/deftest undo-merge
   (t/testing "Undoing a merge operation."

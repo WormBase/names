@@ -88,7 +88,7 @@
               (tu/query-provenance conn gid-2 :event/update-gene))))))))
 
 (t/deftest update-name-of-dead-gene
-  (t/testing "Can still update names of dead genes (provided they remain unique in the system."
+  (t/testing "Can still update names of dead genes (provided they remain unique in the system)."
     (let [gid (first (gen/sample gsg/id 1))
           sample* (first (tu/gen-sample gsg/uncloned 1))
           sample (-> sample*
@@ -182,7 +182,7 @@
 
 
 (t/deftest gene-provenance
-  (t/testing "Provenance is recorded for successful transactions"
+  (t/testing "Provenance is recorded for successful transactions (console agent)"
     (let [gid (first (gen/sample gsg/id 1))
           sample* (first (tu/gen-sample gsg/cloned 1))
           sample (-> sample*
@@ -201,16 +201,17 @@
         (fn [conn]
           (let [unqual-sample-data (wnu/unqualify-keys sample-data "gene")
                 new-cgc-name (tu/cgc-name-for-sample unqual-sample-data)
-                why "udpate prov test"
+                why "update prov test"
                 species (tu/species-ref->latin-name sample-data)
+                user-email "tester@wormbase.org"
                 payload {:data (-> unqual-sample-data
                                    (update :biotype name)
-                                   (update :status name) 
+                                   (update :status name)
                                    (assoc :species species)
                                    (dissoc :id :gene/status)
                                    (assoc :cgc-name new-cgc-name))
                          :prov {:why why
-                                :who {:email "tester@wormbase.org"}}}
+                                :who {:email user-email}}}
                 response (update-gene gid payload)
                 db (d/db conn)
                 ent (d/entity db [:gene/id gid])]
@@ -219,12 +220,106 @@
                   act-prov (first provs)]
               (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
                     (pr-str act-prov))
-              (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
+              (t/is (= (-> act-prov :provenance/how :db/ident) :agent/console)
                     (pr-str act-prov))
               (t/is (= (:provenance/why act-prov) why))
               (t/is (= (-> act-prov :provenance/who :person/email)
-                       "tester@wormbase.org"))
+                       user-email))
               (t/is (not= nil (:provenance/when act-prov))))
+            (let [gs (:gene/status ent)]
+              (t/is (= :gene.status/live gs)
+                    (pr-str (:gene/status ent))))
+            (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
+            (t/is (= new-cgc-name (:gene/cgc-name ent))))))))
+
+  (t/testing "Agent is correctly recorded in Provenance for successful transactions by web agent."
+    (let [gid (first (gen/sample gsg/id 1))
+          sample* (first (tu/gen-sample gsg/cloned 1))
+          sample (-> sample*
+                     (wnu/qualify-keys "gene")
+                     (wne/transform-ident-ref-values)
+                     (tu/species->ref))
+          orig-cgc-name (tu/cgc-name-for-sample sample*)
+          sample-data (merge
+                       sample
+                       {:gene/id gid
+                        :gene/cgc-name orig-cgc-name
+                        :gene/status :gene.status/live
+                        :gene/sequence-name (tu/seq-name-for-sample sample*)})]
+      (tu/with-gene-fixtures
+        sample-data
+        (fn [conn]
+          (let [unqual-sample-data (wnu/unqualify-keys sample-data "gene")
+                new-cgc-name (tu/cgc-name-for-sample unqual-sample-data)
+                why "update prov test (web)"
+                species (tu/species-ref->latin-name sample-data)
+                user-email "tester@wormbase.org"
+                payload {:data (-> unqual-sample-data
+                                   (update :biotype name)
+                                   (update :status name)
+                                   (assoc :species species)
+                                   (dissoc :id :gene/status)
+                                   (assoc :cgc-name new-cgc-name))
+                         :prov {:why why
+                                :who {:email user-email}}}
+                extra-headers {"user-agent" "Mozilla/5.0 Gecko/20100101 Firefox/117.0"}
+                response (update-gene gid payload :extra-headers extra-headers)
+                db (d/db conn)
+                ent (d/entity db [:gene/id gid])]
+            (t/is (ru-hp/ok? response))
+            (let [provs (query-provenance conn :gene/cgc-name)
+                  act-prov (first provs)]
+              (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
+                    (pr-str act-prov))
+              (t/is (= (-> act-prov :provenance/how :db/ident) :agent/web)
+                    (pr-str act-prov)))
+            (let [gs (:gene/status ent)]
+              (t/is (= :gene.status/live gs)
+                    (pr-str (:gene/status ent))))
+            (t/is (not= orig-cgc-name (:gene/cgc-name ent)))
+            (t/is (= new-cgc-name (:gene/cgc-name ent))))))))
+
+  (t/testing "Agent is recorded in Provenance for successful transactions by undefined agent."
+    (let [gid (first (gen/sample gsg/id 1))
+          sample* (first (tu/gen-sample gsg/cloned 1))
+          sample (-> sample*
+                     (wnu/qualify-keys "gene")
+                     (wne/transform-ident-ref-values)
+                     (tu/species->ref))
+          orig-cgc-name (tu/cgc-name-for-sample sample*)
+          sample-data (merge
+                       sample
+                       {:gene/id gid
+                        :gene/cgc-name orig-cgc-name
+                        :gene/status :gene.status/live
+                        :gene/sequence-name (tu/seq-name-for-sample sample*)})]
+      (tu/with-gene-fixtures
+        sample-data
+        (fn [conn]
+          (let [unqual-sample-data (wnu/unqualify-keys sample-data "gene")
+                new-cgc-name (tu/cgc-name-for-sample unqual-sample-data)
+                why "update prov test (undefined agent)"
+                species (tu/species-ref->latin-name sample-data)
+                user-email "tester@wormbase.org"
+                payload {:data (-> unqual-sample-data
+                                   (update :biotype name)
+                                   (update :status name)
+                                   (assoc :species species)
+                                   (dissoc :id :gene/status)
+                                   (assoc :cgc-name new-cgc-name))
+                         :prov {:why why
+                                :who {:email user-email}}}
+                extra-headers {"user-agent" nil}
+                response (update-gene gid payload :extra-headers extra-headers)
+                db (d/db conn)
+                ent (d/entity db [:gene/id gid])]
+            (t/is (ru-hp/ok? response))
+            (let [provs (query-provenance conn :gene/cgc-name)
+                  act-prov (first provs)]
+              (t/is (= (-> act-prov :provenance/what :db/ident) :event/update-gene)
+                    (pr-str act-prov))
+              (t/is (= (-> act-prov :provenance/how :db/ident) :agent/console)
+                    (pr-str act-prov)))
             (let [gs (:gene/status ent)]
               (t/is (= :gene.status/live gs)
                     (pr-str (:gene/status ent))))

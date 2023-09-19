@@ -1,26 +1,21 @@
 (ns wormbase.names.entity
-  (:require
-   [clojure.spec.alpha :as s]
-   [clojure.string :as str]
-   [datomic.api :as d]
-   [compojure.api.sweet :as sweet]
-   [magnetcoop.stork :as stork]
-   [ring.util.http-response :refer [bad-request!
-                                    conflict!
-                                    conflict
-                                    created not-found
-                                    not-found!
-                                    ok]]
-   [wormbase.db :as wdb]
-   [wormbase.util :as wu]
-   [wormbase.names.matching :as wnm]
-   [wormbase.names.provenance :as wnp]
-   [wormbase.names.util :as wnu]
-   [wormbase.ids.core :as wbids]
-   [wormbase.specs.common :as wsc]
-   [wormbase.specs.entity :as wse]
-   [wormbase.specs.provenance :as wsp]
-   [wormbase.names.validation :refer [validate-names]]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.string :as str]
+            [compojure.api.sweet :as sweet]
+            [datomic.api :as d]
+            [magnetcoop.stork :as stork]
+            [ring.util.http-response :refer [bad-request! conflict conflict!
+                                             created not-found not-found! ok]]
+            [wormbase.db :as wdb]
+            [wormbase.ids.core :as wbids]
+            [wormbase.names.matching :as wnm]
+            [wormbase.names.provenance :as wnp]
+            [wormbase.names.util :as wnu]
+            [wormbase.names.validation :refer [validate-names]]
+            [wormbase.specs.common :as wsc]
+            [wormbase.specs.entity :as wse]
+            [wormbase.specs.provenance :as wsp]
+            [wormbase.util :as wu]))
 
 (def enabled-ident :wormbase.names/entity-type-enabled?)
 

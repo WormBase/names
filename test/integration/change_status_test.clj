@@ -104,7 +104,7 @@
                     %)
            tx-ids))))
 
-(defn check-killed-dead [conn kill-fn ident sample _]
+(defn kill-and-confirm-dead [conn kill-fn ident sample _]
   (let [id (ident sample)
         response (kill-fn id)
         db (d/db conn)
@@ -124,7 +124,7 @@
     (t/is (= (count provs) 1))
     (let [prov (first provs)]
       (t/is (= (some-> prov :provenance/how :db/ident)
-               :agent/web))
+               :agent/console))
       (t/is (= (some-> prov :provenance/who :person/email)
                "tester@wormbase.org")))
     (t/is (ru-hp/ok? response))
@@ -136,7 +136,7 @@
       (tu/with-gene-fixtures
         sample
         (fn check-dead-after-kill [conn]
-          (check-killed-dead conn kill-gene :gene/id sample id)))))
+          (kill-and-confirm-dead conn kill-gene :gene/id sample id)))))
   (t/testing "killed ok and provenance recorded."
     (let [[_ sample] (gene-sample)]
       (tu/with-gene-fixtures
@@ -189,7 +189,7 @@
       (tu/with-variation-fixtures
         sample
         (fn check-dead-after-kill [conn]
-          (check-killed-dead conn kill-variation :variation/id sample id)))))
+          (kill-and-confirm-dead conn kill-variation :variation/id sample id)))))
   (t/testing "killed variation ok and provenance recorded."
     (let [[_ sample] (variation-sample)]
       (tu/with-variation-fixtures

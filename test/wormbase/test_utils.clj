@@ -27,6 +27,8 @@
 
 (def mformats (muuntaja/create))
 
+(def http-headers-defaults {"user-agent" "Clojure-Peridot.core/0.5.0"})
+
 (defn read-body [body]
   (if (instance? InputStream body)
     (slurp body)
@@ -118,7 +120,7 @@
                     p/session
                     (p/request uri
                                :request-method :delete
-                               :headers (or headers {})
+                               :headers (merge http-headers-defaults headers)
                                :content-type (or content-type
                                                  "application/edn")
                                :body payload))
@@ -131,7 +133,7 @@
                     p/session
                     (p/request uri
                                :request-method method
-                               :headers (or headers {})
+                               :headers (merge http-headers-defaults headers)
                                :content-type (or content-type
                                                  "application/edn")
                                :body payload))
