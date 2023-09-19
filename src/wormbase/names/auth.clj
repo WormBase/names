@@ -45,8 +45,7 @@
           (get environ/env :google-redirect-uri))
      (.execute)
      (.getIdToken))
-    (catch TokenResponseException _
-      (log/warn "Caught TokenResponseException during GoogleAuthorizationCodeTokenRequest construction & execution."))
+    (catch TokenResponseException _)
     (catch Exception e
       (log/warn "Caught Exception during GoogleAuthorizationCodeTokenRequest construction & execution:" e))))
 
