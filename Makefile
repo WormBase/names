@@ -1,12 +1,12 @@
 ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
-PROJ_NAME ?= "wormbase-names"
+PROJ_NAME ?= wormbase-names
 LOCAL_GOOGLE_REDIRECT_URI = "http://lvh.me:3000"
-ifeq ($(PROJ_NAME), "wormbase-names")
+ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
 	GOOGLE_APP_PROFILE ?= "prod"
-else ifeq ($(PROJ_NAME), "wormbase-names-test")
+else ifeq ($(PROJ_NAME), wormbase-names-test)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	GOOGLE_APP_PROFILE ?= "prod"
@@ -80,7 +80,7 @@ ui-build: google-oauth2-secrets \
           $(call print-help,ui-build,\
           Build JS and CSS file for release.)
 	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	  echo "Building UI using GOOGLE_APP_PROFILE: ${GOOGLE_APP_PROFILE}" && \
+	  echo "Building UI using GOOGLE_APP_PROFILE: '${GOOGLE_APP_PROFILE}'" && \
 	  ./scripts/build-ui.sh
 
 .PHONY: clean
@@ -264,7 +264,7 @@ google-oauth2-secrets: \
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID)
 	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET)
-	@echo "Retrieved google-oauth2-secrets."
+	@echo "Retrieved google-oauth2-secrets for GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}'."
 
 check_defined = \
     $(strip $(foreach 1,$1, \
