@@ -76,10 +76,11 @@ build: clean ui-build docker/${DEPLOY_JAR} \
 		./docker/
 
 .PHONY: ui-build
-ui-build: \
+ui-build: google-oauth2-secrets \
           $(call print-help,ui-build,\
           Build JS and CSS file for release.)
-	@./scripts/build-ui.sh
+	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	  ./scripts/build-ui.sh
 
 .PHONY: clean
 clean: \
@@ -129,7 +130,6 @@ ifndef GOOGLE_REDIRECT_URI
 endif
 	@cp ebextensions-templates/${EB_APP_ENV_FILE} .ebextensions/
 	sed -i -r 's~(WB_DB_URI:\s+)".*"~\1"'"${WB_DB_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
-	sed -i -r 's~(REACT_APP_GOOGLE_OAUTH_CLIENT_ID:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_ID}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_ID:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_ID}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_SECRET:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_SECRET}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(GOOGLE_REDIRECT_URI:\s+)".*"~\1"'"${GOOGLE_REDIRECT_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
