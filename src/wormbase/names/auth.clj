@@ -24,8 +24,7 @@
 
 (def ^:private token-verifier (.. (GoogleIdTokenVerifier$Builder. net-transport
                                                                   json-factory)
-                                  (setAudience (->> (get environ/env :api-google-oauth-client-id)
-                                                    (apply list)))
+                                  (setAudience (list (get environ/env :api-google-oauth-client-id)))
                                   (build)))
 
 (defn google-auth-code-to-id-token
@@ -38,7 +37,6 @@
      (new GoogleAuthorizationCodeTokenRequest
           net-transport
           json-factory
-          "https://oauth2.googleapis.com/token"
           (get environ/env :api-google-oauth-client-id)
           (get environ/env :api-google-oauth-client-secret)
           authCode
@@ -172,5 +170,3 @@
                            :on-error access-error})))
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
-
-
