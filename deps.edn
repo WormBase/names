@@ -19,7 +19,7 @@
   danlentz/clj-uuid {:mvn/version "0.1.9"}
   environ {:mvn/version "1.2.0"}
   expound {:mvn/version "0.8.5"}
-  com.google.api-client/google-api-client {:mvn/version "1.30.9"}
+  com.google.api-client/google-api-client {:mvn/version "1.35.2"}
   metosin/compojure-api {:mvn/version "2.0.0-alpha30"
                          :exclusions [frankiesardo/linked]}
   metosin/muuntaja {:mvn/version "0.6.7"}

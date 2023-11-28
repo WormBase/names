@@ -14,11 +14,11 @@
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
            (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
            (com.google.api.client.http.javanet NetHttpTransport)
-           (com.google.api.client.json.jackson2 JacksonFactory)))
+           (com.google.api.client.json.gson GsonFactory)))
 
 (def ^:private net-transport (NetHttpTransport.))
 
-(def ^:private json-factory (JacksonFactory.))
+(def ^:private json-factory (GsonFactory.))
 
 (def ^:private app-conf (wu/read-app-config))
 
