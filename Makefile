@@ -1,6 +1,6 @@
 ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
-PROJ_NAME ?= wormbase-names
+PROJ_NAME ?= wormbase-names-dev
 LOCAL_GOOGLE_REDIRECT_URI = "http://lvh.me:3000"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
@@ -259,7 +259,7 @@ run-dev-ui: google-oauth2-secrets\
 .PHONY: google-oauth2-secrets
 google-oauth2-secrets: \
                        $(call print-help,google-oauth2-secrets,\
-                       Store the Google oauth2 client details in a secrets file.)
+                       Store the Google oauth2 client details as env variables.)
 	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID)
 	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
