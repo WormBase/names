@@ -5,6 +5,7 @@
             [buddy.auth.middleware :as auth-mw]
             [buddy.sign.compact :as bsc]
             [clojure.tools.logging :as log]
+            [clojure.string :as str]
             [clojure.walk :as w]
             [datomic.api :as d]
             [environ.core :as environ]
@@ -47,37 +48,57 @@
     (catch Exception e
       (log/warn "Caught Exception during GoogleAuthorizationCodeTokenRequest construction & execution:" e))))
 
-(defn parse-token
-  "Parse provided Google ID token, returns a map containing the information associated with the token.
-   Returns nil if the token cannot be parsed as Google Auth code nor Google ID token."
-  [^String token]
-   (try
-     (some->> (GoogleIdToken/parse json-factory token)
-              (.getPayload)
-              (into {})
-              (w/keywordize-keys))
-     (catch IllegalArgumentException _
-       nil)))
+(defn parse-token-str
+  "Parse provided Google ID token string, returns a GoogleIdToken object.
+   Returns nil if the token string cannot be parsed as Google ID token."
+  ^GoogleIdToken
+  [^String token-str]
+  (if (not (or
+            (str/blank? token-str)
+            (= token-str "null")))
+    (try
+      (GoogleIdToken/parse json-factory token-str)
+      (catch java.io.IOException e
+        (log/warn "Caught invalid token-str. IOException:" e))
+      (catch Exception ex
+        (log/error "parse-token-str exception:" ex ". token-str provided:" token-str)))
+    nil))
+
+(defn get-id-token-payload
+  "Get the GoogleIdToken payload containing the information associated with the token
+   (from a GoogleIdToken object)."
+  [^GoogleIdToken token]
+  (try
+    (.getPayload token)
+    (catch IllegalArgumentException _
+      (log/error "Invalid googleIdToken object provided. getPayload method not found."))))
+
+(defn to-keywordized-map
+  "Convert an object into a keywordized map"
+  [object]
+  (some->> object
+           (into {})
+           (w/keywordize-keys)))
 
 (defn verify-token-gapi
-  "Return a truthy value if the token is valid."
-  [token]
-  (some->> (.verify token-verifier token)
-           (.getPayload)))
+  "Returns true if the token is valid."
+  [^String token]
+  (some-> (parse-token-str token)
+          (.verify token-verifier)))
 
 (defn verify-token
   "Verify the token via Google API(s).
   Returns a map containing the information held in the Google ID Token."
   [^String token]
-  (try
-    (when-let [gtoken (verify-token-gapi token)]
-      (when (and
-             gtoken
-             (= (.getHostedDomain gtoken) "wormbase.org")
-             (true? (.getEmailVerified gtoken)))
-        (w/keywordize-keys (into {} gtoken))))
-    (catch Exception exc
-      (log/error exc "Invalid token supplied"))))
+  (if (verify-token-gapi token)
+    (let [gtoken (some-> (parse-token-str token)
+                         (get-id-token-payload))]
+      (if (and gtoken
+               (= (.getHostedDomain gtoken) "wormbase.org")
+               (true? (.getEmailVerified gtoken)))
+        (to-keywordized-map gtoken)
+        (log/warn "Token failed domain verification (token must correspond to verified @wormbase.org email address).")))
+    (log/warn "Token failed google API verification.")))
 
 (defn query-person
   "Query the database for a WormBase person, given the schema attribute
@@ -101,14 +122,14 @@
   [db auth-token-conf parsed-token]
   (let [email (:email parsed-token)]
     (when-let [{stored-token :person/auth-token} (d/pull db
-                                                       '[:person/auth-token]
-                                                       [:person/email email])]
+                                                         '[:person/auth-token]
+                                                         [:person/email email])]
 
       (when (try
               (bsc/unsign stored-token (:key auth-token-conf)
                           (select-keys auth-token-conf [:max-age]))
               (catch Exception _
-                (log/debug "Failed to unsigned stored token"
+                (log/error "Failed to unsigned stored token"
                            {:stored-token stored-token
                             :key (:key auth-token-conf)})))
         (query-person db :person/email email)))))
@@ -121,17 +142,16 @@
    Return an Identification record."
   [request ^String token]
   (let [auth-token-conf (:auth-token app-conf)
-        google-ID-token (or (google-auth-code-to-id-token token)
-                            token)
-        parsed-token (try
-                       (parse-token google-ID-token)
-                       (catch Exception ex
-                         (log/error ex "Malformed token")))
+        google-ID-token-str (or (google-auth-code-to-id-token token)
+                                token)
+        parsed-token-map (some-> (parse-token-str google-ID-token-str)
+                                 (get-id-token-payload)
+                                 (to-keywordized-map))
         db (:db request)]
-    (when parsed-token
-      (if-let [person (verified-person db auth-token-conf parsed-token)]
-        (map->Identification {:id-token google-ID-token :token-info parsed-token :person person})
-        (when-let [tok (verify-token token)]
+    (when parsed-token-map
+      (if-let [person (verified-person db auth-token-conf parsed-token-map)]
+        (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person})
+        (when-let [tok (verify-token google-ID-token-str)]
           (if-let [person (query-person db :person/email (:email tok))]
             (let [auth-token (sign-token auth-token-conf tok)]
               @(d/transact-async (:conn request)
@@ -139,7 +159,7 @@
                                    (:db/id person)
                                    :person/auth-token
                                    auth-token]])
-              (map->Identification {:id-token google-ID-token :token-info parsed-token :person person}))
+              (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
             (log/warn "NO PERSON FOUND IN DB:" tok)))))))
 
 (def backend (babt/token-backend {:authfn identify}))
