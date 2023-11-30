@@ -117,22 +117,30 @@
 
 (defrecord Identification [id-token token-info person])
 
-(defn verified-person
-  "Return a person from the database having a matching stored token."
-  [db auth-token-conf parsed-token]
-  (let [email (:email parsed-token)]
-    (when-let [{stored-token :person/auth-token} (d/pull db
-                                                         '[:person/auth-token]
-                                                         [:person/email email])]
+(defn get-verified-person
+  "Returns a person from the database with:
+   * Matching email address
+   * Active profile state in DB
+   * A matching stored (unsigned) auth-token"
+  [db auth-token-conf token-str email]
 
-      (when (try
-              (bsc/unsign stored-token (:key auth-token-conf)
-                          (select-keys auth-token-conf [:max-age]))
-              (catch Exception _
-                (log/error "Failed to unsigned stored token"
-                           {:stored-token stored-token
-                            :key (:key auth-token-conf)})))
-        (query-person db :person/email email)))))
+  (when-let [person (d/pull db
+                            '[:person/auth-token :person/active?]
+                            [:person/email email])]
+
+    (when (:person/active? person)
+      (let [stored-token (:person/auth-token person)
+            unsigned-stored-token (try
+                                    (bsc/unsign stored-token (:key auth-token-conf)
+                                                (select-keys auth-token-conf [:max-age]))
+                                    (catch Exception _
+                                      (log/error "Failed to unsigned stored token"
+                                                 {:stored-token stored-token
+                                                  :key (:key auth-token-conf)})))]
+        (when (and (not (nil? unsigned-stored-token))
+                   (not (nil? token-str))
+                   (= unsigned-stored-token token-str))
+          (query-person db :person/email email))))))
 
 (defn identify
   "Identify the wormbase user associated with request based on token.
@@ -147,20 +155,40 @@
         parsed-token-map (some-> (parse-token-str google-ID-token-str)
                                  (get-id-token-payload)
                                  (to-keywordized-map))
+        email (some-> parsed-token-map
+                      (:email parsed-token-map))
         db (:db request)]
-    (when parsed-token-map
-      (if-let [person (verified-person db auth-token-conf parsed-token-map)]
-        (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person})
-        (when-let [tok (verify-token google-ID-token-str)]
+    (log/debug "Initiating token-based identification.")
+    (if parsed-token-map
+      (if-let [person (get-verified-person db auth-token-conf google-ID-token-str email)]
+        ;Verified person found matching token
+        (do
+          (log/debug "Verified person found:" person)
+          (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
+        ;No verified person found matching token
+        (if-let [tok (verify-token google-ID-token-str)]
+          ;Provided token verified
           (if-let [person (query-person db :person/email (:email tok))]
-            (let [auth-token (sign-token auth-token-conf tok)]
-              @(d/transact-async (:conn request)
-                                 [[:db/add
-                                   (:db/id person)
-                                   :person/auth-token
-                                   auth-token]])
+            ;Person found matching verified token
+            (let [signed-auth-token (sign-token auth-token-conf google-ID-token-str)
+                  stored-auth-token (some-> (d/pull db
+                                                    '[:person/auth-token]
+                                                    [:person/email email])
+                                            (:person/auth-token))]
+              (log/debug "No verified person found, but token verified as valid. Person matching verified token: " person)
+              (when (nil? stored-auth-token)
+                (log/debug "Storing new auth-token for user " (:email tok))
+                @(d/transact-async (:conn request)
+                                   [[:db/add
+                                     (:db/id person)
+                                     :person/auth-token
+                                     signed-auth-token]]))
               (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
-            (log/warn "NO PERSON FOUND IN DB:" tok)))))))
+            ;No person found matching verified token
+            (log/warn "No person found in db for verified token:" tok))
+          ;Provided token fails to verify
+          (log/warn "Unverified token received (and no verified person found).")))
+      (log/warn "Empty token received or token failed to parse."))))
 
 (def backend (babt/token-backend {:authfn identify}))
 
