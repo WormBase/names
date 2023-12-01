@@ -7,10 +7,13 @@
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [clojure.walk :as w]
+            [compojure.api.sweet :as sweet]
             [datomic.api :as d]
             [environ.core :as environ]
             [ring.middleware.defaults :as rmd]
             [ring.util.http-response :as http-response]
+            [wormbase.specs.auth :as ws-auth]
+            [wormbase.names.util :as wnu]
             [wormbase.util :as wu])
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
            (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
@@ -218,3 +221,28 @@
                            :on-error access-error})))
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
+
+;; Enpoint handlers
+(defn get-identity [request]
+  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")
+        person (wnu/unqualify-keys (:person identity) "person")
+        id-token (:id-token identity)
+        token-info (:token-info identity)]
+    (http-response/ok {:person person
+                       :id-token id-token
+                       :token-info token-info})))
+
+;; API endpoints
+(def routes
+  (sweet/routes
+   (sweet/context "/auth" []
+     :tags ["authentication"]
+     (sweet/context "/identity" []
+       :tags ["authentication" "identity"]
+       (sweet/resource
+        {:get
+         {:summary "Get the identity for the authenticated and authorized user making the request."
+          :x-name ::get-identity
+          :responses (wnu/http-responses-for-read {:schema ::ws-auth/identity-response})
+          :handler get-identity}}))
+     )))

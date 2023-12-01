@@ -1,4 +1,4 @@
-(ns wormbase.specs.identity
+(ns wormbase.specs.auth
   (:require
    [clojure.spec.alpha :as s]
    [spec-tools.core :as stc]

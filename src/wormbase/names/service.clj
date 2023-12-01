@@ -7,13 +7,12 @@
    [muuntaja.middleware :as mmw]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as wdbs]
-   [wormbase.names.auth :as wna]
+   [wormbase.names.auth :as wn-auth]
    [wormbase.names.batch :as wn-batch]
    [wormbase.names.coercion] ;; coercion scheme
    [wormbase.names.entity :as wne]
    [wormbase.names.errhandlers :as wn-eh]
    [wormbase.names.gene :as wn-gene]
-   [wormbase.names.identity :as wn-identity]
    [wormbase.names.person :as wn-person]
    [wormbase.names.recent :as wn-recent]
    [wormbase.names.response-formats :as wnrf]
@@ -83,7 +82,7 @@
     :exceptions {:handlers wn-eh/handlers}
     :middleware [wrap-static-resources
                  wdb/wrap-datomic
-                 wna/wrap-auth
+                 wn-auth/wrap-auth
                  mmw/wrap-format
                  rmnm/wrap-not-modified
                  wrap-not-found
@@ -91,10 +90,10 @@
     :swagger swagger-ui}
    (sweet/context "" []
      (sweet/context "/api" []
-       :middleware [wna/restrict-to-authenticated]
+       :middleware [wn-auth/restrict-to-authenticated]
+       wn-auth/routes
        wn-species/routes
        wn-gene/routes
-       wn-identity/routes
        wn-person/routes
        wn-recent/routes
        wn-batch/routes

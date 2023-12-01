@@ -76,7 +76,7 @@ export default function Authenticate({ children }) {
     var return_val;
 
     try {
-      return_val = fetch(`/api/identity`, {
+      return_val = fetch(`/api/auth/identity`, {
         headers: identityHeaders,
       }).then((response) => {
         if (response.ok) {
