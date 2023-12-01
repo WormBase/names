@@ -222,7 +222,7 @@
 
 (def restrict-to-authenticated (restrict-access auth/authenticated?))
 
-;; Enpoint handlers
+;; Endpoint handlers
 (defn get-identity [request]
   (let [identity (wnu/unqualify-keys (-> request :identity) "identity")
         person (wnu/unqualify-keys (:person identity) "person")
@@ -231,6 +231,16 @@
     (http-response/ok {:person person
                        :id-token id-token
                        :token-info token-info})))
+
+;;Placeholder fn. Actual code to be written.
+(defn store-auth-token [request]
+  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")]
+    (http-response/ok)))
+
+;;Placeholder fn. Actual code to be written.
+(defn delete-auth-token [request]
+  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")]
+    (http-response/ok)))
 
 ;; API endpoints
 (def routes
@@ -245,4 +255,15 @@
           :x-name ::get-identity
           :responses (wnu/http-responses-for-read {:schema ::ws-auth/identity-response})
           :handler get-identity}}))
+     (sweet/context "/token" []
+       :tags ["authenticate"]
+       (sweet/resource
+        {:post
+         {:summary "Store the current ID token for future scripting usage. This will invalidate the previously stored token."
+          :responses (wnu/response-map http-response/ok {:schema ::ws-auth/empty-response})
+          :handler store-auth-token}
+         :delete
+         {:summary "Delete the stored token, invalidating it for future use."
+          :responses (wnu/response-map http-response/ok {:schema ::ws-auth/empty-response})
+          :handler delete-auth-token}}))
      )))

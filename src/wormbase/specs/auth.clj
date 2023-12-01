@@ -35,3 +35,5 @@
 
 (s/def ::identity-response (stc/spec {:spec (s/keys :req-un [::id-token ::token-info ::person])
                                       :swagger/example example-identity}))
+
+(s/def ::empty-response (stc/spec {:spec (s/cat)}))
