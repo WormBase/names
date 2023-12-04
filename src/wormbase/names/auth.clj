@@ -26,6 +26,8 @@
 
 (def ^:private app-conf (wu/read-app-config))
 
+(def ^:private auth-token-conf (:auth-token app-conf))
+
 (def ^:private token-verifier (.. (GoogleIdTokenVerifier$Builder. net-transport
                                                                   json-factory)
                                   (setAudience (list (get environ/env :api-google-oauth-client-id)))
@@ -115,8 +117,20 @@
 
 (defn sign-token
   "Sign a token using a key from the application configuration."
-  [auth-token-conf token]
+  [token]
   (bsc/sign (str token) (:key auth-token-conf)))
+
+(defn unsign-token
+  "Sign a token using a key from the application configuration."
+  [token]
+  (try
+    (bsc/unsign token (:key auth-token-conf)
+                ;; (select-keys auth-token-conf [:max-age])
+                )
+    (catch Exception _
+      (log/error "Failed to unsigned stored token"
+                 {:token token
+                  :key (:key auth-token-conf)}))))
 
 (defrecord Identification [id-token token-info person])
 
@@ -125,21 +139,15 @@
    * Matching email address
    * Active profile state in DB
    * A matching stored (unsigned) auth-token"
-  [db auth-token-conf token-str email]
+  [db token-str email]
 
   (when-let [person (d/pull db
                             '[:person/auth-token :person/active?]
                             [:person/email email])]
 
     (when (:person/active? person)
-      (let [stored-token (:person/auth-token person)
-            unsigned-stored-token (try
-                                    (bsc/unsign stored-token (:key auth-token-conf)
-                                                (select-keys auth-token-conf [:max-age]))
-                                    (catch Exception _
-                                      (log/error "Failed to unsigned stored token"
-                                                 {:stored-token stored-token
-                                                  :key (:key auth-token-conf)})))]
+      (let [unsigned-stored-token (some-> (:person/auth-token person)
+                                          (unsign-token))]
         (when (and (not (nil? unsigned-stored-token))
                    (not (nil? token-str))
                    (= unsigned-stored-token token-str))
@@ -152,8 +160,7 @@
    Conditionally associates the authentication token with the user in the database.
    Return an Identification record."
   [request ^String token]
-  (let [auth-token-conf (:auth-token app-conf)
-        google-ID-token-str (or (google-auth-code-to-id-token token)
+  (let [google-ID-token-str (or (google-auth-code-to-id-token token)
                                 token)
         parsed-token-map (some-> (parse-token-str google-ID-token-str)
                                  (get-id-token-payload)
@@ -163,7 +170,7 @@
         db (:db request)]
     (log/debug "Initiating token-based identification.")
     (if parsed-token-map
-      (if-let [person (get-verified-person db auth-token-conf google-ID-token-str email)]
+      (if-let [person (get-verified-person db google-ID-token-str email)]
         ;Verified person found matching token
         (do
           (log/debug "Verified person found:" person)
@@ -173,19 +180,12 @@
           ;Provided token verified
           (if-let [person (query-person db :person/email (:email tok))]
             ;Person found matching verified token
-            (let [signed-auth-token (sign-token auth-token-conf google-ID-token-str)
+            (let [signed-auth-token (sign-token google-ID-token-str)
                   stored-auth-token (some-> (d/pull db
                                                     '[:person/auth-token]
                                                     [:person/email email])
                                             (:person/auth-token))]
               (log/debug "No verified person found, but token verified as valid. Person matching verified token: " person)
-              (when (nil? stored-auth-token)
-                (log/debug "Storing new auth-token for user " (:email tok))
-                @(d/transact-async (:conn request)
-                                   [[:db/add
-                                     (:db/id person)
-                                     :person/auth-token
-                                     signed-auth-token]]))
               (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
             ;No person found matching verified token
             (log/warn "No person found in db for verified token:" tok))
@@ -232,14 +232,30 @@
                        :id-token id-token
                        :token-info token-info})))
 
-;;Placeholder fn. Actual code to be written.
 (defn store-auth-token [request]
-  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")]
-    (http-response/ok)))
+  (if-let [signed-auth-token (some->
+                              (wnu/unqualify-keys (-> request :identity) "identity")
+                              (:id-token identity)
+                              (sign-token))]
+    (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
+                     (:person identity))]
+      (log/debug "Storing new auth-token for user " (:email person))
+      @(d/transact (:conn request)
+                   [[:db/add
+                     (:db/id person)
+                     :person/auth-token
+                     signed-auth-token]])
+      (http-response/ok))
+    (http-response/internal-server-error)))
 
-;;Placeholder fn. Actual code to be written.
 (defn delete-auth-token [request]
-  (let [identity (wnu/unqualify-keys (-> request :identity) "identity")]
+  (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
+                   (:person identity))]
+    (log/debug "Revoking stored auth-token for user " (:person/email person))
+    @(d/transact (:conn request)
+                 [[:db/retract
+                   (:db/id person)
+                   :person/auth-token]])
     (http-response/ok)))
 
 ;; API endpoints
