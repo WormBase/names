@@ -22,7 +22,7 @@ const Profile = (props) => {
           </CopyToClipboard>
         </div>
       </span>
-      <div className={props.classes.logout}>{props.children}</div>
+      <div className={props.classes.actions}>{props.children}</div>
     </div>
   );
 };
@@ -44,8 +44,8 @@ const styles = (theme) => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logout: {
-    margin: theme.spacing.unit * 6,
+  actions: {
+    margin: theme.spacing.unit * 4,
   },
 });
 

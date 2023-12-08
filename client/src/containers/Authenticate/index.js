@@ -4,6 +4,7 @@ import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
 import ProfileButton from './ProfileButton';
+import TokenMgmt from './TokenMgmt';
 import AuthorizationContext, {
   DEFAULT_AUTHENTICATION_STATE,
 } from './AuthorizationContext';
@@ -168,6 +169,7 @@ export {
   Login,
   Logout,
   Profile,
+  TokenMgmt,
   AuthorizationContext,
   useDataFetch,
 };
