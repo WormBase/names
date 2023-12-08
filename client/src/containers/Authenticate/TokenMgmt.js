@@ -3,7 +3,7 @@ import { Button } from '../../components/elements';
 
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 
-const TokenMgmt = (props) => {
+function TokenMgmt() {
   const ACTION_STORE = 'STORE';
   const ACTION_REVOKE = 'REVOKE';
 
@@ -18,16 +18,16 @@ const TokenMgmt = (props) => {
     "Click the 'Store token' button below to store the current ID token and display it here.";
 
   function tokenReducer(state, action) {
-    const new_state = { ...state };
+    const newState = { ...state };
 
     switch (action.type) {
       case ACTION_STORE:
         console.log('Storing apiToken in new state.');
-        new_state['apiToken'] = user.id_token;
+        newState['apiToken'] = user.id_token;
         break;
       case ACTION_REVOKE:
         console.log('Revoking apiToken from new state.');
-        new_state['apiToken'] = null;
+        newState['apiToken'] = null;
         break;
       default:
         console.log('Invalid action type detected:');
@@ -35,7 +35,7 @@ const TokenMgmt = (props) => {
         throw new Error();
     }
 
-    return new_state;
+    return newState;
   }
 
   function storeTokenHandler() {
@@ -73,6 +73,6 @@ const TokenMgmt = (props) => {
       </Button>
     </div>
   );
-};
+}
 
 export default TokenMgmt;
