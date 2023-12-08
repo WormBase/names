@@ -61,7 +61,7 @@ function TokenMgmt() {
   return (
     <div>
       <textarea
-        disabled="true"
+        disabled={true}
         value={tokenState.apiToken || defaultTokenInstructions}
       />
       <br />
