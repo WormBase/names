@@ -13,7 +13,7 @@ class Login extends Component {
             <div className={classes.errorMessage}>{errorMessage}</div>
           </div>
         ) : null}
-        <Button onClick={onSignIn} variant="raised">
+        <Button onClick={onSignIn} variant="contained">
           Login with Google
         </Button>
       </div>

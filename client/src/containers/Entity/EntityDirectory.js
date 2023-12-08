@@ -27,7 +27,7 @@ const EntityDirectory = (props) => {
           <div className={classes.root}>
             <div className={classes.header}>
               <Button
-                variant="raised"
+                variant="contained"
                 color="secondary"
                 component={({ ...props }) => (
                   <Link to={`/${entityType}/new`} {...props} />

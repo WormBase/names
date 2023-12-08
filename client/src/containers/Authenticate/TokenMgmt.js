@@ -65,10 +65,10 @@ function TokenMgmt() {
         value={tokenState.apiToken || defaultTokenInstructions}
       />
       <br />
-      <Button variant="raised" onClick={storeTokenHandler}>
+      <Button variant="contained" onClick={storeTokenHandler}>
         Store token
       </Button>
-      <Button variant="raised" onClick={revokeTokenHandler}>
+      <Button variant="contained" onClick={revokeTokenHandler}>
         Revoke token
       </Button>
     </div>

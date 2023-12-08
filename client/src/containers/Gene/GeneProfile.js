@@ -85,7 +85,7 @@ class GeneProfile extends Component {
               {!dead && (
                 <Button
                   {...getOperationProps(OPERATION_MERGE)}
-                  variant="raised"
+                  variant="contained"
                 >
                   Merge Gene
                 </Button>
@@ -93,7 +93,7 @@ class GeneProfile extends Component {
               {!dead && (
                 <Button
                   {...getOperationProps(OPERATION_SPLIT)}
-                  variant="raised"
+                  variant="contained"
                 >
                   Split Gene
                 </Button>
@@ -101,7 +101,7 @@ class GeneProfile extends Component {
               {live && (
                 <Button
                   {...getOperationProps(OPERATION_SUPPRESS)}
-                  variant="raised"
+                  variant="contained"
                 >
                   Suppress Gene
                 </Button>
@@ -110,7 +110,7 @@ class GeneProfile extends Component {
                 <Button
                   {...getOperationProps(OPERATION_KILL)}
                   wbVariant="danger"
-                  variant="raised"
+                  variant="contained"
                 >
                   Kill Gene
                 </Button>
@@ -119,7 +119,7 @@ class GeneProfile extends Component {
                 <Button
                   {...getOperationProps(OPERATION_RESURRECT)}
                   wbVariant="danger"
-                  variant="raised"
+                  variant="contained"
                 >
                   Resurrect Gene
                 </Button>

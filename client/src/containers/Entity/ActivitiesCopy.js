@@ -54,7 +54,7 @@ function ActivitiesCopy({ entityType, activities }) {
       <p>Need the {entityType} IDs in the Ontology Annotator (OA)?</p>
       <p>
         <Button
-          variant="raised"
+          variant="contained"
           color="primary"
           disabled={entriesToday.length === 0}
           onClick={handleCopy}
