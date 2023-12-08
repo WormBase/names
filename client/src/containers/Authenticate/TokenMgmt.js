@@ -1,10 +1,13 @@
-import React, { useReducer } from 'react';
-// import PropTypes from 'prop-types';
+import React, { useContext, useReducer } from 'react';
 import { Button } from '../../components/elements';
+
+import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 
 const TokenMgmt = (props) => {
   const ACTION_STORE = 'STORE';
   const ACTION_REVOKE = 'REVOKE';
+
+  const { authorizedFetch, user } = useContext(AuthorizationContext);
 
   const [tokenState, dispatchTokenState] = useReducer(tokenReducer, {
     apiToken: null,
@@ -20,13 +23,11 @@ const TokenMgmt = (props) => {
     switch (action.type) {
       case ACTION_STORE:
         console.log('Storing apiToken in new state.');
-        new_state['apiToken'] =
-          'API TOKEN str. To be retrieved from the identity state (profile?). ' +
-          Date.now();
+        new_state['apiToken'] = user.id_token;
         break;
       case ACTION_REVOKE:
         console.log('Revoking apiToken from new state.');
-        new_state['apiToken'] = '';
+        new_state['apiToken'] = null;
         break;
       default:
         console.log('Invalid action type detected:');
@@ -37,6 +38,26 @@ const TokenMgmt = (props) => {
     return new_state;
   }
 
+  function storeTokenHandler() {
+    console.log('storeTokenHandler triggered.');
+
+    authorizedFetch(`/api/auth/token`, {
+      method: 'POST',
+    });
+
+    dispatchTokenState({ type: ACTION_STORE });
+  }
+
+  function revokeTokenHandler() {
+    console.log('revokeTokenHandler triggered.');
+
+    authorizedFetch(`/api/auth/token`, {
+      method: 'DELETE',
+    });
+
+    dispatchTokenState({ type: ACTION_REVOKE });
+  }
+
   return (
     <div>
       <textarea
@@ -44,29 +65,14 @@ const TokenMgmt = (props) => {
         value={tokenState.apiToken || defaultTokenInstructions}
       />
       <br />
-      <Button
-        variant="raised"
-        onClick={() => {
-          //TODO: action the token storage
-          dispatchTokenState({ type: ACTION_STORE });
-        }}
-      >
+      <Button variant="raised" onClick={storeTokenHandler}>
         Store token
       </Button>
-      <Button
-        variant="raised"
-        onClick={() => {
-          //TODO: action the token storage
-          dispatchTokenState({ type: ACTION_REVOKE });
-        }}
-      >
+      <Button variant="raised" onClick={revokeTokenHandler}>
         Revoke token
       </Button>
     </div>
   );
 };
-
-// TokenMgmt.propTypes = {
-// };
 
 export default TokenMgmt;
