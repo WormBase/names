@@ -7,12 +7,21 @@ Log in to the name service website using your wormbase google email (ending on `
 
 # API Authorization token
 As authorization mechanism, the names service requires that either a temporary Google Auth Code
-(for exchange using the identity endpoint) or a valid id_token is passed in through the HTTP(S) request Authorization header
-sent to all API endpoints.
-To obtain a valid ID-token for calling the API, log in to the name service website with your personal account,
-browse to your profile page (`/me`) and copy the ID-token shown (by clicking the `copy to clipboard` button).
+(for exchange using the identity endpoint) or a valid ID token is passed in through
+the HTTP(S) request Authorization header sent to all API endpoints.
+By default, ID tokens expire after 1 hour. To obtain a token that will be valid longer than 1 hour,
+which can be used for calling the API in scripting:
+ 1. Log in to the name service website with your personal wormbase google account
+ 2. Browse to your profile page (`/me`).
+ 3. Click the `store token` button to store the current ID token as an API token,
+    and copy the token that shows up in the textbox above (by clicking the `copy to clipboard` button).
+    This API token will only be visible once upon storing it to the database, and not after refreshing the page or in any later sessions.
+ *  If you forgot your API token, or the token was potentially leaked, click the `store token` button again
+    to store and display a new token and invalidate the old one.
+ *  If you no longer need (direct) API access to the name service, click the `revoke token` button
+    to revoke the currently stored token without generating a new one.
 
-The token should then be passed in the header as described below.
+The token should then be passed in the header as described below for direct API access.
 For example; given a suitable JSON file for the payload,
 the _curl_ command below creates a number of genes via the names service batch API:
 
