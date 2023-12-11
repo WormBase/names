@@ -1,5 +1,6 @@
 import React, { useContext, useReducer } from 'react';
 import { Button } from '../../components/elements';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
 
@@ -64,6 +65,11 @@ function TokenMgmt() {
         disabled={true}
         value={tokenState.apiToken || defaultTokenInstructions}
       />
+      <CopyToClipboard text={tokenState.apiToken}>
+        <div>
+          <button>Copy to clipboard</button>
+        </div>
+      </CopyToClipboard>
       <br />
       <Button variant="contained" onClick={storeTokenHandler}>
         Store token

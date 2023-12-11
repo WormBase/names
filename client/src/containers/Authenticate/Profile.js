@@ -1,5 +1,4 @@
 import React from 'react';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
 import PropTypes from 'prop-types';
 import { withStyles } from '../../components/elements';
 
@@ -10,18 +9,6 @@ const Profile = (props) => {
       <span>ID: {props.id}</span>
       <br />
       <span>Email: {props.email}</span>
-      <span>
-        ID-token:{' '}
-        <div>
-          <textarea>{props.id_token}</textarea>
-          <br />
-          <CopyToClipboard text={props.id_token}>
-            <div>
-              <button>Copy to clipboard</button>
-            </div>
-          </CopyToClipboard>
-        </div>
-      </span>
       <div className={props.classes.actions}>{props.children}</div>
     </div>
   );
