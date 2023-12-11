@@ -63,6 +63,7 @@ function TokenMgmt() {
     <div>
       <textarea
         disabled={true}
+        style={{ width: '100%', height: 65 }}
         value={tokenState.apiToken || defaultTokenInstructions}
       />
       <CopyToClipboard text={tokenState.apiToken}>
