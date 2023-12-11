@@ -23,11 +23,9 @@ function TokenMgmt() {
 
     switch (action.type) {
       case ACTION_STORE:
-        console.log('Storing apiToken in new state.');
         newState['apiToken'] = user.id_token;
         break;
       case ACTION_REVOKE:
-        console.log('Revoking apiToken from new state.');
         newState['apiToken'] = null;
         break;
       default:
