@@ -173,25 +173,24 @@
       (if-let [person (get-verified-person db google-ID-token-str email)]
         ;Verified person found matching token
         (do
-          (log/debug "Verified person found:" person)
+          (log/debug "Verified person found on matching stored auth-code:" person)
           (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
         ;No verified person found matching token
         (if-let [tok (verify-token google-ID-token-str)]
           ;Provided token verified
           (if-let [person (query-person db :person/email (:email tok))]
             ;Person found matching verified token
-            (let [signed-auth-token (sign-token google-ID-token-str)
-                  stored-auth-token (some-> (d/pull db
-                                                    '[:person/auth-token]
-                                                    [:person/email email])
-                                            (:person/auth-token))]
-              (log/debug "No verified person found, but token verified as valid. Person matching verified token: " person)
+            (do
+              (log/debug "No verified person found based on stored auth-code,
+                          but token verified as valid. Person matching verified token: " person)
               (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
             ;No person found matching verified token
             (log/warn "No person found in db for verified token:" tok))
           ;Provided token fails to verify
           (log/warn "Unverified token received (and no verified person found).")))
-      (log/warn "Empty token received or token failed to parse."))))
+      (when (not (or (str/blank? google-ID-token-str)
+                     (= google-ID-token-str "null")))
+        (log/warn "Received token failed to parse." )))))
 
 (def backend (babt/token-backend {:authfn identify}))
 
@@ -239,7 +238,7 @@
                               (sign-token))]
     (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
                      (:person identity))]
-      (log/debug "Storing new auth-token for user " (:email person))
+      (log/debug "Storing new auth-token for user" (:person/email person))
       @(d/transact (:conn request)
                    [[:db/add
                      (:db/id person)
@@ -251,7 +250,7 @@
 (defn delete-auth-token [request]
   (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
                    (:person identity))]
-    (log/debug "Revoking stored auth-token for user " (:person/email person))
+    (log/debug "Revoking stored auth-token for user" (:person/email person))
     @(d/transact (:conn request)
                  [[:db/retract
                    (:db/id person)
