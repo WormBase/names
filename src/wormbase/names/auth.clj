@@ -187,7 +187,7 @@
             ;No person found matching verified token
             (log/warn "No person found in db for verified token:" tok))
           ;Provided token fails to verify
-          (log/warn "Unverified token received (and no verified person found).")))
+          (log/warn "Unverified (or expired) token received (and token did not match stored auth-code of any verified person).")))
       (when (not (or (str/blank? google-ID-token-str)
                      (= google-ID-token-str "null")))
         (log/warn "Received token failed to parse." )))))
