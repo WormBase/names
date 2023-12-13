@@ -34,7 +34,7 @@
     pl))
 
 (alter-var-root
- (var wn-auth/verify-token-gapi)
+ (var wn-auth/verify-token)
  (fn fake-google-api-verify-token [_]
    (fn verify-token-pretend [_]
      (log/debug "NOTICE: Faking verifying token with Google API")
@@ -42,11 +42,13 @@
        (doseq [[k v] defaults]
          (when-not (get *gapi-verify-token-response* k)
            (.set *gapi-verify-token-response* k v)))
-       *gapi-verify-token-response*))))
+       (some->> *gapi-verify-token-response*
+                (into {})
+                (w/keywordize-keys))))))
 
 (alter-var-root
- (var wn-auth/parse-token)
- (fn fake-parse-token [_]
+ (var wn-auth/get-token-payload-map)
+ (fn fake-get-token-payload-map [_]
    (fn [_]
      (log/debug "NOTICE: faking wna/parse-token")
      (merge

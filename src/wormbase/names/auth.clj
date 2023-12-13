@@ -86,6 +86,13 @@
            (into {})
            (w/keywordize-keys)))
 
+(defn get-token-payload-map
+  "Parse a Google ID token string, return a keywordized map of the GoogleIdToken.payload"
+  [^String google-ID-token-str]
+  (some-> (parse-token-str google-ID-token-str)
+          (get-id-token-payload)
+          (to-keywordized-map)))
+
 (defn verify-token-gapi
   "Returns true if the token is valid."
   [^String token]
@@ -180,9 +187,7 @@
   [request ^String token]
   (let [google-ID-token-str (or (google-auth-code-to-id-token token)
                                 token)
-        parsed-token-map (some-> (parse-token-str google-ID-token-str)
-                                 (get-id-token-payload)
-                                 (to-keywordized-map))
+        parsed-token-map (get-token-payload-map google-ID-token-str)
         email (some-> parsed-token-map
                       (:email parsed-token-map))
         db (:db request)]
