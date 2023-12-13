@@ -3,6 +3,7 @@
             [buddy.auth.accessrules :as baa]
             [buddy.auth.backends.token :as babt]
             [buddy.auth.middleware :as auth-mw]
+            [buddy.hashers :as bhasher]
             [buddy.sign.compact :as bsc]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
@@ -115,6 +116,28 @@
     (when (:db/id person)
       (dissoc person :person/auth-token))))
 
+(defn derive-token-hash
+  "Return a hash derived from provided token for database storage."
+  [token]
+  (bhasher/derive (str token) {:alg :argon2id}))
+
+(defn matching-token-hash?
+  "Verify if a provided token matches a hashed token.
+   Returns true if token matches, false if not, nil on error."
+  [raw-token hashed-token]
+  (if (or
+       (str/blank? raw-token)
+       (= raw-token "null")
+       (str/blank? hashed-token)
+       (= hashed-token "null"))
+    false
+    (some->
+     (try
+       (bhasher/verify (str raw-token) (str hashed-token))
+       (catch clojure.lang.ExceptionInfo e
+         (log/error "Failed to verify token with stored hash." e)))
+     (:valid))))
+
 (defn sign-token
   "Sign a token using a key from the application configuration."
   [token]
@@ -138,20 +161,15 @@
   "Returns a person from the database with:
    * Matching email address
    * Active profile state in DB
-   * A matching stored (unsigned) auth-token"
+   * A matching stored (signed) auth-token"
   [db token-str email]
 
   (when-let [person (d/pull db
                             '[:person/auth-token :person/active?]
                             [:person/email email])]
-
-    (when (:person/active? person)
-      (let [unsigned-stored-token (some-> (:person/auth-token person)
-                                          (unsign-token))]
-        (when (and (not (nil? unsigned-stored-token))
-                   (not (nil? token-str))
-                   (= unsigned-stored-token token-str))
-          (query-person db :person/email email))))))
+    (when (and (:person/active? person)
+               (matching-token-hash? token-str (:person/auth-token person)))
+      (query-person db :person/email email))))
 
 (defn identify
   "Identify the wormbase user associated with request based on token.
@@ -235,7 +253,7 @@
   (if-let [signed-auth-token (some->
                               (wnu/unqualify-keys (-> request :identity) "identity")
                               (:id-token identity)
-                              (sign-token))]
+                              (derive-token-hash))]
     (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
                      (:person identity))]
       (log/debug "Storing new auth-token for user" (:person/email person))
