@@ -2,7 +2,7 @@
   (:require
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [ring.util.http-response :refer [ok]]
    [wormbase.names.provenance :as wnp]
    [wormbase.names.util :as wnu]

@@ -6,7 +6,7 @@
    [amazonica.aws.dynamodbv2 :as ddb]
    [amazonica.aws.elasticbeanstalk :as eb]
    [amazonica.aws.securitytoken :as st]
-   [java-time :as jt]))
+   [java-time.api :as jt]))
 
 (def operator-iam-spec
   {:role-arn "arn:aws:iam::357210185381:role/wb-names-test-system-operator"

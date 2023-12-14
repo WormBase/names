@@ -3,7 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [datomic.api :as d]
-            [java-time :as jt]
+            [java-time.api :as jt]
             [wormbase.db :as wdb]
             [wormbase.names.agent :as wna]
             [wormbase.names.util :as wnu]

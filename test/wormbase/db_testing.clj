@@ -3,7 +3,7 @@
    [clojure.core.cache :as cache]
    [datomock.core :as dm]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [mount.core :as mount]
    [wormbase.db :as wdb]
    [wormbase.db.schema :as schema]))

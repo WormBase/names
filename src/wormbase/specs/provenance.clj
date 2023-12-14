@@ -2,7 +2,7 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [spec-tools.core :as stc]
    [spec-tools.spec :as sts]
    [wormbase.specs.person] ;; side effecting: to bring in specs
