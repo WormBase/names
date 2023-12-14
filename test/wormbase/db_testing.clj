@@ -6,9 +6,7 @@
    [java-time :as jt]
    [mount.core :as mount]
    [wormbase.db :as wdb]
-   [wormbase.db.schema :as schema]
-   [wormbase.names.auth :as wna]
-   [wormbase.util :as wu]))
+   [wormbase.db.schema :as schema]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html

@@ -14,8 +14,7 @@
             [ring.middleware.defaults :as rmd]
             [ring.util.http-response :as http-response]
             [wormbase.specs.auth :as ws-auth]
-            [wormbase.names.util :as wnu]
-            [wormbase.util :as wu])
+            [wormbase.names.util :as wnu])
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
            (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
            (com.google.api.client.http.javanet NetHttpTransport)
@@ -24,10 +23,6 @@
 (def ^:private net-transport (NetHttpTransport.))
 
 (def ^:private json-factory (GsonFactory.))
-
-(def ^:private app-conf (wu/read-app-config))
-
-(def ^:private auth-token-conf (:auth-token app-conf))
 
 (def ^:private token-verifier (.. (GoogleIdTokenVerifier$Builder. net-transport
                                                                   json-factory)
@@ -144,23 +139,6 @@
        (catch clojure.lang.ExceptionInfo e
          (log/error "Failed to verify token with stored hash." e)))
      (:valid))))
-
-(defn sign-token
-  "Sign a token using a key from the application configuration."
-  [token]
-  (bsc/sign (str token) (:key auth-token-conf)))
-
-(defn unsign-token
-  "Sign a token using a key from the application configuration."
-  [token]
-  (try
-    (bsc/unsign token (:key auth-token-conf)
-                ;; (select-keys auth-token-conf [:max-age])
-                )
-    (catch Exception _
-      (log/error "Failed to unsigned stored token"
-                 {:token token
-                  :key (:key auth-token-conf)}))))
 
 (defrecord Identification [id-token token-info person])
 
