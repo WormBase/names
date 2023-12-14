@@ -1,7 +1,7 @@
 ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= wormbase-names-dev
-LOCAL_GOOGLE_REDIRECT_URI = "http://lvh.me:3000"
+LOCAL_GOOGLE_REDIRECT_URI := "http://lvh.me:3000"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
@@ -11,7 +11,7 @@ else ifeq ($(PROJ_NAME), wormbase-names-test)
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	GOOGLE_APP_PROFILE ?= "prod"
 else
-	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+	WB_DB_URI ?= "datomic:ddb-local://localhost:8000/WBNames_local/wormbase"
 #   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
 #   if intended for AWS deployment (default is set for local execution)
 	GOOGLE_REDIRECT_URI ?= ${LOCAL_GOOGLE_REDIRECT_URI}
@@ -235,14 +235,17 @@ run-tests: google-oauth2-secrets \
 	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
 	  export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
 	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
-	  clj -A:datomic-pro:webassets:dev:test:run-tests
+	  clj -A:datomic-pro:logging:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
+run-dev-webserver: PORT := 4010
 run-dev-webserver: google-oauth2-secrets \
                    $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
 				   GOOGLE_REDIRECT_URI=<google-redirect-uri>,\
                    Run a local development webserver.)
-	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
+	@ export WB_DB_URI=${WB_DB_URI} && export PORT=${PORT} && \
+	 export GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} && \
+	 export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
 	 export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
 	 clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
 

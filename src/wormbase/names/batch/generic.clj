@@ -4,7 +4,7 @@
    [compojure.api.sweet :as sweet]
    [clj-uuid :as uuid]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [ring.util.http-response :refer [bad-request created not-found! not-modified ok]]
    [spec-tools.spec :as sts]
    [wormbase.db :as wdb]

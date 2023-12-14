@@ -7,7 +7,7 @@ export default function EntityDirectoryButton(props) {
 
   return (
     <Button
-      variant="raised"
+      variant="contained"
       component={({ ...props }) => <Link to={`/${entityType}`} {...props} />}
     >
       Back to directory

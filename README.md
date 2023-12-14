@@ -11,6 +11,7 @@
     * [REST API](#rest-api)
        - [Tools](#tools)
           * [Running a Clojure REPL](#running-a-clojure-repl)
+          * [Debug printing](#debug-printing)
     * [Client app (web interface)](#client-app-web-interface)
  - [Testing](#testing)
  - [Release & deployment](#release--deployment)
@@ -150,6 +151,28 @@ From time to time it is good to check for outdated dependencies.
 This can be done via the following command:
 ```bash
 clj -A:outdated
+```
+
+#### Debug printing
+Standard logging is done using `ch.qos.logback/logback` (`-classic` and `-core`), but this is not flexible
+for limited-scale (local) debug printing during coding and debugging. To enable more flexible debug printing:
+
+ 1. In the file you want to enable temporary debug printing, replace the loading of the `clojure.tools.logging` library
+    with the `taoensso.timbre` library instead (using the same `:log` alias).
+
+ 2. Add the following line below the library loading section
+    ```clojure
+    (log/merge-config! {:level :debug})
+    ```
+    This will enable all log printing up to debug level within that file,
+    but leave the application-default logging outside of it, enabling a
+    more focused log inspection.
+
+ 3. Add any additional debug logging with the standard `(log/debug "string" object)`
+
+`taoensso.timbre` will by default print logs to the following format:
+```
+<date> <timestamp> <device-name> <LOGLEVEL> [<namespace>] - <log message>
 ```
 
 ### Client app (web interface)

@@ -6,7 +6,7 @@ import { Button } from '../../components/elements';
 const Logout = (props) => {
   return (
     <Button
-      variant="raised"
+      variant="contained"
       onClick={() => {
         props.onLogout();
         props.history.push('/');

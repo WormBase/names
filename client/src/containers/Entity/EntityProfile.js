@@ -56,7 +56,7 @@ class EntityProfile extends Component {
           <Button
             {...getOperationProps(OPERATION_KILL)}
             wbVariant="danger"
-            variant="raised"
+            variant="contained"
           >
             Kill {entityType}
           </Button>
@@ -64,7 +64,7 @@ class EntityProfile extends Component {
           <Button
             {...getOperationProps(OPERATION_RESURRECT)}
             wbVariant="danger"
-            variant="raised"
+            variant="contained"
           >
             Resurrect {entityType}
           </Button>
@@ -162,7 +162,7 @@ class EntityProfile extends Component {
                   <Typography variant="headline" gutterBottom>
                     {entityType} <em>{wbId}</em>{' '}
                     <Button
-                      variant="raised"
+                      variant="contained"
                       color="primary"
                       {...buttonCopyProps}
                     />
@@ -188,11 +188,11 @@ class EntityProfile extends Component {
                         </ErrorBoundary>
                       ) : null}
                       <div className={classes.actions}>
-                        <Button variant="raised" {...buttonResetProps}>
+                        <Button variant="contained" {...buttonResetProps}>
                           Reset
                         </Button>
                         <ProgressButton
-                          variant="raised"
+                          variant="contained"
                           color="secondary"
                           {...buttonSubmitProps}
                         >

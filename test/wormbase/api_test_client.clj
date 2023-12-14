@@ -55,19 +55,23 @@
   (send-request entity-kind :put data :sub-path identifier :current-user current-user :extra-headers extra-headers))
 
 (defn summary
-  [entity-kind identifier & {:keys [params extra-headers]
+  [entity-kind identifier & {:keys [params extra-headers current-user]
                              :or {params {}
-                                  extra-headers nil}}]
-  (let [headers (merge {"content-type" "application/json"
-                        "authorization" "Token FAKED"}
-                       extra-headers)
-        path (str "/api/" entity-kind (and identifier (str "/" identifier)))]
-    (parsed-response
-     (tu/get*
-      service/app
-      path
-      params
-      headers))))
+                                  extra-headers nil
+                                  current-user default-user}}]
+  (binding [fake-auth/*gapi-verify-token-response* (make-auth-payload
+                                                     :current-user
+                                                     current-user)]
+     (let [headers (merge {"content-type" "application/json"
+                           "authorization" "Token FAKED"}
+                          extra-headers)
+           path (str "/api/" entity-kind (and identifier (str "/" identifier)))]
+       (parsed-response
+        (tu/get*
+         service/app
+         path
+         params
+         headers)))))
 
 (defn delete
   [entity-kind path & {:keys [current-user payload extra-headers]

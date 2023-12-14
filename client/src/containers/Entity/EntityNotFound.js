@@ -16,7 +16,7 @@ function EntityNotFound(props) {
         <div className={classes.operations}>
           <EntityDirectoryButton entityType={entityType} />
           <Button
-            variant="raised"
+            variant="contained"
             color="secondary"
             component={({ ...props }) => (
               <Link to={`/${entityType}/new`} {...props} />

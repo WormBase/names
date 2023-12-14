@@ -6,46 +6,43 @@
              "clojars" {:url "https://repo.clojars.org/"}}
  :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
-  org.clojure/data.csv {:mvn/version "1.0.0"}
+  org.clojure/data.csv {:mvn/version "1.0.1"}
   org.clojure/tools.cli {:mvn/version "1.0.194"}
-  org.clojure/tools.logging {:mvn/version "1.1.0"}
-  clojure.java-time {:mvn/version "0.3.2"}
-  aero {:mvn/version "1.1.6"}
+  org.clojure/tools.logging {:mvn/version "1.2.4"}
+  clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}
+  aero/aero {:mvn/version "1.1.6"}
   bk/ring-gzip {:mvn/version "0.3.0"}
-  buddy/buddy-auth {:mvn/version "2.2.0"}
-  buddy/buddy-sign {:mvn/version "3.1.0"}
-  com.taoensso/nippy {:mvn/version "2.14.0"}
-  cheshire {:mvn/version "5.10.0"}
+  buddy/buddy-auth {:mvn/version "3.0.323"}
+  buddy/buddy-hashers {:mvn/version "2.0.167"}
   danlentz/clj-uuid {:mvn/version "0.1.9"}
-  environ {:mvn/version "1.2.0"}
-  expound {:mvn/version "0.8.5"}
-  com.google.api-client/google-api-client {:mvn/version "1.35.2"}
+  environ/environ {:mvn/version "1.2.0"}
+  expound/expound {:mvn/version "0.9.0"}
+  com.google.api-client/google-api-client {:mvn/version "2.2.0"}
   metosin/compojure-api {:mvn/version "2.0.0-alpha30"
                          :exclusions [frankiesardo/linked]}
-  metosin/muuntaja {:mvn/version "0.6.7"}
+  metosin/muuntaja {:mvn/version "0.6.8"}
   ikitommi/linked {:mvn/version "1.3.1-alpha1"}
-  mount {:mvn/version "0.1.16"}
-  phrase {:mvn/version "0.3-alpha4"}
-  ring/ring-codec {:mvn/version "1.1.2"}
-  ring/ring-defaults {:mvn/version "0.3.2"}
-  ring/ring-jetty-adapter {:mvn/version "1.8.1"}
-  semantic-csv {:mvn/version "0.2.1-alpha1"}
+  mount/mount {:mvn/version "0.1.17"}
+  phrase/phrase {:mvn/version "0.3-alpha4"}
+  ring/ring-codec {:mvn/version "1.2.0"}
+  ring/ring-defaults {:mvn/version "0.4.0"}
+  ring/ring-jetty-adapter {:mvn/version "1.10.0"}
+  semantic-csv/semantic-csv {:mvn/version "0.2.1-alpha1"}
   user-agent/user-agent {:mvn/version "0.1.1"}
-  com.taoensso/encore {:mvn/version "2.120.0"}
   magnetcoop/stork {:mvn/version "0.1.6"}}
  :aliases
  {:1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
   :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}
   :depstar {:extra-deps {seancorfield/depstar {:mvn/version "0.5.2"}}}
   :webassets {:extra-paths ["resources"]}
-  :artifact-name {:extra-deps {metav {:mvn/version "1.5.2"}}
+  :artifact-name {:extra-deps {metav/metav {:mvn/version "1.5.2"}}
                   :main-opts ["-m" "metav.display"]}
-  :release {:extra-deps {metav {:mvn/version "1.5.2"}}
+  :release {:extra-deps {metav/metav {:mvn/version "1.5.2"}}
             :main-opts ["-m" "metav.release" "--module-name-override" "wormbase-names"]}
   :event-broadcast
   {:extra-deps
    {com.draines/postal {:mvn/version "2.0.3"}
-    amazonica {:mvn/version "0.3.152"}}}
+    amazonica/amazonica {:mvn/version "0.3.152"}}}
   :prod
   {:extra-deps
    {wormbase/ids {:mvn/version "0.6.5"}}}
@@ -71,11 +68,11 @@
                               :exclusions [org.clojure/tools.reader]}
     javax.servlet/javax.servlet-api {:mvn/version "4.0.0"}
     ring/ring-devel {:mvn/version "1.6.3"}
-    metav {:mvn/version "1.5.2"}
-    peridot {:mvn/version "0.5.0"}
+    metav/metav {:mvn/version "1.5.2"}
+    peridot/peridot {:mvn/version "0.5.0"}
     vvvvalvalval/datomock {:mvn/version "0.2.2"}}
    :extra-paths ["ids/src" "export/src" "test"]}
-  :clj-kondo {:extra-deps {clj-kondo {:mvn/version "RELEASE"}}
+  :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2023.09.06"}}
               :main-opts ["-m" "clj-kondo.main"]}
   :export
   {:extra-paths ["export/src" "ids/src"]
@@ -95,12 +92,13 @@
                                     :exclusions
                                     [;; Exclude transitive dependencies on all other logging
                                      ;; implementations, including other SLF4J bridges.
-                                     commons-logging
-                                     log4j
+                                     commons-logging/commons-logging
+                                     log4j/log4j
                                      org.apache.logging.log4j/log4j
                                      org.slf4j/simple
                                      org.slf4j/slf4j-jcl
                                      org.slf4j/slf4j-nop
                                      org.slf4j/slf4j-log4j12
                                      org.slf4j/slf4j-log4j13]}
-    ch.qos.logback/logback-core {:mvn/version "1.1.7"}}}}}
+    ch.qos.logback/logback-core {:mvn/version "1.1.7"}
+    com.taoensso/timbre {:mvn/version "4.1.0"}}}}}

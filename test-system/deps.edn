@@ -1,12 +1,12 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/tools.cli {:mvn/version "1.0.194"}
-        amazonica {:mvn/version "0.3.152"}
-        clojure.java-time {:mvn/version "0.3.2"}}
+        amazonica/amazonica {:mvn/version "0.3.152"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "1.0.0"}}}
-  :clj-kondo {:extra-deps {clj-kondo {:mvn/version "RELEASE"}}
+  :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2023.09.06"}}
               :main-opts ["-m" "clj-kondo.main"]}
   :runner
   {:extra-deps {com.cognitect/test-runner

@@ -4,6 +4,7 @@ import Login from './Login';
 import Logout from './Logout';
 import Profile from './Profile';
 import ProfileButton from './ProfileButton';
+import TokenMgmt from './TokenMgmt';
 import AuthorizationContext, {
   DEFAULT_AUTHENTICATION_STATE,
 } from './AuthorizationContext';
@@ -76,7 +77,7 @@ export default function Authenticate({ children }) {
     var return_val;
 
     try {
-      return_val = fetch(`/api/identity`, {
+      return_val = fetch(`/api/auth/identity`, {
         headers: identityHeaders,
       }).then((response) => {
         if (response.ok) {
@@ -168,6 +169,7 @@ export {
   Login,
   Logout,
   Profile,
+  TokenMgmt,
   AuthorizationContext,
   useDataFetch,
 };

@@ -5,7 +5,7 @@
    [clojure.string :as str]
    [clojure.walk :as w]
    [aero.core :as aero]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [wormbase.ids.core :as wic])
   (:import
    (java.io File PushbackReader)

@@ -22,7 +22,7 @@ function Home({ classes }) {
               <div className={classes.cell}>
                 <MuiThemeProvider theme={theme}>
                   <Button
-                    variant="raised"
+                    variant="contained"
                     color="secondary"
                     component={({ ...props }) => (
                       <Link to={`${path}/new`} {...props} />

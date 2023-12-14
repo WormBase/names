@@ -15,6 +15,7 @@ import Header, { NavBar } from '../Header';
 import {
   AuthorizationContext,
   ProfileButton,
+  TokenMgmt,
   Login,
   Logout,
   Profile,
@@ -64,6 +65,8 @@ function Main({ classes }) {
                   component={() => (
                     <DocumentTitle title="Your profile">
                       <Profile {...user}>
+                        <TokenMgmt />
+                        <br />
                         <Logout onLogout={handleLogout} />
                       </Profile>
                     </DocumentTitle>

@@ -7,7 +7,7 @@
    [clojure.string :as str]
    [datomic.api :as d]
    [environ.core :as environ]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [semantic-csv.core :as sc]
    [wormbase.names.auth :as wna]
    [wormbase.specs.entity :as wse]

@@ -3,12 +3,10 @@
    [clojure.core.cache :as cache]
    [datomock.core :as dm]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [mount.core :as mount]
    [wormbase.db :as wdb]
-   [wormbase.db.schema :as schema]
-   [wormbase.names.auth :as wna]
-   [wormbase.util :as wu]))
+   [wormbase.db.schema :as schema]))
 
 ;;; fixture caching and general approach taken verbatim from:
 ;;; https://vvvvalvalval.github.io/posts/2016-07-24-datomic-web-app-a-practical-guide.html
@@ -19,12 +17,7 @@
     (schema/ensure-schema conn)
     ;; A set of fake users
     @(d/transact-async conn [{:person/email "tester@wormbase.org"
-                              :person/id "WBPerson007"
-                              :person/auth-token (wna/sign-token
-                                                  (-> (wu/read-app-config)
-                                                      :auth-token)
-                                                  {"email" "tester@wormbase.org"
-                                                   "hd" "wormbase.org"})}
+                              :person/id "WBPerson007"}
                              {:person/email "tester2@wormbase.org"}
                              {:person/email "tester3@wormbase.org"}
                              {:db/ident :event/test-fixture-assertion}])

@@ -6,7 +6,7 @@
    [clojure.tools.logging :as log]
    [compojure.api.routes :as routes]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [muuntaja.core :as muuntaja]
    [peridot.core :as p]
    [wormbase.constdata :refer [elegans-ln]]

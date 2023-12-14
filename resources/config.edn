@@ -1,5 +1,4 @@
-{:auth-token #include "secrets/wb-auth-token.edn"
- :recent {:days-back 60}
+{:recent {:days-back 60}
  :datomic
  {:internal-namespaces
   ["db" "db.alter" "db.install" "db.excise" "db.sys" "conformity" "fressian"]}

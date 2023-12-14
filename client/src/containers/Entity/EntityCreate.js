@@ -70,11 +70,11 @@ class EntityCreate extends Component {
                     </ErrorBoundary>
                   ) : null}
                   <div className={classes.actions}>
-                    <Button variant="raised" {...buttonResetProps}>
+                    <Button variant="contained" {...buttonResetProps}>
                       Reset
                     </Button>
                     <ProgressButton
-                      variant="raised"
+                      variant="contained"
                       color="secondary"
                       {...buttonSubmitProps}
                     >

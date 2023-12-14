@@ -2,7 +2,7 @@
   (:require
    [clojure.test :as t]
    [datomic.api :as d]
-   [java-time :as jt]
+   [java-time.api :as jt]
    [ring.util.http-predicates :as ru-hp]
    [wormbase.constdata :refer [elegans-ln]]
    [wormbase.db :as wdb]
