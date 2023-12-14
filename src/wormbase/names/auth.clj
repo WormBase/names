@@ -4,7 +4,6 @@
             [buddy.auth.backends.token :as babt]
             [buddy.auth.middleware :as auth-mw]
             [buddy.hashers :as bhasher]
-            [buddy.sign.compact :as bsc]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [clojure.walk :as w]
