@@ -313,7 +313,7 @@
           :responses (wnu/http-responses-for-read {:schema ::ws-auth/identity-response})
           :handler get-identity}}))
      (sweet/context "/token" []
-       :tags ["authenticate"]
+       :tags ["authentication"]
        (sweet/resource
         {:post
          {:summary "Store the current ID token for future scripting usage. This will invalidate the previously stored token."
