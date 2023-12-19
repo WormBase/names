@@ -106,6 +106,18 @@
        :cardinality :db.cardinality/one
        :unique :db.unique/value
        :noHistory true}
+  #:db{:ident :person/auth-token-stored-at
+       :valueType :db.type/instant
+       :cardinality :db.cardinality/one
+       :doc "When the current auth-token was stored."}
+  #:db{:ident :person/auth-token-last-used
+       :valueType :db.type/instant
+       :cardinality :db.cardinality/one
+       :doc "When the stored auth-token was last used to access the API."}
+  #:db{:ident :person/last-activity
+       :valueType :db.type/instant
+       :cardinality :db.cardinality/one
+       :doc "When the user last showed any activity in the NS (through either API or web)."}
   #:db{:ident :person/name
        :valueType :db.type/string
        :cardinality :db.cardinality/one

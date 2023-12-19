@@ -13,7 +13,8 @@
             [ring.middleware.defaults :as rmd]
             [ring.util.http-response :as http-response]
             [wormbase.specs.auth :as ws-auth]
-            [wormbase.names.util :as wnu])
+            [wormbase.names.util :as wnu]
+            [wormbase.util :as wu])
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
            (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
            (com.google.api.client.http.javanet NetHttpTransport)
@@ -141,19 +142,38 @@
 
 (defrecord Identification [id-token token-info person])
 
-(defn get-verified-person
+(defn get-person-matching-token
   "Returns a person from the database with:
    * Matching email address
    * Active profile state in DB
    * A matching stored (signed) auth-token"
-  [db token-str email]
+  [conn db token-str email]
 
   (when-let [person (d/pull db
                             '[:person/auth-token :person/active?]
                             [:person/email email])]
     (when (and (:person/active? person)
                (matching-token-hash? token-str (:person/auth-token person)))
-      (query-person db :person/email email))))
+      ;;Update :person/auth-token-last-used attribute to indicate API token usage
+      (let [person (query-person db :person/email email)]
+        @(d/transact conn
+                     [[:db/add
+                       (:db/id person)
+                       :person/auth-token-last-used
+                       (wu/now)]])
+        person))))
+
+(defn successful-login
+  "Store the identification of a successful login
+   and store the login timestamp in the DB."
+  [conn identification]
+  (let [person (:person identification)]
+    @(d/transact conn
+                 [[:db/add
+                   (:db/id person)
+                   :person/last-activity
+                   (wu/now)]]))
+  (map->Identification identification))
 
 (defn identify
   "Identify the wormbase user associated with request based on token.
@@ -167,14 +187,15 @@
         parsed-token-map (get-token-payload-map google-ID-token-str)
         email (some-> parsed-token-map
                       (:email parsed-token-map))
-        db (:db request)]
+        db (:db request)
+        conn (:conn request)]
     (log/debug "Initiating token-based identification.")
     (if parsed-token-map
-      (if-let [person (get-verified-person db google-ID-token-str email)]
+      (if-let [person (get-person-matching-token conn db google-ID-token-str email)]
         ;Verified person found matching token
         (do
-          (log/debug "Verified person found on matching stored auth-code:" person)
-          (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
+          (log/debug "Verified person found with matching stored auth-code:" person)
+          (successful-login conn {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
         ;No verified person found matching token
         (if-let [tok (verify-token google-ID-token-str)]
           ;Provided token verified
@@ -183,7 +204,7 @@
             (do
               (log/debug "No verified person found based on stored auth-code,
                           but token verified as valid. Person matching verified token: " person)
-              (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
+              (successful-login conn {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
             ;No person found matching verified token
             (log/warn "No person found in db for verified token:" tok))
           ;Provided token fails to verify
@@ -243,7 +264,11 @@
                    [[:db/add
                      (:db/id person)
                      :person/auth-token
-                     signed-auth-token]])
+                     signed-auth-token]
+                    [:db/add
+                     (:db/id person)
+                     :person/auth-token-stored-at
+                     (wu/now)]])
       (http-response/ok))
     (http-response/internal-server-error)))
 
@@ -254,7 +279,13 @@
     @(d/transact (:conn request)
                  [[:db/retract
                    (:db/id person)
-                   :person/auth-token]])
+                   :person/auth-token]
+                  [:db/retract
+                   (:db/id person)
+                   :person/auth-token-stored-at]
+                  [:db/retract
+                   (:db/id person)
+                   :person/auth-token-last-used]])
     (http-response/ok)))
 
 ;; API endpoints
