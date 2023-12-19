@@ -109,12 +109,12 @@
     (log/warn "Token failed google API verification.")))
 
 (defn query-person
-  "Query the database for a WormBase person, given the schema attribute
-  and token associated with authentication.
+  "Query the database for a WormBase person, given a unique schema attribute
+  and a unique value to match.
 
   Return a map containing the information about a person, omitting the auth token."
-  [db ident auth-token]
-  (let [person (d/pull db '[*] [ident auth-token])]
+  [db ident-attr ident-value]
+  (let [person (d/pull db '[*] [ident-attr ident-value])]
     (when (:db/id person)
       (dissoc person :person/auth-token))))
 
