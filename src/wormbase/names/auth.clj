@@ -288,6 +288,17 @@
                    :person/auth-token-last-used]])
     (http-response/ok)))
 
+(defn get-token-metadata [request]
+  (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
+                   (:person)
+                   (wnu/unqualify-keys "person"))
+        token-last-used (:auth-token-last-used person)
+        _ (log/debug "token-last-used:" token-last-used)
+        token-stored? (not (nil? (:auth-token-stored-at person)))
+        _ (log/debug "token-stored?:" token-stored?)]
+    (http-response/ok {:token-stored? token-stored?
+                       :last-used token-last-used})))
+
 ;; API endpoints
 (def routes
   (sweet/routes
@@ -312,4 +323,12 @@
          {:summary "Delete the stored token, invalidating it for future use."
           :responses (wnu/response-map http-response/ok {:schema ::ws-auth/empty-response})
           :handler delete-auth-token}}))
+     (sweet/context "/token-metadata" []
+       :tags ["authentication"]
+       (sweet/resource
+        {:get
+         {:summary "Get token metadata such as token storage state (yes/no) and usage."
+          :x-name ::get-token-metadata
+          :responses (wnu/http-responses-for-read {:schema ::ws-auth/token-metadata-response})
+          :handler get-token-metadata}}))
      )))
