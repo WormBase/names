@@ -255,10 +255,10 @@
 (defn store-auth-token [request]
   (if-let [signed-auth-token (some->
                               (wnu/unqualify-keys (-> request :identity) "identity")
-                              (:id-token identity)
+                              (:id-token)
                               (derive-token-hash))]
     (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
-                     (:person identity))]
+                     (:person))]
       (log/debug "Storing new auth-token for user" (:person/email person))
       @(d/transact (:conn request)
                    [[:db/add
@@ -274,7 +274,7 @@
 
 (defn delete-auth-token [request]
   (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
-                   (:person identity))]
+                   (:person))]
     (log/debug "Revoking stored auth-token for user" (:person/email person))
     @(d/transact (:conn request)
                  [[:db/retract
