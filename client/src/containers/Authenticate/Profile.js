@@ -19,7 +19,6 @@ Profile.propTypes = {
   name: PropTypes.string.isRequired,
   email: PropTypes.string.isRequired,
   id: PropTypes.string.isRequired,
-  onLogout: PropTypes.func.isRequired,
   children: PropTypes.element,
 };
 
