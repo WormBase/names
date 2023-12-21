@@ -65,9 +65,11 @@ function Main({ classes }) {
                   component={() => (
                     <DocumentTitle title="Your profile">
                       <Profile {...user}>
-                        <TokenMgmt />
-                        <br />
-                        <Logout onLogout={handleLogout} />
+                        <>
+                          <TokenMgmt />
+                          <br />
+                          <Logout onLogout={handleLogout} />
+                        </>
                       </Profile>
                     </DocumentTitle>
                   )}

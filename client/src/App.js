@@ -7,8 +7,10 @@ import Main from './containers/Main';
 import { theme, MuiThemeProvider } from './components/elements';
 
 export default () => (
-  <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID}>
-    <React.StrictMode>
+  <React.StrictMode>
+    <GoogleOAuthProvider
+      clientId={process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID}
+    >
       <BrowserRouter>
         <Authenticate>
           <EntityTypesContextProvider>
@@ -18,6 +20,6 @@ export default () => (
           </EntityTypesContextProvider>
         </Authenticate>
       </BrowserRouter>
-    </React.StrictMode>
-  </GoogleOAuthProvider>
+    </GoogleOAuthProvider>
+  </React.StrictMode>
 );
