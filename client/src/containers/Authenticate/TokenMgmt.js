@@ -89,9 +89,12 @@ function TokenMgmt() {
     [authorizedFetch]
   );
 
-  const defaultTokenInstructions =
+  const noTokenInstructions =
     'No stored ID token to display.\n' +
     "Click the 'Store token' button below to store the current ID token and display it here.";
+  const newTokenInstructions =
+    'Stored tokens can not be retrieved for display after storage.\n' +
+    "Click the 'Store token' button below to store a new token (invalidating the current stored token) and display it here.";
 
   function storeTokenHandler() {
     console.log('storeTokenHandler triggered.');
@@ -141,7 +144,13 @@ function TokenMgmt() {
       <textarea
         disabled={true}
         style={{ width: '100%', height: 65 }}
-        value={tokenState.apiToken || defaultTokenInstructions}
+        value={
+          tokenState.apiToken
+            ? tokenState.apiToken
+            : tokenMetaDataState['token-stored?']
+            ? newTokenInstructions
+            : noTokenInstructions
+        }
       />
       <CopyToClipboard text={tokenState.apiToken}>
         <div>
