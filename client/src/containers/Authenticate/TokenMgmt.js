@@ -3,48 +3,95 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 
 import { Button } from '../../components/elements';
 import AuthorizationContext from '../../containers/Authenticate/AuthorizationContext';
+import { useCallback } from 'react';
+
+const ACTION_STORE = 'STORE';
+const ACTION_REVOKE = 'REVOKE';
+const UPDATE_METADATA = 'UPDATE_METADATA';
+
+function tokenMetaDataReducer(state, action) {
+  let newState = { ...state };
+
+  switch (action.type) {
+    case UPDATE_METADATA:
+      console.log('Metadata update trigerred.');
+      newState = { ...action['payload'] };
+      break;
+    default:
+      console.log('Invalid action type detected:');
+      console.log(action.type);
+      throw new Error();
+  }
+
+  return newState;
+}
+
+function tokenReducer(state, action) {
+  const newState = { ...state };
+
+  switch (action.type) {
+    case ACTION_STORE:
+      newState['apiToken'] = action.payload;
+      break;
+    case ACTION_REVOKE:
+      newState['apiToken'] = null;
+      break;
+    default:
+      console.log('Invalid action type detected:');
+      console.log(action.type);
+      throw new Error();
+  }
+
+  return newState;
+}
 
 function TokenMgmt() {
-  const ACTION_STORE = 'STORE';
-  const ACTION_REVOKE = 'REVOKE';
-  const UPDATE_METADATA = 'UPDATE_METADATA';
-
   const { authorizedFetch, user } = useContext(AuthorizationContext);
 
   const [tokenState, dispatchTokenState] = useReducer(tokenReducer, {
     apiToken: null,
-    tokenMetadata: {
+  });
+
+  const [tokenMetaDataState, dispatchTokenMetaData] = useReducer(
+    tokenMetaDataReducer,
+    {
       'token-stored?': false,
       'last-used': null,
+    }
+  );
+
+  const updateTokenMetadata = useCallback(
+    () => {
+      authorizedFetch('/api/auth/token-metadata', { method: 'GET' })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            console.log(
+              'Error while retrieving token metadata. Returned response: ',
+              response
+            );
+            throw new Error('Error while retrieving token metadata');
+          }
+        })
+        .then((data) => {
+          console.log('token-metadata result received:', data);
+
+          dispatchTokenMetaData({ type: UPDATE_METADATA, payload: data });
+        })
+        .catch((error) => {
+          console.log(
+            'Error caught on authorizedFetch for token-metadata:',
+            error
+          );
+        });
     },
-  });
+    [authorizedFetch]
+  );
 
   const defaultTokenInstructions =
     'No stored ID token to display.\n' +
     "Click the 'Store token' button below to store the current ID token and display it here.";
-
-  function tokenReducer(state, action) {
-    const newState = { ...state };
-
-    switch (action.type) {
-      case ACTION_STORE:
-        newState['apiToken'] = user.id_token;
-        break;
-      case ACTION_REVOKE:
-        newState['apiToken'] = null;
-        break;
-      case UPDATE_METADATA:
-        console.log('Metadata update trigerred.');
-        newState['tokenMetadata'] = { ...action.payload };
-        break;
-      default:
-        console.log('Invalid action type detected:');
-        console.log(action.type);
-        throw new Error();
-    }
-
-    return newState;
-  }
 
   function storeTokenHandler() {
     console.log('storeTokenHandler triggered.');
@@ -53,13 +100,12 @@ function TokenMgmt() {
       method: 'POST',
     }).then((response) => {
       if (response.ok) {
-        updateTokenMetadata();
+        dispatchTokenState({ type: ACTION_STORE, payload: user.id_token });
       } else {
         console.log('Error returned by /auth/token POST endpoint.');
+        throw new Error('API endpoint for token storage returned error.');
       }
     });
-
-    dispatchTokenState({ type: ACTION_STORE });
   }
 
   function revokeTokenHandler() {
@@ -69,44 +115,28 @@ function TokenMgmt() {
       method: 'DELETE',
     }).then((response) => {
       if (response.ok) {
-        updateTokenMetadata();
+        dispatchTokenState({ type: ACTION_REVOKE });
       } else {
         console.log('Error returned by /auth/token DELETE endpoint.');
+        throw new Error('API endpoint for token revoking returned error.');
       }
     });
-
-    dispatchTokenState({ type: ACTION_REVOKE });
   }
 
-  function updateTokenMetadata() {
-    authorizedFetch('/api/auth/token-metadata', { method: 'GET' })
-      .then((response) => {
-        return Promise.all([response, response.json()]);
-      })
-      .then(([response, data]) => {
-        if (response.ok) {
-          console.log('authorizedFetch data results:', data);
-          dispatchTokenState({ type: UPDATE_METADATA, payload: data });
-        } else {
-          console.log('Error while retrieving token metadata.');
-        }
-      });
-  }
-
-  useEffect(() => {
-    updateTokenMetadata();
-  }, []);
+  useEffect(
+    () => {
+      updateTokenMetadata();
+    },
+    [tokenState, updateTokenMetadata]
+  );
 
   return (
     <div>
       <span>
-        Token stored?:{' '}
-        {tokenState.tokenMetadata['token-stored?'] ? 'Yes' : 'No'}
+        Token stored?: {tokenMetaDataState['token-stored?'] ? 'Yes' : 'No'}
       </span>
       <br />
-      <span>
-        Token last used: {tokenState.tokenMetadata['last-used'] || 'Never'}
-      </span>
+      <span>Token last used: {tokenMetaDataState['last-used'] || 'Never'}</span>
       <br />
       <textarea
         disabled={true}
