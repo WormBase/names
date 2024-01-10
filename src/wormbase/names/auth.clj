@@ -13,7 +13,8 @@
             [ring.middleware.defaults :as rmd]
             [ring.util.http-response :as http-response]
             [wormbase.specs.auth :as ws-auth]
-            [wormbase.names.util :as wnu])
+            [wormbase.names.util :as wnu]
+            [wormbase.util :as wu])
   (:import (com.google.api.client.auth.oauth2 TokenResponseException)
            (com.google.api.client.googleapis.auth.oauth2 GoogleAuthorizationCodeTokenRequest GoogleIdToken GoogleIdTokenVerifier$Builder)
            (com.google.api.client.http.javanet NetHttpTransport)
@@ -108,12 +109,12 @@
     (log/warn "Token failed google API verification.")))
 
 (defn query-person
-  "Query the database for a WormBase person, given the schema attribute
-  and token associated with authentication.
+  "Query the database for a WormBase person, given a unique schema attribute
+  and a unique value to match.
 
   Return a map containing the information about a person, omitting the auth token."
-  [db ident auth-token]
-  (let [person (d/pull db '[*] [ident auth-token])]
+  [db ident-attr ident-value]
+  (let [person (d/pull db '[*] [ident-attr ident-value])]
     (when (:db/id person)
       (dissoc person :person/auth-token))))
 
@@ -141,19 +142,38 @@
 
 (defrecord Identification [id-token token-info person])
 
-(defn get-verified-person
+(defn get-person-matching-token
   "Returns a person from the database with:
    * Matching email address
    * Active profile state in DB
    * A matching stored (signed) auth-token"
-  [db token-str email]
+  [conn db token-str email]
 
   (when-let [person (d/pull db
                             '[:person/auth-token :person/active?]
                             [:person/email email])]
     (when (and (:person/active? person)
                (matching-token-hash? token-str (:person/auth-token person)))
-      (query-person db :person/email email))))
+      ;;Update :person/auth-token-last-used attribute to indicate API token usage
+      (let [person (query-person db :person/email email)]
+        @(d/transact conn
+                     [[:db/add
+                       (:db/id person)
+                       :person/auth-token-last-used
+                       (wu/now)]])
+        person))))
+
+(defn successful-login
+  "Store the identification of a successful login
+   and store the login timestamp in the DB."
+  [conn identification]
+  (let [person (:person identification)]
+    @(d/transact conn
+                 [[:db/add
+                   (:db/id person)
+                   :person/last-activity
+                   (wu/now)]]))
+  (map->Identification identification))
 
 (defn identify
   "Identify the wormbase user associated with request based on token.
@@ -167,14 +187,15 @@
         parsed-token-map (get-token-payload-map google-ID-token-str)
         email (some-> parsed-token-map
                       (:email parsed-token-map))
-        db (:db request)]
+        db (:db request)
+        conn (:conn request)]
     (log/debug "Initiating token-based identification.")
     (if parsed-token-map
-      (if-let [person (get-verified-person db google-ID-token-str email)]
+      (if-let [person (get-person-matching-token conn db google-ID-token-str email)]
         ;Verified person found matching token
         (do
-          (log/debug "Verified person found on matching stored auth-code:" person)
-          (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
+          (log/debug "Verified person found with matching stored auth-code:" person)
+          (successful-login conn {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
         ;No verified person found matching token
         (if-let [tok (verify-token google-ID-token-str)]
           ;Provided token verified
@@ -183,7 +204,7 @@
             (do
               (log/debug "No verified person found based on stored auth-code,
                           but token verified as valid. Person matching verified token: " person)
-              (map->Identification {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
+              (successful-login conn {:id-token google-ID-token-str :token-info parsed-token-map :person person}))
             ;No person found matching verified token
             (log/warn "No person found in db for verified token:" tok))
           ;Provided token fails to verify
@@ -234,28 +255,49 @@
 (defn store-auth-token [request]
   (if-let [signed-auth-token (some->
                               (wnu/unqualify-keys (-> request :identity) "identity")
-                              (:id-token identity)
+                              (:id-token)
                               (derive-token-hash))]
     (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
-                     (:person identity))]
+                     (:person))]
       (log/debug "Storing new auth-token for user" (:person/email person))
       @(d/transact (:conn request)
                    [[:db/add
                      (:db/id person)
                      :person/auth-token
-                     signed-auth-token]])
+                     signed-auth-token]
+                    [:db/add
+                     (:db/id person)
+                     :person/auth-token-stored-at
+                     (wu/now)]])
       (http-response/ok))
     (http-response/internal-server-error)))
 
 (defn delete-auth-token [request]
   (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
-                   (:person identity))]
+                   (:person))]
     (log/debug "Revoking stored auth-token for user" (:person/email person))
     @(d/transact (:conn request)
                  [[:db/retract
                    (:db/id person)
-                   :person/auth-token]])
+                   :person/auth-token]
+                  [:db/retract
+                   (:db/id person)
+                   :person/auth-token-stored-at]
+                  [:db/retract
+                   (:db/id person)
+                   :person/auth-token-last-used]])
     (http-response/ok)))
+
+(defn get-token-metadata [request]
+  (let [person (-> (wnu/unqualify-keys (-> request :identity) "identity")
+                   (:person)
+                   (wnu/unqualify-keys "person"))
+        token-last-used (:auth-token-last-used person)
+        _ (log/debug "token-last-used:" token-last-used)
+        token-stored? (not (nil? (:auth-token-stored-at person)))
+        _ (log/debug "token-stored?:" token-stored?)]
+    (http-response/ok {:token-stored? token-stored?
+                       :last-used token-last-used})))
 
 ;; API endpoints
 (def routes
@@ -271,7 +313,7 @@
           :responses (wnu/http-responses-for-read {:schema ::ws-auth/identity-response})
           :handler get-identity}}))
      (sweet/context "/token" []
-       :tags ["authenticate"]
+       :tags ["authentication"]
        (sweet/resource
         {:post
          {:summary "Store the current ID token for future scripting usage. This will invalidate the previously stored token."
@@ -281,4 +323,12 @@
          {:summary "Delete the stored token, invalidating it for future use."
           :responses (wnu/response-map http-response/ok {:schema ::ws-auth/empty-response})
           :handler delete-auth-token}}))
+     (sweet/context "/token-metadata" []
+       :tags ["authentication"]
+       (sweet/resource
+        {:get
+         {:summary "Get token metadata such as token storage state (yes/no) and usage."
+          :x-name ::get-token-metadata
+          :responses (wnu/http-responses-for-read {:schema ::ws-auth/token-metadata-response})
+          :handler get-token-metadata}}))
      )))

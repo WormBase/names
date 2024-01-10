@@ -36,4 +36,18 @@
 (s/def ::identity-response (stc/spec {:spec (s/keys :req-un [::id-token ::token-info ::person])
                                       :swagger/example example-identity}))
 
+(s/def ::token-stored? (stc/spec {:spec sts/boolean?
+                                  :swagger/example false
+                                  :description "Boolean indicating whether or not a token is currently stored for a person."}))
+
+(s/def ::last-used (stc/spec {:spec (s/nilable sts/inst?)
+                              :swagger/example "2023-12-19T14:11:34Z"
+                              :description "Datestring indicating when a token was last used to access the name service."}))
+
+(def example-token-metadata {:token-stored? true
+                             :last-used "2023-12-19T14:11:34Z"})
+
+(s/def ::token-metadata-response (stc/spec {:spec (s/keys :req-un [::token-stored? ::last-used])
+                                            :swagger/example example-token-metadata}))
+
 (s/def ::empty-response (stc/spec {:spec (s/cat)}))
