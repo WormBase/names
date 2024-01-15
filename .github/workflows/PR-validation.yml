@@ -40,7 +40,7 @@ jobs:
           aws-region: us-east-1
       - name: Generate pom file
         run: |
-          clj -Spom
+          clojure -Spom
       - name: Run Integration tests
         run: |
           make run-tests GOOGLE_APP_PROFILE=dev
