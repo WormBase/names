@@ -235,7 +235,7 @@ run-tests: google-oauth2-secrets \
 	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
 	  export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
 	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
-	  clj -A:datomic-pro:logging:webassets:dev:test:run-tests
+	  clojure -A:datomic-pro:logging:webassets:dev:test:run-tests
 
 .PHONY: run-dev-server
 run-dev-webserver: PORT := 4010
