@@ -18,4 +18,4 @@
   (t/testing "Stats summary renders with ok response on first access."
     (let [response (stats-summary)]
       (t/is (ru-hp/ok? response))
-       (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response))))))
+      (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response))))))
