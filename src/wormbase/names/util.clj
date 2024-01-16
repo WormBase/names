@@ -6,7 +6,6 @@
    [clojure.string :as str]
    [clojure.walk :as w]
    [buddy.core.codecs :as codecs]
-   [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
    [phrase.alpha :as ph]
@@ -143,7 +142,7 @@
             bid)))
 
 (defn encode-etag [latest-t]
-  (some-> latest-t str b64/encode codecs/bytes->str))
+  (some-> latest-t codecs/long->bytes codecs/bytes->b64 codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]
   (if (seq etag)
