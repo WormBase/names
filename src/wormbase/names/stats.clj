@@ -3,7 +3,6 @@
    [clojure.walk :as w]
    [compojure.api.sweet :as sweet]
    [datomic.api :as d]
-   [ring.middleware.not-modified :as rmnm]
    [ring.util.http-response :refer [ok]]
    [wormbase.names.util :as wnu]
    [wormbase.specs.stats :as wsst]))
@@ -29,14 +28,11 @@
          (w/stringify-keys))))
 
 (defn handle-summary [request]
-  (let [etag (some-> request :db d/basis-t wnu/encode-etag)]
-    (-> (summary request)
-        (ok)
-        (wnu/add-etag-header-maybe etag))))
+  (-> (summary request)
+      (ok)))
 
 (def routes (sweet/routes
              (sweet/context "/stats" []
-               :middleware [rmnm/wrap-not-modified]
                :tags ["stats"]
                (sweet/resource
                 {:get
