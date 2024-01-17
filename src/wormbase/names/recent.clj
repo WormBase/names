@@ -23,7 +23,7 @@
                    (jt/instant))]
     (-> max-date
         (jt/plus (jt/seconds 1))
-        (jt/to-java-date))))
+        (jt/java-date))))
 
 (def imported-date (memoize find-max-imported-date))
 
@@ -45,7 +45,7 @@
          from-t (if (and from (>= (compare from import-date) 0))
                   from
                   import-date)
-         until-t (or until (jt/to-java-date (jt/instant)))]
+         until-t (or until (jt/java-date (jt/instant)))]
      ;; Timings for the `tx-ids` query below with default configured time window (60 days)
      ;; (excluding pull expressions)
      ;; jvm (cold): 107.266427 msecs
@@ -117,7 +117,7 @@
    (let [{conn :conn db :db} request
          log (d/log conn)
          from* (or from (wu/days-ago wsr/*default-days-ago*))
-         until* (or until (jt/to-java-date (jt/instant)))
+         until* (or until (jt/java-date (jt/instant)))
          items (activities db log rules puller (or needle "") how from* until*)
          etag (some-> items first :t wnu/encode-etag)]
      (some-> {:from from* :until until*}
@@ -179,7 +179,7 @@
   (binding [db (d/db conn) log (d/log conn)
             pull-prov-only (prov-only-puller db log)
             pull-changes-and-prov (changes-and-prov-puller db log)
-            from (jt/to-java-date (jt/instant))
+            from (jt/java-date (jt/instant))
             until (wu/days-ago 2)]
     (activities db log entity-rules pull-changes-and-prov "gene")
     (activities db log entity-rules-rules pull-changes-and-prov "gene" from until)

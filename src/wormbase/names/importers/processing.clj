@@ -130,7 +130,7 @@
       (jt/zoned-date-time tz)
       (jt/with-zone-same-instant tz)
       (jt/instant)
-      (jt/to-java-date)))
+      (jt/java-date)))
 
 (defn check-environ! []
   (when-not (environ/env :token)

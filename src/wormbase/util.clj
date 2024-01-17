@@ -49,7 +49,7 @@
 (defn days-ago [n]
   (-> (jt/instant)
       (jt/minus (jt/days n))
-      (jt/to-java-date)))
+      (jt/java-date)))
 
 (defn format-java-date [dt & {:keys [tz fmt]
                               :or {tz (jt/zone-id)
@@ -73,7 +73,7 @@
   ([tz]
    (-> (jt/instant)
        (jt/zoned-date-time (jt/zone-id tz))
-       (jt/to-java-date)))
+       (jt/java-date)))
   ([]
    (now "UTC")))
 

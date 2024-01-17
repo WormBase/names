@@ -47,7 +47,7 @@
         whence (-> (get prov :provenance/when (jt/instant))
                    (jt/zoned-date-time tz)
                    (jt/with-zone-same-instant tz)
-                   (jt/to-java-date))
+                   (jt/java-date))
         how (-> request :headers wna/identify)
         why (:provenance/why prov)
         prov {:db/id "datomic.tx"
