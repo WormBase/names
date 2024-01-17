@@ -9,7 +9,8 @@
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
    [phrase.alpha :as ph]
-   [ring.util.http-response :refer [bad-request conflict header not-found not-modified ok]]
+   [ring.util.http-response :refer [bad-request conflict not-found not-modified ok]]
+   [ring.util.response :refer [header]]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.validation :as wsv]))

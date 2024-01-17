@@ -2,7 +2,7 @@
   (:require
    [clojure.test :as t]
    [ring.util.http-predicates :as ru-hp]
-   [ring.util.http-response :as http-response]
+   [ring.util.response :as ring-response]
    [wormbase.db-testing :as db-testing]
    [wormbase.fake-auth]
    [wormbase.names.service :as service]))
@@ -19,5 +19,5 @@
                      :request-method :get})]
       (t/is (not (nil? response)))
       (t/is (ru-hp/ok? response))
-      (t/is (http-response/get-header response "content-type") "text/html"))))
+      (t/is (ring-response/get-header response "content-type") "text/html"))))
 
