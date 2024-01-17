@@ -10,8 +10,6 @@
    [wormbase.util :as wu])
   (:import (java.util Date)))
 
-(def conf (:recent (wu/read-app-config)))
-
 (defn- find-max-imported-date [db]
   (let [max-tx-inst (d/q '[:find (max ?inst) .
                            :where
@@ -107,8 +105,6 @@
 
 (def batch-rules '[[(filter-events ?tx ?needle)
                     [?tx :batch/id _ _ ]]])
-
-(def response-schema (wnu/response-map ok {:schema {:activities ::wsr/activities}}))
 
 (defn handle
   ([request rules puller needle from until]

@@ -2,7 +2,6 @@
   (:require
    [clojure.spec.alpha :as s]
    [miner.strgen :as sg]
-   [wormbase.gen-specs.util :as util]
    [wormbase.specs.person :as wsp]))
 
 (def email (sg/string-generator wsp/email-regexp))

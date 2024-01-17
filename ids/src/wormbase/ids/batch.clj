@@ -19,7 +19,7 @@
    [clojure.core :as cc]
    [clojure.set :as set]
    [datomic.api :as d]
-   [wormbase.ids.core :refer [attr-schema-unique? identifier-format]]))
+   [wormbase.ids.core :refer [identifier-format]]))
 
 (defn- assoc-prov
   "Attach an identifier to `prov` making this a mapping suitable for tracking provenance for a batch.
@@ -31,12 +31,6 @@
 (defn- add-prov-maybe [prov tx-data]
   (when tx-data
     (cons prov tx-data)))
-
-(defn db-error? [exc]
-  (some->> (ex-data exc)
-           (keys)
-           (filter (fn has-db-ns? [k]
-                     (#{"db" "db.error"} (namespace k))))))
 
 (defrecord BatchResult [tx-result errors])
 

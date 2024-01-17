@@ -15,11 +15,6 @@
    [wormbase.specs.common :as wsc]
    [wormbase.specs.validation :as wsv]))
 
-(defn- nsify [domain kw]
-  (if (namespace kw)
-    kw
-    (keyword domain (name kw))))
-
 ;; trunc and datom-table taken from day-of-datomic repo (congnitect).
 
 (defn trunc
