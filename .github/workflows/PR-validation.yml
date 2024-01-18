@@ -33,11 +33,12 @@ jobs:
         run: |
           echo "Github runner OS: ${{ runner.os }}"
       - name: AWS credentials configuration
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{secrets.GH_ACTIONS_AWS_ROLE}}
           role-session-name: gh-actions-${{github.run_id}}.${{github.run_number}}.${{github.run_attempt}}-test-api
           aws-region: us-east-1
+          mask-aws-account-id: true
       - name: Download and install Datomic Pro
         run: |
           aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip ./
