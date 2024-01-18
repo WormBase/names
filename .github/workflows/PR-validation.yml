@@ -38,6 +38,11 @@ jobs:
           role-to-assume: ${{secrets.GH_ACTIONS_AWS_ROLE}}
           role-session-name: gh-actions-${{github.run_id}}.${{github.run_number}}.${{github.run_attempt}}-test-api
           aws-region: us-east-1
+      - name: Download and install Datomic Pro
+        run: |
+          aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip ./
+          unzip datomic-pro-1.0.6165.zip
+          datomic-pro-1.0.6165/bin/maven-install
       - name: Generate pom file
         run: |
           clojure -Spom
