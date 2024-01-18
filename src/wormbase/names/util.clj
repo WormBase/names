@@ -6,19 +6,14 @@
    [clojure.string :as str]
    [clojure.walk :as w]
    [buddy.core.codecs :as codecs]
-   [buddy.core.codecs.base64 :as b64]
    [datomic.api :as d]
    [expound.alpha :refer [expound-str]]
    [phrase.alpha :as ph]
-   [ring.util.http-response :refer [bad-request conflict header not-found not-modified ok]]
+   [ring.util.http-response :refer [bad-request conflict not-found not-modified ok]]
+   [ring.util.response :refer [header]]
    [wormbase.db :as wdb]
    [wormbase.specs.common :as wsc]
    [wormbase.specs.validation :as wsv]))
-
-(defn- nsify [domain kw]
-  (if (namespace kw)
-    kw
-    (keyword domain (name kw))))
 
 ;; trunc and datom-table taken from day-of-datomic repo (congnitect).
 
@@ -143,7 +138,7 @@
             bid)))
 
 (defn encode-etag [latest-t]
-  (some-> latest-t str b64/encode codecs/bytes->str))
+  (some-> latest-t codecs/long->bytes codecs/bytes->b64 codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]
   (if (seq etag)

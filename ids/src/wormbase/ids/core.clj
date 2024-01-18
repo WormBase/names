@@ -9,7 +9,7 @@
   (try
     (let [s-attr (:db/unique (d/entity db attr))]
       (#{:db.unique/identity :db.unique/value} s-attr))
-    (catch IllegalArgumentException iae)))
+    (catch IllegalArgumentException _)))
 
 (defn entids->data [db m k v]
     (assoc m

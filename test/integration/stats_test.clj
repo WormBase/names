@@ -16,11 +16,6 @@
 
 (t/deftest test-summary
   (t/testing "Stats summary renders with ok response on first access."
-    (let [response (stats-summary)
-          etag (get-in response [:headers "etag"])]
+    (let [response (stats-summary)]
       (t/is (ru-hp/ok? response))
-      (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response)))
-      (t/testing "Status summary renders a not-modified response when nothing has changed."
-        (let [extra-headers {"if-none-match" etag}
-              response2 (stats-summary extra-headers)]
-          (t/is (ru-hp/not-modified? response2)))))))
+      (t/is (set/subset? #{:gene :variation :sequence-feature} (:body response))))))

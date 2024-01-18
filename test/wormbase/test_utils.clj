@@ -238,7 +238,7 @@
 (defn provenance
   [_ & {:keys [how what whence why person _ batch-id]
         :or {how :agent/console
-             whence (jt/to-java-date (jt/instant))
+             whence (jt/java-date (jt/instant))
              what :event/test-fixture-assertion
              person [:person/email "tester@wormbase.org"]}}]
   (merge {:db/id "datomic.tx"

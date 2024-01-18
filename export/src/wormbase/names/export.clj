@@ -2,7 +2,6 @@
   (:require
    [clojure.java.io :as io]
    [clojure.data.csv :as cd-csv]
-   [clojure.set :as set]
    [clojure.string :as str]
    [clojure.tools.cli :as cli]
    [datomic.api :as d]

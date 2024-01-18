@@ -23,7 +23,8 @@
    [ring.middleware.gzip :as ring-gzip]
    [ring.middleware.not-modified :as rmnm]
    [ring.middleware.resource :as ring-resource]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   [ring.util.response :as ring-response]))
 
 (defn- wrap-not-found
   "Fallback 404 handler."
@@ -36,9 +37,9 @@
         (http-response/not-found {:message "Resource not found (fallback)"})
 
         :else
-        (-> (http-response/resource-response "client_build/index.html")
-            (http-response/content-type "text/html")
-            (http-response/status 200))))))
+        (-> (ring-response/resource-response "client_build/index.html")
+            (ring-response/content-type "text/html")
+            (ring-response/status 200))))))
 
 (def ^:private swagger-validator-url
   "The URL used to validate the swagger JSON produced by the application."
