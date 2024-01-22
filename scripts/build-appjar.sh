@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ARTEFACT="docker/app.jar"
+ARTEFACT="build/app.jar"
 LATEST_TAG=$(git describe --abbrev=0)
 RELEASE_NAME="wormbase-names-${LATEST_TAG}"
 DEPLOY_JAR="target/${RELEASE_NAME}.jar"

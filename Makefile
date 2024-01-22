@@ -67,13 +67,15 @@ show-version: \
               Show the current application version.)
 	@echo "${VERSION_TAG}"
 
+build/:
+	mkdir build/
+
 .PHONY: build
-build: clean ui-build docker/${DEPLOY_JAR} \
+build: clean build/ ui-build build/${DEPLOY_JAR} \
        $(call print-help,build,\
        Build the docker images from using the current git revision.)
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
-		--build-arg uberjar_path=${DEPLOY_JAR} \
-		./docker/
+		--build-arg uberjar_path=build/${DEPLOY_JAR} .
 
 .PHONY: ui-build
 ui-build: google-oauth2-secrets \
@@ -87,10 +89,10 @@ ui-build: google-oauth2-secrets \
 clean: \
        $(call print-help,clean,\
        Remove the locally built JAR file.)
-	@rm -f ./docker/${DEPLOY_JAR}
+	@rm -f ./build/${DEPLOY_JAR}
 
-docker/${DEPLOY_JAR}: \
-                      $(call print-help,docker/${DEPLOY_JAR},\
+build/${DEPLOY_JAR}: \
+                      $(call print-help,build/${DEPLOY_JAR},\
                       Build the jar file.)
 	@./scripts/build-appjar.sh
 
