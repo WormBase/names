@@ -21,21 +21,9 @@ DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
 
-REVISION_NAME_CMD := git describe --tags
-# If REF_NAME is defined, convert provided ref in matching name
-# (ref could be a tagname, a reference like "HEAD", branch-names...)
-ifneq (${REF_NAME},)
-	REVISION_NAME := $(shell ${REVISION_NAME_CMD} ${REF_NAME})
-# Else, assume working-directory deployment
-else
-	REVISION_NAME := $(shell ${REVISION_NAME_CMD} --dirty=-DIRTY)
-endif
-
-VERSION_TAG ?= $(shell echo "${REVISION_NAME}" | sed 's/^wormbase-names-//')
-
 ECR_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
 ECR_REPO_URI := ${ECR_URI}/${ECR_REPO_NAME}
-ECR_IMAGE_URI := ${ECR_REPO_URI}:${VERSION_TAG}
+ECR_IMAGE_URI = ${ECR_REPO_URI}:${VERSION_TAG}
 # Set AWS (EB) profile env vars if undefined
 ifneq (${AWS_PROFILE},)
 	AWS_EB_PROFILE ?= ${AWS_PROFILE}
@@ -61,8 +49,30 @@ need-help := $(filter help,$(MAKECMDGOALS))
 help: ; @echo $(if $(need-help),,\
 	Type \'$(MAKE)$(dash-f) help\' to get help)
 
+.PHONY: ENV.VERSION_TAG
+ENV.VERSION_TAG: \
+	$(call print-help,ENV.VERSION_TAG,\
+	Extract the VERSION_TAG env variables for make targets from git tags if undefined.)
+	$(eval REVISION_NAME_CMD = git describe --tags)
+ifeq (${VERSION_TAG},)
+# If REF_NAME is defined, convert provided ref in matching name
+# (ref could be a tagname, a reference like "HEAD", branch-names...)
+ifneq (${REF_NAME},)
+	$(eval REVISION_NAME_CMD = ${REVISION_NAME_CMD} ${REF_NAME})
+# Else, assume working-directory deployment
+else
+	$(eval REVISION_NAME_CMD = ${REVISION_NAME_CMD} --dirty=-DIRTY)
+endif
+	$(eval VERSION_TAG = $(shell ${REVISION_NAME_CMD} | sed 's/^wormbase-names-//'))
+	$(call check_defined, VERSION_TAG, Ensure your working directory is a\
+	                                   git clone of the repository)
+	@echo "Retrieved VERSION_TAG '${VERSION_TAG}' from git tags."
+else
+	@echo "Using predefined VERSION_TAG '${VERSION_TAG}'."
+endif
+
 .PHONY: show-version
-show-version: \
+show-version: ENV.VERSION_TAG \
               $(call print-help,show-version,\
               Show the current application version.)
 	@echo "${VERSION_TAG}"
@@ -71,7 +81,7 @@ build/:
 	mkdir build/
 
 .PHONY: build
-build: clean build/ ui-build build/${DEPLOY_JAR} \
+build: ENV.VERSION_TAG clean build/ ui-build build/${DEPLOY_JAR} \
        $(call print-help,build,\
        Build the docker images from using the current git revision.)
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
@@ -114,14 +124,14 @@ docker-push-ecr: docker-ecr-login \
 	@docker push ${ECR_IMAGE_URI}
 
 .PHONY: docker-tag
-docker-tag: \
+docker-tag: ENV.VERSION_TAG \
             $(call print-help,docker-tag,\
             Tag the image with current git revision and ':latest' alias.)
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_IMAGE_URI}
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_REPO_URI}
 
 .PHONY: eb-def-app-env
-eb-def-app-env: google-oauth2-secrets \
+eb-def-app-env: google-oauth2-secrets ENV.VERSION_TAG \
                 $(call print-help,eb-def-app-env \
 				[WB_DB_URI=<datomic-db-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
                 Define the ElasticBeanStalk app-environment config file.)
@@ -188,7 +198,7 @@ eb-local: docker-ecr-login \
 	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
 .PHONY: run
-run: \
+run: ENV.VERSION_TAG \
      $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
 	 [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
      Run the application in docker (locally).)
@@ -217,16 +227,15 @@ deploy-ecr: docker-build docker-tag docker-push-ecr
             Deploy the application to the AWS container registry.)
 
 .PHONY: vc-release
-vc-release: export VERSION_TAG := ${VERSION_TAG}
-vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,\
+vc-release: ENV.VERSION_TAG \
+            $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	clj -A:release --without-sign ${LEVEL}
 	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
 .PHONY: release
-release: export VERSION_TAG := ${VERSION_TAG}
-release: deploy-ecr \
+release: ENV.VERSION_TAG deploy-ecr \
          $(call print-help,release [AWS_PROFILE=<profile_name>] [REF_NAME=<tag-or-gitref>],\
          Release the applicaton.)
 
@@ -266,15 +275,22 @@ google-oauth2-secrets: \
                        $(call print-help,google-oauth2-secrets,\
                        Store the Google oauth2 client details as env variables.)
 	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID)
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined GOOGLE_APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
 	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET)
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined GOOGLE_APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
 	@echo "Retrieved google-oauth2-secrets for GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}'."
 
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
 check_defined = \
     $(strip $(foreach 1,$1, \
         $(call __check_defined,$1,$(strip $(value 2)))))
 __check_defined = \
     $(if $(value $1),, \
-      $(error Failed to retrieve $1. Check the defined GOOGLE_APP_PROFILE value\
-	and ensure the AWS_PROFILE variable is appropriately defined) )
+      $(error Failed to define $1. $(if $2, $2)))
