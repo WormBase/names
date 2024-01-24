@@ -17,6 +17,9 @@ else
 	GOOGLE_REDIRECT_URI ?= ${LOCAL_GOOGLE_REDIRECT_URI}
 	GOOGLE_APP_PROFILE ?= "dev"
 endif
+
+STORE_SECRETS_FILE = secrets.makedef
+
 DEPLOY_JAR := app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
@@ -48,6 +51,13 @@ need-help := $(filter help,$(MAKECMDGOALS))
 
 help: ; @echo $(if $(need-help),,\
 	Type \'$(MAKE)$(dash-f) help\' to get help)
+
+source-secrets:
+ifneq ($(SECRETS_SRC), )
+	@echo "Sourcing secrets file ${SECRETS_SRC}"
+	$(eval SECRETS_CONTENT := $(shell cat "${SECRETS_SRC}"))
+	$(foreach secret,${SECRETS_CONTENT},$(eval ${secret}))
+endif
 
 .PHONY: ENV.VERSION_TAG
 ENV.VERSION_TAG: \
@@ -271,35 +281,34 @@ run-dev-ui: google-oauth2-secrets\
 	 npm run start
 
 .PHONY: ENV.GOOGLE_OAUTH_CLIENT_ID
-ENV.GOOGLE_OAUTH_CLIENT_ID: \
+ENV.GOOGLE_OAUTH_CLIENT_ID: source-secrets \
 	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_ID,\
 	Retrieve the GOOGLE_OAUTH_CLIENT_ID env variable for make targets from aws ssm if undefined.)
-ifeq (${GOOGLE_OAUTH_CLIENT_ID},)
-	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_ID},"Using predefined GOOGLE_OAUTH_CLIENT_ID.","Retrieving GOOGLE_OAUTH_CLIENT_ID from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined GOOGLE_APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
-	@echo "Retrieved GOOGLE_OAUTH_CLIENT_ID from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."
-else
-	@echo "Using predefined GOOGLE_OAUTH_CLIENT_ID."
-endif
 
 .PHONY: ENV.GOOGLE_OAUTH_CLIENT_SECRET
-ENV.GOOGLE_OAUTH_CLIENT_SECRET: \
+ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
 	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_SECRET,\
 	Retrieve the GOOGLE_OAUTH_CLIENT_SECRET env variable for make targets from aws ssm if undefined.)
-ifeq (${GOOGLE_OAUTH_CLIENT_SECRET},)
-	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_SECRET},"Using predefined GOOGLE_OAUTH_CLIENT_SECRET.","Retrieving GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined GOOGLE_APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
-	@echo "Retrieved GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."
-else
-	@echo "Using predefined GOOGLE_OAUTH_CLIENT_SECRET."
-endif
 
 .PHONY: google-oauth2-secrets
-google-oauth2-secrets: ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
+google-oauth2-secrets: source-secrets ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
                        $(call print-help,google-oauth2-secrets,\
                        Store the Google oauth2 client details as env variables.)
+
+${STORE_SECRETS_FILE}: google-oauth2-secrets
+	@install -m 600 /dev/null ${STORE_SECRETS_FILE}
+	@echo "GOOGLE_OAUTH_CLIENT_ID:=${GOOGLE_OAUTH_CLIENT_ID}" >> ${STORE_SECRETS_FILE}
+	@echo "GOOGLE_OAUTH_CLIENT_SECRET:=${GOOGLE_OAUTH_CLIENT_SECRET}" >> ${STORE_SECRETS_FILE}
 
 # Check that given variables are set and all have non-empty values,
 # die with an error otherwise.
