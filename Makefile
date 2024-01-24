@@ -88,7 +88,7 @@ build: ENV.VERSION_TAG clean build/ ui-build build/${DEPLOY_JAR} \
 		--build-arg uberjar_path=build/${DEPLOY_JAR} .
 
 .PHONY: ui-build
-ui-build: google-oauth2-secrets \
+ui-build: ENV.GOOGLE_OAUTH_CLIENT_ID \
           $(call print-help,ui-build,\
           Build JS and CSS file for release.)
 	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
@@ -270,17 +270,36 @@ run-dev-ui: google-oauth2-secrets\
 	 npm install && \
 	 npm run start
 
-.PHONY: google-oauth2-secrets
-google-oauth2-secrets: \
-                       $(call print-help,google-oauth2-secrets,\
-                       Store the Google oauth2 client details as env variables.)
+.PHONY: ENV.GOOGLE_OAUTH_CLIENT_ID
+ENV.GOOGLE_OAUTH_CLIENT_ID: \
+	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_ID,\
+	Retrieve the GOOGLE_OAUTH_CLIENT_ID env variable for make targets from aws ssm if undefined.)
+ifeq (${GOOGLE_OAUTH_CLIENT_ID},)
 	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined GOOGLE_APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
+	@echo "Retrieved GOOGLE_OAUTH_CLIENT_ID from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."
+else
+	@echo "Using predefined GOOGLE_OAUTH_CLIENT_ID."
+endif
+
+.PHONY: ENV.GOOGLE_OAUTH_CLIENT_SECRET
+ENV.GOOGLE_OAUTH_CLIENT_SECRET: \
+	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_SECRET,\
+	Retrieve the GOOGLE_OAUTH_CLIENT_SECRET env variable for make targets from aws ssm if undefined.)
+ifeq (${GOOGLE_OAUTH_CLIENT_SECRET},)
 	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined GOOGLE_APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
-	@echo "Retrieved google-oauth2-secrets for GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}'."
+	@echo "Retrieved GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."
+else
+	@echo "Using predefined GOOGLE_OAUTH_CLIENT_SECRET."
+endif
+
+.PHONY: google-oauth2-secrets
+google-oauth2-secrets: ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
+                       $(call print-help,google-oauth2-secrets,\
+                       Store the Google oauth2 client details as env variables.)
 
 # Check that given variables are set and all have non-empty values,
 # die with an error otherwise.
