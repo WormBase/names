@@ -181,7 +181,7 @@ Correct functionality of the client app can be tested in two ways:
 - Making a production build of the client app. Failure during this process means fixes will be needed before deployment.
 ```bash
 # performs a npm clean install of dependencies based on package-lock.json
-make ui-build
+make build-ui
 ```
 
 To start up a local client development server:<a id="local-rest"></a>
@@ -299,7 +299,7 @@ To deploy an update for the main application, change your working dir
 to the repository root dir and execute the following commands (bash):
 ```bash
 # Build the client application to ensure no errors occur.
-make ui-build APP_PROFILE=prod
+make build-ui APP_PROFILE=prod
 
 # Generate the pom.xml file (not version-controlled)
 # to ensure no errors occur (in API code)

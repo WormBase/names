@@ -97,9 +97,9 @@ build: ENV.VERSION_TAG clean build/ ui-build build/${DEPLOY_JAR} \
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
 		--build-arg uberjar_path=build/${DEPLOY_JAR} .
 
-.PHONY: ui-build
-ui-build: ENV.GOOGLE_OAUTH_CLIENT_ID \
-          $(call print-help,ui-build,\
+.PHONY: build-ui
+build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
+          $(call print-help,build-ui,\
           Build JS and CSS file for release.)
 	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
 	  echo "Building UI using APP_PROFILE: '${APP_PROFILE}'" && \
