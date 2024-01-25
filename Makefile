@@ -20,7 +20,7 @@ endif
 
 STORE_SECRETS_FILE = secrets.makedef
 
-DEPLOY_JAR := app.jar
+APP_JAR_PATH ?= build/app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
 
@@ -109,12 +109,16 @@ ui-build: ENV.GOOGLE_OAUTH_CLIENT_ID \
 clean: \
        $(call print-help,clean,\
        Remove the locally built JAR file.)
-	@rm -f ./build/${DEPLOY_JAR}
+	@rm -f ${APP_JAR_PATH}
 
-build/${DEPLOY_JAR}: \
-                      $(call print-help,build/${DEPLOY_JAR},\
+${APP_JAR_PATH}: build/ \
+                      $(call print-help,${APP_JAR_PATH},\
                       Build the jar file.)
-	@./scripts/build-appjar.sh
+	@./scripts/build-appjar.sh ${APP_JAR_PATH}
+
+build-app-jar: ${APP_JAR_PATH} \
+               $(call print-help,build-app-jar,\
+               Build the jar file.)
 
 .PHONY: docker-build
 docker-build: clean build \
