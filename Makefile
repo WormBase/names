@@ -5,17 +5,17 @@ LOCAL_GOOGLE_REDIRECT_URI := "http://lvh.me:3000"
 ifeq ($(PROJ_NAME), wormbase-names)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
-	GOOGLE_APP_PROFILE ?= "prod"
+	APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
 	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
-	GOOGLE_APP_PROFILE ?= "prod"
+	APP_PROFILE ?= "prod"
 else
 	WB_DB_URI ?= "datomic:ddb-local://localhost:8000/WBNames_local/wormbase"
 #   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
 #   if intended for AWS deployment (default is set for local execution)
 	GOOGLE_REDIRECT_URI ?= ${LOCAL_GOOGLE_REDIRECT_URI}
-	GOOGLE_APP_PROFILE ?= "dev"
+	APP_PROFILE ?= "dev"
 endif
 
 STORE_SECRETS_FILE = secrets.makedef
@@ -102,8 +102,8 @@ ui-build: ENV.GOOGLE_OAUTH_CLIENT_ID \
           $(call print-help,ui-build,\
           Build JS and CSS file for release.)
 	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	  echo "Building UI using GOOGLE_APP_PROFILE: '${GOOGLE_APP_PROFILE}'" && \
-	  ./scripts/build-ui.sh
+	  echo "Building UI using APP_PROFILE: '${APP_PROFILE}'" && \
+	  ./scripts/build-ui.sh ${APP_PROFILE}
 
 .PHONY: clean
 clean: \
@@ -284,20 +284,20 @@ run-dev-ui: google-oauth2-secrets\
 ENV.GOOGLE_OAUTH_CLIENT_ID: source-secrets \
 	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_ID,\
 	Retrieve the GOOGLE_OAUTH_CLIENT_ID env variable for make targets from aws ssm if undefined.)
-	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_ID},"Using predefined GOOGLE_OAUTH_CLIENT_ID.","Retrieving GOOGLE_OAUTH_CLIENT_ID from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."))
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_ID},"Using predefined GOOGLE_OAUTH_CLIENT_ID.","Retrieving GOOGLE_OAUTH_CLIENT_ID from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
 	@echo ${ACTION_MSG}
-	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined GOOGLE_APP_PROFILE value\
+	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 
 .PHONY: ENV.GOOGLE_OAUTH_CLIENT_SECRET
 ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
 	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_SECRET,\
 	Retrieve the GOOGLE_OAUTH_CLIENT_SECRET env variable for make targets from aws ssm if undefined.)
-	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_SECRET},"Using predefined GOOGLE_OAUTH_CLIENT_SECRET.","Retrieving GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}')."))
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_SECRET},"Using predefined GOOGLE_OAUTH_CLIENT_SECRET.","Retrieving GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
 	@echo ${ACTION_MSG}
-	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined GOOGLE_APP_PROFILE value\
+	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 
 .PHONY: google-oauth2-secrets

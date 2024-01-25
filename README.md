@@ -299,7 +299,7 @@ To deploy an update for the main application, change your working dir
 to the repository root dir and execute the following commands (bash):
 ```bash
 # Build the client application to ensure no errors occur.
-make ui-build GOOGLE_APP_PROFILE=prod
+make ui-build APP_PROFILE=prod
 
 # Generate the pom.xml file (not version-controlled)
 # to ensure no errors occur (in API code)
@@ -332,7 +332,7 @@ sudo service docker start
 # NOTE: To deploy a tagged or branched codeversion that does not equal your (potentially dirty) working-dir content,
 #       use the additional argument REF_NAME=<ref-name>
 #       E.g. make release AWS_PROFILE=wormbase REF_NAME=wormbase-names-1.4.7
-make release [AWS_PROFILE=<profile_name>] GOOGLE_APP_PROFILE=prod
+make release [AWS_PROFILE=<profile_name>] APP_PROFILE=prod
 
 # Deploy the application to an EB environmnent.
 # Before execution:

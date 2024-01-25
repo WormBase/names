@@ -50,5 +50,5 @@ jobs:
           clojure -Spom
       - name: Run Integration tests
         run: |
-          make run-tests GOOGLE_APP_PROFILE=dev
+          make run-tests APP_PROFILE=dev
   #TODO: add UI and API build and container packaging test
