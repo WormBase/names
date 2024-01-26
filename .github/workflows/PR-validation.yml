@@ -81,13 +81,19 @@ jobs:
           sleep 60
       - name: Test API accessability
         id: test-api-accessability
+        continue-on-error: true
         run: |
           curl -I http://localhost:3000/api/auth/identity
       - name: Test UI accessability
         id: test-ui-accessability
+        continue-on-error: true
         run: |
           curl -I http://localhost:3000/
       - name: Report container logs if either accessibility test fails
         if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
         run: |
           docker logs wormbase-names-test
+      - name: Report accessibility test failures
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          echo "::setFailed title=Accessability tests failed::UI and/or API accessability tests failed."
