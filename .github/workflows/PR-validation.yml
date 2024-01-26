@@ -78,17 +78,17 @@ jobs:
       - name: Launch test instance of container (connecting to test env DB)
         run: |
           make run-docker PROJ_NAME=wormbase-names-test
-          sleep 60
+          sleep 120
       - name: Test API accessability
         id: test-api-accessability
         continue-on-error: true
         run: |
-          curl -I http://localhost:3000/api/auth/identity
+          curl --no-progress-meter -I http://localhost:3000/api/auth/identity
       - name: Test UI accessability
         id: test-ui-accessability
         continue-on-error: true
         run: |
-          curl -I http://localhost:3000/
+          curl --no-progress-meter -I http://localhost:3000/
       - name: Report container logs if either accessibility test fails
         if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
         run: |
