@@ -260,8 +260,10 @@ endif
 clean-docker-run: \
               $(call print-help,clean-docker-run [PROJ_NAME=<docker-project-name>],\
               Stop and remove the docker container (if running).)
-	@docker stop ${PROJ_NAME}
-	@docker rm ${PROJ_NAME}
+# Stop if running container found
+	@echo $(if $(shell docker ps -q --filter name=${PROJ_NAME}),$(shell docker stop ${PROJ_NAME})) > /dev/null
+# Remove if stopped container found
+	@echo $(if $(shell docker ps -a -q --filter name=${PROJ_NAME}),$(shell docker rm ${PROJ_NAME})) > /dev/null
 
 .PHONY: deploy-ecr
 deploy-ecr: docker-build docker-tag docker-push-ecr
