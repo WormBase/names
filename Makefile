@@ -321,7 +321,7 @@ ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 
 .PHONY: google-oauth2-secrets
-google-oauth2-secrets: source-secrets ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
+google-oauth2-secrets: ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
                        $(call print-help,google-oauth2-secrets,\
                        Store the Google oauth2 client details as env variables.)
 
