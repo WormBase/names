@@ -95,5 +95,4 @@ jobs:
           docker logs wormbase-names-test
       - name: Report accessibility test failures
         if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
-        run: |
-          echo "::setFailed title=Accessability tests failed::UI and/or API accessability tests failed."
+        run: echo "::setFailed title=Accessability tests failed::UI and/or API accessability tests failed."
