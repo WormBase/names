@@ -81,12 +81,10 @@ jobs:
           sleep 60
       - name: Test API accessability
         id: test-api-accessability
-        continue-on-error: true
         run: |
           curl -I http://localhost:3000/api/auth/identity
       - name: Test UI accessability
         id: test-ui-accessability
-        continue-on-error: true
         run: |
           curl -I http://localhost:3000/
       - name: Report container logs if either accessibility test fails
