@@ -90,10 +90,10 @@ show-version: ENV.VERSION_TAG \
 build/:
 	mkdir build/
 
-.PHONY: build
-build: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} \
-       $(call print-help,build,\
-       Build the docker images from the current git revision.)
+.PHONY: build-docker-image
+build-docker-image: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} \
+                       $(call print-help,build,\
+                       Build the docker image from the current git revision.)
 	@aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip build/
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
 		--secret id=make-secrets-file,src=${STORE_SECRETS_FILE} \
@@ -111,8 +111,9 @@ build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
 .PHONY: clean
 clean: \
        $(call print-help,clean,\
-       Remove the locally built JAR file.)
+       Remove the locally built UI and API artefacts.)
 	@rm -f ${APP_JAR_PATH}
+	@rm -rf client/build/*
 
 ${APP_JAR_PATH}: build/ \
                       $(call print-help,${APP_JAR_PATH},\
@@ -123,10 +124,10 @@ build-app-jar: ${APP_JAR_PATH} \
                $(call print-help,build-app-jar,\
                Build the jar file.)
 
-.PHONY: docker-build
-docker-build: clean build \
-              $(call print-help,docker-build,\
-              Create docker container.)
+.PHONY: build-local
+build-local: clean build-ui build-app-jar \
+              $(call print-help,build-local,\
+              Build UI and app JAR (locally).)
 
 .PHONY: docker-ecr-login
 docker-ecr-login: \
@@ -214,11 +215,11 @@ eb-local: docker-ecr-login \
           Runs the ElasticBeanStalk/docker build and run locally.)
 	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
-.PHONY: run
-run: ENV.VERSION_TAG \
-     $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
-	 [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
-     Run the application in docker (locally).)
+.PHONY: run-docker
+run-docker: ENV.VERSION_TAG clean-docker-run \
+            $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
+	        [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
+            Run the application docker container (locally).)
 	
 	$(eval RUN_CMD = docker run \
 		--name ${PROJ_NAME} \
@@ -244,9 +245,9 @@ endif
 
 	${RUN_CMD} ${ECR_REPO_NAME}:${VERSION_TAG}
 
-.PHONY: docker-clean
-docker-clean: \
-              $(call print-help,docker-clean [PROJ_NAME=<docker-project-name>],\
+.PHONY: clean-docker-run
+clean-docker-run: \
+              $(call print-help,clean-docker-run [PROJ_NAME=<docker-project-name>],\
               Stop and remove the docker container (if running).)
 	@docker stop ${PROJ_NAME}
 	@docker rm ${PROJ_NAME}
@@ -278,7 +279,7 @@ run-tests: google-oauth2-secrets \
 	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
 	  clojure -A:datomic-pro:logging:webassets:dev:test:run-tests
 
-.PHONY: run-dev-server
+.PHONY: run-dev-webserver
 run-dev-webserver: PORT := 4010
 run-dev-webserver: google-oauth2-secrets \
                    $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
