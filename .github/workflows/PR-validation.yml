@@ -5,9 +5,7 @@ on:
     branches:
       - master
 jobs:
-  test-api:
-    permissions:
-      id-token: write # Required for authentication through OIDC to AWS
+  reporting:
     runs-on: ubuntu-22.04
     steps:
       - name: Report workflow details
@@ -20,6 +18,13 @@ jobs:
         run: |
           git fetch -q origin ${{ github.base_ref }} ${{ github.head_ref }}
           git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }}
+  test-api:
+    permissions:
+      id-token: write # Required for authentication through OIDC to AWS
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
