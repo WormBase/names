@@ -72,7 +72,7 @@ jobs:
           mask-aws-account-id: true
       - name: Build container image
         run: |
-          make build-docker-imagedock
+          make build-docker-image
       - name: Launch test instance of container (connecting to test env DB)
         run: |
           make run-docker PROJ_NAME=wormbase-names-test
