@@ -33,7 +33,6 @@ target/
 !.elasticbeanstalk/*.global.yml
 Dockerrun.aws.json
 build/*
-/.dockerignore
 
 #Local docker-compose env-variable files
 .env
