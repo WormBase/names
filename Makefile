@@ -91,11 +91,14 @@ build/:
 	mkdir build/
 
 .PHONY: build
-build: ENV.VERSION_TAG clean build/ ui-build build/${DEPLOY_JAR} \
+build: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} \
        $(call print-help,build,\
-       Build the docker images from using the current git revision.)
+       Build the docker images from the current git revision.)
+	@aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip build/
 	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
-		--build-arg uberjar_path=build/${DEPLOY_JAR} .
+		--secret id=make-secrets-file,src=${STORE_SECRETS_FILE} \
+		.
+	@rm ${STORE_SECRETS_FILE}
 
 .PHONY: build-ui
 build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
