@@ -2,12 +2,13 @@ ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= wormbase-names-dev
 LOCAL_GOOGLE_REDIRECT_URI := "http://lvh.me:3000"
+AWS_DEFAULT_REGION ?= us-east-1
 ifeq ($(PROJ_NAME), wormbase-names)
-	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
 	APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
-	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	APP_PROFILE ?= "prod"
 else
@@ -24,7 +25,7 @@ APP_JAR_PATH ?= build/app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
 
-ECR_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
+ECR_URI := ${WB_ACC_NUM}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 ECR_REPO_URI := ${ECR_URI}/${ECR_REPO_NAME}
 ECR_IMAGE_URI = ${ECR_REPO_URI}:${VERSION_TAG}
 # Set AWS (EB) profile env vars if undefined
@@ -182,7 +183,7 @@ eb-create: eb-def-app-env \
 		&& exit 1 \
 	)
 	@eb create ${PROJ_NAME} \
-	        --region=us-east-1 \
+	        --region=${AWS_DEFAULT_REGION} \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
 	        --cname="${PROJ_NAME}" \
 	        -p docker \
@@ -209,6 +210,7 @@ eb-setenv: \
 		_JAVA_OPTIONS="-Xmx14g" \
 		AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
 		AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+		AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
 		-e "${PROJ_NAME}"
 
 .PHONY: eb-local
@@ -239,7 +241,8 @@ run-docker: ENV.VERSION_TAG clean-docker-run \
 		--detach \
 		-e WB_DB_URI=${WB_DB_URI} \
 		-e GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} \
-		-e PORT=${PORT})
+		-e PORT=${PORT} \
+		-e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION})
 ifneq (${AWS_ACCESS_KEY_ID},)
 ifneq (${AWS_SECRET_ACCESS_KEY},)
 	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY})
