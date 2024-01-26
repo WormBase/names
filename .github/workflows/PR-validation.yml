@@ -93,6 +93,15 @@ jobs:
         if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
         run: |
           docker logs wormbase-names-test
-      - name: Report accessibility test failures
+      - name: Report UI accessibility test failures
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' }}
+        run: |
+          echo "UI accessability test step failed."
+      - name: Report API accessibility test failures
+        if: ${{ steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          echo "API accessability test step failed."
+      - name: Fail if either accessibility test fails
         if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
-        run: echo "::setFailed title=Accessability tests failed::UI and/or API accessability tests failed."
+        run: |
+          exit 1
