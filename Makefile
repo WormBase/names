@@ -247,6 +247,9 @@ ifneq (${AWS_ACCESS_KEY_ID},)
 ifneq (${AWS_SECRET_ACCESS_KEY},)
 	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY})
 	$(eval RUN_CMD = ${RUN_CMD} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID})
+ifneq (${AWS_SESSION_TOKEN},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN})
+endif
 else
 	@echo 'ENV var "AWS_ACCESS_KEY_ID" is defined but "AWS_SECRET_ACCESS_KEY" is not. Either define both or none.' >&2
 	@exit 1
