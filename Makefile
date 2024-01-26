@@ -218,6 +218,14 @@ eb-local: docker-ecr-login \
           Runs the ElasticBeanStalk/docker build and run locally.)
 	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
+#Note: the run-docker command can currently only be used with non-local WB_DB_URI value.
+# Current setup fails to connect to local datomic DB (on host, outside of container)
+# from within the application container.
+# Making the host's "localhost" accessible within the container as "host.docker.internal"
+# through the following options in the `docker run` command makes the DB URI accessible
+# from within the container, but the transactor still fails to be accessible.
+#     -e WB_DB_URI=datomic:ddb-local://host.docker.internal:8000/WBNames_local/wormbase
+#     --add-host=host.docker.internal:host-gateway
 .PHONY: run-docker
 run-docker: ENV.VERSION_TAG clean-docker-run \
             $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
