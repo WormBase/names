@@ -2,40 +2,32 @@ ECR_REPO_NAME := wormbase/names
 EB_APP_ENV_FILE := app-env.config
 PROJ_NAME ?= wormbase-names-dev
 LOCAL_GOOGLE_REDIRECT_URI := "http://lvh.me:3000"
+AWS_DEFAULT_REGION ?= us-east-1
 ifeq ($(PROJ_NAME), wormbase-names)
-	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
-	GOOGLE_APP_PROFILE ?= "prod"
+	APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
-	WB_DB_URI ?= "datomic:ddb://us-east-1/WSNames-test-14/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
-	GOOGLE_APP_PROFILE ?= "prod"
+	APP_PROFILE ?= "prod"
 else
 	WB_DB_URI ?= "datomic:ddb-local://localhost:8000/WBNames_local/wormbase"
 #   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
 #   if intended for AWS deployment (default is set for local execution)
 	GOOGLE_REDIRECT_URI ?= ${LOCAL_GOOGLE_REDIRECT_URI}
-	GOOGLE_APP_PROFILE ?= "dev"
+	APP_PROFILE ?= "dev"
 endif
-DEPLOY_JAR := app.jar
+
+STORE_SECRETS_FILE = secrets.makedef
+
+APP_JAR_PATH ?= build/app.jar
 PORT := 3000
 WB_ACC_NUM := 357210185381
 
-REVISION_NAME_CMD := git describe --tags
-# If REF_NAME is defined, convert provided ref in matching name
-# (ref could be a tagname, a reference like "HEAD", branch-names...)
-ifneq (${REF_NAME},)
-	REVISION_NAME := $(shell ${REVISION_NAME_CMD} ${REF_NAME})
-# Else, assume working-directory deployment
-else
-	REVISION_NAME := $(shell ${REVISION_NAME_CMD} --dirty=-DIRTY)
-endif
-
-VERSION_TAG ?= $(shell echo "${REVISION_NAME}" | sed 's/^wormbase-names-//')
-
-ECR_URI := ${WB_ACC_NUM}.dkr.ecr.us-east-1.amazonaws.com
+ECR_URI := ${WB_ACC_NUM}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 ECR_REPO_URI := ${ECR_URI}/${ECR_REPO_NAME}
-ECR_IMAGE_URI := ${ECR_REPO_URI}:${VERSION_TAG}
+ECR_IMAGE_URI = ${ECR_REPO_URI}:${VERSION_TAG}
 # Set AWS (EB) profile env vars if undefined
 ifneq (${AWS_PROFILE},)
 	AWS_EB_PROFILE ?= ${AWS_PROFILE}
@@ -61,43 +53,85 @@ need-help := $(filter help,$(MAKECMDGOALS))
 help: ; @echo $(if $(need-help),,\
 	Type \'$(MAKE)$(dash-f) help\' to get help)
 
+source-secrets:
+ifneq ($(SECRETS_SRC), )
+	@echo "Sourcing secrets file ${SECRETS_SRC}"
+	$(eval SECRETS_CONTENT := $(shell cat "${SECRETS_SRC}"))
+	$(foreach secret,${SECRETS_CONTENT},$(eval ${secret}))
+endif
+
+.PHONY: ENV.VERSION_TAG
+ENV.VERSION_TAG: \
+	$(call print-help,ENV.VERSION_TAG,\
+	Extract the VERSION_TAG env variables for make targets from git tags if undefined.)
+	$(eval REVISION_NAME_CMD = git describe --tags)
+ifeq (${VERSION_TAG},)
+# If REF_NAME is defined, convert provided ref in matching name
+# (ref could be a tagname, a reference like "HEAD", branch-names...)
+ifneq (${REF_NAME},)
+	$(eval REVISION_NAME_CMD = ${REVISION_NAME_CMD} ${REF_NAME})
+# Else, assume working-directory deployment
+else
+	$(eval REVISION_NAME_CMD = ${REVISION_NAME_CMD} --dirty=-DIRTY)
+endif
+	$(eval VERSION_TAG = $(shell ${REVISION_NAME_CMD} | sed 's/^wormbase-names-//'))
+	$(call check_defined, VERSION_TAG, Ensure your working directory is a\
+	                                   git clone of the repository)
+	@echo "Retrieved VERSION_TAG '${VERSION_TAG}' from git tags."
+else
+	@echo "Using predefined VERSION_TAG '${VERSION_TAG}'."
+endif
+
 .PHONY: show-version
-show-version: \
+show-version: ENV.VERSION_TAG \
               $(call print-help,show-version,\
               Show the current application version.)
 	@echo "${VERSION_TAG}"
 
-.PHONY: build
-build: clean ui-build docker/${DEPLOY_JAR} \
-       $(call print-help,build,\
-       Build the docker images from using the current git revision.)
-	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
-		--build-arg uberjar_path=${DEPLOY_JAR} \
-		./docker/
+build/:
+	mkdir build/
 
-.PHONY: ui-build
-ui-build: google-oauth2-secrets \
-          $(call print-help,ui-build,\
+build/datomic-pro-1.0.6165.zip:
+	@echo "Downloading datomic bundle from S3."
+	@aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip build/
+
+.PHONY: build-docker-image
+build-docker-image: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} build/datomic-pro-1.0.6165.zip \
+                       $(call print-help,build,\
+                       Build the docker image from the current git revision.)
+	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
+		--secret id=make-secrets-file,src=${STORE_SECRETS_FILE} \
+		.
+	@rm ${STORE_SECRETS_FILE}
+
+.PHONY: build-ui
+build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
+          $(call print-help,build-ui,\
           Build JS and CSS file for release.)
 	@ export REACT_APP_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	  echo "Building UI using GOOGLE_APP_PROFILE: '${GOOGLE_APP_PROFILE}'" && \
-	  ./scripts/build-ui.sh
+	  echo "Building UI using APP_PROFILE: '${APP_PROFILE}'" && \
+	  ./scripts/build-ui.sh ${APP_PROFILE}
 
 .PHONY: clean
 clean: \
        $(call print-help,clean,\
-       Remove the locally built JAR file.)
-	@rm -f ./docker/${DEPLOY_JAR}
+       Remove the locally built UI and API artefacts.)
+	@rm -f ${APP_JAR_PATH}
+	@rm -rf client/build/*
 
-docker/${DEPLOY_JAR}: \
-                      $(call print-help,docker/${DEPLOY_JAR},\
+${APP_JAR_PATH}: build/ \
+                      $(call print-help,${APP_JAR_PATH},\
                       Build the jar file.)
-	@./scripts/build-appjar.sh
+	@./scripts/build-appjar.sh ${APP_JAR_PATH}
 
-.PHONY: docker-build
-docker-build: clean build \
-              $(call print-help,docker-build,\
-              Create docker container.)
+build-app-jar: ${APP_JAR_PATH} \
+               $(call print-help,build-app-jar,\
+               Build the jar file.)
+
+.PHONY: build-local
+build-local: clean build-ui build-app-jar \
+              $(call print-help,build-local,\
+              Build UI and app JAR (locally).)
 
 .PHONY: docker-ecr-login
 docker-ecr-login: \
@@ -112,14 +146,14 @@ docker-push-ecr: docker-ecr-login \
 	@docker push ${ECR_IMAGE_URI}
 
 .PHONY: docker-tag
-docker-tag: \
+docker-tag: ENV.VERSION_TAG \
             $(call print-help,docker-tag,\
             Tag the image with current git revision and ':latest' alias.)
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_IMAGE_URI}
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_REPO_URI}
 
 .PHONY: eb-def-app-env
-eb-def-app-env: google-oauth2-secrets \
+eb-def-app-env: google-oauth2-secrets ENV.VERSION_TAG \
                 $(call print-help,eb-def-app-env \
 				[WB_DB_URI=<datomic-db-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
                 Define the ElasticBeanStalk app-environment config file.)
@@ -149,7 +183,7 @@ eb-create: eb-def-app-env \
 		&& exit 1 \
 	)
 	@eb create ${PROJ_NAME} \
-	        --region=us-east-1 \
+	        --region=${AWS_DEFAULT_REGION} \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
 	        --cname="${PROJ_NAME}" \
 	        -p docker \
@@ -176,6 +210,7 @@ eb-setenv: \
 		_JAVA_OPTIONS="-Xmx14g" \
 		AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
 		AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+		AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
 		-e "${PROJ_NAME}"
 
 .PHONY: eb-local
@@ -185,29 +220,56 @@ eb-local: docker-ecr-login \
           Runs the ElasticBeanStalk/docker build and run locally.)
 	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
-.PHONY: run
-run: \
-     $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
-	 [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
-     Run the application in docker (locally).)
-	@docker run \
+#Note: the run-docker command can currently only be used with non-local WB_DB_URI value.
+# Current setup fails to connect to local datomic DB (on host, outside of container)
+# from within the application container.
+# Making the host's "localhost" accessible within the container as "host.docker.internal"
+# through the following options in the `docker run` command makes the DB URI accessible
+# from within the container, but the transactor still fails to be accessible.
+#     -e WB_DB_URI=datomic:ddb-local://host.docker.internal:8000/WBNames_local/wormbase
+#     --add-host=host.docker.internal:host-gateway
+.PHONY: run-docker
+run-docker: ENV.VERSION_TAG clean-docker-run \
+            $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
+	        [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
+            Run the application docker container (locally).)
+	
+	$(eval RUN_CMD = docker run \
 		--name ${PROJ_NAME} \
 		--publish-all=true \
 		--publish ${PORT}:${PORT} \
 		--detach \
-		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e WB_DB_URI=${WB_DB_URI} \
 		-e GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} \
 		-e PORT=${PORT} \
-		${ECR_REPO_NAME}:${VERSION_TAG}
+		-e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION})
+ifneq (${AWS_ACCESS_KEY_ID},)
+ifneq (${AWS_SECRET_ACCESS_KEY},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY})
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID})
+ifneq (${AWS_SESSION_TOKEN},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN})
+endif
+else
+	@echo 'ENV var "AWS_ACCESS_KEY_ID" is defined but "AWS_SECRET_ACCESS_KEY" is not. Either define both or none.' >&2
+	@exit 1
+endif
+else
+ifneq (${AWS_PROFILE},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_PROFILE=${AWS_PROFILE} -v ~/.aws:/root/.aws)
+endif
+endif
 
-.PHONY: docker-clean
-docker-clean: \
-              $(call print-help,docker-clean [PROJ_NAME=<docker-project-name>],\
+	${RUN_CMD} ${ECR_REPO_NAME}:${VERSION_TAG}
+
+.PHONY: clean-docker-run
+clean-docker-run: \
+              $(call print-help,clean-docker-run [PROJ_NAME=<docker-project-name>],\
               Stop and remove the docker container (if running).)
-	@docker stop ${PROJ_NAME}
-	@docker rm ${PROJ_NAME}
+# Stop if running container found
+	@echo $(if $(shell docker ps -q --filter name=${PROJ_NAME}),$(shell docker stop ${PROJ_NAME})) > /dev/null
+# Remove if stopped container found
+	@echo $(if $(shell docker ps -a -q --filter name=${PROJ_NAME}),$(shell docker rm ${PROJ_NAME})) > /dev/null
 
 .PHONY: deploy-ecr
 deploy-ecr: docker-build docker-tag docker-push-ecr
@@ -215,16 +277,15 @@ deploy-ecr: docker-build docker-tag docker-push-ecr
             Deploy the application to the AWS container registry.)
 
 .PHONY: vc-release
-vc-release: export VERSION_TAG := ${VERSION_TAG}
-vc-release: $(call print-help,vc-release LEVEL=<major|minor|patch>,\
+vc-release: ENV.VERSION_TAG \
+            $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	clj -A:release --without-sign ${LEVEL}
 	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
 .PHONY: release
-release: export VERSION_TAG := ${VERSION_TAG}
-release: deploy-ecr \
+release: ENV.VERSION_TAG deploy-ecr \
          $(call print-help,release [AWS_PROFILE=<profile_name>] [REF_NAME=<tag-or-gitref>],\
          Release the applicaton.)
 
@@ -237,7 +298,7 @@ run-tests: google-oauth2-secrets \
 	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
 	  clojure -A:datomic-pro:logging:webassets:dev:test:run-tests
 
-.PHONY: run-dev-server
+.PHONY: run-dev-webserver
 run-dev-webserver: PORT := 4010
 run-dev-webserver: google-oauth2-secrets \
                    $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
@@ -259,20 +320,45 @@ run-dev-ui: google-oauth2-secrets\
 	 npm install && \
 	 npm run start
 
+.PHONY: ENV.GOOGLE_OAUTH_CLIENT_ID
+ENV.GOOGLE_OAUTH_CLIENT_ID: source-secrets \
+	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_ID,\
+	Retrieve the GOOGLE_OAUTH_CLIENT_ID env variable for make targets from aws ssm if undefined.)
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_ID},"Using predefined GOOGLE_OAUTH_CLIENT_ID.","Retrieving GOOGLE_OAUTH_CLIENT_ID from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
+
+.PHONY: ENV.GOOGLE_OAUTH_CLIENT_SECRET
+ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
+	$(call print-help,ENV.GOOGLE_OAUTH_CLIENT_SECRET,\
+	Retrieve the GOOGLE_OAUTH_CLIENT_SECRET env variable for make targets from aws ssm if undefined.)
+	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_SECRET},"Using predefined GOOGLE_OAUTH_CLIENT_SECRET.","Retrieving GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
+
 .PHONY: google-oauth2-secrets
-google-oauth2-secrets: \
+google-oauth2-secrets: ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
                        $(call print-help,google-oauth2-secrets,\
                        Store the Google oauth2 client details as env variables.)
-	$(eval GOOGLE_OAUTH_CLIENT_ID = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID)
-	$(eval GOOGLE_OAUTH_CLIENT_SECRET = $(shell aws ssm get-parameter --name "/name-service/${GOOGLE_APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption))
-	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET)
-	@echo "Retrieved google-oauth2-secrets for GOOGLE_APP_PROFILE '${GOOGLE_APP_PROFILE}'."
 
+${STORE_SECRETS_FILE}: google-oauth2-secrets
+	@install -m 600 /dev/null ${STORE_SECRETS_FILE}
+	@echo "GOOGLE_OAUTH_CLIENT_ID:=${GOOGLE_OAUTH_CLIENT_ID}" >> ${STORE_SECRETS_FILE}
+	@echo "GOOGLE_OAUTH_CLIENT_SECRET:=${GOOGLE_OAUTH_CLIENT_SECRET}" >> ${STORE_SECRETS_FILE}
+
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
 check_defined = \
     $(strip $(foreach 1,$1, \
         $(call __check_defined,$1,$(strip $(value 2)))))
 __check_defined = \
     $(if $(value $1),, \
-      $(error Failed to retrieve $1. Check the defined GOOGLE_APP_PROFILE value\
-	and ensure the AWS_PROFILE variable is appropriately defined) )
+      $(error Failed to define $1. $(if $2, $2)))

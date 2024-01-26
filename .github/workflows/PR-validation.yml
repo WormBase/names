@@ -5,9 +5,7 @@ on:
     branches:
       - master
 jobs:
-  test-api:
-    permissions:
-      id-token: write # Required for authentication through OIDC to AWS
+  reporting:
     runs-on: ubuntu-22.04
     steps:
       - name: Report workflow details
@@ -20,6 +18,13 @@ jobs:
         run: |
           git fetch -q origin ${{ github.base_ref }} ${{ github.head_ref }}
           git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }}
+  test-api:
+    permissions:
+      id-token: write # Required for authentication through OIDC to AWS
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
@@ -50,5 +55,53 @@ jobs:
           clojure -Spom
       - name: Run Integration tests
         run: |
-          make run-tests GOOGLE_APP_PROFILE=dev
-  #TODO: add UI and API build and container packaging test
+          make run-tests APP_PROFILE=dev
+  build-and-run-container:
+    permissions:
+      id-token: write # Required for authentication through OIDC to AWS
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: AWS credentials configuration
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.GH_ACTIONS_AWS_ROLE}}
+          role-session-name: gh-actions-${{github.run_id}}.${{github.run_number}}.${{github.run_attempt}}-test-api
+          aws-region: us-east-1
+          mask-aws-account-id: true
+      - name: Build container image
+        run: |
+          make build-docker-image
+      - name: Launch test instance of container (connecting to test env DB)
+        run: |
+          make run-docker PROJ_NAME=wormbase-names-test
+          sleep 120
+      - name: Test API accessability
+        id: test-api-accessability
+        continue-on-error: true
+        run: |
+          curl --no-progress-meter -I http://localhost:3000/api/auth/identity
+      - name: Test UI accessability
+        id: test-ui-accessability
+        continue-on-error: true
+        run: |
+          curl --no-progress-meter -I http://localhost:3000/
+      - name: Report container logs if either accessibility test fails
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          docker logs wormbase-names-test
+      - name: Report UI accessibility test failures
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' }}
+        run: |
+          echo "UI accessability test step failed."
+      - name: Report API accessibility test failures
+        if: ${{ steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          echo "API accessability test step failed."
+      - name: Fail if either accessibility test fails
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          exit 1
