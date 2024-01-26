@@ -219,17 +219,30 @@ run: ENV.VERSION_TAG \
      $(call print-help,run [PORT=<port>] [PROJ_NAME=<docker-project-name>] \
 	 [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
      Run the application in docker (locally).)
-	@docker run \
+	
+	$(eval RUN_CMD = docker run \
 		--name ${PROJ_NAME} \
 		--publish-all=true \
 		--publish ${PORT}:${PORT} \
 		--detach \
-		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e WB_DB_URI=${WB_DB_URI} \
 		-e GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} \
-		-e PORT=${PORT} \
-		${ECR_REPO_NAME}:${VERSION_TAG}
+		-e PORT=${PORT})
+ifneq (${AWS_ACCESS_KEY_ID},)
+ifneq (${AWS_SECRET_ACCESS_KEY},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY})
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID})
+else
+	@echo 'ENV var "AWS_ACCESS_KEY_ID" is defined but "AWS_SECRET_ACCESS_KEY" is not. Either define both or none.' >&2
+	@exit 1
+endif
+else
+ifneq (${AWS_PROFILE},)
+	$(eval RUN_CMD = ${RUN_CMD} -e AWS_PROFILE=${AWS_PROFILE} -v ~/.aws:/root/.aws)
+endif
+endif
+
+	${RUN_CMD} ${ECR_REPO_NAME}:${VERSION_TAG}
 
 .PHONY: docker-clean
 docker-clean: \
