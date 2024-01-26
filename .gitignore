@@ -39,6 +39,7 @@ build/*
 
 # secrets
 /resources/secrets/
+secrets.makedef
 
 # Generated assets
 /resources/client_build
