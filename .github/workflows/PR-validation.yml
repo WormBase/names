@@ -56,4 +56,38 @@ jobs:
       - name: Run Integration tests
         run: |
           make run-tests APP_PROFILE=dev
-  #TODO: add UI and API build and container packaging test
+  build-and-run-container:
+    permissions:
+      id-token: write # Required for authentication through OIDC to AWS
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: AWS credentials configuration
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.GH_ACTIONS_AWS_ROLE}}
+          role-session-name: gh-actions-${{github.run_id}}.${{github.run_number}}.${{github.run_attempt}}-test-api
+          aws-region: us-east-1
+          mask-aws-account-id: true
+      - name: Build container image
+        run: |
+          make build-docker-imagedock
+      - name: Launch test instance of container (connecting to test env DB)
+        run: |
+          make run-docker PROJ_NAME=wormbase-names-test
+          sleep 60
+      - name: Test API accessability
+        id: test-api-accessability
+        continue-on-error: true
+        run: |
+          curl -I http://localhost:3000/api/auth/identity
+      - name: Test UI accessability
+        id: test-ui-accessability
+        continue-on-error: true
+        run: |
+          curl -I http://localhost:3000/
+      - name: Report container logs if either accessibility test fails
+        if: ${{ steps.test-ui-accessability.outcome == 'failure' || steps.test-api-accessability.outcome == 'failure' }}
+        run: |
+          docker logs wormbase-names-test
