@@ -36,7 +36,7 @@ const styles = (theme) => ({
     flexDirection: 'column',
     width: 200,
     '& > *': {
-      marginBottom: theme.spacing.unit,
+      marginBottom: theme.spacing(1),
     },
     [theme.breakpoints.down('sm')]: {
       width: '100%',

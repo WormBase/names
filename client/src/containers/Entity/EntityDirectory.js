@@ -47,7 +47,7 @@ const EntityDirectory = (props) => {
             {/* tables and charts */}
             {
               <section>
-                <Typography variant="title" gutterBottom>
+                <Typography variant="h6" gutterBottom>
                   Recent activities
                 </Typography>
                 <ErrorBoundary>{renderHistory()}</ErrorBoundary>
@@ -74,7 +74,7 @@ const styles = (theme) => ({
     display: 'flex',
     justifyContent: 'start',
     alignItems: 'center',
-    marginBottom: theme.spacing.unit * 6,
+    marginBottom: theme.spacing(6),
     [theme.breakpoints.down('xs')]: {
       flexDirection: 'column',
     },
@@ -85,7 +85,7 @@ const styles = (theme) => ({
     },
   },
   search: {
-    marginTop: theme.spacing.unit * 2,
+    marginTop: theme.spacing(2),
   },
   main: {
     display: 'flex',

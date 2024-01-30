@@ -33,7 +33,7 @@ pageRight.propTypes = {
 export const Page = withStyles((theme) => ({
   root: {
     display: 'flex',
-    margin: theme.spacing.unit * 4,
+    margin: theme.spacing(4),
     [theme.breakpoints.down('sm')]: {
       flexDirection: 'column',
     },
@@ -46,7 +46,7 @@ export const PageLeft = withStyles((theme) => ({
     flex: '0 0 auto',
     [theme.breakpoints.down('sm')]: {
       width: `100%`,
-      marginBottom: theme.spacing.unit * 4,
+      marginBottom: theme.spacing(4),
     },
   },
 }))(pageLeft);

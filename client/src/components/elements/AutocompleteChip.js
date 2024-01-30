@@ -28,7 +28,7 @@ const styles = (theme) => ({
   wbId: {
     fontSize: '0.8em',
     display: 'inline-block',
-    padding: `0 ${theme.spacing.unit / 2}px`,
+    padding: `0 ${theme.spacing(0.5)}px`,
   },
 });
 

@@ -42,8 +42,8 @@ const styles = (theme) => ({
   },
   errorMessage: {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    margin: theme.spacing.unit * 2,
-    padding: theme.spacing.unit * 4,
+    margin: theme.spacing(2),
+    padding: theme.spacing(4),
     color: theme.palette.error.main,
     textAlign: 'left',
     fontFamily: 'monospace',

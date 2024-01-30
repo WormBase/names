@@ -60,10 +60,10 @@ const styles = (theme) => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    margin: `${theme.spacing.unit * 2}px 0`,
+    margin: `${theme.spacing(2)}px 0`,
   },
   cell: {
-    padding: `${theme.spacing.unit * 4}px`,
+    padding: `${theme.spacing(4)}px`,
     flex: `1 1 50%`,
     display: 'flex',
     '&:first-child > *': {

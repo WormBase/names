@@ -13,7 +13,7 @@ const Footer = (props) => {
 const styles = (theme) => ({
   root: {
     width: '100%',
-    height: theme.spacing.unit * 6,
+    height: theme.spacing(6),
     textAlign: 'center',
     backgroundColor: theme.palette.grey['50'],
     display: 'flex',
