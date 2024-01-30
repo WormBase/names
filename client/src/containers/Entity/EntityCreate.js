@@ -51,7 +51,7 @@ class EntityCreate extends Component {
                   </div>
                 </PageLeft>
                 <PageMain>
-                  <Typography variant="headline" gutterBottom>
+                  <Typography variant="h5" gutterBottom>
                     Add {entityType}
                   </Typography>
                   <ValidationError {...errorMessage} />
@@ -104,7 +104,7 @@ const styles = (theme) => ({
     flexDirection: 'column',
     width: 150,
     '& > *': {
-      marginBottom: theme.spacing.unit,
+      marginBottom: theme.spacing(1),
     },
     [theme.breakpoints.down('sm')]: {
       width: '100%',
@@ -112,12 +112,12 @@ const styles = (theme) => ({
     },
   },
   actions: {
-    marginTop: theme.spacing.unit * 2,
+    marginTop: theme.spacing(2),
     '& > *': {
-      marginRight: theme.spacing.unit,
+      marginRight: theme.spacing(1),
       width: 150,
       [theme.breakpoints.down('xs')]: {
-        width: `calc(50% - ${theme.spacing.unit}px)`,
+        width: `calc(50% - ${theme.spacing(1)}px)`,
       },
     },
   },

@@ -7,7 +7,7 @@ class NotFound extends Component {
     const { classes } = this.props;
     return (
       <div className={classes.root}>
-        <Typography variant="display2" gutterBottom>
+        <Typography variant="h3" gutterBottom>
           Not Found
         </Typography>
         {this.props.children}
@@ -25,12 +25,12 @@ const styles = (theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    margin: theme.spacing.unit * 5,
+    margin: theme.spacing(5),
     [theme.breakpoints.down('sm')]: {
-      margin: `${theme.spacing.unit * 5}px 0`,
+      margin: `${theme.spacing(5)}px 0`,
     },
     '& > *': {
-      marginBottom: theme.spacing.unit * 2,
+      marginBottom: theme.spacing(2),
     },
   },
 });

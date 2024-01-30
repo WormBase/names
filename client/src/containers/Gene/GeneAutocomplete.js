@@ -155,7 +155,7 @@ const styles = (theme) => ({
   paper: {
     position: 'absolute',
     zIndex: 10,
-    marginTop: -6 * theme.spacing.unit,
+    marginTop: -6 * theme.spacing(1),
     left: 0,
     right: 0,
   },
@@ -163,7 +163,7 @@ const styles = (theme) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: theme.spacing.unit,
+    padding: theme.spacing(1),
   },
 });
 

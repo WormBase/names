@@ -90,7 +90,7 @@ ValidationError.propTypes = {
 
 const styles = (theme) => ({
   root: {
-    margin: `${theme.spacing.unit * 4}px 0`,
+    margin: `${theme.spacing(4)}px 0`,
     backgroundColor: theme.palette.background.default,
   },
   message: {
@@ -98,12 +98,12 @@ const styles = (theme) => ({
   },
   problems: {
     color: theme.palette.error.main,
-    marginTop: theme.spacing.unit * -2,
+    marginTop: theme.spacing(-2),
     backgroundColor: theme.palette.background.paper,
   },
   actions: {},
   leftIcon: {
-    marginRight: theme.spacing.unit,
+    marginRight: theme.spacing(1),
   },
 });
 

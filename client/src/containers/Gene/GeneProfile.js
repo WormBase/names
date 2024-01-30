@@ -29,10 +29,10 @@ class GeneProfile extends Component {
       data['status'] === 'dead' ? getActivityDescriptor(changes[0]) : {};
 
     return data['status'] !== 'live' ? (
-      <Typography variant="display1" gutterBottom>
+      <Typography variant="h4" gutterBottom>
         <Humanize capitalized>{data['status']}</Humanize>
         {data['status'] === 'dead' ? (
-          <Typography variant="subheading" component={'i'}>
+          <Typography variant="subtitle1" component={'i'}>
             (
             <Humanize postProcessor={pastTense}>
               {killEventDescriptor.eventLabel}

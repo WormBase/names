@@ -26,8 +26,8 @@ class ErrorBoundary extends React.Component {
       return (
         <Card elevation={0} className={classes.card}>
           <CardContent>
-            <Typography variant="display1">A problem occurred</Typography>
-            <Typography variant="subheading">
+            <Typography variant="h4">A problem occurred</Typography>
+            <Typography variant="subtitle1">
               Please <a href={`mailto:developers.wormbase.org`}>let us know</a>.
             </Typography>
           </CardContent>

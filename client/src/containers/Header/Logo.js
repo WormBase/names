@@ -13,9 +13,9 @@ const Logo = (props) => {
 
 const styles = (theme) => ({
   root: {
-    width: theme.spacing.unit * 4,
-    height: theme.spacing.unit * 4,
-    margin: theme.spacing.unit,
+    width: theme.spacing(4),
+    height: theme.spacing(4),
+    margin: theme.spacing(1),
   },
 });
 

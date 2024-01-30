@@ -237,7 +237,7 @@ const styles = (theme) => ({
     visibility: 'hidden',
   },
   entityTypeSelectRoot: {
-    margin: `0 ${theme.spacing.unit}px`,
+    margin: `0 ${theme.spacing(1)}px`,
   },
   paper: {
     position: 'absolute',
@@ -249,14 +249,14 @@ const styles = (theme) => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: theme.spacing.unit,
+    padding: theme.spacing(1),
   },
   searchIcon: {
-    paddingLeft: theme.spacing.unit,
+    paddingLeft: theme.spacing(1),
   },
   chip: {
-    height: theme.spacing.unit * 3,
-    marginLeft: theme.spacing.unit,
+    height: theme.spacing(3),
+    marginLeft: theme.spacing(1),
   },
 });
 

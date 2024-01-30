@@ -69,7 +69,7 @@ export const Dialog = withMobileDialog()(
   withStyles((theme) => ({
     paper: {
       minWidth: '50%',
-      marginTop: theme.spacing.unit * -10,
+      marginTop: theme.spacing(-10),
       [theme.breakpoints.down('sm')]: {
         marginTop: 0,
       },

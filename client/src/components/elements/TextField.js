@@ -5,7 +5,7 @@ const TextField = (props) => <MuiTextField variant="outlined" {...props} />;
 
 const styles = (theme) => ({
   root: {
-    margin: `${theme.spacing.unit}px ${theme.spacing.unit / 4}px`,
+    margin: `${theme.spacing(1)}px ${theme.spacing(0.25)}px`,
     // display: 'block',
   },
 });

@@ -28,7 +28,7 @@ const Header = (props) => {
           </Link>
           <div className={classes.title}>
             <Link to="/">
-              <Typography variant="title" color="inherit">
+              <Typography variant="h6" color="inherit">
                 Names Service
               </Typography>
             </Link>
@@ -66,11 +66,11 @@ Header.propTypes = {
 const styles = (theme) => ({
   root: {},
   toolbar: {
-    minHeight: theme.spacing.unit * 4,
+    minHeight: theme.spacing(4),
     [theme.breakpoints.down('sm')]: {
       justifyContent: 'space-between',
       flexWrap: 'wrap',
-      padding: `0 0 ${theme.spacing.unit}px 0`,
+      padding: `0 0 ${theme.spacing(1)}px 0`,
     },
   },
   title: {
@@ -85,7 +85,7 @@ const styles = (theme) => ({
       order: 10,
       width: '100%',
     },
-    margin: `0px ${theme.spacing.unit * 2}px`,
+    margin: `0px ${theme.spacing(2)}px`,
   },
 });
 

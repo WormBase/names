@@ -31,7 +31,7 @@ const styles = (theme) => ({
     alignItems: 'center',
   },
   actions: {
-    margin: theme.spacing.unit * 4,
+    margin: theme.spacing(4),
   },
 });
 
