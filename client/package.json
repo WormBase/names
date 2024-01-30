@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "husky": "1.2.1",
-    "lint-staged": "10.5.4",
+    "lint-staged": "12.5.0",
     "prettier": "1.15.3",
     "react-scripts": "3.4.4"
   },
