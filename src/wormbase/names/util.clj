@@ -138,7 +138,7 @@
             bid)))
 
 (defn encode-etag [latest-t]
-  (some-> latest-t codecs/long->bytes codecs/bytes->b64 codecs/bytes->str))
+  (some-> latest-t str codecs/str->bytes codecs/bytes->b64 codecs/bytes->str))
 
 (defn add-etag-header-maybe [response etag]
   (if (seq etag)
