@@ -28,14 +28,22 @@ WB_ACC_NUM := 357210185381
 ECR_URI := ${WB_ACC_NUM}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 ECR_REPO_URI := ${ECR_URI}/${ECR_REPO_NAME}
 ECR_IMAGE_URI = ${ECR_REPO_URI}:${VERSION_TAG}
-# Set AWS (EB) profile env vars if undefined
-ifneq (${AWS_PROFILE},)
-	AWS_EB_PROFILE ?= ${AWS_PROFILE}
-endif
-ifneq (${AWS_EB_PROFILE},)
-	AWS_PROFILE ?= ${AWS_EB_PROFILE}
 
-	export AWS_EB_PROFILE
+# Define AWS (EB) CLI base commands as appropriate
+AWS_CLI_BASE := aws
+EB_CLI_BASE := eb
+ifneq (${AWS_EB_PROFILE},)
+	EB_CLI_BASE := ${EB_CLI_BASE} --profile ${AWS_EB_PROFILE}
+ifeq (${AWS_PROFILE},)
+	AWS_CLI_BASE := ${AWS_CLI_BASE} --profile ${AWS_EB_PROFILE}
+endif
+endif
+
+ifneq (${AWS_PROFILE},)
+	AWS_CLI_BASE := ${AWS_CLI_BASE} --profile ${AWS_PROFILE}
+ifeq (${AWS_EB_PROFILE},)
+	EB_CLI_BASE := ${EB_CLI_BASE} --profile ${AWS_PROFILE}
+endif
 endif
 
 define target-help
@@ -93,7 +101,7 @@ build/:
 
 build/datomic-pro-1.0.6165.zip:
 	@echo "Downloading datomic bundle from S3."
-	@aws s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip build/
+	@${AWS_CLI_BASE} s3 cp s3://wormbase/datomic-pro/distro/datomic-pro-1.0.6165.zip build/
 
 .PHONY: build-docker-image
 build-docker-image: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} build/datomic-pro-1.0.6165.zip \
@@ -137,7 +145,7 @@ build-local: clean build-ui build-app-jar \
 docker-ecr-login: \
                   $(call print-help,docker-ecr-login [AWS_PROFILE=<profile_name>],\
                   Login to ECR.)
-	aws --profile ${AWS_PROFILE} ecr get-login-password | docker login -u AWS --password-stdin https://${ECR_URI}
+	${AWS_CLI_BASE} ecr get-login-password | docker login -u AWS --password-stdin https://${ECR_URI}
 
 .PHONY: docker-push-ecr
 docker-push-ecr: docker-ecr-login \
@@ -177,12 +185,12 @@ eb-create: eb-def-app-env \
 		   [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Create an ElasticBeanStalk environment using the Docker platform.)
 	$(eval AWS_IAM_UNAME ?= $(shell test ${AWS_IAM_UNAME} && echo ${AWS_IAM_UNAME}\
-	                             || aws --profile ${AWS_PROFILE} iam get-user --query "User.UserName"))
+	                             || ${AWS_CLI_BASE} iam get-user --query "User.UserName"))
 	@test ${AWS_IAM_UNAME} || (\
 		echo "Failed to retrieve IAM user-name. Define IAM username as AWS_IAM_UNAME arg." \
 		&& exit 1 \
 	)
-	@eb create ${PROJ_NAME} \
+	@${EB_CLI_BASE} create ${PROJ_NAME} \
 	        --region=${AWS_DEFAULT_REGION} \
 	        --tags="CreatedBy=${AWS_IAM_UNAME},Role=RestAPI" \
 	        --cname="${PROJ_NAME}" \
@@ -194,17 +202,17 @@ eb-create: eb-def-app-env \
 .PHONY: eb-deploy
 eb-deploy: eb-def-app-env \
            $(call print-help,eb-deploy [PROJ_NAME=<eb-env-name>] \
-           [AWS_EB_PROFILE=<profile_name>] [WB_DB_URI=<datomic-db-uri>] \
+           [AWS(_EB)?_PROFILE=<profile_name>] [WB_DB_URI=<datomic-db-uri>] \
 		   [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Deploy the application using ElasticBeanstalk.)
-	@eb deploy ${PROJ_NAME}
+	@${EB_CLI_BASE} deploy ${PROJ_NAME}
 
 .PHONY: eb-env
 eb-setenv: \
-           $(call print-help,eb-env [AWS_EB_PROFILE=<profile_name>] [PROJ_NAME=<eb-env-name>] \
+           $(call print-help,eb-env [AWS(_EB)_PROFILE=<profile_name>] [PROJ_NAME=<eb-env-name>] \
 		   [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
            Set enviroment variables for the ElasticBeanStalk environment.)
-	@eb setenv \
+	@${EB_CLI_BASE} setenv \
 		WB_DB_URI="${WB_DB_URI}" \
 		GOOGLE_REDIRECT_URI="${GOOGLE_REDIRECT_URI}" \
 		_JAVA_OPTIONS="-Xmx14g" \
@@ -215,10 +223,10 @@ eb-setenv: \
 
 .PHONY: eb-local
 eb-local: docker-ecr-login \
-          $(call print-help,eb-local [AWS_EB_PROFILE=<profile_name>] [PORT=<port>] \
+          $(call print-help,eb-local [AWS(_EB)_PROFILE=<profile_name>] [PORT=<port>] \
 		  [WB_DB_URI=<datomic-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
           Runs the ElasticBeanStalk/docker build and run locally.)
-	@eb local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+	@${EB_CLI_BASE} local run --envvars PORT=${PORT},WB_DB_URI=${WB_DB_URI},GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
 
 #Note: the run-docker command can currently only be used with non-local WB_DB_URI value.
 # Current setup fails to connect to local datomic DB (on host, outside of container)
@@ -281,7 +289,6 @@ vc-release: ENV.VERSION_TAG \
             $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	clj -A:release --without-sign ${LEVEL}
-	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
 .PHONY: release
@@ -326,7 +333,7 @@ ENV.GOOGLE_OAUTH_CLIENT_ID: source-secrets \
 	Retrieve the GOOGLE_OAUTH_CLIENT_ID env variable for make targets from aws ssm if undefined.)
 	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_ID},"Using predefined GOOGLE_OAUTH_CLIENT_ID.","Retrieving GOOGLE_OAUTH_CLIENT_ID from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
 	@echo ${ACTION_MSG}
-	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
+	$(if ${GOOGLE_OAUTH_CLIENT_ID},,$(eval GOOGLE_OAUTH_CLIENT_ID := $(shell ${AWS_CLI_BASE} ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-id" --query "Parameter.Value" --output text --with-decryption)))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_ID, Check the defined APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 
@@ -336,7 +343,7 @@ ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
 	Retrieve the GOOGLE_OAUTH_CLIENT_SECRET env variable for make targets from aws ssm if undefined.)
 	$(eval ACTION_MSG := $(if ${GOOGLE_OAUTH_CLIENT_SECRET},"Using predefined GOOGLE_OAUTH_CLIENT_SECRET.","Retrieving GOOGLE_OAUTH_CLIENT_SECRET from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
 	@echo ${ACTION_MSG}
-	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell aws ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
+	$(if ${GOOGLE_OAUTH_CLIENT_SECRET},,$(eval GOOGLE_OAUTH_CLIENT_SECRET := $(shell ${AWS_CLI_BASE} ssm get-parameter --name "/name-service/${APP_PROFILE}/google-oauth2-app-config/client-secret" --query "Parameter.Value" --output text --with-decryption)))
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 

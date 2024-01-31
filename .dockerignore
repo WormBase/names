@@ -4,3 +4,4 @@ target/
 .github/
 .ebextensions/
 .elasticbeanstalk/
+pom.xml
