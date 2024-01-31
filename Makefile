@@ -280,7 +280,7 @@ clean-docker-run: \
 	@echo $(if $(shell docker ps -a -q --filter name=${PROJ_NAME}),$(shell docker rm ${PROJ_NAME})) > /dev/null
 
 .PHONY: deploy-ecr
-deploy-ecr: docker-build docker-tag docker-push-ecr
+deploy-ecr: build-docker-image docker-tag docker-push-ecr
             $(call print-help,deploy-ecr,\
             Deploy the application to the AWS container registry.)
 
