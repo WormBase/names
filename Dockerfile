@@ -40,7 +40,7 @@ COPY --from=BUILD_UI_STAGE $WORKDIR/client/ $WORKDIR/client/
 RUN make build-app-jar APP_JAR_PATH=$APPJAR_BUILDPATH
 
 ### Stage 3: build final application image
-FROM openjdk:8-jre-alpine as APPLICATION_IMAGE_STAGE
+FROM eclipse-temurin:8-jre-alpine as APPLICATION_IMAGE_STAGE
 
 ARG WORKDIR
 ARG APPJAR_BUILDPATH
