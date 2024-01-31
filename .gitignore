@@ -25,6 +25,8 @@ pm_to_blib
 release-archives/
 target/
 .cpcache/
+.classpath
+.factorypath
 
 # Elastic Beanstalk Files
 .ebextensions/app-env.config
@@ -53,5 +55,11 @@ data/
 # Source code linter cache
 /.clj-kondo/.cache/
 
+# IDE project/module settings
+.vscode
+.project
+.settings
+
 # VS Code calva extension configs
 .calva
+.lsp
