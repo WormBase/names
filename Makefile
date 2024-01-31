@@ -33,7 +33,7 @@ ECR_IMAGE_URI = ${ECR_REPO_URI}:${VERSION_TAG}
 AWS_CLI_BASE := aws
 EB_CLI_BASE := eb
 ifneq (${AWS_EB_PROFILE},)
-	EB_CLI_BASE := ${EB_CLI_BASE} --profile ${AWS_EB_PROFILE}
+	EB_CLI_BASE := export AWS_EB_PROFILE=${AWS_EB_PROFILE} && ${EB_CLI_BASE}
 ifeq (${AWS_PROFILE},)
 	AWS_CLI_BASE := ${AWS_CLI_BASE} --profile ${AWS_EB_PROFILE}
 endif
@@ -42,7 +42,7 @@ endif
 ifneq (${AWS_PROFILE},)
 	AWS_CLI_BASE := ${AWS_CLI_BASE} --profile ${AWS_PROFILE}
 ifeq (${AWS_EB_PROFILE},)
-	EB_CLI_BASE := ${EB_CLI_BASE} --profile ${AWS_PROFILE}
+	EB_CLI_BASE := export AWS_EB_PROFILE=${AWS_PROFILE} && ${EB_CLI_BASE}
 endif
 endif
 
