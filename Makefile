@@ -105,12 +105,21 @@ build/datomic-pro-1.0.6165.zip:
 
 .PHONY: build-docker-image
 build-docker-image: build/ ENV.VERSION_TAG ${STORE_SECRETS_FILE} build/datomic-pro-1.0.6165.zip \
-                       $(call print-help,build,\
+                       $(call print-help,build-docker-image,\
                        Build the docker image from the current git revision.)
-	@docker build -t ${ECR_REPO_NAME}:${VERSION_TAG} \
+	$(eval DOCKER_CMD := docker build -t ${ECR_REPO_NAME}:${VERSION_TAG})
+ifeq (${APP_PROFILE},prod)
+	$(eval DOCKER_CMD := ${DOCKER_CMD} --no-cache --pull)
+endif
+	@${DOCKER_CMD} \
 		--secret id=make-secrets-file,src=${STORE_SECRETS_FILE} \
 		.
 	@rm ${STORE_SECRETS_FILE}
+
+.PHONY: docker-build-image
+docker-build-image: build-docker-image \
+					$(call print-help,docker-build-image,\
+                       Alias for build-docker-image.)
 
 .PHONY: build-ui
 build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
