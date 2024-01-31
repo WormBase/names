@@ -116,6 +116,11 @@ endif
 		.
 	@rm ${STORE_SECRETS_FILE}
 
+.PHONY: docker-build-image
+docker-build-image: build-docker-image \
+					$(call print-help,docker-build-image,\
+                       Alias for build-docker-image.)
+
 .PHONY: build-ui
 build-ui: ENV.GOOGLE_OAUTH_CLIENT_ID \
           $(call print-help,build-ui,\
