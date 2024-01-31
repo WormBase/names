@@ -289,7 +289,6 @@ vc-release: ENV.VERSION_TAG \
             $(call print-help,vc-release LEVEL=<major|minor|patch>,\
             Perform the Version Control tasks to release the applicaton.)
 	clj -A:release --without-sign ${LEVEL}
-	@echo "Edit version of application in pom.xml to match wormbase-names-* version reported above (version number only)."
 
 
 .PHONY: release

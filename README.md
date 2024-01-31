@@ -298,14 +298,6 @@ make help
 To deploy an update for the main application, change your working dir
 to the repository root dir and execute the following commands (bash):
 ```bash
-# Build the client application to ensure no errors occur.
-make build-ui APP_PROFILE=prod
-
-# Generate the pom.xml file (not version-controlled)
-# to ensure no errors occur (in API code)
-rm pom.xml
-clj -Spom
-
 # Specify $LEVEL as one of <major|minor|patch>.
 # This will bump the x, y or z version number.
 # SLF4J messages can be ignored (warnings, not errors).
@@ -317,12 +309,6 @@ make show-version
 
 # Once confirmed to be correct, push the created tag to github
 git push --follow-tags
-
-# Update the pom.xml to
-#   * match the version reported by make as <version> tag value
-#   * have "wormbase" (unquoted) as <groupId> tag value
-#   * have "names" (unquoted) as <artifactId> tag value
-$EDITOR pom.xml
 
 # Before building the application, ensure docker (daemon) is running.
 # If not, start it. On Ubuntu you can do so with the following cmd:
@@ -343,7 +329,7 @@ make release [AWS_PROFILE=<profile_name>] APP_PROFILE=prod
 # * Ensure to define the correct GOOGLE_REDIRECT_URI for google authentication (http://lvh.me:3000 when developing locally)
 # Executing this make target will automatically set the required execution environment variables
 # for Google Oauth2 authentication, through EB (retrieved from AWS SSM).
-make eb-deploy PROJ_NAME=<env-name> [GOOGLE_REDIRECT_URI=<google-redirect-uri>] [WB_DB_URI=<datomic-db-uri>] [AWS_EB_PROFILE=<profile_name>]
+make eb-deploy PROJ_NAME=<env-name> [GOOGLE_REDIRECT_URI=<google-redirect-uri>] [WB_DB_URI=<datomic-db-uri>] [AWS(_EB)?_PROFILE=<profile_name>]
 ```
 
 ### Deploying the IDs library
