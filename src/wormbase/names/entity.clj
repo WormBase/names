@@ -517,8 +517,8 @@
                   (list-entity-schemas request))}
       :post
       {:summary "Add a new simple entity type to the system."
-       :responses (wnu/response-map created {:schema ::wse/schema-created})
-       :parameters {:body-params {:data ::wse/new-schema
+       :responses (wnu/response-map created {:schema ::wse/new-type-response})
+       :parameters {:body-params {:data ::wse/new-type
                                   :prov ::wsp/provenance}}
        :handler (fn register-entity-schema [request]
                   (handle-register-entity-schema request))}})))
@@ -554,7 +554,7 @@
        :parameters {:body-params {:data ::wse/new
                                   :prov ::wsp/provenance}}
        :responses (-> wnu/default-responses
-                      (assoc created {:schema {:created ::wse/created}})
+                      (assoc created {:schema ::wse/created-response})
                       (wnu/response-map))
        :handler (fn new-entity [request]
                   (let [id-ident (keyword entity-type "id")
