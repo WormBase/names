@@ -404,12 +404,12 @@
        :responses (wnu/response-map created {:schema {:created ::wsg/created}}
                                     bad-request {:schema ::wsv/error-response})
        :handler (fn handle-new [request]
-                  (let [new-gene (wne/creator :gene/id
-                                              (partial wnu/conform-data-drop-label ::wsg/new)
-                                              :event/new-gene
-                                              #(get-gene-info %1 %2 :fmt-output true)
-                                              validate-names)]
-                    (new-gene request)))}})))
+                  (let [new-gene-handler (wne/new-entity-handler-creator :gene/id
+                                                                         (partial wnu/conform-data-drop-label ::wsg/new)
+                                                                         :event/new-gene
+                                                                         #(get-gene-info %1 %2 :fmt-output true)
+                                                                         validate-names)]
+                    (new-gene-handler request)))}})))
 
 (def item-resources
   (sweet/context "/gene/:identifier" []

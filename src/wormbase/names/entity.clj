@@ -1,8 +1,11 @@
 (ns wormbase.names.entity
-  (:require [clojure.spec.alpha :as s]
+  (:require [clojure.data.json :as json]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]
+            [clj-http.client :as client]
             [compojure.api.sweet :as sweet]
             [datomic.api :as d]
+            [environ.core :refer [env]]
             [magnetcoop.stork :as stork]
             [ring.util.http-response :refer [bad-request! conflict conflict!
                                              created not-found not-found! ok]]
@@ -105,10 +108,27 @@
              {}
              data))
 
-(defn creator
+(defn new-entity-replay-caltech
+  "Replay entity creation to Caltech API endpoint"
+  [entity-type entity-id entity-name]
+  (if (some #{entity-type} '("variation" "strain"))
+    (let [api_url (env :caltech-api-url)
+          user    (env :caltech-api-user)
+          pass    (env :caltech-api-password)
+          body    (json/write-str {"datatype" entity-type
+                                   "objId" entity-id
+                                   "objName" entity-name})]
+      (client/post api_url {:basic-auth [user pass]
+                            :accept "text/plain"
+                            :content-type :json
+                            :body body
+                            :throw-exceptions false}))
+    nil))
+
+(defn new-entity-handler-creator
   "Return an endpoint handler for new entity creation."
   [uiident conform-spec-fn event get-info-fn & [validate]]
-  (fn handle-new [request]
+  (fn [request]
     (let [{payload :body-params db :db conn :conn} request
           ent-ns (namespace uiident)
           live-status-attr (keyword ent-ns "status")
@@ -133,16 +153,31 @@
             tx-res @(d/transact-async conn tx-data)
             dba (:db-after tx-res)]
         (when dba
-          (let [new-id (wdb/extract-id tx-res uiident)
-                emap  (get-info-fn dba [uiident new-id])
-                emap* (reduce-kv (fn [m k v]
-                                   (if (qualified-keyword? v)
-                                     (assoc m k (name v))
-                                     (assoc m k v)))
-                                 {}
-                                 emap)
-                result {:created (wnu/unqualify-keys emap* ent-ns)}]
-            (created (str "/" ent-ns "/") result)))))))
+          (let [unqualified-emap (as-> (wdb/extract-id tx-res uiident) $
+                                   (get-info-fn dba [uiident $])
+                                   (reduce-kv (fn [m k v]
+                                                (if (qualified-keyword? v)
+                                                  (assoc m k (name v))
+                                                  (assoc m k v)))
+                                              {}
+                                              $)
+                                   (wnu/unqualify-keys $ ent-ns))
+                caltech-response (new-entity-replay-caltech ent-ns (:id unqualified-emap) (:name unqualified-emap))
+                caltech-sync (if caltech-response
+                               (merge {:http-response-status-code (:status caltech-response)}
+                                      (if (seq (:body caltech-response))
+                                        (try
+                                          (let [raw-response-body (:body caltech-response)
+                                                response-body (json/read-str raw-response-body)
+                                                caltech-message (get response-body "message")]
+                                            {:caltech-message caltech-message})
+                                          (catch Exception _
+                                            {:http-response-body (:body caltech-response)}))
+                                        nil))
+                               nil)
+                response-body (-> {:created unqualified-emap}
+                                  (cond-> (seq caltech-sync) (assoc :caltech-sync caltech-sync)))]
+            (created (str "/" ent-ns "/") response-body)))))))
 
 (defn merge-into-ent-data
   [data ent-data db uiident]
@@ -556,17 +591,19 @@
        :responses (-> wnu/default-responses
                       (assoc created {:schema ::wse/created-response})
                       (wnu/response-map))
-       :handler (fn new-entity [request]
+       :handler (fn [request]
                   (let [id-ident (keyword entity-type "id")
                         event-ident (keyword "event" (str "new-" entity-type))
                         conformer (partial wnu/conform-data ::wse/new)
                         summary-fn (partial pull-ent-summary entity-type)
-                        new-entity (creator id-ident
-                                            conformer
-                                            event-ident
-                                            summary-fn
-                                            validate-names)]
-                    (new-entity request)))}})
+                        create-entity (new-entity-handler-creator id-ident
+                                                                  conformer
+                                                                  event-ident
+                                                                  summary-fn
+                                                                  validate-names)
+                        new-entity-response (create-entity request)]
+                    new-entity-response
+                    ))}})
     (sweet/context "/:identifier" []
       :tags ["entity"]
       :middleware [entity-enabled-checker]
