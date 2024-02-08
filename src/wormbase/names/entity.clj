@@ -444,7 +444,7 @@
         {entity-type :entity-type
          id-template :id-template
          generic? :generic
-         name-required? :name-required} data
+         name-required? :name-required?} data
         id-attr (keyword entity-type "id")
         prov (wnp/assoc-provenance request payload :event/new-entity-type)]
     (when-not entity-type

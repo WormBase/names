@@ -49,12 +49,12 @@
                                       :description "The response map returned by a successful entity-type creation operation."}))
 
 (s/def ::new-type (stc/spec {:spec (s/keys :req-un [::id-template
-                                                      ::entity-type
-                                                      ::name-required?])
+                                                    ::entity-type
+                                                    ::name-required?])
                                :description "Parameters required to install a new entity schema (aka entity type)."
                                :swagger/example {:id-template "WBThing%d"
                                                  :entity-type "thing"
-                                                 :name-required true}}))
+                                                 :name-required? true}}))
 
 (s/def ::named? (stc/spec {:spec sts/boolean?
                            :swagger/example "true"
