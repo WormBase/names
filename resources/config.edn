@@ -2,17 +2,6 @@
  :datomic
  {:internal-namespaces
   ["db" "db.alter" "db.install" "db.excise" "db.sys" "conformity" "fressian"]}
- :event-broadcast
- {:gmail #include "secrets/wb-ns-gmail.edn"
-  :aws-sqs
-  {:queue-name "org-wormbase-names-tx_messages"
-   :attributes
-   {:VisibilityTimeout 30 ;; sec
-    :MaximumMessageSize 65536 ;; bytes
-    :MessageRetentionPeriod 1209600 ;; sec
-    :ReceiveMessageWaitTimeSeconds 10}}
-  :aws-s3
-  {:bucket-name "wormbase"}}
  :oauth2
  {:google
   {:launch-uri "/oauth2/google"
