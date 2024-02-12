@@ -600,10 +600,8 @@
                                                                   conformer
                                                                   event-ident
                                                                   summary-fn
-                                                                  validate-names)
-                        new-entity-response (create-entity request)]
-                    new-entity-response
-                    ))}})
+                                                                  validate-names)]
+                    (create-entity request)))}})
     (sweet/context "/:identifier" []
       :tags ["entity"]
       :middleware [entity-enabled-checker]
