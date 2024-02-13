@@ -19,6 +19,21 @@ const Header = (props) => {
   const { classes } = props;
   const { getEntityType } = useEntityTypes();
 
+  const entity_type_searchbox = React.forwardRef((props, ref) => {
+    const entityType = props.match.params.entityType;
+
+    return getEntityType(entityType) ? (
+      <SearchBox
+        entityType={entityType}
+        enableEntityTypeSelect={true}
+        classes={{
+          root: classes.searchBox,
+        }}
+        ref={ref}
+      />
+    ) : null;
+  });
+
   return (
     <div>
       <AppBar position="static" className={classes.root}>
@@ -34,22 +49,7 @@ const Header = (props) => {
             </Link>
           </div>
           {props.isAuthenticated ? (
-            <Route
-              path="/:entityType"
-              component={({ match }) => {
-                const entityType = match.params.entityType;
-
-                return getEntityType(entityType) ? (
-                  <SearchBox
-                    entityType={entityType}
-                    enableEntityTypeSelect={true}
-                    classes={{
-                      root: classes.searchBox,
-                    }}
-                  />
-                ) : null;
-              }}
-            />
+            <Route path="/:entityType" component={entity_type_searchbox} />
           ) : null}
           {props.children}
         </Toolbar>

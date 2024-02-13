@@ -6,7 +6,7 @@ import {
 
 import {
   MuiThemeProvider,
-  createMuiTheme,
+  createTheme,
   withStyles,
   Dialog as MuiDialog,
   withMobileDialog,
@@ -85,7 +85,7 @@ export const Dialog = withMobileDialog()(
 // };
 // All the following keys are optional.
 // We try our best to provide a great default value.
-export const theme = createMuiTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       main: primaryColor[700],
@@ -104,4 +104,4 @@ export const theme = createMuiTheme({
   },
 });
 
-export { MuiThemeProvider, createMuiTheme, withStyles };
+export { MuiThemeProvider, createTheme, withStyles };

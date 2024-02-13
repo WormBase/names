@@ -7,6 +7,11 @@ import EntityDirectoryButton from './EntityDirectoryButton';
 
 function EntityNotFound(props) {
   const { classes = {}, wbId, entityType } = props;
+
+  const new_entity_link = React.forwardRef(function(props, ref) {
+    return <Link to={`/${entityType}/new`} {...props} ref={ref} />;
+  });
+
   return (
     <DocumentTitle title="Not found">
       <NotFound>
@@ -18,9 +23,7 @@ function EntityNotFound(props) {
           <Button
             variant="contained"
             color="secondary"
-            component={({ ...props }) => (
-              <Link to={`/${entityType}/new`} {...props} />
-            )}
+            component={new_entity_link}
           >
             Create {entityType}
           </Button>

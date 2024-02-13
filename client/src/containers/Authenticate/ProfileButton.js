@@ -4,12 +4,13 @@ import { Button, withStyles } from '../../components/elements';
 import { Link } from 'react-router-dom';
 import PersonIcon from '@material-ui/icons/Person';
 
+const my_profile_link = React.forwardRef(function(props, ref) {
+  return <Link to="/me" {...props} ref={ref} />;
+});
+
 const ProfileButton = (props) => {
   return props.name ? (
-    <Button
-      component={({ ...props }) => <Link to="/me" {...props} />}
-      className={props.classes.button}
-    >
+    <Button component={my_profile_link} className={props.classes.button}>
       <PersonIcon className={props.classes.icon} />
       Hi, {props.name.split(/\s+/)[0]}
     </Button>

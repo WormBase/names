@@ -176,11 +176,9 @@ const SearchBox = (props) => {
                     {({ pageItems, navigation }) =>
                       isOpen ? (
                         <Paper className={classes.paper} square>
-                          {pageItems.map((suggestion, index) => (
-                            <AutocompleteSuggestion
-                              key={index}
-                              suggestion={suggestion}
-                              component={({ children, ...props }) => (
+                          {pageItems.map((suggestion, index) => {
+                            const search_result_link = React.forwardRef(
+                              (props, ref) => (
                                 <a
                                   {...props}
                                   onClick={() => {
@@ -189,16 +187,25 @@ const SearchBox = (props) => {
                                       `/${entityType}/id/${suggestion.id}`
                                     );
                                   }}
+                                  ref={ref}
                                 >
-                                  {children}
+                                  {props.children}
                                 </a>
-                              )}
-                              index={index}
-                              highlightedIndex={highlightedIndex}
-                              selectedItem={selectedItem}
-                              itemProps={getItemProps({ item: suggestion })}
-                            />
-                          ))}
+                              )
+                            );
+
+                            return (
+                              <AutocompleteSuggestion
+                                key={index}
+                                suggestion={suggestion}
+                                component={search_result_link}
+                                index={index}
+                                highlightedIndex={highlightedIndex}
+                                selectedItem={selectedItem}
+                                itemProps={getItemProps({ item: suggestion })}
+                              />
+                            );
+                          })}
                           {navigation}
                         </Paper>
                       ) : null

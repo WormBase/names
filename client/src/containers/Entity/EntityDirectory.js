@@ -20,6 +20,9 @@ const EntityDirectory = (props) => {
     entityType,
     renderHistory = () => <EntityRecentActivities entityType={entityType} />, //<i>Coming soon...</i>,
   } = props;
+  const new_entity_link = React.forwardRef((props, ref) => (
+    <Link to={`/${entityType}/new`} {...props} ref={ref} />
+  ));
   return (
     <DocumentTitle title={`${capitalize(entityType)} directory`}>
       <Page>
@@ -29,9 +32,7 @@ const EntityDirectory = (props) => {
               <Button
                 variant="contained"
                 color="secondary"
-                component={({ ...props }) => (
-                  <Link to={`/${entityType}/new`} {...props} />
-                )}
+                component={new_entity_link}
               >
                 Add new {entityType}
               </Button>
