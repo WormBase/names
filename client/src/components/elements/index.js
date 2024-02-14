@@ -6,7 +6,7 @@ import {
 
 import {
   MuiThemeProvider,
-  createMuiTheme,
+  createTheme,
   withStyles,
   Dialog as MuiDialog,
   withMobileDialog,
@@ -44,13 +44,12 @@ export { default as AutocompleteSuggestion } from './AutocompleteSuggestion';
 export { default as BaseForm } from './BaseForm';
 export { default as BiotypeSelect } from './BiotypeSelect';
 export { default as Button } from './Button';
-export { default as DocumentTitle } from './DocumentTitle';
 export { default as EntityTypeSelect } from './EntityTypeSelect';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as SimpleAjax } from './SimpleAjax';
 export { default as NoData } from './NoData';
 export { default as NotFound } from './NotFound';
-export { Page, PageLeft, PageMain } from './Page';
+export { default as Page, PageLeft, PageMain } from './Page';
 export * from './ProgressButton';
 export { default as ProgressButton } from './ProgressButton';
 export { default as SimpleListPagination } from './SimpleListPagination';
@@ -85,7 +84,7 @@ export const Dialog = withMobileDialog()(
 // };
 // All the following keys are optional.
 // We try our best to provide a great default value.
-export const theme = createMuiTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       main: primaryColor[700],
@@ -104,4 +103,4 @@ export const theme = createMuiTheme({
   },
 });
 
-export { MuiThemeProvider, createMuiTheme, withStyles };
+export { MuiThemeProvider, createTheme, withStyles };

@@ -10,7 +10,7 @@ ifeq ($(PROJ_NAME), wormbase-names)
 else ifeq ($(PROJ_NAME), wormbase-names-test)
 	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-14/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
-	APP_PROFILE ?= "prod"
+	APP_PROFILE ?= "test"
 else
 	WB_DB_URI ?= "datomic:ddb-local://localhost:8000/WBNames_local/wormbase"
 #   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
@@ -170,7 +170,7 @@ docker-tag: ENV.VERSION_TAG \
 	@docker tag ${ECR_REPO_NAME}:${VERSION_TAG} ${ECR_REPO_URI}
 
 .PHONY: eb-def-app-env
-eb-def-app-env: google-oauth2-secrets ENV.VERSION_TAG \
+eb-def-app-env: google-oauth2-secrets caltech-api-secrets ENV.VERSION_TAG \
                 $(call print-help,eb-def-app-env \
 				[WB_DB_URI=<datomic-db-uri>] [GOOGLE_REDIRECT_URI=<google-redirect-uri>],\
                 Define the ElasticBeanStalk app-environment config file.)
@@ -185,6 +185,9 @@ endif
 	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_ID:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_ID}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(API_GOOGLE_OAUTH_CLIENT_SECRET:\s+)".*"~\1"'"${GOOGLE_OAUTH_CLIENT_SECRET}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(GOOGLE_REDIRECT_URI:\s+)".*"~\1"'"${GOOGLE_REDIRECT_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(CALTECH_API_URL:\s+)".*"~\1"'"${CALTECH_API_URL}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(CALTECH_API_USER:\s+)".*"~\1"'"${CALTECH_API_USER}"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(CALTECH_API_PASSWORD:\s+)".*"~\1"'"${CALTECH_API_PASSWORD}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed  -i -r 's~(WB_NAMES_RELEASE: ).+~\1'${VERSION_TAG}'~' .ebextensions/${EB_APP_ENV_FILE}
 
 .PHONY: eb-create
@@ -306,24 +309,30 @@ release: ENV.VERSION_TAG deploy-ecr \
          Release the applicaton.)
 
 .PHONY: run-tests
-run-tests: google-oauth2-secrets \
+run-tests: google-oauth2-secrets caltech-api-secrets \
            $(call print-help,run-tests,\
            Run all tests.)
-	@ export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	  export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
-	  export GOOGLE_REDIRECT_URI=${LOCAL_GOOGLE_REDIRECT_URI} && \
+	@ export API_GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID}" && \
+	  export API_GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET}" && \
+	  export CALTECH_API_URL="${CALTECH_API_URL}" && \
+	  export CALTECH_API_USER="${CALTECH_API_USER}" && \
+	  export CALTECH_API_PASSWORD="${CALTECH_API_PASSWORD}" && \
+	  export GOOGLE_REDIRECT_URI="${LOCAL_GOOGLE_REDIRECT_URI}" && \
 	  clojure -A:datomic-pro:logging:webassets:dev:test:run-tests
 
 .PHONY: run-dev-webserver
 run-dev-webserver: PORT := 4010
-run-dev-webserver: google-oauth2-secrets \
+run-dev-webserver: google-oauth2-secrets caltech-api-secrets \
                    $(call print-help,run-dev-webserver PORT=<port> WB_DB_URI=<datomic-uri> \
 				   GOOGLE_REDIRECT_URI=<google-redirect-uri>,\
                    Run a local development webserver.)
 	@ export WB_DB_URI=${WB_DB_URI} && export PORT=${PORT} && \
-	 export GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} && \
-	 export API_GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID} && \
-	 export API_GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET} && \
+	 export GOOGLE_REDIRECT_URI="${GOOGLE_REDIRECT_URI}" && \
+	 export API_GOOGLE_OAUTH_CLIENT_ID="${GOOGLE_OAUTH_CLIENT_ID}" && \
+	 export API_GOOGLE_OAUTH_CLIENT_SECRET="${GOOGLE_OAUTH_CLIENT_SECRET}" && \
+	 export CALTECH_API_URL="${CALTECH_API_URL}" && \
+	 export CALTECH_API_USER="${CALTECH_API_USER}" && \
+	 export CALTECH_API_PASSWORD="${CALTECH_API_PASSWORD}" && \
 	 clj -A:logging:datomic-pro:webassets:dev -m wormbase.names.service
 
 .PHONY: run-dev-ui
@@ -356,10 +365,45 @@ ENV.GOOGLE_OAUTH_CLIENT_SECRET: source-secrets \
 	$(call check_defined, GOOGLE_OAUTH_CLIENT_SECRET, Check the defined APP_PROFILE value\
 	 and ensure the AWS_PROFILE variable is appropriately defined)
 
+.PHONY: ENV.CALTECH_API_URL
+ENV.CALTECH_API_URL: \
+	$(call print-help,ENV.CALTECH_API_URL,\
+	Retrieve the CALTECH_API_URL env variable for make targets from aws ssm if undefined.)
+	$(eval ACTION_MSG := $(if ${CALTECH_API_URL},"Using predefined CALTECH_API_URL.","Retrieving CALTECH_API_URL from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${CALTECH_API_URL},,$(eval CALTECH_API_URL := $(shell ${AWS_CLI_BASE} ssm get-parameter --name "/name-service/${APP_PROFILE}/caltech-api-config/url" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, CALTECH_API_URL, Check the defined APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
+
+.PHONY: ENV.CALTECH_API_USER
+ENV.CALTECH_API_USER: \
+	$(call print-help,ENV.CALTECH_API_USER,\
+	Retrieve the CALTECH_API_USER env variable for make targets from aws ssm if undefined.)
+	$(eval ACTION_MSG := $(if ${CALTECH_API_USER},"Using predefined CALTECH_API_USER.","Retrieving CALTECH_API_USER from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${CALTECH_API_USER},,$(eval CALTECH_API_USER := $(shell ${AWS_CLI_BASE} ssm get-parameter --name "/name-service/${APP_PROFILE}/caltech-api-config/username" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, CALTECH_API_USER, Check the defined APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
+
+.PHONY: ENV.CALTECH_API_PASSWORD
+ENV.CALTECH_API_PASSWORD: \
+	$(call print-help,ENV.CALTECH_API_PASSWORD,\
+	Retrieve the CALTECH_API_PASSWORD env variable for make targets from aws ssm if undefined.)
+	$(eval ACTION_MSG := $(if ${CALTECH_API_PASSWORD},"Using predefined CALTECH_API_PASSWORD.","Retrieving CALTECH_API_PASSWORD from AWS SSM (APP_PROFILE '${APP_PROFILE}')."))
+	@echo ${ACTION_MSG}
+	$(if ${CALTECH_API_PASSWORD},,$(eval CALTECH_API_PASSWORD := $(shell ${AWS_CLI_BASE} ssm get-parameter --name "/name-service/${APP_PROFILE}/caltech-api-config/password" --query "Parameter.Value" --output text --with-decryption)))
+	$(call check_defined, CALTECH_API_PASSWORD, Check the defined APP_PROFILE value\
+	 and ensure the AWS_PROFILE variable is appropriately defined)
+
 .PHONY: google-oauth2-secrets
 google-oauth2-secrets: ENV.GOOGLE_OAUTH_CLIENT_ID ENV.GOOGLE_OAUTH_CLIENT_SECRET \
                        $(call print-help,google-oauth2-secrets,\
                        Store the Google oauth2 client details as env variables.)
+
+.PHONY: caltech-api-secrets
+caltech-api-secrets: ENV.CALTECH_API_URL ENV.CALTECH_API_USER ENV.CALTECH_API_PASSWORD \
+                     $(call print-help,caltech-api-secrets,\
+                     Store the Caltech API details as env variables.)
 
 ${STORE_SECRETS_FILE}: google-oauth2-secrets
 	@install -m 600 /dev/null ${STORE_SECRETS_FILE}

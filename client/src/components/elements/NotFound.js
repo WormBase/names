@@ -1,20 +1,23 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Typography, withStyles } from '@material-ui/core';
 
-class NotFound extends Component {
-  render() {
-    const { classes } = this.props;
-    return (
-      <div className={classes.root}>
-        <Typography variant="h3" gutterBottom>
-          Not Found
-        </Typography>
-        {this.props.children}
-      </div>
-    );
-  }
-}
+import { useTitle } from '../../hooks/useTitle';
+
+const NotFound = (props) => {
+  const { classes } = props;
+
+  useTitle('Not found');
+
+  return (
+    <div className={classes.root}>
+      <Typography variant="h3" gutterBottom>
+        Not Found
+      </Typography>
+      {props.children}
+    </div>
+  );
+};
 
 NotFound.propTypes = {
   children: PropTypes.element,

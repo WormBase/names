@@ -27,20 +27,25 @@ const NavBar = (props) => {
       centered={true}
       className={props.classes.root}
     >
-      {allTabs.map(({ entityType, displayName, path }) => (
-        <Tab
-          key={entityType}
-          label={displayName || capitalize(entityType)}
-          value={entityType}
-          style={{
-            color:
-              getEntityType(entityType) && getEntityType(entityType).theme
-                ? getEntityType(entityType).theme.palette.secondary.dark
-                : '#000',
-          }}
-          component={(props) => <Link {...props} to={path} />}
-        />
-      ))}
+      {allTabs.map(({ entityType, displayName, path }) => {
+        const entity_dir_link = React.forwardRef((props, ref) => (
+          <Link {...props} to={path} ref={ref} />
+        ));
+        return (
+          <Tab
+            key={entityType}
+            label={displayName || capitalize(entityType)}
+            value={entityType}
+            style={{
+              color:
+                getEntityType(entityType) && getEntityType(entityType).theme
+                  ? getEntityType(entityType).theme.palette.secondary.dark
+                  : '#000',
+            }}
+            component={entity_dir_link}
+          />
+        );
+      })}
     </Tabs>
   );
 };

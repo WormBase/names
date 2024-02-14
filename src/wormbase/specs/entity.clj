@@ -11,6 +11,20 @@
        :dynamic true}
   *max-requestable-un-named* 1000000)
 
+(s/def ::caltech-message (stc/spec {:spec string?
+                                    :swagger/example "Added 2023-11-21 22:06:46 WBVar03000001 tempVariation to obo_name_variation and obo_data_variation."
+                                    :description "A message received from a caltech API call."}))
+
+(s/def ::http-response-status-code (stc/spec {:spec (s/and int?
+                                                           #(<= 100 %)
+                                                           #(< % 600))
+                                              :swagger/example 404
+                                              :description "Any valid HTTP status code"}))
+
+(s/def ::http-response-body (stc/spec {:spec string?
+                                       :swagger/example "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>\n"
+                                       :description "A (complete) HTTP response body."}))
+
 (s/def ::id-template (stc/spec
                       {:spec (s/and string?
                                     #(str/starts-with? % "WB")
@@ -29,13 +43,18 @@
                                 :swagger/example "variation"
                                 :description "The name of the entity type."}))
 
-(s/def ::new-schema (stc/spec {:spec (s/keys ::req-un [::id-template
-                                                       ::entity-type
-                                                       ::name-required?])
-                               :description "Parameters required to install a new entity schema."
+(s/def ::message string?)
+
+(s/def ::new-type-response (stc/spec {:spec (s/keys :req-un [::message])
+                                      :description "The response map returned by a successful entity-type creation operation."}))
+
+(s/def ::new-type (stc/spec {:spec (s/keys :req-un [::id-template
+                                                    ::entity-type
+                                                    ::name-required?])
+                               :description "Parameters required to install a new entity schema (aka entity type)."
                                :swagger/example {:id-template "WBThing%d"
                                                  :entity-type "thing"
-                                                 :name-required true}}))
+                                                 :name-required? true}}))
 
 (s/def ::named? (stc/spec {:spec sts/boolean?
                            :swagger/example "true"
@@ -137,9 +156,14 @@
 (s/def ::created (stc/spec {:spec (s/keys :req-un [::id])
                             :description "A mapping describing a newly created entity."}))
 
-(s/def ::message string?)
+(s/def ::caltech-sync (stc/spec {:spec (s/keys :req-un [::http-response-status-code]
+                                               :opt-un [::caltech-message ::http-response-body])
+                                 :description (str "A mapping describing the response received from "
+                                                   "sending a new object to Caltech APIs (over HTTP(S)).")}))
 
-(s/def ::schema-created (stc/spec (s/keys :req-un [::message])))
+(s/def ::created-response (stc/spec {:spec (s/keys :req-un [::created]
+                                                   :opt-un [::caltech-sync])
+                                     :description "The response map returned by a successful entity creation operation."}))
 
 (s/def ::names (stc/spec {:spec (s/coll-of (s/keys :req-un [::name]) :min-count 1)
                           :description "A collection of entity names."}))

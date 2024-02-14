@@ -17,31 +17,38 @@ function Home({ classes }) {
     <Page>
       <PageMain>
         <div className={classes.main}>
-          {entityTypesAll.map(({ entityType, path, theme, displayName }) => (
-            <Paper key={entityType} levation={1} className={classes.row}>
-              <div className={classes.cell}>
-                <MuiThemeProvider theme={theme}>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    component={({ ...props }) => (
-                      <Link to={`${path}/new`} {...props} />
-                    )}
-                  >
-                    Add {displayName}
+          {entityTypesAll.map(({ entityType, path, theme, displayName }) => {
+            const new_entity_link = React.forwardRef(function(props, ref) {
+              return <Link to={`${path}/new`} {...props} ref={ref} />;
+            });
+            const entity_directory_link = React.forwardRef(function(
+              props,
+              ref
+            ) {
+              return <Link to={path} {...props} ref={ref} />;
+            });
+
+            return (
+              <Paper key={entityType} levation={1} className={classes.row}>
+                <div className={classes.cell}>
+                  <MuiThemeProvider theme={theme}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      component={new_entity_link}
+                    >
+                      Add {displayName}
+                    </Button>
+                  </MuiThemeProvider>
+                </div>
+                <div className={classes.cell}>
+                  <Button color="primary" component={entity_directory_link}>
+                    Browse {displayName}s
                   </Button>
-                </MuiThemeProvider>
-              </div>
-              <div className={classes.cell}>
-                <Button
-                  color="primary"
-                  component={({ ...props }) => <Link to={path} {...props} />}
-                >
-                  Browse {displayName}s
-                </Button>
-              </div>
-            </Paper>
-          ))}
+                </div>
+              </Paper>
+            );
+          })}
         </div>
       </PageMain>
     </Page>

@@ -1,9 +1,6 @@
 import React, { createContext, useCallback, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
-import {
-  createMuiTheme,
-  theme as defaultTheme,
-} from '../../components/elements';
+import { createTheme, theme as defaultTheme } from '../../components/elements';
 import {
   green as geneColor,
   purple as variationColor,
@@ -34,7 +31,7 @@ const processEntityTypeConfig = ({ color, ...entityTypeConfig }) => {
       ? `/api/entity/${entityType}`
       : `/api/${entityType}`,
     theme: color
-      ? createMuiTheme({
+      ? createTheme({
           palette: {
             ...defaultTheme.palette,
             secondary: {

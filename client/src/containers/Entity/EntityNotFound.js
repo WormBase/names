@@ -2,31 +2,32 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { withStyles, Button, Typography } from '@material-ui/core';
 
-import { DocumentTitle, NotFound } from '../../components/elements';
+import { NotFound } from '../../components/elements';
 import EntityDirectoryButton from './EntityDirectoryButton';
 
 function EntityNotFound(props) {
   const { classes = {}, wbId, entityType } = props;
+
+  const new_entity_link = React.forwardRef(function(props, ref) {
+    return <Link to={`/${entityType}/new`} {...props} ref={ref} />;
+  });
+
   return (
-    <DocumentTitle title="Not found">
-      <NotFound>
-        <Typography>
-          <strong>{wbId}</strong> does not exist
-        </Typography>
-        <div className={classes.operations}>
-          <EntityDirectoryButton entityType={entityType} />
-          <Button
-            variant="contained"
-            color="secondary"
-            component={({ ...props }) => (
-              <Link to={`/${entityType}/new`} {...props} />
-            )}
-          >
-            Create {entityType}
-          </Button>
-        </div>
-      </NotFound>
-    </DocumentTitle>
+    <NotFound>
+      <Typography>
+        <strong>{wbId}</strong> does not exist
+      </Typography>
+      <div className={classes.operations}>
+        <EntityDirectoryButton entityType={entityType} />
+        <Button
+          variant="contained"
+          color="secondary"
+          component={new_entity_link}
+        >
+          Create {entityType}
+        </Button>
+      </div>
+    </NotFound>
   );
 }
 

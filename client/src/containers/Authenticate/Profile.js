@@ -2,7 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '../../components/elements';
 
+import { useTitle } from '../../hooks/useTitle';
+
 const Profile = (props) => {
+  useTitle('Your profile');
   return (
     <div className={props.classes.root}>
       <h2>{props.name}</h2>

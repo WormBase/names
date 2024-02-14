@@ -9,7 +9,6 @@ import {
 
 import {
   Button,
-  DocumentTitle,
   ErrorBoundary,
   Humanize,
   Page,
@@ -132,103 +131,101 @@ class EntityProfile extends Component {
           const ReasonField = withFieldData(TextArea, 'why');
 
           return (
-            <DocumentTitle title={`${wbId} (${entityType})`}>
-              <Page>
-                <PageLeft>
-                  <div className={classes.operations}>
-                    <EntityDirectoryButton entityType={entityType} />
-                    <Divider light />
-                    {renderOperations &&
-                      renderOperations({
+            <Page title={`${wbId} (${entityType})`}>
+              <PageLeft>
+                <div className={classes.operations}>
+                  <EntityDirectoryButton entityType={entityType} />
+                  <Divider light />
+                  {renderOperations &&
+                    renderOperations({
+                      ...renderProps,
+                      getOperationProps,
+                      getDialogProps,
+                    })}
+                  {renderOperationTip
+                    ? renderOperationTip &&
+                      renderOperationTip({
                         ...renderProps,
-                        getOperationProps,
-                        getDialogProps,
-                      })}
-                    {renderOperationTip
-                      ? renderOperationTip &&
-                        renderOperationTip({
-                          ...renderProps,
-                          Wrapper: ({ children }) => (
-                            <React.Fragment>
-                              <h5>Tip:</h5>
-                              {children}
-                            </React.Fragment>
-                          ),
-                        })
-                      : null}
-                  </div>
-                </PageLeft>
-                <PageMain>
-                  <Typography variant="h5" gutterBottom>
-                    {entityType} <em>{wbId}</em>{' '}
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      {...buttonCopyProps}
-                    />
-                  </Typography>
-                  <ValidationError {...errorMessage} />
-                  {this.props.status === 'LOADING' ? (
-                    <CircularProgress />
-                  ) : (
-                    <div>
-                      {renderStatus(renderProps)}
-                      {renderForm ? (
-                        <ErrorBoundary>
-                          {renderForm({ ...renderProps, ...formContext })}
-                          {dirtinessContext(({ dirty }) =>
-                            dirty ? (
-                              <ReasonField
-                                multiline
-                                label="Reason"
-                                helperText={`Why do you update this ${entityType}?`}
-                              />
-                            ) : null
-                          )}
-                        </ErrorBoundary>
-                      ) : null}
-                      <div className={classes.actions}>
-                        <Button variant="contained" {...buttonResetProps}>
-                          Reset
-                        </Button>
-                        <ProgressButton
-                          variant="contained"
-                          color="secondary"
-                          {...buttonSubmitProps}
-                        >
-                          Update
-                        </ProgressButton>
-                      </div>
-                    </div>
-                  )}
-                  <div className={classes.section}>
-                    <Typography variant="h6" gutterBottom>
-                      Change history
-                    </Typography>
-                    {renderChanges ? (
-                      <div className={classes.historyTable}>
-                        <ErrorBoundary>
-                          {renderChanges(renderProps)}
-                        </ErrorBoundary>
-                      </div>
-                    ) : null}
-                  </div>
-                </PageMain>
-
-                <Snackbar
-                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                  open={message}
-                  onClose={onMessageClose}
-                  transitionDuration={0}
-                >
-                  <SnackbarContent
-                    variant={messageVariant}
-                    message={<span>{message}</span>}
-                    onClose={onMessageClose}
+                        Wrapper: ({ children }) => (
+                          <React.Fragment>
+                            <h5>Tip:</h5>
+                            {children}
+                          </React.Fragment>
+                        ),
+                      })
+                    : null}
+                </div>
+              </PageLeft>
+              <PageMain>
+                <Typography variant="h5" gutterBottom>
+                  {entityType} <em>{wbId}</em>{' '}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    {...buttonCopyProps}
                   />
-                </Snackbar>
-              </Page>
-            </DocumentTitle>
+                </Typography>
+                <ValidationError {...errorMessage} />
+                {this.props.status === 'LOADING' ? (
+                  <CircularProgress />
+                ) : (
+                  <div>
+                    {renderStatus(renderProps)}
+                    {renderForm ? (
+                      <ErrorBoundary>
+                        {renderForm({ ...renderProps, ...formContext })}
+                        {dirtinessContext(({ dirty }) =>
+                          dirty ? (
+                            <ReasonField
+                              multiline
+                              label="Reason"
+                              helperText={`Why do you update this ${entityType}?`}
+                            />
+                          ) : null
+                        )}
+                      </ErrorBoundary>
+                    ) : null}
+                    <div className={classes.actions}>
+                      <Button variant="contained" {...buttonResetProps}>
+                        Reset
+                      </Button>
+                      <ProgressButton
+                        variant="contained"
+                        color="secondary"
+                        {...buttonSubmitProps}
+                      >
+                        Update
+                      </ProgressButton>
+                    </div>
+                  </div>
+                )}
+                <div className={classes.section}>
+                  <Typography variant="h6" gutterBottom>
+                    Change history
+                  </Typography>
+                  {renderChanges ? (
+                    <div className={classes.historyTable}>
+                      <ErrorBoundary>
+                        {renderChanges(renderProps)}
+                      </ErrorBoundary>
+                    </div>
+                  ) : null}
+                </div>
+              </PageMain>
+
+              <Snackbar
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                open={message}
+                onClose={onMessageClose}
+                transitionDuration={0}
+              >
+                <SnackbarContent
+                  variant={messageVariant}
+                  message={<span>{message}</span>}
+                  onClose={onMessageClose}
+                />
+              </Snackbar>
+            </Page>
           );
         }}
       </EntityEdit>
@@ -241,8 +238,8 @@ EntityProfile.propTypes = {
   entityType: PropTypes.string.isRequired,
   wbId: PropTypes.string.isRequired,
   apiPrefix: PropTypes.string,
-  withFieldData: PropTypes.func.isRequired,
-  dirtinessContext: PropTypes.func.isRequired,
+  withFieldData: PropTypes.func,
+  dirtinessContext: PropTypes.func,
   errorMessage: PropTypes.string,
   message: PropTypes.string,
   messageVariant: PropTypes.oneOf(['info', 'warning']),

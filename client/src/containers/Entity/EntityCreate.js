@@ -8,7 +8,6 @@ import EntityEditNew from './EntityEditNew';
 import EntityForm from './EntityForm';
 import {
   Button,
-  DocumentTitle,
   ErrorBoundary,
   Page,
   PageLeft,
@@ -43,47 +42,45 @@ class EntityCreate extends Component {
           const ReasonField = withFieldData(TextArea, 'why');
 
           return (
-            <DocumentTitle title={`Create ${entityType}`}>
-              <Page>
-                <PageLeft>
-                  <div className={classes.operations}>
-                    <EntityDirectoryButton entityType={entityType} />
-                  </div>
-                </PageLeft>
-                <PageMain>
-                  <Typography variant="h5" gutterBottom>
-                    Add {entityType}
-                  </Typography>
-                  <ValidationError {...errorMessage} />
-                  {renderForm ? (
-                    <ErrorBoundary>
-                      {renderForm(formContext)}
-                      {dirtinessContext(({ dirty }) =>
-                        true ? (
-                          <ReasonField
-                            multiline
-                            label="Reason"
-                            helperText={`Why do you create this ${entityType}?`}
-                          />
-                        ) : null
-                      )}
-                    </ErrorBoundary>
-                  ) : null}
-                  <div className={classes.actions}>
-                    <Button variant="contained" {...buttonResetProps}>
-                      Reset
-                    </Button>
-                    <ProgressButton
-                      variant="contained"
-                      color="secondary"
-                      {...buttonSubmitProps}
-                    >
-                      Create
-                    </ProgressButton>
-                  </div>
-                </PageMain>
-              </Page>
-            </DocumentTitle>
+            <Page title={`Create ${entityType}`}>
+              <PageLeft>
+                <div className={classes.operations}>
+                  <EntityDirectoryButton entityType={entityType} />
+                </div>
+              </PageLeft>
+              <PageMain>
+                <Typography variant="h5" gutterBottom>
+                  Add {entityType}
+                </Typography>
+                <ValidationError {...errorMessage} />
+                {renderForm ? (
+                  <ErrorBoundary>
+                    {renderForm(formContext)}
+                    {dirtinessContext(({ dirty }) =>
+                      true ? (
+                        <ReasonField
+                          multiline
+                          label="Reason"
+                          helperText={`Why do you create this ${entityType}?`}
+                        />
+                      ) : null
+                    )}
+                  </ErrorBoundary>
+                ) : null}
+                <div className={classes.actions}>
+                  <Button variant="contained" {...buttonResetProps}>
+                    Reset
+                  </Button>
+                  <ProgressButton
+                    variant="contained"
+                    color="secondary"
+                    {...buttonSubmitProps}
+                  >
+                    Create
+                  </ProgressButton>
+                </div>
+              </PageMain>
+            </Page>
           );
         }}
       </EntityEditNew>

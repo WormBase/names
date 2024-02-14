@@ -25,7 +25,6 @@
     "prop-types": "15.7.2",
     "query-string": "5",
     "react": "16.8.5",
-    "react-document-title": "2.0.3",
     "react-dom": "16.8.5",
     "react-router-dom": "5.3.4",
     "react-storage-hooks": "3.0.1",

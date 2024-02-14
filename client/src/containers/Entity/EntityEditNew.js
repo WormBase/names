@@ -76,30 +76,112 @@ class EntityEditNew extends Component {
             }
           )
             .then((response) => {
+              this.setState({
+                error: null,
+              });
+
+              if (!response.ok) {
+                console.log(
+                  'Error response received on entity creation request.'
+                );
+
+                let error_message = `API error. Status ${response.status} (${
+                  response.statusText
+                }) received, but no message.`;
+
+                this.setState({
+                  error: { message: error_message },
+                });
+              }
+
               return response.json();
             })
-            .then((response) => {
-              if (!response.created) {
-                this.setState({
-                  error: response,
-                  status: 'COMPLETE',
-                });
-              } else {
-                this.setState(
-                  {
-                    data: response.created,
-                    error: null,
-                    status: 'COMPLETE',
-                  },
-                  () => {
-                    this.props.history.push(
-                      `/${entityType}/id/${response.created.id}`
-                    );
-                  }
+            .then((response_body) => {
+              if (this.state.error || !response_body.created) {
+                console.log(
+                  'state.error found or response_body.created not found.'
                 );
+                console.log('state.error: ', this.state.error);
+                console.log('response_body.created: ', response_body.created);
+
+                let new_state = this.state;
+                new_state['status'] = 'COMPLETE';
+
+                if (response_body.message) {
+                  new_state['error'] = { message: response_body.message };
+                } else {
+                  console.log('Error response received but no message.');
+                  console.log('Full response body:', response_body);
+                }
+
+                this.setState(new_state);
+              } else {
+                let redirect_delay = 0;
+
+                let new_state = this.state;
+
+                new_state['data'] = response_body.created;
+                new_state['status'] = 'COMPLETE';
+
+                if ('caltech-sync' in response_body) {
+                  let caltech_result = response_body['caltech-sync'];
+                  let message = `Entity ${
+                    response_body.created.id
+                  } created successfully.`;
+                  if (
+                    [200, 201, 202].includes(
+                      caltech_result['http-response-status-code']
+                    )
+                  ) {
+                    redirect_delay += 2000;
+                    message += ' Caltech sync successful.';
+                  } else {
+                    redirect_delay += 3000;
+                    message += ` Error returned by Caltech sync API (HTTP Code ${
+                      caltech_result['http-response-status-code']
+                    }).`;
+                  }
+
+                  if ('caltech-message' in caltech_result) {
+                    redirect_delay += 2000;
+                    message += ` Message returned: "${
+                      caltech_result['caltech-message']
+                    }".`;
+                  }
+
+                  message += ' Redirecting to entity page...';
+
+                  console.log('Caltech sync display message:', message);
+
+                  new_state['error'] = { message: message };
+                } else {
+                  console.log(
+                    'Entity successfully created, but no caltech-sync property found.'
+                  );
+                  new_state['error'] = null;
+                }
+
+                this.setState(new_state, () => {
+                  setTimeout(() => {
+                    this.props.history.push(
+                      `/${entityType}/id/${response_body.created.id}`
+                    );
+                  }, redirect_delay);
+                });
               }
             })
-            .catch((e) => console.log('error', e));
+            .catch((e) => {
+              console.log('Caught error:', e);
+              this.setState({
+                error: {
+                  message:
+                    'Uncaught error: ' +
+                    e.toString() +
+                    '. See console for more details.',
+                },
+                status: 'COMPLETE',
+              });
+            });
         }
       );
     };

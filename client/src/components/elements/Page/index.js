@@ -2,11 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core';
 
-function page({ classes, ...others }) {
-  return <div className={classes.root} {...others} />;
-}
-page.propTypes = {
+import { useTitle } from '../../../hooks/useTitle';
+
+const Page = (props) => {
+  useTitle(props.title);
+  return <div className={props.classes.root} {...props} />;
+};
+Page.propTypes = {
   classes: PropTypes.object.isRequired,
+  title: PropTypes.string,
 };
 
 function pageMain({ classes, ...others }) {
@@ -30,7 +34,7 @@ pageRight.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export const Page = withStyles((theme) => ({
+export default withStyles((theme) => ({
   root: {
     display: 'flex',
     margin: theme.spacing(4),
@@ -38,7 +42,7 @@ export const Page = withStyles((theme) => ({
       flexDirection: 'column',
     },
   },
-}))(page);
+}))(Page);
 
 export const PageLeft = withStyles((theme) => ({
   left: {
@@ -70,5 +74,3 @@ export const PageMain = withStyles((theme) => ({
 //     },
 //   },
 // }))(pageRight);
-
-export default Page;

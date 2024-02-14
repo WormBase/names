@@ -42,7 +42,7 @@
         (let [data {:entity-type "strain"
                     :id-template "WBStrain%0d"
                     :generic true
-                    :name-required true}
+                    :name-required? true}
               response (new-entity-type {:data data :prov nil})]
           (t/is (ru-hp/created? response))
           (let [db-after (d/db conn)
