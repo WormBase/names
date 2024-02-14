@@ -6,7 +6,6 @@ import Typography from '@material-ui/core/Typography';
 import { capitalize } from '../../utils/format';
 import {
   Button,
-  DocumentTitle,
   ErrorBoundary,
   Page,
   PageMain,
@@ -24,40 +23,38 @@ const EntityDirectory = (props) => {
     <Link to={`/${entityType}/new`} {...props} ref={ref} />
   ));
   return (
-    <DocumentTitle title={`${capitalize(entityType)} directory`}>
-      <Page>
-        <PageMain>
-          <div className={classes.root}>
-            <div className={classes.header}>
-              <Button
-                variant="contained"
-                color="secondary"
-                component={new_entity_link}
-              >
-                Add new {entityType}
-              </Button>
-              {/*
-                <div className={classes.or}>OR</div>
-                  <div className={classes.search}>
-                  <SearchBox entityType={entityType} />
-                </div>
-                */}
-            </div>
+    <Page title={`${capitalize(entityType)} directory`}>
+      <PageMain>
+        <div className={classes.root}>
+          <div className={classes.header}>
+            <Button
+              variant="contained"
+              color="secondary"
+              component={new_entity_link}
+            >
+              Add new {entityType}
+            </Button>
+            {/*
+              <div className={classes.or}>OR</div>
+                <div className={classes.search}>
+                <SearchBox entityType={entityType} />
+              </div>
+              */}
           </div>
-          <div className={classes.main}>
-            {/* tables and charts */}
-            {
-              <section>
-                <Typography variant="h6" gutterBottom>
-                  Recent activities
-                </Typography>
-                <ErrorBoundary>{renderHistory()}</ErrorBoundary>
-              </section>
-            }
-          </div>
-        </PageMain>
-      </Page>
-    </DocumentTitle>
+        </div>
+        <div className={classes.main}>
+          {/* tables and charts */}
+          {
+            <section>
+              <Typography variant="h6" gutterBottom>
+                Recent activities
+              </Typography>
+              <ErrorBoundary>{renderHistory()}</ErrorBoundary>
+            </section>
+          }
+        </div>
+      </PageMain>
+    </Page>
   );
 };
 

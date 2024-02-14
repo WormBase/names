@@ -7,7 +7,6 @@ import {
   MuiThemeProvider,
   CircularProgress,
   Page,
-  DocumentTitle,
   ErrorBoundary,
   NotFound,
 } from '../../components/elements';
@@ -63,15 +62,13 @@ function Main({ classes }) {
                 <Route
                   path="/me"
                   component={() => (
-                    <DocumentTitle title="Your profile">
-                      <Profile {...user}>
-                        <>
-                          <TokenMgmt />
-                          <br />
-                          <Logout onLogout={handleLogout} />
-                        </>
-                      </Profile>
-                    </DocumentTitle>
+                    <Profile {...user}>
+                      <>
+                        <TokenMgmt />
+                        <br />
+                        <Logout onLogout={handleLogout} />
+                      </>
+                    </Profile>
                   )}
                 />
                 <Route
