@@ -187,8 +187,9 @@ endif
 	sed -i -r 's~(GOOGLE_REDIRECT_URI:\s+)".*"~\1"'"${GOOGLE_REDIRECT_URI}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(CALTECH_API_URL:\s+)".*"~\1"'"${CALTECH_API_URL}"'"~' .ebextensions/${EB_APP_ENV_FILE}
 	sed -i -r 's~(CALTECH_API_USER:\s+)".*"~\1"'"${CALTECH_API_USER}"'"~' .ebextensions/${EB_APP_ENV_FILE}
-	sed -i -r 's~(CALTECH_API_PASSWORD:\s+)".*"~\1"'"${CALTECH_API_PASSWORD}"'"~' .ebextensions/${EB_APP_ENV_FILE}
-	sed  -i -r 's~(WB_NAMES_RELEASE: ).+~\1'${VERSION_TAG}'~' .ebextensions/${EB_APP_ENV_FILE}
+	SED_SAFE="$(shell printf '%s\n' "${CALTECH_API_PASSWORD}" | sed -e 's~[\~&]~\\&~g')" && \
+	sed -i -r 's~(CALTECH_API_PASSWORD:\s+)".*"~\1"'"$$SED_SAFE"'"~' .ebextensions/${EB_APP_ENV_FILE}
+	sed -i -r 's~(WB_NAMES_RELEASE: ).+~\1'${VERSION_TAG}'~' .ebextensions/${EB_APP_ENV_FILE}
 
 .PHONY: eb-create
 eb-create: eb-def-app-env \
