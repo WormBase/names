@@ -8,7 +8,7 @@ ifeq ($(PROJ_NAME), wormbase-names)
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
 	APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
-	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-14/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-15/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	APP_PROFILE ?= "test"
 else
