@@ -11,6 +11,10 @@ else ifeq ($(PROJ_NAME), wormbase-names-test)
 	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-17/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	APP_PROFILE ?= "test"
+else ifeq ($(PROJ_NAME), wormbase-names-tmp)
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-17/wormbase"
+	GOOGLE_REDIRECT_URI ?= "https://tmp-names.wormbase.org"
+	APP_PROFILE ?= "prod"
 else
 	WB_DB_URI ?= "datomic:ddb-local://localhost:8000/WBNames_local/wormbase"
 #   Ensure GOOGLE_REDIRECT_URI is defined appropriately as an env variable or CLI argument
