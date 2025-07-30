@@ -4,11 +4,11 @@ PROJ_NAME ?= wormbase-names-dev
 LOCAL_GOOGLE_REDIRECT_URI := "http://lvh.me:3000"
 AWS_DEFAULT_REGION ?= us-east-1
 ifeq ($(PROJ_NAME), wormbase-names)
-	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-prod/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://names.wormbase.org"
 	APP_PROFILE ?= "prod"
 else ifeq ($(PROJ_NAME), wormbase-names-test)
-	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-15/wormbase"
+	WB_DB_URI ?= "datomic:ddb://${AWS_DEFAULT_REGION}/WSNames-test-17/wormbase"
 	GOOGLE_REDIRECT_URI ?= "https://test-names.wormbase.org"
 	APP_PROFILE ?= "test"
 else

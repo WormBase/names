@@ -306,7 +306,7 @@
     :default "WBNamesTestTransactor"]
    ["-t"
     "--ddb-table-name SOURCE_DDB_TABLE_NAME"
-    :default "WSNames"]
+    :default "WSNames-prod"]
    [nil
     "--ddb-table-name-prefix PREFIX"
     :default "WSNames-test"]

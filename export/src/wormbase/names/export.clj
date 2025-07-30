@@ -196,5 +196,5 @@
         (run db ent-ns out-path)
         (d/release conn))
       (exit 1 (str "Please set the WB_DB_URI environment variable.\n"
-                   "e.g: export WB_DB_URI=\"datomic:ddb://us-east-1/WSNames/wormbase")))
+                   "e.g: export WB_DB_URI=\"datomic:ddb://us-east-1/WSNames-prod/wormbase")))
     (System/exit 0)))

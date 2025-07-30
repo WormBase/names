@@ -69,7 +69,7 @@ To reset to a state such that the reset command can work:
 
 1. Delete the `WBNamesTestTransactor` cloud formation stack
 2. Terminate the Elastic Beanstalk environment `wormbase-names-test`.
-3. Delete any DynamoDB table with the prefix `WSNames-test`. Be careful not to delete `WSNames` (production env table)!
+3. Delete any DynamoDB table with the prefix `WSNames-test`. Be careful not to delete `WSNames-prod` (production env table)!
 4. Clone the production Elastic Beanstalk environment: `wormbase-names`
    to create a new EB test environment (`wormbase-names-test`).
 5. Create a new CloudFormation transactor stack named `WBNamesTestTransactor`
